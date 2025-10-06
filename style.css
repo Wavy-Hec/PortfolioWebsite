@@ -1,12 +1,71 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
-*{
-    margin:0;
-    padding: 0;
-    box-sizing:border-box;
-    text-decoration: none;
-    border:none;
-    outline:none;
-    font-family: "Poppins", sans-serif;
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
+html { font-size: 62.5%; }
+
+body {
+  font-family: 'Poppins', sans-serif;
+  color: #fff;
+  background: #000;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding-top: 80px; /* for fixed header */
+}
+
+/* Header & Nav */
+header {
+  position: fixed; top: 0; left: 0; width: 100%;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1rem 9%; z-index: 100; background: transparent;
+}
+
+.logo { font-size: 3rem; color: #b74b4b; font-weight: 800; transition: .3s; }
+.logo:hover { transform: scale(1.05); }
+
+nav a {
+  font-size: 1.8rem; color: #fff; margin-left: 4rem;
+  border-bottom: 3px solid transparent; transition: .3s;
+}
+nav a:hover { color: #b74b4b; border-bottom-color: #b74b4b; }
+
+/* Section & Hero */
+section { min-height: 100vh; padding: 5rem 9%; }
+
+.home {
+  display: flex; justify-content: center; align-items: center; gap: 8rem;
+}
+
+.home .home-content h1 { font-size: 6rem; line-height: 1.2; }
+.home .home-content h3 { font-size: 4rem; margin-bottom: 1rem; }
+.home .home-content p { font-size: 1.6rem; }
+
+span { color: #b74b4b; }
+
+/* Image */
+.home-img img {
+  width: 32vw; border-radius: 50%;
+  box-shadow: 0 0 25px #b74b4b; transition: .2s linear;
+}
+.home-img img:hover { transform: scale(1.03); }
+
+/* Social icons (buttons) */
+.social-icons a {
+  display: inline-flex; justify-content: center; align-items: center;
+  width: 4rem; height: 4rem; border-radius: 50%;
+  margin: 3rem 1.5rem 0 0; border: 0.2rem solid #b74b4b;
+  color: #b74b4b; font-size: 2rem; transition: .3s;
+}
+.social-icons a:hover {
+  background: #b74b4b; color: #000; transform: scale(1.15) translateY(-4px);
+  box-shadow: 0 0 25px #b74b4b;
+}
+
+/* Responsive */
+@media (max-width: 995px) {
+  .home { flex-direction: column; gap: 4rem; padding-top: 2rem; }
+  .home .home-content h1 { font-size: 5rem; }
+  .home .home-content h3 { font-size: 2.5rem; }
+  .home-img img { width: 70vw; margin-top: 2rem; }
 }
