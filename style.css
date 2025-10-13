@@ -47,7 +47,7 @@ body {
   position: relative;
 }
 
-/* Subtle Professional Grid Background */
+/* Floating Particles Background */
 body::before {
   content: '';
   position: fixed;
@@ -56,11 +56,103 @@ body::before {
   width: 100%;
   height: 100%;
   background-image: 
+    radial-gradient(2px 2px at 25px 25px, var(--accent-cyan), transparent),
+    radial-gradient(2px 2px at 50px 75px, var(--accent-coral), transparent),
+    radial-gradient(1px 1px at 100px 50px, var(--accent-teal), transparent),
+    radial-gradient(1px 1px at 150px 100px, var(--accent-gold), transparent),
     linear-gradient(rgba(100, 255, 218, 0.02) 1px, transparent 1px),
     linear-gradient(90deg, rgba(100, 255, 218, 0.02) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-size: 200px 200px, 300px 300px, 400px 400px, 500px 500px, 40px 40px, 40px 40px;
+  background-position: 0 0, 50px 50px, 100px 100px, 150px 150px, 0 0, 0 0;
+  animation: floatingParticles 20s ease-in-out infinite;
   pointer-events: none;
   z-index: -1;
+  opacity: 0.6;
+}
+
+@keyframes floatingParticles {
+  0%, 100% { 
+    background-position: 0 0, 50px 50px, 100px 100px, 150px 150px, 0 0, 0 0;
+    opacity: 0.6;
+  }
+  25% { 
+    background-position: 50px 25px, 100px 75px, 200px 50px, 300px 100px, 0 0, 0 0;
+    opacity: 0.8;
+  }
+  50% { 
+    background-position: 100px 0, 150px 100px, 300px 150px, 450px 50px, 0 0, 0 0;
+    opacity: 0.4;
+  }
+  75% { 
+    background-position: 25px 75px, 75px 25px, 150px 200px, 200px 150px, 0 0, 0 0;
+    opacity: 0.7;
+  }
+}
+
+@keyframes holographicShimmer {
+  0% { 
+    transform: rotate(45deg) translateX(-100%);
+    opacity: 0;
+  }
+  50% { 
+    opacity: 1;
+  }
+  100% { 
+    transform: rotate(45deg) translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes gradientShift {
+  0%, 100% { 
+    background-position: 0% 50%;
+  }
+  50% { 
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes glitch {
+  0%, 100% { 
+    transform: translate(0);
+    filter: hue-rotate(0deg);
+  }
+  10% { 
+    transform: translate(-2px, 2px);
+    filter: hue-rotate(90deg);
+  }
+  20% { 
+    transform: translate(-2px, -2px);
+    filter: hue-rotate(180deg);
+  }
+  30% { 
+    transform: translate(2px, 2px);
+    filter: hue-rotate(270deg);
+  }
+  40% { 
+    transform: translate(2px, -2px);
+    filter: hue-rotate(360deg);
+  }
+  50% { 
+    transform: translate(-2px, 2px);
+    filter: hue-rotate(180deg);
+  }
+  60% { 
+    transform: translate(-2px, -2px);
+    filter: hue-rotate(90deg);
+  }
+  70% { 
+    transform: translate(2px, 2px);
+    filter: hue-rotate(270deg);
+  }
+  80% { 
+    transform: translate(-2px, -2px);
+    filter: hue-rotate(360deg);
+  }
+  90% { 
+    transform: translate(2px, 2px);
+    filter: hue-rotate(180deg);
+  }
 }
 
 /* Header & Nav */
@@ -128,21 +220,7 @@ nav a {
   padding: 0.5rem 1rem;
 }
 
-nav a::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 0;
-  height: 100%;
-  background: rgba(6, 182, 212, 0.1);
-  transition: width 0.3s ease;
-  z-index: -1;
-}
 
-nav a:hover::before {
-  width: 100%;
-}
 
 nav a:hover,
 nav a.active { 
@@ -280,10 +358,18 @@ span {
 }
 
 .social-icons a:hover {
-  color: var(--navy-dark); 
-  transform: scale(1.15) translateY(-5px);
-  box-shadow: var(--retro-glow);
+  color: var(--navy-deepest); 
+  transform: scale(1.2) translateY(-8px) rotate(360deg);
+  box-shadow: 
+    0 0 30px rgba(100, 255, 218, 0.8),
+    0 15px 40px rgba(100, 255, 218, 0.4);
   border-color: var(--accent-gold);
+  animation: socialPulse 0.6s ease-in-out;
+}
+
+@keyframes socialPulse {
+  0%, 100% { transform: scale(1.2) translateY(-8px) rotate(360deg); }
+  50% { transform: scale(1.3) translateY(-10px) rotate(360deg); }
 }
 
 /* Buttons */
@@ -297,37 +383,49 @@ span {
 .btn {
   display: inline-block;
   padding: 1.5rem 3.5rem;
-  background: linear-gradient(45deg, var(--accent-cyan), var(--navy-light));
-  color: var(--text-primary);
+  background: linear-gradient(45deg, var(--accent-cyan), var(--accent-teal));
+  color: var(--navy-deepest);
   border-radius: 50px;
   text-decoration: none;
   font-family: 'JetBrains Mono', monospace;
   font-weight: 600;
   font-size: 1.6rem;
-  transition: all .4s;
+  transition: all .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   border: 2px solid transparent;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
+  box-shadow: 
+    0 8px 32px rgba(100, 255, 218, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .btn::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: left 0.6s;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 .btn:hover::before {
-  left: 100%;
+  width: 300px;
+  height: 300px;
 }
 
 .btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 15px 40px rgba(6, 182, 212, 0.4);
+  transform: translateY(-5px) scale(1.05);
+  border-radius: 25px;
+  box-shadow: 
+    0 20px 60px rgba(100, 255, 218, 0.6),
+    0 0 30px rgba(100, 255, 218, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: linear-gradient(45deg, var(--accent-cyan), var(--accent-gold));
 }
 
 .btn-outline {
@@ -347,10 +445,22 @@ span {
   font-size: 4.5rem;
   text-align: center;
   margin-bottom: 6rem;
-  color: var(--text-primary);
+  background: linear-gradient(
+    45deg,
+    var(--accent-cyan),
+    var(--accent-teal),
+    var(--accent-coral),
+    var(--accent-gold)
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 4s ease-in-out infinite;
   font-weight: 700;
   position: relative;
   letter-spacing: 1px;
+  filter: drop-shadow(0 0 20px rgba(100, 255, 218, 0.5));
 }
 
 .section-title::after {
@@ -363,6 +473,7 @@ span {
   height: 3px;
   background: linear-gradient(90deg, var(--accent-cyan), var(--accent-teal));
   border-radius: 2px;
+  animation: gradientShift 2s ease-in-out infinite;
 }
 
 /* About Section */
@@ -583,12 +694,14 @@ span {
   text-align: center;
   border: 2px solid var(--glass-border);
   backdrop-filter: blur(15px);
-  transition: all .5s;
+  transition: all .5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   overflow: hidden;
+  perspective: 1000px;
+  transform-style: preserve-3d;
   box-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(0, 212, 255, 0.2);
+    inset 0 1px 0 rgba(100, 255, 218, 0.2);
 }
 
 .project-card::before {
@@ -598,24 +711,26 @@ span {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: linear-gradient(45deg, transparent, rgba(245, 158, 11, 0.05), transparent);
+  background: 
+    linear-gradient(45deg, transparent, rgba(100, 255, 218, 0.1), transparent),
+    linear-gradient(-45deg, transparent, rgba(255, 107, 157, 0.1), transparent);
   transform: rotate(45deg);
-  transition: all 0.6s ease;
+  transition: all 0.8s ease;
   opacity: 0;
 }
 
 .project-card:hover::before {
   opacity: 1;
-  animation: shimmer 1.5s ease-in-out;
+  animation: holographicShimmer 2s ease-in-out infinite;
 }
 
 .project-card:hover {
-  transform: translateY(-20px) scale(1.02);
-  border-color: var(--accent-electric);
+  transform: translateY(-25px) rotateX(5deg) rotateY(5deg) scale(1.05);
+  border-color: var(--accent-cyan);
   box-shadow: 
-    0 30px 80px rgba(0, 212, 255, 0.3),
-    var(--retro-glow-strong),
-    inset 0 1px 0 rgba(0, 255, 255, 0.4);
+    0 40px 100px rgba(100, 255, 218, 0.4),
+    0 0 50px rgba(100, 255, 218, 0.3),
+    inset 0 1px 0 rgba(100, 255, 218, 0.4);
 }
 
 .project-image {
@@ -624,12 +739,20 @@ span {
 
 .project-image i {
   font-size: 6.5rem;
-  background: linear-gradient(45deg, var(--accent-electric), var(--accent-gold));
+  background: linear-gradient(45deg, var(--accent-cyan), var(--accent-gold), var(--accent-coral));
+  background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: var(--neon-shadow);
-  filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.4));
+  animation: gradientShift 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 20px rgba(100, 255, 218, 0.6));
+  transition: all 0.3s ease;
+}
+
+.project-card:hover .project-image i {
+  font-size: 7rem;
+  filter: drop-shadow(0 0 30px rgba(100, 255, 218, 0.8));
+  animation: gradientShift 1s ease-in-out infinite;
 }
 
 .project-content h3 {

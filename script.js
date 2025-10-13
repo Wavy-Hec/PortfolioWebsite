@@ -1,9 +1,16 @@
-// Typing Animation
+// Enhanced Typing Animation with Glitch Effect
 const typingText = document.querySelector('.typing-animation');
-const roles = ['ML Researcher', 'Robotics Engineer', 'RL Specialist', 'AI Developer'];
+const roles = ['Graduate Teaching Assistant', 'ML Researcher', 'Robotics Engineer', 'RL Specialist', 'AI Developer'];
 let roleIndex = 0;
 let charIndex = 0;
 let isDeleting = false;
+
+function addGlitchEffect() {
+    typingText.style.animation = 'glitch 0.3s ease-in-out';
+    setTimeout(() => {
+        typingText.style.animation = '';
+    }, 300);
+}
 
 function typeWriter() {
     const currentRole = roles[roleIndex];
@@ -15,6 +22,7 @@ function typeWriter() {
         if (charIndex === 0) {
             isDeleting = false;
             roleIndex = (roleIndex + 1) % roles.length;
+            addGlitchEffect(); // Add glitch when switching roles
         }
     } else {
         typingText.textContent = currentRole.substring(0, charIndex + 1);
@@ -22,7 +30,10 @@ function typeWriter() {
         
         if (charIndex === currentRole.length) {
             isDeleting = true;
-            setTimeout(typeWriter, 2000); // Pause before deleting
+            setTimeout(() => {
+                addGlitchEffect(); // Add glitch before deleting
+                setTimeout(typeWriter, 300);
+            }, 2000);
             return;
         }
     }
