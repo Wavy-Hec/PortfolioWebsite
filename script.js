@@ -44,6 +44,13 @@ function typeWriter() {
 // Start typing animation when page loads
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(typeWriter, 1000);
+    
+    // Remove empty skill/tech tags
+    document.querySelectorAll('.project-tech span, .experience-skills span').forEach(span => {
+        if (span.textContent.trim() === '') {
+            span.remove();
+        }
+    });
 });
 
 // Mobile Menu Toggle
