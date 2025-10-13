@@ -8,34 +8,297 @@
   <title>Portfolio Website</title>
 </head>
 <body>
+  <div class="scroll-progress" id="scroll-progress"></div>
   <header>
     <a href="#" class="logo">Hector</a>
     <nav>
-      <a href="#">Home</a>
-      <a href="#">Services</a>
-      <a href="#">Skills</a>
-      <a href="#">Education</a>
-      <a href="#">Experience</a>
-      <a href="#">Contact</a>
+      <a href="#home">Home</a>
+      <a href="#about">About</a>
+      <a href="#skills">Skills</a>
+      <a href="#projects">Projects</a>
+      <a href="#experience">Experience</a>
+      <a href="#contact">Contact</a>
     </nav>
+    <div class="mobile-menu-toggle" id="mobile-menu-toggle">
+      <i class="fas fa-bars"></i>
+    </div>
   </header>
 
-  <section class="home">
+  <section class="home" id="home">
     <div class="home-img">
       <img src="PFP.jpg" alt="Profile picture">
     </div>
     <div class="home-content">
       <h1>Hi, it's <span>Hector</span></h1>
-      <h3 class="typing-text">I'm a <span></span></h3>
+      <h3 class="typing-text">I'm a <span class="typing-animation"></span></h3>
       <p>Welcome to my portfolio website! I'm excited to share my skills, experience, and projects with you. Feel free to explore and get in touch!</p>
       <div class="social-icons">
-        <a href="https://linkedin.com/in/hector-lugo-3rd"><i class="fa-brands fa-linkedin"></i></a>
-        <a href="https://github.com/Wavy-Hec"><i class="fa-brands fa-github"></i></a>
+        <a href="https://linkedin.com/in/hector-lugo-3rd" target="_blank"><i class="fa-brands fa-linkedin"></i></a>
+        <a href="https://github.com/Wavy-Hec" target="_blank"><i class="fa-brands fa-github"></i></a>
         <a href="mailto:hlugo576@gmail.com"><i class="fa-solid fa-envelope"></i></a>
-        <a href="https://www.instagram.com/wavy_hec/"><i class="fa-brands fa-instagram"></i></a>
-        <a href="https://open.spotify.com/user/karatekid1222"><i class="fa-brands fa-spotify"></i></a>
+        <a href="https://www.instagram.com/wavy_hec/" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+        <a href="https://open.spotify.com/user/karatekid1222" target="_blank"><i class="fa-brands fa-spotify"></i></a>
+      </div>
+      <div class="btn-group">
+        <a href="#contact" class="btn">Hire Me</a>
+        <a href="#projects" class="btn btn-outline">View Projects</a>
       </div>
     </div>
   </section>
+
+  <section class="about" id="about">
+    <div class="about-container">
+      <h2 class="section-title">About <span>Me</span></h2>
+      <div class="about-content">
+        <div class="about-text">
+          <h3>Full Stack Developer & Problem Solver</h3>
+          <p>I'm passionate about creating innovative solutions and bringing ideas to life through code. With experience in both frontend and backend development, I enjoy tackling complex challenges and learning new technologies.</p>
+          <p>When I'm not coding, you can find me exploring new music on Spotify, connecting with the tech community, or working on personal projects that push the boundaries of what's possible.</p>
+          <div class="about-stats">
+            <div class="stat">
+              <h4>50+</h4>
+              <p>Projects Completed</p>
+            </div>
+            <div class="stat">
+              <h4>2+</h4>
+              <p>Years Experience</p>
+            </div>
+            <div class="stat">
+              <h4>100%</h4>
+              <p>Client Satisfaction</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="skills" id="skills">
+    <div class="skills-container">
+      <h2 class="section-title">My <span>Skills</span></h2>
+      <div class="skills-grid">
+        <div class="skill-category">
+          <h3>Frontend</h3>
+          <div class="skills-list">
+            <div class="skill-item">
+              <i class="fab fa-html5"></i>
+              <span>HTML5</span>
+            </div>
+            <div class="skill-item">
+              <i class="fab fa-css3-alt"></i>
+              <span>CSS3</span>
+            </div>
+            <div class="skill-item">
+              <i class="fab fa-js-square"></i>
+              <span>JavaScript</span>
+            </div>
+            <div class="skill-item">
+              <i class="fab fa-react"></i>
+              <span>React</span>
+            </div>
+          </div>
+        </div>
+        <div class="skill-category">
+          <h3>Backend</h3>
+          <div class="skills-list">
+            <div class="skill-item">
+              <i class="fab fa-node-js"></i>
+              <span>Node.js</span>
+            </div>
+            <div class="skill-item">
+              <i class="fab fa-python"></i>
+              <span>Python</span>
+            </div>
+            <div class="skill-item">
+              <i class="fas fa-database"></i>
+              <span>SQL</span>
+            </div>
+            <div class="skill-item">
+              <i class="fab fa-aws"></i>
+              <span>AWS</span>
+            </div>
+          </div>
+        </div>
+        <div class="skill-category">
+          <h3>Tools</h3>
+          <div class="skills-list">
+            <div class="skill-item">
+              <i class="fab fa-git-alt"></i>
+              <span>Git</span>
+            </div>
+            <div class="skill-item">
+              <i class="fab fa-docker"></i>
+              <span>Docker</span>
+            </div>
+            <div class="skill-item">
+              <i class="fas fa-code"></i>
+              <span>VS Code</span>
+            </div>
+            <div class="skill-item">
+              <i class="fab fa-figma"></i>
+              <span>Figma</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="projects" id="projects">
+    <div class="projects-container">
+      <h2 class="section-title">My <span>Projects</span></h2>
+      <div class="projects-grid">
+        <div class="project-card">
+          <div class="project-image">
+            <i class="fas fa-globe"></i>
+          </div>
+          <div class="project-content">
+            <h3>E-Commerce Platform</h3>
+            <p>A full-stack e-commerce solution with React frontend and Node.js backend, featuring user authentication, payment processing, and admin dashboard.</p>
+            <div class="project-tech">
+              <span>React</span>
+              <span>Node.js</span>
+              <span>MongoDB</span>
+            </div>
+            <div class="project-links">
+              <a href="#" class="project-link">Live Demo</a>
+              <a href="#" class="project-link">GitHub</a>
+            </div>
+          </div>
+        </div>
+        <div class="project-card">
+          <div class="project-image">
+            <i class="fas fa-mobile-alt"></i>
+          </div>
+          <div class="project-content">
+            <h3>Task Management App</h3>
+            <p>A responsive task management application with drag-and-drop functionality, real-time updates, and team collaboration features.</p>
+            <div class="project-tech">
+              <span>JavaScript</span>
+              <span>CSS3</span>
+              <span>Firebase</span>
+            </div>
+            <div class="project-links">
+              <a href="#" class="project-link">Live Demo</a>
+              <a href="#" class="project-link">GitHub</a>
+            </div>
+          </div>
+        </div>
+        <div class="project-card">
+          <div class="project-image">
+            <i class="fas fa-chart-bar"></i>
+          </div>
+          <div class="project-content">
+            <h3>Data Visualization Dashboard</h3>
+            <p>An interactive dashboard for data visualization with real-time charts, filtering capabilities, and export functionality.</p>
+            <div class="project-tech">
+              <span>Python</span>
+              <span>D3.js</span>
+              <span>Flask</span>
+            </div>
+            <div class="project-links">
+              <a href="#" class="project-link">Live Demo</a>
+              <a href="#" class="project-link">GitHub</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="experience" id="experience">
+    <div class="experience-container">
+      <h2 class="section-title">My <span>Experience</span></h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-date">2023 - Present</div>
+          <div class="timeline-content">
+            <h3>Full Stack Developer</h3>
+            <h4>Tech Solutions Inc.</h4>
+            <p>Leading development of web applications using modern frameworks and technologies. Collaborating with cross-functional teams to deliver high-quality software solutions.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-date">2022 - 2023</div>
+          <div class="timeline-content">
+            <h3>Frontend Developer</h3>
+            <h4>Digital Agency Pro</h4>
+            <p>Developed responsive websites and web applications for various clients. Focused on user experience optimization and performance enhancement.</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-date">2021 - 2022</div>
+          <div class="timeline-content">
+            <h3>Junior Developer</h3>
+            <h4>StartUp Innovations</h4>
+            <p>Started my professional journey building features for mobile and web applications. Gained experience in agile development methodologies.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact" id="contact">
+    <div class="contact-container">
+      <h2 class="section-title">Get In <span>Touch</span></h2>
+      <div class="contact-content">
+        <div class="contact-info">
+          <h3>Let's work together!</h3>
+          <p>I'm always interested in new opportunities and exciting projects. Whether you have a project in mind or just want to connect, feel free to reach out!</p>
+          <div class="contact-details">
+            <div class="contact-item">
+              <i class="fas fa-envelope"></i>
+              <div>
+                <h4>Email</h4>
+                <p>hlugo576@gmail.com</p>
+              </div>
+            </div>
+            <div class="contact-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <div>
+                <h4>Location</h4>
+                <p>Available Worldwide</p>
+              </div>
+            </div>
+            <div class="contact-item">
+              <i class="fas fa-phone"></i>
+              <div>
+                <h4>Response Time</h4>
+                <p>Within 24 hours</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <form class="contact-form" id="contact-form">
+          <div class="form-group">
+            <input type="text" id="name" name="name" placeholder="Your Name" required>
+          </div>
+          <div class="form-group">
+            <input type="email" id="email" name="email" placeholder="Your Email" required>
+          </div>
+          <div class="form-group">
+            <input type="text" id="subject" name="subject" placeholder="Subject" required>
+          </div>
+          <div class="form-group">
+            <textarea id="message" name="message" placeholder="Your Message" rows="5" required></textarea>
+          </div>
+          <button type="submit" class="btn">Send Message</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-content">
+      <p>&copy; 2025 Hector Lugo. All rights reserved.</p>
+      <div class="footer-social">
+        <a href="https://linkedin.com/in/hector-lugo-3rd" target="_blank"><i class="fa-brands fa-linkedin"></i></a>
+        <a href="https://github.com/Wavy-Hec" target="_blank"><i class="fa-brands fa-github"></i></a>
+        <a href="https://www.instagram.com/wavy_hec/" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
