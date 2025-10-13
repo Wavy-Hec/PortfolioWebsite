@@ -1,6 +1,6 @@
 // Typing Animation
 const typingText = document.querySelector('.typing-animation');
-const roles = ['Developer', 'Problem Solver', 'Tech Enthusiast', 'Creator'];
+const roles = ['ML Researcher', 'Robotics Engineer', 'RL Specialist', 'AI Developer'];
 let roleIndex = 0;
 let charIndex = 0;
 let isDeleting = false;
