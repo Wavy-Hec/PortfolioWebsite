@@ -1,52 +1,41 @@
-// Enhanced Typing Animation with Glitch Effect
+// Typing Animation
 const typingText = document.querySelector('.typing-animation');
-const roles = ['Graduate Teaching Assistant', 'ML Researcher', 'Robotics Engineer', 'RL Specialist', 'AI Developer'];
+const roles = ['Graduate Researcher', 'RL Specialist', 'Computer Vision Engineer', 'VLM Researcher', 'Locomotion Researcher', 'Robotics Engineer'];
 let roleIndex = 0;
 let charIndex = 0;
 let isDeleting = false;
 
-function addGlitchEffect() {
-    typingText.style.animation = 'glitch 0.3s ease-in-out';
-    setTimeout(() => {
-        typingText.style.animation = '';
-    }, 300);
-}
-
 function typeWriter() {
     const currentRole = roles[roleIndex];
-    
+
     if (isDeleting) {
         typingText.textContent = currentRole.substring(0, charIndex - 1);
         charIndex--;
-        
+
         if (charIndex === 0) {
             isDeleting = false;
             roleIndex = (roleIndex + 1) % roles.length;
-            addGlitchEffect(); // Add glitch when switching roles
         }
     } else {
         typingText.textContent = currentRole.substring(0, charIndex + 1);
         charIndex++;
-        
+
         if (charIndex === currentRole.length) {
             isDeleting = true;
-            setTimeout(() => {
-                addGlitchEffect(); // Add glitch before deleting
-                setTimeout(typeWriter, 300);
-            }, 2000);
+            setTimeout(typeWriter, 2000);
             return;
         }
     }
-    
-    setTimeout(typeWriter, isDeleting ? 100 : 150);
+
+    setTimeout(typeWriter, isDeleting ? 80 : 120);
 }
 
 // Start typing animation when page loads
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(typeWriter, 1000);
     
-    // Remove empty skill/tech tags
-    document.querySelectorAll('.project-tech span, .experience-skills span').forEach(span => {
+    // Remove empty chips
+    document.querySelectorAll('.chips span').forEach(span => {
         if (span.textContent.trim() === '') {
             span.remove();
         }
@@ -113,15 +102,6 @@ window.addEventListener('scroll', () => {
     // Update scroll progress bar
     scrollProgress.style.width = scrollPercent + '%';
     
-    // Add background when scrolling
-    if (scrollTop > 100) {
-        header.style.background = 'rgba(12, 20, 69, 0.95)';
-        header.style.backdropFilter = 'blur(10px)';
-    } else {
-        header.style.background = 'rgba(12, 20, 69, 0.9)';
-        header.style.backdropFilter = 'blur(10px)';
-    }
-    
     // Hide/show header on scroll
     if (scrollTop > lastScrollTop && scrollTop > 200) {
         header.style.transform = 'translateY(-100%)';
@@ -148,7 +128,7 @@ const observer = new IntersectionObserver((entries) => {
 
 // Add animation class to elements and observe them
 document.addEventListener('DOMContentLoaded', () => {
-    const animatedElements = document.querySelectorAll('.about, .skills, .projects, .experience, .contact');
+    const animatedElements = document.querySelectorAll('.work, .about, .skills, .projects, .experience, .resume, .beyond, .contact');
     
     animatedElements.forEach(el => {
         el.classList.add('fade-in');
@@ -215,11 +195,13 @@ function showNotification(message, type = 'info') {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${type === 'success' ? '#10b981' : '#3b82f6'};
-        color: white;
-        padding: 15px 20px;
-        border-radius: 10px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        background: #082728;
+        border: 1px solid ${type === 'success' ? '#34d399' : '#15484a'};
+        color: #ffe6cb;
+        font-family: 'Share Tech Mono', monospace;
+        padding: 14px 18px;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         z-index: 1000;
         transform: translateX(100%);
         transition: transform 0.3s ease;
@@ -274,80 +256,47 @@ function updateActiveNavLink() {
     });
 }
 
-// Add active nav link styles to CSS
-const style = document.createElement('style');
-style.textContent = `
-    nav a.active {
-        color: #60a5fa !important;
-        border-bottom-color: #3b82f6 !important;
-    }
-`;
-document.head.appendChild(style);
+// Active-nav styling lives in style.css (.active uses the cyan palette).
 
 // Update active nav link on scroll
 window.addEventListener('scroll', updateActiveNavLink);
 
-// Particle Background Effect (Optional Enhancement)
-function createParticles() {
-    const particlesContainer = document.createElement('div');
-    particlesContainer.className = 'particles-container';
-    particlesContainer.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: -1;
-        overflow: hidden;
-    `;
-    
-    for (let i = 0; i < 50; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.cssText = `
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: rgba(59, 130, 246, 0.5);
-            border-radius: 50%;
-            animation: float ${Math.random() * 20 + 10}s infinite linear;
-            left: ${Math.random() * 100}%;
-            top: ${Math.random() * 100}%;
-        `;
-        particlesContainer.appendChild(particle);
-    }
-    
-    document.body.appendChild(particlesContainer);
-}
-
-// Add particle animation keyframes
-const particleStyle = document.createElement('style');
-particleStyle.textContent = `
-    @keyframes float {
-        0% {
-            transform: translateY(100vh) rotate(0deg);
-            opacity: 0;
-        }
-        10% {
-            opacity: 1;
-        }
-        90% {
-            opacity: 1;
-        }
-        100% {
-            transform: translateY(-100vh) rotate(360deg);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(particleStyle);
-
-// Initialize particles on load
+// Initialize active nav state on load (particle background removed for a calmer, terminal-style look)
 document.addEventListener('DOMContentLoaded', () => {
-    createParticles();
     updateActiveNavLink();
 });
+
+// Terminal panel typewriter reveal — progressive enhancement.
+// Lines are fully visible without JS; when the panel scrolls into view they
+// reveal one at a time for a live-terminal feel.
+const terminalPanel = document.querySelector('.terminal');
+if (terminalPanel) {
+    const termLines = Array.from(terminalPanel.querySelectorAll('.terminal-body p'));
+    let termPlayed = false;
+
+    const revealTerminal = () => {
+        if (termPlayed) return;
+        termPlayed = true;
+        termLines.forEach(line => { line.style.opacity = '0'; });
+        termLines.forEach((line, i) => {
+            setTimeout(() => {
+                line.style.transition = 'opacity 0.25s ease';
+                line.style.opacity = '1';
+            }, i * 350);
+        });
+    };
+
+    const terminalObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                revealTerminal();
+                terminalObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.3 });
+
+    terminalObserver.observe(terminalPanel);
+}
 
 // Loading Animation
 window.addEventListener('load', () => {
@@ -368,7 +317,7 @@ loadingStyle.textContent = `
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(135deg, #0c1445 0%, #1e3a8a 50%, #1e40af 100%);
+        background: #041c1c;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -384,3 +333,25 @@ loadingStyle.textContent = `
     }
 `;
 document.head.appendChild(loadingStyle);
+
+// Copy-to-clipboard buttons (contact command block, etc.)
+document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const text = btn.getAttribute('data-copy');
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (e) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+        }
+        const icon = btn.querySelector('i');
+        const prev = icon ? icon.className : '';
+        if (icon) icon.className = 'fas fa-check';
+        showNotification('Copied ' + text + ' to clipboard', 'success');
+        setTimeout(() => { if (icon) icon.className = prev; }, 1500);
+    });
+});
