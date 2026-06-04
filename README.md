@@ -15,7 +15,7 @@ Plain HTML, CSS, and vanilla JavaScript — no build step, no dependencies
 | `index.html` | Markup and content |
 | `style.css` | Theme + all component styles |
 | `script.js` | Typing animation, mobile nav, scroll effects, terminal reveal, copy-to-clipboard |
-| `Hector_Lugo_Resume_Spring_2026-1.pdf` | Résumé (linked from the hero, nav, and résumé section) |
+| `Hector_Lugo_Resume_Spring_2026.pdf` | Résumé (linked from the hero, nav, and résumé section) |
 | `pfp.jpg` | Profile photo (optimized) |
 | `raiden.png` | Metal Gear Solid 2 artwork (Beyond the Code section) |
 
