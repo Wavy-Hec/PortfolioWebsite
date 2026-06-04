@@ -195,13 +195,13 @@ function showNotification(message, type = 'info') {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: #082728;
-        border: 1px solid ${type === 'success' ? '#34d399' : '#15484a'};
-        color: #ffe6cb;
+        background: #ffffff;
+        border: 1px solid #2f54cc;
+        color: #2f54cc;
         font-family: 'Share Tech Mono', monospace;
         padding: 14px 18px;
-        border-radius: 8px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        border-radius: 6px;
+        box-shadow: 0 10px 30px rgba(47,84,204,0.18);
         z-index: 1000;
         transform: translateX(100%);
         transition: transform 0.3s ease;
@@ -317,7 +317,7 @@ loadingStyle.textContent = `
         left: 0;
         width: 100%;
         height: 100%;
-        background: #041c1c;
+        background: #eaf0fb;
         display: flex;
         justify-content: center;
         align-items: center;

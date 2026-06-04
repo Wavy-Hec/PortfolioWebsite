@@ -7,3 +7,9 @@ desktop.ini
 # Editor settings
 .vscode/
 .idea/
+
+# Local preview captures & reference screenshots (not part of the site)
+_preview*.png
+_full.png
+hermes.png
+Screenshot*.png
