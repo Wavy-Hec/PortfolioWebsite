@@ -151,27 +151,37 @@ document.addEventListener('DOMContentLoaded', () => {
 // Contact Form Handling
 const contactForm = document.getElementById('contact-form');
 
-contactForm.addEventListener('submit', (e) => {
+contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    // Get form data
-    const formData = new FormData(contactForm);
-    const name = formData.get('name');
-    const email = formData.get('email');
-    const subject = formData.get('subject');
-    const message = formData.get('message');
-    
-    // Create mailto link
-    const mailtoLink = `mailto:hlugo576@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`)}`;
-    
-    // Open email client
-    window.location.href = mailtoLink;
-    
-    // Show success message
-    showNotification('Thank you! Your email client will open with the message.', 'success');
-    
-    // Reset form
-    contactForm.reset();
+
+    const submitBtn = contactForm.querySelector('button[type="submit"]');
+    const originalBtnHTML = submitBtn.innerHTML;
+
+    // Show sending state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+    try {
+        // Submit directly to Web3Forms (no email app, stays on the page)
+        const response = await fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' },
+            body: new FormData(contactForm)
+        });
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showNotification("Thanks! Your message has been sent — I'll reply within 24 hours.", 'success');
+            contactForm.reset();
+        } else {
+            showNotification(result.message || 'Something went wrong. Please email me at hlugo576@gmail.com.', 'error');
+        }
+    } catch (err) {
+        showNotification('Network error — please email me directly at hlugo576@gmail.com.', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHTML;
+    }
 });
 
 // Notification System
@@ -190,14 +200,17 @@ function showNotification(message, type = 'info') {
         </div>
     `;
     
+    // Color by type (error = red, otherwise blue accent)
+    const accent = type === 'error' ? '#cc2f3f' : '#2f54cc';
+
     // Add styles
     notification.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
         background: #ffffff;
-        border: 1px solid #2f54cc;
-        color: #2f54cc;
+        border: 1px solid ${accent};
+        color: ${accent};
         font-family: 'Share Tech Mono', monospace;
         padding: 14px 18px;
         border-radius: 6px;
