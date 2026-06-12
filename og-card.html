@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Source page for og-card.png (1200x630). Re-render: open at 1200x630 and screenshot. -->
+  <title>og card</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@600;700;800&family=Share+Tech+Mono&display=swap">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+      background: #eaf0fb;
+      font-family: 'Spectral', Georgia, serif;
+      position: relative;
+    }
+    #dither-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    .card {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 90px;
+      gap: 60px;
+    }
+    .kicker {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 21px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #2f54cc;
+      margin-bottom: 22px;
+    }
+    h1 {
+      font-size: 96px;
+      font-weight: 800;
+      line-height: 1.02;
+      letter-spacing: -2px;
+      color: #2746b4;
+      margin-bottom: 26px;
+    }
+    .role {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 26px;
+      color: #2f54cc;
+      margin-bottom: 34px;
+    }
+    .rule {
+      width: 130px;
+      height: 2px;
+      background-image: linear-gradient(to right, #a7bbe7 60%, transparent 0%);
+      background-size: 14px 2px;
+      background-repeat: repeat-x;
+      margin-bottom: 34px;
+    }
+    .url {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 20px;
+      letter-spacing: 1px;
+      color: #687494;
+    }
+    .portrait {
+      flex: 0 0 auto;
+      background: #ffffff;
+      border: 1px solid #ccd8f1;
+      border-radius: 8px;
+      padding: 16px 16px 12px;
+      text-align: center;
+    }
+    .portrait img { width: 360px; display: block; border-radius: 4px; }
+    .portrait figcaption {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #8089a8;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="text">
+      <p class="kicker">// ai researcher · robotics engineer</p>
+      <h1>Hector Lugo</h1>
+      <p class="role">&gt; rl · computer vision · vlms — robotics</p>
+      <div class="rule"></div>
+      <p class="url">wavy-hec.github.io/PortfolioWebsite · codec 140.85</p>
+    </div>
+    <figure class="portrait">
+      <img src="raiden-dither.png" alt="">
+      <figcaption>output 01 · seed: 2001</figcaption>
+    </figure>
+  </div>
+  <script src="dither.js"></script>
+</body>
+</html>

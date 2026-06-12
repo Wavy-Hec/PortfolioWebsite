@@ -1,3 +1,68 @@
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ===== Codec mode (MGS2 green-phosphor theme) =====
+const themeToggle = document.getElementById('theme-toggle');
+const heroPortrait = document.querySelector('.home-img img');
+
+function applyTheme(codec) {
+    if (codec) {
+        document.documentElement.dataset.theme = 'codec';
+    } else {
+        delete document.documentElement.dataset.theme;
+    }
+    if (themeToggle) themeToggle.setAttribute('aria-pressed', String(codec));
+    if (heroPortrait) heroPortrait.src = codec ? 'raiden-dither-green.png' : 'raiden-dither.png';
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (themeColor) themeColor.content = codec ? '#081209' : '#eaf0fb';
+    try { localStorage.setItem('theme', codec ? 'codec' : 'light'); } catch (e) {}
+    window.dispatchEvent(new CustomEvent('themechange'));
+}
+
+// Sync button/portrait with the pre-paint theme set in <head>
+applyTheme(document.documentElement.dataset.theme === 'codec');
+
+themeToggle.addEventListener('click', () => {
+    applyTheme(document.documentElement.dataset.theme !== 'codec');
+});
+
+// Konami code: ! alert + codec ring + toggle codec mode
+const KONAMI = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+let konamiPos = 0;
+document.addEventListener('keydown', (e) => {
+    konamiPos = (e.key === KONAMI[konamiPos]) ? konamiPos + 1 : (e.key === KONAMI[0] ? 1 : 0);
+    if (konamiPos === KONAMI.length) {
+        konamiPos = 0;
+        const alertMark = document.createElement('div');
+        alertMark.className = 'mgs-alert';
+        alertMark.textContent = '!';
+        alertMark.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(alertMark);
+        setTimeout(() => alertMark.remove(), 1600);
+        playCodecRing();
+        setTimeout(() => applyTheme(document.documentElement.dataset.theme !== 'codec'), 350);
+    }
+});
+
+// Short two-tone codec ring (WebAudio, no assets)
+function playCodecRing() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const beep = (t, freq, dur) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.05, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + dur);
+        };
+        const t0 = ctx.currentTime;
+        [0, 0.12, 0.32, 0.44].forEach((off, i) => beep(t0 + off, i % 2 ? 1245 : 1660, 0.09));
+    } catch (e) {}
+}
+
 // Typing Animation
 const typingText = document.querySelector('.typing-animation');
 const roles = ['Graduate Researcher', 'RL Specialist', 'Computer Vision Engineer', 'VLM Researcher', 'Locomotion Researcher', 'Robotics Engineer'];
@@ -30,9 +95,13 @@ function typeWriter() {
     setTimeout(typeWriter, isDeleting ? 80 : 120);
 }
 
-// Start typing animation when page loads
+// Start typing animation when page loads (static text under reduced motion)
 document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(typeWriter, 1000);
+    if (prefersReducedMotion) {
+        typingText.textContent = roles[0];
+    } else {
+        setTimeout(typeWriter, 1000);
+    }
     
     // Remove empty chips
     document.querySelectorAll('.chips span').forEach(span => {
@@ -48,7 +117,8 @@ const nav = document.querySelector('nav');
 
 mobileMenuToggle.addEventListener('click', () => {
     nav.classList.toggle('active');
-    
+    mobileMenuToggle.setAttribute('aria-expanded', nav.classList.contains('active'));
+
     // Change icon based on menu state
     const icon = mobileMenuToggle.querySelector('i');
     if (nav.classList.contains('active')) {
@@ -64,6 +134,7 @@ mobileMenuToggle.addEventListener('click', () => {
 document.querySelectorAll('nav a').forEach(link => {
     link.addEventListener('click', () => {
         nav.classList.remove('active');
+        mobileMenuToggle.setAttribute('aria-expanded', 'false');
         const icon = mobileMenuToggle.querySelector('i');
         icon.classList.remove('fa-times');
         icon.classList.add('fa-bars');
@@ -94,22 +165,34 @@ const header = document.querySelector('header');
 const scrollProgress = document.getElementById('scroll-progress');
 let lastScrollTop = 0;
 
-window.addEventListener('scroll', () => {
+function handleHeaderScroll() {
     const scrollTop = window.pageYOffset;
     const docHeight = document.documentElement.scrollHeight - window.innerHeight;
     const scrollPercent = (scrollTop / docHeight) * 100;
-    
+
     // Update scroll progress bar
     scrollProgress.style.width = scrollPercent + '%';
-    
+
     // Hide/show header on scroll
     if (scrollTop > lastScrollTop && scrollTop > 200) {
         header.style.transform = 'translateY(-100%)';
     } else {
         header.style.transform = 'translateY(0)';
     }
-    
+
     lastScrollTop = scrollTop;
+}
+
+// Single rAF-throttled scroll listener (avoids layout thrash on every scroll event)
+let scrollTicking = false;
+window.addEventListener('scroll', () => {
+    if (scrollTicking) return;
+    scrollTicking = true;
+    requestAnimationFrame(() => {
+        scrollTicking = false;
+        handleHeaderScroll();
+        updateActiveNavLink();
+    });
 });
 
 // Scroll-triggered Animations
@@ -190,35 +273,41 @@ function showNotification(message, type = 'info') {
     const existingNotifications = document.querySelectorAll('.notification');
     existingNotifications.forEach(notification => notification.remove());
     
-    // Create notification element
+    // Create notification element (textContent for the message — no HTML injection)
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <span>${message}</span>
-            <button class="notification-close">&times;</button>
-        </div>
-    `;
+    notification.setAttribute('role', 'status');
+    const content = document.createElement('div');
+    content.className = 'notification-content';
+    const text = document.createElement('span');
+    text.textContent = message;
+    const close = document.createElement('button');
+    close.className = 'notification-close';
+    close.setAttribute('aria-label', 'Dismiss');
+    close.innerHTML = '&times;';
+    content.appendChild(text);
+    content.appendChild(close);
+    notification.appendChild(content);
     
-    // Color by type (error = red, otherwise blue accent)
-    const accent = type === 'error' ? '#cc2f3f' : '#2f54cc';
+    // Color by type (error = red, otherwise theme accent)
+    const accent = type === 'error' ? 'var(--error)' : 'var(--ink)';
 
     // Add styles
     notification.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: #ffffff;
+        background: var(--panel);
         border: 1px solid ${accent};
         color: ${accent};
         font-family: 'Share Tech Mono', monospace;
         padding: 14px 18px;
         border-radius: 6px;
-        box-shadow: 0 10px 30px rgba(47,84,204,0.18);
+        box-shadow: var(--shadow-lift);
         z-index: 1000;
         transform: translateX(100%);
         transition: transform 0.3s ease;
-        max-width: 350px;
+        max-width: min(350px, calc(100vw - 40px));
     `;
     
     // Add to page
@@ -270,9 +359,7 @@ function updateActiveNavLink() {
 }
 
 // Active-nav styling lives in style.css (.active uses the cyan palette).
-
-// Update active nav link on scroll
-window.addEventListener('scroll', updateActiveNavLink);
+// (Scroll updates are handled by the single rAF-throttled listener above.)
 
 // Initialize active nav state on load (particle background removed for a calmer, terminal-style look)
 document.addEventListener('DOMContentLoaded', () => {
@@ -315,6 +402,8 @@ if (terminalPanel) {
 window.addEventListener('load', () => {
     document.body.classList.add('loaded');
 });
+// Failsafe: never leave scrolling locked if a slow resource delays the load event
+setTimeout(() => document.body.classList.add('loaded'), 4000);
 
 // Add loading styles
 const loadingStyle = document.createElement('style');
@@ -324,13 +413,18 @@ loadingStyle.textContent = `
     }
     
     body:not(.loaded)::before {
-        content: '';
+        content: 'establishing codec link…';
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: #eaf0fb;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 15px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
         display: flex;
         justify-content: center;
         align-items: center;

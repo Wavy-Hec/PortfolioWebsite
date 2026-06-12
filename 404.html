@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>404 — Hector Lugo</title>
+  <link rel="icon" href="https://wavy-hec.github.io/PortfolioWebsite/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@700;800&family=Share+Tech+Mono&display=swap">
+  <!-- Self-contained on purpose: GitHub Pages serves 404.html at any missing path,
+       so relative asset URLs would break. -->
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: #eaf0fb;
+      background-image:
+        repeating-linear-gradient(0deg, rgba(31, 80, 120, .04) 0 1px, transparent 1px 4px),
+        radial-gradient(ellipse 90% 55% at 50% 0%, #f5f8fe, transparent 60%);
+      font-family: 'Spectral', Georgia, serif;
+      color: #46568c;
+    }
+    .terminal {
+      width: 100%;
+      max-width: 640px;
+      background: #ffffff;
+      border: 1px solid #ccd8f1;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 10px 28px rgba(39, 70, 180, .10);
+    }
+    .bar {
+      padding: 12px 18px;
+      background: #f4f7fd;
+      border-bottom: 1px solid #ccd8f1;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #8089a8;
+    }
+    .body { padding: 26px 24px; font-family: 'Share Tech Mono', monospace; font-size: 15px; line-height: 2; }
+    .prompt { color: #2f54cc; margin-right: 8px; }
+    .out { color: #687494; padding-left: 16px; }
+    .alert { color: #cc2f3f; }
+    .cursor::after { content: '_'; animation: blink 1.1s infinite; color: #2f54cc; }
+    @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+    .home-btn {
+      display: inline-block;
+      margin: 18px 0 6px 16px;
+      font-family: 'Spectral', serif;
+      font-weight: 700;
+      font-size: 15px;
+      color: #ffffff;
+      background: #2f54cc;
+      border: 1px solid #2f54cc;
+      border-radius: 4px;
+      padding: 10px 22px;
+      text-decoration: none;
+    }
+    .home-btn:hover { background: #2746b4; }
+  </style>
+</head>
+<body>
+  <main class="terminal">
+    <div class="bar">hector@big-shell: ~ — 404</div>
+    <div class="body">
+      <p><span class="prompt">$</span> locate requested-page</p>
+      <p class="out"><span class="alert">!</span> alert — page not found. it must have been hiding in a cardboard box.</p>
+      <p><span class="prompt">$</span> codec --freq 140.85</p>
+      <p class="out">"Snake, that page doesn't exist. Return to the portfolio at once."</p>
+      <a class="home-btn" href="https://wavy-hec.github.io/PortfolioWebsite/">&larr; back to base</a>
+      <p><span class="prompt">$</span> <span class="cursor"></span></p>
+    </div>
+  </main>
+</body>
+</html>
