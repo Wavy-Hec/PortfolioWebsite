@@ -2,7 +2,47 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 
 // ===== Codec mode (MGS2 green-phosphor theme) =====
 const themeToggle = document.getElementById('theme-toggle');
-const heroPortrait = document.querySelector('.home-img img');
+// Every dithered portrait carries data-light / data-codec sources and swaps together.
+const themedPortraits = document.querySelectorAll('img[data-codec]');
+
+// ===== Custom reticle cursor (codec mode, fine-pointer devices only) =====
+const finePointer = window.matchMedia('(pointer: fine)').matches;
+let reticle = null;
+let reticleEnabled = false;
+
+function moveReticle(e) {
+    if (!reticleEnabled || !reticle) return;
+    reticle.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+    if (!reticle.classList.contains('active')) reticle.classList.add('active');
+}
+function hoverReticle(e) {
+    if (!reticleEnabled || !reticle) return;
+    const interactive = e.target.closest('a, button, input, textarea, .copy-btn, .chips span, .work-card, .project-card, .beyond-card');
+    reticle.classList.toggle('lock', !!interactive);
+}
+function ensureReticle() {
+    if (reticle) return;
+    reticle = document.createElement('div');
+    reticle.className = 'reticle';
+    reticle.setAttribute('aria-hidden', 'true');
+    reticle.innerHTML = '<svg viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.5">'
+        + '<circle cx="17" cy="17" r="10" opacity="0.55"/>'
+        + '<path d="M17 1 V7 M17 27 V33 M1 17 H7 M27 17 H33"/>'
+        + '<circle cx="17" cy="17" r="1.6" fill="currentColor" stroke="none"/></svg>';
+    document.body.appendChild(reticle);
+    document.addEventListener('mousemove', moveReticle);
+    document.addEventListener('mouseover', hoverReticle);
+}
+function setReticle(on) {
+    reticleEnabled = !!(on && finePointer);
+    if (reticleEnabled) {
+        ensureReticle();
+        document.documentElement.classList.add('reticle-on');
+    } else {
+        document.documentElement.classList.remove('reticle-on');
+        if (reticle) reticle.classList.remove('active', 'lock');
+    }
+}
 
 function applyTheme(codec) {
     if (codec) {
@@ -11,9 +51,10 @@ function applyTheme(codec) {
         delete document.documentElement.dataset.theme;
     }
     if (themeToggle) themeToggle.setAttribute('aria-pressed', String(codec));
-    if (heroPortrait) heroPortrait.src = codec ? 'raiden-dither-green.png' : 'raiden-dither.png';
+    themedPortraits.forEach(img => { img.src = codec ? img.dataset.codec : img.dataset.light; });
     const themeColor = document.querySelector('meta[name="theme-color"]');
     if (themeColor) themeColor.content = codec ? '#081209' : '#eaf0fb';
+    setReticle(codec);
     try { localStorage.setItem('theme', codec ? 'codec' : 'light'); } catch (e) {}
     window.dispatchEvent(new CustomEvent('themechange'));
 }
@@ -398,48 +439,70 @@ if (terminalPanel) {
     terminalObserver.observe(terminalPanel);
 }
 
-// Loading Animation
-window.addEventListener('load', () => {
-    document.body.classList.add('loaded');
-});
-// Failsafe: never leave scrolling locked if a slow resource delays the load event
-setTimeout(() => document.body.classList.add('loaded'), 4000);
+// Codec dial-in loader — the frequency jitters and homes in on 140.85 while a
+// signal-bar meter fills, then "connected" before the overlay fades. Styling
+// lives in style.css (.codec-loader); markup is in index.html so it paints
+// instantly with no flash.
+(function codecLoader() {
+    const loader = document.getElementById('codec-loader');
+    if (!loader) { document.body.classList.add('loaded'); return; }
+    const freqEl = document.getElementById('cl-freq');
+    const barsEl = document.getElementById('cl-bars');
+    const statusEl = document.getElementById('cl-status');
 
-// Add loading styles
-const loadingStyle = document.createElement('style');
-loadingStyle.textContent = `
-    body:not(.loaded) {
-        overflow: hidden;
+    const BARS = 7;
+    for (let i = 0; i < BARS; i++) barsEl.appendChild(document.createElement('i'));
+    const bars = barsEl.children;
+
+    let done = false;
+    function finish() {
+        if (done) return;
+        done = true;
+        loader.classList.add('done');
+        document.body.classList.add('loaded');
+        setTimeout(() => loader.remove(), 600);
     }
-    
-    body:not(.loaded)::before {
-        content: 'establishing codec link…';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: var(--bg);
-        color: var(--ink);
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 15px;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        animation: fadeOut 0.5s ease 2s forwards;
+
+    if (prefersReducedMotion) {
+        freqEl.textContent = '140.85';
+        statusEl.textContent = 'connected';
+        for (const b of bars) b.classList.add('on');
+        window.addEventListener('load', () => setTimeout(finish, 300));
+        setTimeout(finish, 1500);
+        return;
     }
-    
-    @keyframes fadeOut {
-        to {
-            opacity: 0;
-            visibility: hidden;
+
+    const start = performance.now();
+    const DURATION = 1500;
+
+    let barI = 0;
+    const barTimer = setInterval(() => { if (barI < BARS) bars[barI++].classList.add('on'); }, DURATION / (BARS + 1));
+
+    function dial(now) {
+        const t = Math.min(1, (now - start) / DURATION);
+        if (t < 0.82) {
+            const wobble = (1 - t) * 1.4;
+            freqEl.textContent = (140.85 + Math.sin(now / 38) * wobble).toFixed(2);
+            statusEl.textContent = t < 0.4 ? 'dialing' : 'connecting';
+            requestAnimationFrame(dial);
+        } else {
+            freqEl.textContent = '140.85';
+            statusEl.textContent = 'connected';
+            for (const b of bars) b.classList.add('on');
         }
     }
-`;
-document.head.appendChild(loadingStyle);
+    requestAnimationFrame(dial);
+
+    // Fade only once the page has loaded AND the dial-in has had time to play
+    let pageLoaded = false;
+    window.addEventListener('load', () => { pageLoaded = true; });
+    const settle = setInterval(() => {
+        if (pageLoaded && performance.now() - start >= DURATION + 200) {
+            clearInterval(settle); clearInterval(barTimer); finish();
+        }
+    }, 80);
+    setTimeout(() => { clearInterval(settle); clearInterval(barTimer); finish(); }, 4000); // failsafe
+})();
 
 // Copy-to-clipboard buttons (contact command block, etc.)
 document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {

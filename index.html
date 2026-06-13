@@ -28,7 +28,7 @@
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@300;400;500;600;700;800&family=Share+Tech+Mono&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="style.css?v=13">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -50,7 +50,15 @@
 </head>
 <body>
   <a href="#home" class="skip-link">skip to content</a>
+  <div class="codec-loader" id="codec-loader" aria-hidden="true">
+    <div class="codec-loader-box">
+      <span class="cl-freq" id="cl-freq">140.85</span>
+      <span class="cl-bars" id="cl-bars"></span>
+      <span class="cl-status" id="cl-status">dialing</span>
+    </div>
+  </div>
   <div class="grain" aria-hidden="true"></div>
+  <div class="crt" aria-hidden="true"></div>
   <div class="scroll-progress" id="scroll-progress"></div>
 
   <header>
@@ -92,7 +100,7 @@
     </div>
     <div class="home-img">
       <figure>
-        <img src="raiden-dither.png" alt="Raiden — Metal Gear Solid 2, dithered blue-ink render">
+        <img src="raiden-dither.png" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" alt="Raiden — Metal Gear Solid 2, dithered render">
         <figcaption class="img-caption">output 01 · seed: 2001 · raiden.png</figcaption>
       </figure>
     </div>
@@ -137,6 +145,10 @@
         <div class="about-text">
           <p>👋 Hey there! I'm Hector, a Master's student in Computer Science at The University of Texas Rio Grande Valley. My passion is combining <strong>reinforcement learning</strong>, <strong>computer vision</strong>, and <strong>vision-language models</strong>, with a focus on autonomous navigation and locomotion for robotics.</p>
           <p>Right now I'm an AI/ML research intern at the <strong>Air Force Research Laboratory</strong>, where my focus is deepfake research and multi-camera, multi-agent perception. Day to day I build RL pipelines and train agents in simulation with <strong>LocoMuJoCo</strong> and <strong>NVIDIA Isaac Sim</strong> — mostly locomotion, perception, and getting policies to transfer from sim to real.</p>
+          <blockquote class="vr-quote">
+            <p>Raiden trained for the real thing entirely in VR. My agents do the same — policies learned in simulation, then carried across the <strong>sim-to-real</strong> gap.</p>
+            <cite>// yes, that's why Raiden's up there</cite>
+          </blockquote>
           <p>Outside of research I train Taekwondo 🥋 and hike 🥾 — slowly working toward summiting a mountain 🏔️.</p>
           <div class="lab-affiliation">
             <p class="lab-label">// research lab</p>
@@ -429,11 +441,22 @@
     <div class="container">
       <p class="kicker">// codec · 140.85</p>
       <h2 class="section-title">Get in <span class="hl">touch</span></h2>
-      <div class="codec-bar" aria-hidden="true">
-        <span class="codec-arrow">‹</span>
-        <span class="codec-freq">140.85</span>
-        <span class="codec-arrow">›</span>
-        <span class="codec-label">PTT</span>
+      <div class="codec-call">
+        <div class="codec-portrait cc-left">
+          <img src="headshot-dither.png" data-light="headshot-dither.png" data-codec="headshot-dither-green.png" alt="Hector Lugo">
+          <span class="codec-name">HECTOR</span>
+          <span class="codec-mhz">140.85</span>
+        </div>
+        <div class="codec-transmission cc-mid">
+          <span class="codec-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+          <p class="codec-line">"Kept you waiting, huh?"</p>
+          <span class="codec-status">▸ incoming transmission · 140.85</span>
+        </div>
+        <div class="codec-portrait cc-right">
+          <img src="raiden-dither.png" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" alt="Raiden">
+          <span class="codec-name">RAIDEN</span>
+          <span class="codec-mhz">140.85</span>
+        </div>
       </div>
       <div class="contact-content">
         <div class="contact-info">
@@ -476,7 +499,8 @@
     </div>
   </footer>
 
-  <script src="dither.js"></script>
-  <script src="script.js"></script>
+  <script src="dither.js?v=12"></script>
+  <script src="radar.js?v=12"></script>
+  <script src="script.js?v=12"></script>
 </body>
 </html>
