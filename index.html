@@ -21,7 +21,7 @@
   <meta name="twitter:title" content="Hector Lugo — AI Researcher & Robotics Engineer">
   <meta name="twitter:description" content="Reinforcement learning, computer vision, and vision-language models for robotics.">
   <meta name="twitter:image" content="https://wavy-hec.github.io/PortfolioWebsite/og-card.png">
-  <script>try{var t=localStorage.getItem('theme');if(t==='codec'||t==='starwars')document.documentElement.dataset.theme=t}catch(e){}</script>
+  <script>try{var t=localStorage.getItem('theme');if(t==='codec'||t==='starwars'||t==='gotham')document.documentElement.dataset.theme=t}catch(e){}</script>
   <!-- PNG first so legacy Safari (no SVG favicon support) picks it up; SVG-capable browsers prefer the later entry -->
   <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -35,16 +35,16 @@
   <!-- Icons load async (media swap) — no above-the-fold text depends on them -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></noscript>
-  <link rel="stylesheet" href="style.css?v=15">
+  <link rel="stylesheet" href="style.css?v=18">
   <!-- Without JS the codec loader can never dismiss itself — hide it outright.
        Must come AFTER style.css so it wins the cascade (equal specificity). -->
   <noscript><style>.codec-loader{display:none!important}body:not(.loaded){overflow-y:auto!important}</style></noscript>
   <!-- Deferred: downloads start with the preload scanner, execution keeps this
        order (script.js dispatches 'themechange'; dither/radar listen) and runs
        post-parse. game.js is lazy-loaded by script.js on first launch. -->
-  <script src="dither.js?v=13" defer></script>
-  <script src="radar.js?v=13" defer></script>
-  <script src="script.js?v=17" defer></script>
+  <script src="dither.js?v=14" defer></script>
+  <script src="radar.js?v=14" defer></script>
+  <script src="script.js?v=20" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -90,9 +90,14 @@
       <a href="#skills">skills</a>
       <a href="#beyond">beyond</a>
       <a href="#contact">contact</a>
+      <div class="theme-picker" id="theme-picker" role="radiogroup" aria-label="Site theme">
+        <button type="button" role="radio" aria-checked="true" tabindex="0" data-theme-value="light" aria-label="ink" title="ink — light editorial"><i aria-hidden="true" class="fas fa-pen-nib"></i><span class="tp-label">ink</span></button>
+        <button type="button" role="radio" aria-checked="false" tabindex="-1" data-theme-value="codec" aria-label="codec" title="codec — green phosphor"><i aria-hidden="true" class="fas fa-tower-broadcast"></i><span class="tp-label">codec</span></button>
+        <button type="button" role="radio" aria-checked="false" tabindex="-1" data-theme-value="starwars" aria-label="holonet" title="holonet — imperial amber"><i aria-hidden="true" class="fas fa-satellite-dish"></i><span class="tp-label">holonet</span></button>
+        <button type="button" role="radio" aria-checked="false" tabindex="-1" data-theme-value="gotham" aria-label="gotham" title="gotham — dark knight"><i aria-hidden="true" class="fas fa-city"></i><span class="tp-label">gotham</span></button>
+      </div>
     </nav>
     <div class="header-actions">
-      <button type="button" class="codec-toggle" id="theme-toggle" title="Switch theme" aria-label="Switch theme"><i aria-hidden="true" class="fas fa-pen-nib"></i><span class="codec-toggle-text">ink</span></button>
       <span id="theme-announce" class="visually-hidden" aria-live="polite"></span>
       <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn btn-sm"><i aria-hidden="true" class="fas fa-arrow-down"></i> Résumé</a>
       <button type="button" class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Menu" aria-expanded="false" aria-controls="nav"><i aria-hidden="true" class="fas fa-bars"></i></button>
@@ -121,8 +126,8 @@
     </div>
     <div class="home-img">
       <figure>
-        <img src="raiden-dither.png" width="482" height="442" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" alt="Raiden — Metal Gear Solid 2, dithered render">
-        <script>if(document.documentElement.dataset.theme==='codec'){var i=document.currentScript.previousElementSibling;i.src=i.dataset.codec;}</script>
+        <img src="raiden-dither.png" width="482" height="442" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" data-starwars="anakin-dither.png" data-starwars-alt="Anakin Skywalker — dithered render" data-gotham="batman-dither.png" data-gotham-alt="Batman — dithered render" alt="Raiden — Metal Gear Solid 2, dithered render">
+        <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars){i.dataset.baseAlt=i.alt;i.src=i.dataset.starwars;i.alt=i.dataset.starwarsAlt;}else if(t==='gotham'&&i.dataset.gotham){i.dataset.baseAlt=i.alt;i.src=i.dataset.gotham;i.alt=i.dataset.gothamAlt;}</script>
         <figcaption class="img-caption">output 01 · seed: 2001 · raiden.png</figcaption>
       </figure>
     </div>
@@ -473,8 +478,8 @@
           <span class="codec-status">▸ incoming transmission · 140.85</span>
         </div>
         <div class="codec-portrait cc-right">
-          <img src="raiden-dither.png" width="482" height="442" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" alt="Raiden">
-          <script>if(document.documentElement.dataset.theme==='codec'){var i=document.currentScript.previousElementSibling;i.src=i.dataset.codec;}</script>
+          <img src="raiden-dither.png" width="482" height="442" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" data-gotham="nightwing-dither.png" data-gotham-alt="Nightwing" alt="Raiden">
+          <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='gotham'&&i.dataset.gotham){i.dataset.baseAlt=i.alt;i.src=i.dataset.gotham;i.alt=i.dataset.gothamAlt;}</script>
           <span class="codec-name">RAIDEN</span>
           <span class="codec-mhz">140.85</span>
         </div>
@@ -514,7 +519,7 @@
     <div class="container footer-content">
       <p>© 2026 Hector Lugo · built with too much coffee</p>
       <!-- Touch-reachable launcher for the hidden stealth mini-game (Konami code still works on keyboards) -->
-      <button type="button" class="codec-launch" id="codec-launch" title="Incoming codec call" aria-label="CODEC 140.85 — launch the codec infiltration mini-game">CODEC 140.85</button>
+      <button type="button" class="codec-launch" id="codec-launch" data-tip="&#8593; &#8593; &#8595; &#8595; &#8592; &#8594; &#8592; &#8594; B A" aria-label="CODEC 140.85 — launch the codec infiltration mini-game. Keyboard: up, up, down, down, left, right, left, right, B, A.">CODEC 140.85</button>
       <div class="footer-social">
         <a href="https://linkedin.com/in/hector-lugo-3rd" target="_blank" rel="noopener" aria-label="LinkedIn"><i aria-hidden="true" class="fa-brands fa-linkedin-in"></i></a>
         <a href="https://github.com/Wavy-Hec" target="_blank" rel="noopener" aria-label="GitHub"><i aria-hidden="true" class="fa-brands fa-github"></i></a>

@@ -98,6 +98,43 @@ html[data-theme="starwars"] {
   --sw-mono: 'Share Tech Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 }
 
+/* ===== Gotham mode — deco noir (Batman: TAS x Nightwing) ===== */
+html[data-theme="gotham"] {
+  color-scheme: dark;
+  --bg: #08090d;             /* Gotham night — near-black, hint of blue */
+  --bg-2: #0c0e14;
+  --panel: #10131a;          /* cold graphite panel */
+  --panel-2: #161a23;
+  --ink: #eec73d;            /* bat-signal yellow — accents, buttons (12.2:1 on --bg) */
+  --ink-strong: #ffe082;     /* pale signal glow — big headings (~15:1 on --bg) */
+  --text: #b9c2d0;           /* cold steel body (~11:1 on --bg) */
+  --text-dim: #8d97a8;
+  --text-muted: #8791a3;     /* ~5.5:1 on --panel-2 (placeholders) */
+  --border: #232936;
+  --border-strong: #3f4a5e;
+  --input-border: #6f7a92;   /* steel — 4.3:1 vs --panel (≥3:1, WCAG 1.4.11) */
+  --highlight: #eec73d;
+  --shadow-lift: 0 10px 28px rgba(0, 0, 0, .65), 0 0 16px rgba(238, 199, 61, .04);
+  --wash: #0d1018;
+  --grid-line: rgba(93, 124, 178, .045);   /* cold blueprint grid */
+  --on-accent: #131107;      /* near-black warm — text on yellow (~11:1) */
+  --accent-tint: rgba(238, 199, 61, .08);
+  --band: rgba(16, 19, 26, .6);
+  --codec-band: rgba(12, 15, 23, .7);      /* cold dark under scanlines */
+  --scanline: rgba(154, 176, 210, .05);    /* rain-gray scanlines, not yellow */
+  --scanline-soft: rgba(154, 176, 210, .035);
+  --header-bg: rgba(8, 9, 13, .85);
+  --header-bg-solid: rgba(8, 9, 13, .98);
+  --error: #ee4b5e;          /* crimson — alerts only (5.5:1 on --bg) */
+  /* theme-scoped extras (referenced only by gotham-scoped rules) */
+  --gt-wing: #35b6e0;        /* Nightwing electric blue (8.4:1 on --bg) — links/highlights */
+  --gt-wing-glow: rgba(53, 182, 224, .35);
+  --gt-wing-bright: #7fd0f2; /* hover lift for wing-blue links */
+  --gt-brass: #b49b5e;       /* deco brass — rules and the pull-quote (7.4:1 on --bg) */
+  --gt-yellow-glow: rgba(238, 199, 61, .28);
+  --gt-deco: 'Franklin Gothic Medium', 'ITC Franklin Gothic', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif; /* system-only condensed gothic */
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html { font-size: 62.5%; scroll-behavior: smooth; scroll-padding-top: 8.4rem; }
@@ -178,7 +215,7 @@ header {
 }
 .logo:hover { color: var(--ink-strong); }
 
-nav { display: flex; gap: 2.6rem; }
+nav { display: flex; align-items: center; gap: 2.6rem; }
 nav a {
   font-family: 'Spectral', serif;
   font-size: 1.45rem;
@@ -205,25 +242,49 @@ nav a:hover::after, nav a.active::after { transform: scaleX(1); }
 
 .header-actions { display: flex; align-items: center; gap: 1.6rem; }
 
-/* Codec-mode toggle */
-.codec-toggle {
+/* Theme picker — segmented radiogroup. Lives at the end of the header nav;
+   at ≤992px it rides inside the mobile dropdown menu. Selected fill is keyed
+   off <html data-theme> so it is correct from first paint, before script.js
+   syncs aria-checked. */
+.theme-picker {
+  display: inline-flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+}
+.theme-picker [role="radio"] {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: .6rem;
   font-family: 'Share Tech Mono', monospace;
   font-size: 1.25rem;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--ink);
   background: transparent;
-  border: 1px solid var(--input-border);
-  border-radius: var(--radius-sm);
-  padding: .8rem 1.1rem;
+  border: 0;
+  padding: .8rem 1rem;
   cursor: pointer;
-  transition: all .2s ease;
+  transition: background .2s ease, color .2s ease;
 }
-.codec-toggle:hover { border-color: var(--ink); background: var(--accent-tint); }
-.codec-toggle-text { display: inline-block; min-width: 8ch; text-align: left; }
+.theme-picker [role="radio"] + [role="radio"] { border-left: 1px solid var(--input-border); }
+.theme-picker [role="radio"]:hover { background: var(--accent-tint); }
+/* keep the global 2px focus outline from being painted under the next segment */
+.theme-picker [role="radio"]:focus-visible { position: relative; z-index: 1; }
+.theme-picker [role="radio"]:first-child { border-radius: calc(var(--radius-sm) - 1px) 0 0 calc(var(--radius-sm) - 1px); }
+.theme-picker [role="radio"]:last-child { border-radius: 0 calc(var(--radius-sm) - 1px) calc(var(--radius-sm) - 1px) 0; }
+.theme-picker i { font-size: 1.3rem; }
+.tp-label { display: none; }
+@media (min-width: 1440px) { .theme-picker .tp-label { display: inline; } }
+html:not([data-theme]) .theme-picker [data-theme-value="light"],
+html[data-theme="codec"] .theme-picker [data-theme-value="codec"],
+html[data-theme="starwars"] .theme-picker [data-theme-value="starwars"],
+html[data-theme="gotham"] .theme-picker [data-theme-value="gotham"] {
+  background: var(--ink);
+  color: var(--on-accent);
+}
 
 /* Screen-reader-only content (theme-change announcements) */
 .visually-hidden {
@@ -338,6 +399,9 @@ body:not(.loaded) { overflow: hidden; animation: loaderUnlock 0s 6s forwards; }
   color: var(--text-muted);
 }
 @media (max-width: 600px) { .soliton-radar { display: none; } }
+/* GCPD signal accepts clicks in gotham only (Nightwing cameo egg — handler in
+   script.js). No cursor:pointer — the egg should not advertise itself. */
+html[data-theme="gotham"] .soliton-radar { pointer-events: auto; }
 
 /* ===== Custom reticle cursor (codec mode) =====
    The OS cursor is hidden only over passive content; links/buttons keep the
@@ -941,6 +1005,7 @@ footer {
 .footer-content p { font-family: 'Share Tech Mono', monospace; font-size: 1.3rem; color: var(--text-dim); }
 /* Footer codec link — touch-reachable launcher for the stealth mini-game */
 .codec-launch {
+  position: relative; /* anchors the Konami tooltip below */
   background: none;
   border: 0;
   padding: .4rem 0;
@@ -952,6 +1017,81 @@ footer {
   transition: color .2s ease;
 }
 .codec-launch:hover { color: var(--ink); }
+/* Konami-code tooltip on the codec launcher — shows on hover AND keyboard focus */
+.codec-launch::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(3px);
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  padding: .6rem 1.1rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+  z-index: 10;
+}
+.codec-launch:hover::after,
+.codec-launch:focus-visible::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+html[data-theme="starwars"] .codec-launch::after { border-radius: 0; }
+/* Typing 140.85 anywhere lights the launcher up — the deaf-accessible
+   counterpart to the codec ring (script.js dial listener) */
+.codec-launch.dialed { color: var(--ink); }
+@media (prefers-reduced-motion: no-preference) {
+  .codec-launch.dialed { animation: dialedPulse 1.2s ease; }
+}
+@keyframes dialedPulse {
+  0%, 100% { text-shadow: none; }
+  30%, 60% { text-shadow: 0 0 12px currentColor; }
+}
+
+/* ===== LEGO Nightwing cameo (gotham egg — 3 clicks on the GCPD signal) ===== */
+.nightwing-cameo {
+  position: fixed;
+  left: 1.8rem;
+  bottom: 0;
+  z-index: 96; /* above .crt (95), below header (100) */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .6rem;
+  pointer-events: none;          /* can never block clicks or trap focus */
+  transform: translateY(105%);
+  transition: transform .6s cubic-bezier(.2, .9, .3, 1.15);
+}
+.nightwing-cameo.show { transform: translateY(12%); }
+.nightwing-cameo img {
+  display: block;
+  width: 110px;
+  height: auto;
+  image-rendering: pixelated;
+}
+.nightwing-caption {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: .3rem .8rem;
+  white-space: nowrap;
+}
+/* Reduced motion for the two egg surfaces above. Lives HERE (not in the global
+   reduce block earlier in the file) because it must come after the base rules
+   in source order to win the equal-specificity cascade. */
+@media (prefers-reduced-motion: reduce) {
+  .codec-launch::after { transition: none; }
+  /* no slide — the figure fades in already-peeked and fades out */
+  .nightwing-cameo { transform: translateY(12%); opacity: 0; transition: opacity .4s ease; }
+  .nightwing-cameo.show { opacity: 1; }
+}
 .footer-social { display: flex; gap: 1.6rem; }
 .footer-social a { color: var(--ink); font-size: 1.9rem; text-decoration: none; transition: color .2s ease; }
 .footer-social a:hover { color: var(--ink-strong); }
@@ -1028,7 +1168,8 @@ html[data-theme="starwars"] .chips span,
 html[data-theme="starwars"] .project-link,
 html[data-theme="starwars"] .project-index,
 html[data-theme="starwars"] .copy-btn,
-html[data-theme="starwars"] .codec-toggle,
+html[data-theme="starwars"] .theme-picker,
+html[data-theme="starwars"] .theme-picker [role="radio"],
 html[data-theme="starwars"] .social-icons a,
 html[data-theme="starwars"] .home-img img,
 html[data-theme="starwars"] .codec-portrait img,
@@ -1144,10 +1285,13 @@ html[data-theme="starwars"] .timeline-item::before {
 html[data-theme="starwars"] .vr-quote { border-left-color: var(--sw-gold); }
 html[data-theme="starwars"] .vr-quote cite { color: var(--sw-gold); }
 
-/* --- Codec call -> holotable transmission. Portraits reuse the blue
+/* --- Codec call -> holotable transmission. The hero carries a dedicated
+   starwars render (data-starwars, swapped in by the pre-paint swapper and
+   script.js) and takes no filter; remaining portraits reuse the blue
    (data-light) renders: invert(1) flips paper to black, hue-rotate(180)
    swings dots back to blue, brightness lifts to hologram blue. --- */
-html[data-theme="starwars"] img[data-light] {
+html[data-theme="starwars"] img[data-starwars] { filter: none; }
+html[data-theme="starwars"] img[data-light]:not([data-starwars]) {
   filter: invert(1) hue-rotate(180deg) brightness(1.45) saturate(.85)
           drop-shadow(0 0 8px rgba(74, 168, 255, .28));
   background: #fff;
@@ -1161,11 +1305,223 @@ html[data-theme="starwars"] .form-group textarea:focus {
   box-shadow: 0 0 0 1px var(--ink), 0 0 12px rgba(240, 168, 50, .2);
 }
 
+/* --- Corner widget: radar.js renders the TARGETING array in starwars; the
+   label ("TARGETING", set by radar.js) glows amber --- */
+html[data-theme="starwars"] .soliton-label {
+  color: var(--ink);
+  letter-spacing: 2.5px;
+  text-shadow: 0 0 8px var(--sw-amber-glow);
+}
+
+/* ===== Gotham mode — theme-scoped restyles ===== */
+
+/* --- Background: skyline silhouette + twin searchlights replace the dither canvas --- */
+html[data-theme="gotham"] #dither-bg { display: none; }
+
+@property --gt-sweep { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+
+html[data-theme="gotham"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  --gt-sweep: 0deg;
+  background-image:
+    /* skyline row A — tall towers, darker than --bg (silhouette) */
+    repeating-linear-gradient(90deg,
+      #05060a 0 42px, transparent 42px 74px,
+      #05060a 74px 128px, transparent 128px 166px,
+      #05060a 166px 208px, transparent 208px 236px),
+    /* skyline row B — shorter towers, offset rhythm */
+    repeating-linear-gradient(90deg,
+      #070910 0 64px, transparent 64px 90px,
+      #070910 90px 132px, transparent 132px 178px),
+    /* searchlight L — bat-signal yellow wedge from below the horizon */
+    conic-gradient(from calc(-12deg + var(--gt-sweep)) at 18% 118%,
+      transparent 0deg, rgba(238, 199, 61, .05) 3.5deg, transparent 7deg 360deg),
+    /* searchlight R — cold steel wedge, counter-sweeping */
+    conic-gradient(from calc(9deg - var(--gt-sweep)) at 82% 122%,
+      transparent 0deg, rgba(196, 210, 232, .04) 3.5deg, transparent 7deg 360deg),
+    /* low cloud wash the beams graze */
+    radial-gradient(ellipse 120% 42% at 50% 112%, rgba(93, 124, 178, .10), transparent 68%),
+    radial-gradient(ellipse 70% 30% at 20% 108%, rgba(238, 199, 61, .045), transparent 70%);
+  background-repeat: repeat-x, repeat-x, no-repeat, no-repeat, no-repeat, no-repeat;
+  background-position: left bottom, left 118px bottom 0, center, center, center, center;
+  background-size: 236px 13vh, 178px 8vh, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+}
+/* Slow beam sweep — reduced-motion users get static beams (no animation).
+   Browsers without @property show static/stepped beams at 5% opacity: acceptable. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme="gotham"] body::after { animation: gtSweep 26s ease-in-out infinite alternate; }
+}
+@keyframes gtSweep { from { --gt-sweep: -8deg; } to { --gt-sweep: 8deg; } }
+
+/* Static vignette, no flicker — noir, not glitch */
+html[data-theme="gotham"] .crt { opacity: .45; }
+
+/* --- Deco geometry: square every corner (same selector list as starwars) --- */
+html[data-theme="gotham"] .work-card,
+html[data-theme="gotham"] .project-card,
+html[data-theme="gotham"] .beyond-card,
+html[data-theme="gotham"] .timeline-item,
+html[data-theme="gotham"] .contact-item,
+html[data-theme="gotham"] .stat,
+html[data-theme="gotham"] .lab-affiliation,
+html[data-theme="gotham"] .resume-block,
+html[data-theme="gotham"] .terminal,
+html[data-theme="gotham"] .contact-form,
+html[data-theme="gotham"] .codec-call,
+html[data-theme="gotham"] .command-block,
+html[data-theme="gotham"] .btn,
+html[data-theme="gotham"] .chips span,
+html[data-theme="gotham"] .project-link,
+html[data-theme="gotham"] .project-index,
+html[data-theme="gotham"] .copy-btn,
+html[data-theme="gotham"] .theme-picker,
+html[data-theme="gotham"] .theme-picker [role="radio"],
+html[data-theme="gotham"] .social-icons a,
+html[data-theme="gotham"] .home-img img,
+html[data-theme="gotham"] .codec-portrait img,
+html[data-theme="gotham"] .form-group input,
+html[data-theme="gotham"] .form-group textarea { border-radius: 0; }
+
+/* --- Header / nav: condensed gothic, wing-blue underline --- */
+html[data-theme="gotham"] header { box-shadow: 0 1px 0 rgba(238, 199, 61, .10); }
+html[data-theme="gotham"] .logo { font-family: var(--gt-deco); letter-spacing: 4px; font-weight: 500; }
+html[data-theme="gotham"] nav a { font-family: var(--gt-deco); text-transform: uppercase; letter-spacing: 3px; font-size: 1.4rem; }
+html[data-theme="gotham"] nav a:hover,
+html[data-theme="gotham"] nav a.active { color: var(--gt-wing); }
+html[data-theme="gotham"] nav a::after {
+  height: 2px;
+  background: var(--gt-wing);
+  box-shadow: 0 0 6px var(--gt-wing), 0 0 14px var(--gt-wing-glow);
+}
+
+/* --- Section headings: condensed gothic caps + double deco rule (yellow | blue) --- */
+html[data-theme="gotham"] .kicker { font-family: 'Spectral', serif; font-variant: small-caps; text-transform: none; letter-spacing: 3px; }
+html[data-theme="gotham"] .section-title {
+  font-family: var(--gt-deco);
+  font-weight: 500;
+  font-size: 3.4rem;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+}
+html[data-theme="gotham"] .section-title::after {
+  width: 120px;
+  height: 6px;
+  background-image:
+    linear-gradient(to right, var(--ink) 0 34px, transparent 34px 40px, var(--gt-wing) 40px 100%),
+    linear-gradient(to right, var(--ink) 0 34px, transparent 34px 40px, var(--gt-wing) 40px 100%);
+  background-size: 100% 2px, 100% 1px;
+  background-position: top left, bottom left;
+  background-repeat: no-repeat;
+}
+
+/* --- Hero: spotlight reveal (no flicker) --- */
+html[data-theme="gotham"] .home-content h1 {
+  letter-spacing: 1px;
+  text-shadow: 0 0 26px rgba(238, 199, 61, .16);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme="gotham"] .home-content h1 { animation: gtSpot .9s ease-out 1; }
+}
+@keyframes gtSpot { from { opacity: 0; filter: brightness(2.2); } to { opacity: 1; filter: brightness(1); } }
+/* accent spans go Nightwing blue against the yellow */
+html[data-theme="gotham"] .hl { color: var(--gt-wing); text-shadow: 0 0 14px var(--gt-wing-glow); }
+
+/* --- Buttons: squared, gothic caps, yellow fill / wing-blue outline --- */
+html[data-theme="gotham"] .btn {
+  font-family: var(--gt-deco);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 1.4rem;
+}
+html[data-theme="gotham"] .btn:hover { box-shadow: 0 0 12px var(--gt-yellow-glow); }
+html[data-theme="gotham"] .btn-outline { color: var(--gt-wing); }
+html[data-theme="gotham"] .btn-outline:hover {
+  color: var(--gt-wing-bright);
+  border-color: var(--gt-wing);
+  background: rgba(53, 182, 224, .08);
+  box-shadow: 0 0 12px var(--gt-wing-glow);
+}
+
+/* --- Chips: signal-yellow evidence tags --- */
+html[data-theme="gotham"] .chips span:hover { box-shadow: 0 0 8px var(--gt-yellow-glow); }
+
+/* --- Cards: 5px double = thin deco twin-rule (renders as 2px/1px/2px) --- */
+html[data-theme="gotham"] .work-card,
+html[data-theme="gotham"] .beyond-card,
+html[data-theme="gotham"] .timeline-item { border-top: 5px double rgba(180, 155, 94, .55); }
+
+/* --- Project cards: case-file brackets in wing blue --- */
+html[data-theme="gotham"] .project-card::before,
+html[data-theme="gotham"] .project-card::after { border-color: rgba(53, 182, 224, .5); }
+html[data-theme="gotham"] .project-card:hover::before,
+html[data-theme="gotham"] .project-card:hover::after { border-color: var(--gt-wing); }
+
+/* --- Links: Nightwing blue --- */
+html[data-theme="gotham"] .lab-link {
+  color: var(--gt-wing);
+  text-decoration-color: var(--gt-wing);
+  text-decoration-thickness: 2px;
+}
+html[data-theme="gotham"] .lab-link:hover { color: var(--gt-wing-bright); }
+html[data-theme="gotham"] .project-link { color: var(--gt-wing); }
+html[data-theme="gotham"] .project-link:hover {
+  border-color: var(--gt-wing);
+  background: rgba(53, 182, 224, .06);
+  box-shadow: 0 0 8px var(--gt-wing-glow);
+}
+
+/* --- Timeline: wing-blue waypoint dots --- */
+html[data-theme="gotham"] .timeline-item::before {
+  background: var(--gt-wing);
+  box-shadow: 0 0 6px var(--gt-wing-glow);
+}
+
+/* --- Deco brass, used once: the pull-quote --- */
+html[data-theme="gotham"] .vr-quote { border-left-color: var(--gt-brass); }
+html[data-theme="gotham"] .vr-quote cite { color: var(--gt-brass); }
+
+/* --- Codec call -> rooftop channel. Dedicated gotham renders (data-gotham)
+   are swapped in by script.js and take no filter; the headshot has no gotham
+   render — invert(1) alone flips its blue ink (#2f54cc) to bat-signal gold
+   (#d0ab33) on black. --- */
+html[data-theme="gotham"] img[data-gotham] { filter: none; }
+html[data-theme="gotham"] img[data-light]:not([data-gotham]) {
+  filter: invert(1) saturate(.85) brightness(1.05)
+          drop-shadow(0 0 8px rgba(238, 199, 61, .25));
+  background: #fff;
+}
+html[data-theme="gotham"] .codec-line { color: var(--gt-wing); text-shadow: 0 0 10px var(--gt-wing-glow); }
+html[data-theme="gotham"] .codec-wave i { background: var(--gt-wing); }
+
+/* --- Corner widget: radar.js renders the GCPD bat-signal in gotham; the
+   label ("GCPD SIGNAL", set by radar.js) picks up its signal gold --- */
+html[data-theme="gotham"] .soliton-label { color: rgba(245, 197, 24, .7); letter-spacing: 2px; }
+
+/* --- Form: signal-yellow focus glow --- */
+html[data-theme="gotham"] .form-group input:focus,
+html[data-theme="gotham"] .form-group textarea:focus {
+  box-shadow: 0 0 0 1px var(--ink), 0 0 12px rgba(238, 199, 61, .2);
+}
+
+/* --- Footer: deco twin-rule caps the page --- */
+html[data-theme="gotham"] footer { border-top: 5px double rgba(180, 155, 94, .45); }
+html[data-theme="gotham"] .footer-content p,
+html[data-theme="gotham"] .codec-launch { font-family: var(--gt-deco); letter-spacing: 2px; }
+
 /* ===== Responsive ===== */
 /* Tight desktop band: keep the one-line header from crowding */
 @media (max-width: 1120px) {
   header { padding: 1.4rem 3%; }
   nav { gap: 1.6rem; }
+  /* .5rem sides (not the spec's .8rem): keeps the 4-segment picker no wider
+     than the old toggle it replaced, so the tight 993–1120 band is no more
+     crowded than it was before the swap. */
+  .theme-picker [role="radio"] { padding: .8rem .5rem; }
 }
 
 @media (max-width: 992px) {
@@ -1190,6 +1546,34 @@ html[data-theme="starwars"] .form-group textarea:focus {
   nav a::after { display: none; }
   nav a.active { background: var(--panel-2); }
   .mobile-menu-toggle { display: inline-flex; }
+
+  /* Theme picker becomes a labeled row at the bottom of the mobile menu */
+  .theme-picker {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin: 1rem 6% 0.8rem;
+  }
+  .theme-picker::before {
+    content: '// theme';
+    grid-column: 1 / -1;
+    padding: 1rem 1.2rem .6rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+  }
+  .theme-picker [role="radio"] {
+    flex-direction: column;
+    gap: .5rem;
+    padding: 1rem .4rem 1.1rem;
+    min-height: 5.6rem;
+  }
+  .theme-picker .tp-label { display: inline; font-size: 1.1rem; }
+  .theme-picker i { font-size: 1.5rem; }
+  .theme-picker [role="radio"]:first-child { border-radius: 0 0 0 calc(var(--radius-sm) - 1px); }
+  .theme-picker [role="radio"]:last-child { border-radius: 0 0 calc(var(--radius-sm) - 1px) 0; }
 
   .home { flex-direction: column; text-align: center; align-items: center; gap: 3rem; padding-top: 2rem; }
   .home-content { order: 2; }
@@ -1222,8 +1606,4 @@ html[data-theme="starwars"] .form-group textarea:focus {
   .timeline-item::before { left: -2.3rem; }
   /* Résumé button is duplicated in the hero; reclaim header space on small screens */
   .header-actions .btn { display: none; }
-}
-
-@media (max-width: 360px) {
-  .codec-toggle-text { display: none; }
 }

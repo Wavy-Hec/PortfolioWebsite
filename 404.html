@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
   <title>404 — Hector Lugo</title>
-  <script>try{var t=localStorage.getItem('theme');if(t==='codec'||t==='starwars')document.documentElement.dataset.theme=t}catch(e){}</script>
+  <script>try{var t=localStorage.getItem('theme');if(t==='codec'||t==='starwars'||t==='gotham')document.documentElement.dataset.theme=t}catch(e){}</script>
   <!-- PNG first so legacy Safari (no SVG favicon support) picks it up -->
   <link rel="icon" href="https://wavy-hec.github.io/PortfolioWebsite/favicon-32.png" type="image/png" sizes="32x32">
   <link rel="icon" href="https://wavy-hec.github.io/PortfolioWebsite/favicon.svg" type="image/svg+xml">
@@ -68,6 +68,23 @@
       --scan: rgba(240, 168, 50, .055);
       --shadow: 0 10px 28px rgba(0, 0, 0, .6);
     }
+    html[data-theme="gotham"] {
+      color-scheme: dark;
+      --bg: #08090d;
+      --panel: #10131a;
+      --panel-2: #161a23;
+      --border: #232936;
+      --ink: #eec73d;
+      --ink-strong: #ffe082;
+      --text: #b9c2d0;
+      --dim: #8d97a8;
+      --muted: #8791a3;
+      --error: #ee4b5e;
+      --on-accent: #131107;
+      --wash: #0d1018;
+      --scan: rgba(154, 176, 210, .05);
+      --shadow: 0 10px 28px rgba(0, 0, 0, .65);
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       min-height: 100vh;
@@ -123,6 +140,26 @@
       text-decoration: none;
     }
     .home-btn:hover { background: var(--ink-strong); border-color: var(--ink-strong); }
+    .egg { margin: 22px 0 6px 16px; }
+    .egg img {
+      display: block;
+      width: min(200px, 55%);
+      height: auto;
+      image-rendering: pixelated;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+    .egg figcaption {
+      margin-top: 8px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12.5px;
+      letter-spacing: .5px;
+      color: var(--muted);
+    }
+    /* The PNG is already a dark hologram (navy -> holo blue #4aa8ff), so no
+       invert anywhere: starwars/gotham show it as-is (it IS their holo blue);
+       codec swings the blue ~-82deg to phosphor green. */
+    html[data-theme="codec"] .egg img { filter: hue-rotate(278deg) brightness(1.1); }
   </style>
 </head>
 <body>
@@ -133,6 +170,13 @@
       <p class="out"><span class="alert">!</span> alert — page not found. it must have been hiding in a cardboard box.</p>
       <p><span class="prompt">$</span> codec --freq 140.85</p>
       <p class="out">"Snake, that page doesn't exist. Return to the portfolio at once."</p>
+      <!-- Absolute src on purpose: GitHub Pages serves this page at any missing
+           path, so a relative src would 404 recursively. onerror degrades the
+           whole figure away if the PNG isn't deployed. -->
+      <figure class="egg">
+        <img src="https://wavy-hec.github.io/PortfolioWebsite/lego-quigon-dither.png" alt="Dithered render of a LEGO Qui-Gon Jinn minifigure floating serenely" loading="lazy" onerror="this.parentElement.style.display='none'">
+        <figcaption>These aren't the pages you're looking for.</figcaption>
+      </figure>
       <a class="home-btn" href="https://wavy-hec.github.io/PortfolioWebsite/">&larr; back to base</a>
       <p><span class="prompt">$</span> <span class="cursor"></span></p>
     </div>

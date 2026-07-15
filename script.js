@@ -1,9 +1,14 @@
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// ===== Codec mode (MGS2 green-phosphor theme) =====
-const themeToggle = document.getElementById('theme-toggle');
-// Every dithered portrait carries data-light / data-codec sources and swaps together.
+// ===== Theme picker (segmented radiogroup at the end of the header nav) =====
+const themePicker = document.getElementById('theme-picker');
+const themeRadios = themePicker ? Array.from(themePicker.querySelectorAll('[role="radio"]')) : [];
+// Every dithered portrait carries data-light / data-codec sources and swaps
+// together; some also carry dedicated data-starwars / data-gotham renders.
 const themedPortraits = document.querySelectorAll('img[data-codec]');
+// Stash each portrait's original alt so leaving starwars/gotham restores it.
+// The pre-paint swapper stashes its own before rewriting alt, hence the guard.
+themedPortraits.forEach(img => { if (!img.dataset.baseAlt) img.dataset.baseAlt = img.alt; });
 
 // ===== Custom reticle cursor (codec mode, fine-pointer devices only) =====
 const finePointer = window.matchMedia('(pointer: fine)').matches;
@@ -56,11 +61,17 @@ function setReticle(on) {
     }
 }
 
-const THEMES = ['light', 'codec', 'starwars'];
+const THEMES = ['light', 'codec', 'starwars', 'gotham'];
+// Konami-hint state (functions live after the codec-launch wiring below).
+// Declared up here because applyTheme() runs before that block evaluates.
+let lastAppliedTheme = null;  // previous theme applyTheme saw (null = initial sync not done)
+let konamiHintedMem = false;  // fallback flag when sessionStorage is unavailable
+// icon/label here must mirror the static picker markup in index.html
 const THEME_META = {
-    light:    { label: 'ink',      icon: 'fa-pen-nib',         color: '#eaf0fb' },
-    codec:    { label: 'codec',    icon: 'fa-tower-broadcast', color: '#081209' },
-    starwars: { label: 'holonet',  icon: 'fa-satellite-dish',  color: '#0b0d10' },
+    light:    { label: 'ink',     icon: 'fa-pen-nib',         color: '#eaf0fb' },
+    codec:    { label: 'codec',   icon: 'fa-tower-broadcast', color: '#081209' },
+    starwars: { label: 'holonet', icon: 'fa-satellite-dish',  color: '#0b0d10' },
+    gotham:   { label: 'gotham',  icon: 'fa-city',            color: '#08090d' }, // color = gotham --bg
 };
 
 function currentTheme() {
@@ -76,37 +87,93 @@ function applyTheme(name) {
         document.documentElement.dataset.theme = name;
     }
     const meta = THEME_META[name];
-    const next = THEME_META[THEMES[(THEMES.indexOf(name) + 1) % THEMES.length]];
-    if (themeToggle) {
-        const text = themeToggle.querySelector('.codec-toggle-text');
-        if (text) text.textContent = meta.label;
-        const icon = themeToggle.querySelector('i');
-        if (icon) icon.className = 'fas ' + meta.icon;
-        themeToggle.setAttribute('aria-label', 'Theme: ' + meta.label + '. Activate to switch to ' + next.label + '.');
-        themeToggle.title = 'Theme: ' + meta.label + ' — click for ' + next.label;
+    themeRadios.forEach(btn => {
+        const on = btn.dataset.themeValue === name;
+        btn.setAttribute('aria-checked', on ? 'true' : 'false');
+        btn.tabIndex = on ? 0 : -1;   // roving tabindex — Tab lands on the checked radio
+    });
+    // Portraits: codec has dedicated green renders; starwars/gotham swap in a
+    // dedicated render where one exists (hero → anakin/batman, codec-call right
+    // → nightwing in gotham); everything else falls back to the blue data-light
+    // render, which the theme CSS recolors via filter where needed.
+    themedPortraits.forEach(img => {
+        if (name === 'codec') {
+            img.src = img.dataset.codec;
+            img.alt = img.dataset.baseAlt;
+        } else if (name === 'gotham' && img.dataset.gotham) {
+            img.src = img.dataset.gotham;
+            img.alt = img.dataset.gothamAlt || img.dataset.baseAlt;
+        } else if (name === 'starwars' && img.dataset.starwars) {
+            img.src = img.dataset.starwars;
+            img.alt = img.dataset.starwarsAlt || img.dataset.baseAlt;
+        } else {
+            img.src = img.dataset.light;
+            img.alt = img.dataset.baseAlt;
+        }
+    });
+    // Hero figcaption + codec-call callsign follow the active portrait.
+    const heroCaption = document.querySelector('.img-caption');
+    if (heroCaption) {
+        heroCaption.textContent =
+            name === 'gotham'   ? 'output 01 · seed: 1992 · batman.png'   // 1992 — Batman: TAS premiere
+          : name === 'starwars' ? 'output 01 · seed: 1999 · anakin.png'   // 1999 — Episode I (N64-era render)
+          :                       'output 01 · seed: 2001 · raiden.png';  // 2001 — MGS2
     }
-    // Portraits: codec has its own green renders; ink and starwars share the blue
-    // renders (starwars recolors them to hologram blue in CSS via filter).
-    themedPortraits.forEach(img => { img.src = name === 'codec' ? img.dataset.codec : img.dataset.light; });
-    // Radar HUD label — radar.js re-inks itself on themechange; the label swap
-    // lives here so radar.js stays untouched. (Label may not exist ≤600px.)
+    const ccRightName = document.querySelector('.cc-right .codec-name');
+    if (ccRightName) ccRightName.textContent = name === 'gotham' ? 'NIGHTWING' : 'RAIDEN';
+    // Radar HUD label — radar.js re-labels itself on themechange; these strings
+    // mirror radar.js's MODE_LABEL exactly so the two writers never disagree.
+    // (Label may not exist ≤600px.)
     const radarLabel = document.querySelector('.soliton-label');
-    if (radarLabel) radarLabel.textContent = name === 'starwars' ? 'SCANNER' : 'SOLITON';
+    if (radarLabel) radarLabel.textContent = name === 'starwars' ? 'TARGETING' : name === 'gotham' ? 'GCPD SIGNAL' : 'SOLITON';
     const themeColor = document.querySelector('meta[name="theme-color"]');
     if (themeColor) themeColor.content = meta.color;
     setReticle(name === 'codec');   // reticle stays codec-exclusive
     try { localStorage.setItem('theme', name); } catch (e) {}
     window.dispatchEvent(new CustomEvent('themechange'));
+    const prevTheme = lastAppliedTheme;
+    lastAppliedTheme = name;
+    // User-driven switch INTO codec (prev !== null excludes the initial load
+    // sync, which is handled by the 20s path next to maybeShowKonamiHint)
+    if (name === 'codec' && prevTheme !== null && prevTheme !== 'codec') maybeShowKonamiHint(2500);
 }
 
-// Sync button/portraits with the pre-paint theme set in <head>
-applyTheme(currentTheme());
+// Sync picker/portraits with the saved theme. Prefer localStorage over the
+// pre-paint DOM attribute so a stored value the pre-paint whitelist missed
+// is still honored instead of being clobbered back to 'light'.
+let storedTheme = null;
+try { storedTheme = localStorage.getItem('theme'); } catch (e) {}
+applyTheme(THEMES.includes(storedTheme) ? storedTheme : currentTheme());
 
-themeToggle.addEventListener('click', () => {
-    const next = THEMES[(THEMES.indexOf(currentTheme()) + 1) % THEMES.length];
-    applyTheme(next);
+function selectTheme(name, moveFocus) {
+    applyTheme(name);
     const announce = document.getElementById('theme-announce');
-    if (announce) announce.textContent = 'Theme changed to ' + THEME_META[next].label;
+    if (announce) announce.textContent = 'Theme changed to ' + THEME_META[name].label;
+    if (moveFocus) {
+        const btn = themeRadios.find(b => b.dataset.themeValue === name);
+        if (btn) btn.focus();
+    }
+}
+
+themeRadios.forEach(btn => {
+    btn.addEventListener('click', () => selectTheme(btn.dataset.themeValue, false));
+});
+
+// Radiogroup keyboard model: arrows move AND select (selection follows focus,
+// safe because applying a theme is instant and non-destructive); Home/End jump.
+// Space/Enter need no handler — real <button>s fire click natively.
+if (themePicker) themePicker.addEventListener('keydown', (e) => {
+    const n = themeRadios.length;
+    let i = themeRadios.indexOf(document.activeElement);
+    if (i < 0) i = Math.max(0, themeRadios.findIndex(b => b.getAttribute('aria-checked') === 'true'));
+    let j = -1;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') j = (i + 1) % n;
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') j = (i - 1 + n) % n;
+    else if (e.key === 'Home') j = 0;
+    else if (e.key === 'End') j = n - 1;
+    if (j < 0) return;
+    e.preventDefault();
+    selectTheme(themeRadios[j].dataset.themeValue, true);
 });
 
 // Codec Infiltration launchers: the Konami code (keyboard) and the footer
@@ -128,6 +195,7 @@ function openGame() {
     document.body.appendChild(s);
 }
 function launchGame() {
+    markKonamiHinted(); // found it — never show the Konami hint this session
     const alertMark = document.createElement('div');
     alertMark.className = 'mgs-alert';
     alertMark.textContent = '!';
@@ -156,6 +224,52 @@ document.addEventListener('keydown', (e) => {
 // Touch-accessible trigger (mobile visitors can't type the Konami code)
 const codecLaunchBtn = document.getElementById('codec-launch');
 if (codecLaunchBtn) codecLaunchBtn.addEventListener('click', launchGame);
+
+// ===== Konami hint — one gentle nudge per session, codec theme only =====
+// (lastAppliedTheme / konamiHintedMem are declared next to THEMES above)
+function konamiHinted() {
+    if (konamiHintedMem) return true;
+    try { return sessionStorage.getItem('konami-hinted') === '1'; } catch (e) { return false; }
+}
+function markKonamiHinted() {
+    konamiHintedMem = true;
+    try { sessionStorage.setItem('konami-hinted', '1'); } catch (e) {}
+}
+function maybeShowKonamiHint(delayMs) {
+    if (konamiHinted() || !finePointer) return; // touch-only users have the footer button instead
+    setTimeout(() => {
+        if (konamiHinted()) return;
+        if (currentTheme() !== 'codec') return;
+        const ae = document.activeElement;
+        if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return; // never interrupt typing
+        markKonamiHinted();
+        showNotification(
+            'INCOMING — 140.85 · try ↑ ↑ ↓ ↓ ← → ← → B A',
+            'info',
+            'Hint: press up, up, down, down, left, right, left, right, B, A for an incoming codec call.',
+            9000
+        );
+    }, delayMs);
+}
+if (currentTheme() === 'codec') maybeShowKonamiHint(20000); // loaded straight into codec
+
+// ===== Dial the frequency: typing 140.85 anywhere (outside form fields) rings the codec =====
+let dialBuffer = '';
+document.addEventListener('keydown', (e) => {
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return; // never fire mid-typing
+    if (e.key.length !== 1) return;                 // printable keys only
+    dialBuffer = (dialBuffer + e.key).slice(-6);
+    if (dialBuffer === '140.85') {
+        dialBuffer = '';
+        playCodecRing();
+        const btn = document.getElementById('codec-launch');
+        if (btn) {
+            btn.classList.add('dialed');
+            setTimeout(() => btn.classList.remove('dialed'), 1300);
+        }
+    }
+});
 
 // Short two-tone codec ring (WebAudio, no assets). One AudioContext is created
 // on first use and reused — browsers cap concurrent contexts, so a fresh
@@ -404,14 +518,16 @@ contactForm.addEventListener('submit', async (e) => {
 });
 
 // Notification System
-function showNotification(message, type = 'info') {
+// srMessage: optional spoken-word override for the live region (e.g. the Konami
+// hint's arrow glyphs read badly); durationMs: visible lifetime of the toast.
+function showNotification(message, type = 'info', srMessage, durationMs = 5000) {
     // Announce via the permanent live regions in index.html — a live element
     // inserted pre-populated is often not announced at all, so the visual
     // toast below carries no live role and the announcement happens here.
     const live = document.getElementById(type === 'error' ? 'live-alert' : 'live-status');
     if (live) {
         live.textContent = '';
-        setTimeout(() => { live.textContent = message; }, 50);
+        setTimeout(() => { live.textContent = srMessage || message; }, 50);
     }
 
     // Remove existing notifications
@@ -469,13 +585,13 @@ function showNotification(message, type = 'info') {
         setTimeout(() => notification.remove(), 300);
     });
     
-    // Auto-remove after 5 seconds
+    // Auto-remove after durationMs (default 5 seconds)
     setTimeout(() => {
         if (notification.parentNode) {
             notification.style.transform = 'translateX(100%)';
             setTimeout(() => notification.remove(), 300);
         }
-    }, 5000);
+    }, durationMs);
 }
 
 // Active Navigation Link Highlighting
@@ -642,3 +758,71 @@ document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
         setTimeout(() => { if (icon) icon.className = prev; }, 1500);
     });
 });
+
+// ===== Gotham egg: 3 clicks on the GCPD signal -> LEGO Nightwing cameo =====
+// The click listener lives here (not radar.js) — style.css re-enables
+// pointer-events on .soliton-radar in gotham only, so this is inert elsewhere.
+let gcpdClicks = 0, gcpdTimer = null, nightwingWarm = false;
+function nightwingCameo() {
+    if (document.querySelector('.nightwing-cameo')) return; // never stack two
+    const egg = document.createElement('div');
+    egg.className = 'nightwing-cameo';
+    egg.setAttribute('aria-hidden', 'true');       // purely decorative
+    const cap = document.createElement('span');
+    cap.className = 'nightwing-caption';
+    cap.textContent = 'you never saw me.';
+    const img = document.createElement('img');
+    img.src = 'lego-nightwing-dither.png';
+    img.alt = '';
+    img.onerror = () => egg.remove();              // PNG missing -> vanish silently
+    egg.appendChild(cap);
+    egg.appendChild(img);
+    document.body.appendChild(egg);
+    // double-rAF so the entrance transition actually plays
+    requestAnimationFrame(() => requestAnimationFrame(() => egg.classList.add('show')));
+    setTimeout(() => {
+        egg.classList.remove('show');
+        setTimeout(() => egg.remove(), 700);       // cleanup after exit transition
+    }, 4600);
+}
+document.addEventListener('click', (e) => {
+    if (currentTheme() !== 'gotham') return;
+    if (!e.target.closest('.soliton-radar')) return;
+    let seen = false;
+    try { seen = sessionStorage.getItem('nightwing-cameo') === '1'; } catch (err) {}
+    if (seen) return;
+    if (!nightwingWarm) { nightwingWarm = true; (new Image()).src = 'lego-nightwing-dither.png'; } // pre-warm cache on first click
+    gcpdClicks++;
+    clearTimeout(gcpdTimer);
+    gcpdTimer = setTimeout(() => { gcpdClicks = 0; }, 4000);
+    if (gcpdClicks >= 3) {
+        gcpdClicks = 0;
+        clearTimeout(gcpdTimer);
+        try { sessionStorage.setItem('nightwing-cameo', '1'); } catch (err) {}
+        nightwingCameo();
+    }
+});
+
+// ===== Console easter egg — codec transmission for anyone who opens devtools =====
+// Green-on-black phosphor styling is intentional in every theme: the console is
+// a dev-facing surface, not part of the themed page. Prints once per page load.
+(function consoleCodec() {
+    try {
+        const box = [
+            '',
+            '╔══ CODEC ▸ 140.85 ═══════════════════════════',
+            '║',
+            '║   incoming transmission',
+            '║   "Raiden. The old code still works."',
+            '║',
+            '║   ↑ ↑ ↓ ↓ ← → ← → B A',
+            '║',
+            '║   (no keyboard? tap CODEC 140.85 in the footer)',
+            '║',
+            '╚═════════════════════════════════════════════',
+            ''
+        ].join('\n');
+        console.log('%c' + box,
+            'font-family:"Share Tech Mono",ui-monospace,Consolas,monospace;font-size:12px;line-height:1.6;color:#6fcf83;background:#081209;padding:6px 10px;border-radius:4px;');
+    } catch (e) {}
+})();

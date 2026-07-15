@@ -150,7 +150,10 @@
 
   // The starwars theme hides the canvas entirely (CSS starfield instead) —
   // no point burning CPU rendering into a display:none canvas.
-  const hiddenByTheme = () => document.documentElement.dataset.theme === 'starwars';
+  const hiddenByTheme = () => {
+    const t = document.documentElement.dataset.theme;
+    return t === 'starwars' || t === 'gotham';
+  };
 
   function start() {
     if (raf === null && !REDUCED_MOTION && !hiddenByTheme()) raf = requestAnimationFrame(loop);
