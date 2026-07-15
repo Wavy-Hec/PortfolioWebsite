@@ -21,14 +21,30 @@
   <meta name="twitter:title" content="Hector Lugo — AI Researcher & Robotics Engineer">
   <meta name="twitter:description" content="Reinforcement learning, computer vision, and vision-language models for robotics.">
   <meta name="twitter:image" content="https://wavy-hec.github.io/PortfolioWebsite/og-card.png">
-  <script>try{if(localStorage.getItem('theme')==='codec')document.documentElement.dataset.theme='codec'}catch(e){}</script>
+  <script>try{var t=localStorage.getItem('theme');if(t==='codec'||t==='starwars')document.documentElement.dataset.theme=t}catch(e){}</script>
+  <!-- PNG first so legacy Safari (no SVG favicon support) picks it up; SVG-capable browsers prefer the later entry -->
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@300;400;500;600;700;800&family=Share+Tech+Mono&display=swap">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=13">
+  <!-- Fonts load async (media swap) like the icons below — display=swap already accepts FOUT, so don't block first paint on a cross-origin CSS fetch -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap"></noscript>
+  <!-- Icons load async (media swap) — no above-the-fold text depends on them -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></noscript>
+  <link rel="stylesheet" href="style.css?v=15">
+  <!-- Without JS the codec loader can never dismiss itself — hide it outright.
+       Must come AFTER style.css so it wins the cascade (equal specificity). -->
+  <noscript><style>.codec-loader{display:none!important}body:not(.loaded){overflow-y:auto!important}</style></noscript>
+  <!-- Deferred: downloads start with the preload scanner, execution keeps this
+       order (script.js dispatches 'themechange'; dither/radar listen) and runs
+       post-parse. game.js is lazy-loaded by script.js on first launch. -->
+  <script src="dither.js?v=13" defer></script>
+  <script src="radar.js?v=13" defer></script>
+  <script src="script.js?v=17" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -50,6 +66,10 @@
 </head>
 <body>
   <a href="#home" class="skip-link">skip to content</a>
+  <!-- Permanent live regions: pre-existing empty regions announce reliably;
+       notifications created on the fly do not (script.js writes in here). -->
+  <div id="live-status" role="status" aria-live="polite" class="visually-hidden"></div>
+  <div id="live-alert" role="alert" class="visually-hidden"></div>
   <div class="codec-loader" id="codec-loader" aria-hidden="true">
     <div class="codec-loader-box">
       <span class="cl-freq" id="cl-freq">140.85</span>
@@ -72,9 +92,10 @@
       <a href="#contact">contact</a>
     </nav>
     <div class="header-actions">
-      <button type="button" class="codec-toggle" id="theme-toggle" aria-pressed="false" title="Toggle codec mode (140.85)"><i class="fas fa-tower-broadcast"></i><span class="codec-toggle-text">codec</span></button>
-      <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn btn-sm"><i class="fas fa-arrow-down"></i> Résumé</a>
-      <button type="button" class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Menu" aria-expanded="false" aria-controls="nav"><i class="fas fa-bars"></i></button>
+      <button type="button" class="codec-toggle" id="theme-toggle" title="Switch theme" aria-label="Switch theme"><i aria-hidden="true" class="fas fa-pen-nib"></i><span class="codec-toggle-text">ink</span></button>
+      <span id="theme-announce" class="visually-hidden" aria-live="polite"></span>
+      <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn btn-sm"><i aria-hidden="true" class="fas fa-arrow-down"></i> Résumé</a>
+      <button type="button" class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Menu" aria-expanded="false" aria-controls="nav"><i aria-hidden="true" class="fas fa-bars"></i></button>
     </div>
   </header>
 
@@ -87,20 +108,21 @@
       <p class="typing-text">&gt;&nbsp;<span class="typing-animation"></span></p>
       <p class="lead">MS Computer Science @ UTRGV, building intelligent systems across <strong>reinforcement learning</strong>, <strong>computer vision</strong>, and <strong>vision-language models</strong> for robotics. I'm an AI/ML research intern at the <strong>Air Force Research Laboratory</strong>, working on multi-agent, multi-camera perception and deepfake research, and I train locomotion policies in LocoMuJoCo and NVIDIA Isaac Sim.</p>
       <div class="btn-group">
-        <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn"><i class="fas fa-arrow-down"></i> Download Résumé</a>
+        <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn"><i aria-hidden="true" class="fas fa-arrow-down"></i> Download Résumé</a>
         <a href="#projects" class="btn btn-outline">View Projects</a>
       </div>
       <div class="social-icons">
-        <a href="https://linkedin.com/in/hector-lugo-3rd" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
-        <a href="https://github.com/Wavy-Hec" target="_blank" rel="noopener" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
-        <a href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&hl=en" target="_blank" rel="noopener" aria-label="Google Scholar"><i class="fa-brands fa-google-scholar"></i></a>
-        <a href="mailto:hlugo576@gmail.com" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
-        <a href="https://open.spotify.com/user/karatekid1222" target="_blank" rel="noopener" aria-label="Spotify"><i class="fa-brands fa-spotify"></i></a>
+        <a href="https://linkedin.com/in/hector-lugo-3rd" target="_blank" rel="noopener" aria-label="LinkedIn"><i aria-hidden="true" class="fa-brands fa-linkedin-in"></i></a>
+        <a href="https://github.com/Wavy-Hec" target="_blank" rel="noopener" aria-label="GitHub"><i aria-hidden="true" class="fa-brands fa-github"></i></a>
+        <a href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&hl=en" target="_blank" rel="noopener" aria-label="Google Scholar"><i aria-hidden="true" class="fa-brands fa-google-scholar"></i></a>
+        <a href="mailto:hlugo576@gmail.com" aria-label="Email"><i aria-hidden="true" class="fa-solid fa-envelope"></i></a>
+        <a href="https://open.spotify.com/user/karatekid1222" target="_blank" rel="noopener" aria-label="Spotify"><i aria-hidden="true" class="fa-brands fa-spotify"></i></a>
       </div>
     </div>
     <div class="home-img">
       <figure>
-        <img src="raiden-dither.png" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" alt="Raiden — Metal Gear Solid 2, dithered render">
+        <img src="raiden-dither.png" width="482" height="442" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" alt="Raiden — Metal Gear Solid 2, dithered render">
+        <script>if(document.documentElement.dataset.theme==='codec'){var i=document.currentScript.previousElementSibling;i.src=i.dataset.codec;}</script>
         <figcaption class="img-caption">output 01 · seed: 2001 · raiden.png</figcaption>
       </figure>
     </div>
@@ -113,22 +135,22 @@
       <h2 class="section-title">Research <span class="hl">focus</span></h2>
       <div class="work-grid">
         <div class="work-card">
-          <i class="fas fa-brain"></i>
+          <i aria-hidden="true" class="fas fa-brain"></i>
           <h3>Reinforcement Learning</h3>
           <p>Training agents and locomotion policies in simulation — multi-agent systems, policy learning, and sim-to-real transfer.</p>
         </div>
         <div class="work-card">
-          <i class="fas fa-eye"></i>
+          <i aria-hidden="true" class="fas fa-eye"></i>
           <h3>Computer Vision</h3>
           <p>Perception for robotics — object detection, real-time vision pipelines, and visual grounding.</p>
         </div>
         <div class="work-card">
-          <i class="fas fa-comments"></i>
+          <i aria-hidden="true" class="fas fa-comments"></i>
           <h3>Vision-Language Models</h3>
           <p>Connecting perception and language so robots can follow instructions and reason about the world.</p>
         </div>
         <div class="work-card">
-          <i class="fas fa-person-walking"></i>
+          <i aria-hidden="true" class="fas fa-person-walking"></i>
           <h3>Robotic Locomotion</h3>
           <p>Legged locomotion and control with LocoMuJoCo &amp; Isaac Sim — from dynamic path planning to low-level motor control.</p>
         </div>
@@ -222,7 +244,7 @@
             <h4>The University of Texas Rio Grande Valley</h4>
             <p>Completed a 9-week research program on the carbon footprint and energy usage of cryptocurrency, presenting findings in a research poster.</p>
             <div class="chips"><span>Research</span><span>Data Analysis</span></div>
-            <div class="project-links"><a href="https://www.linkedin.com/in/hector-lugo-3rd/overlay/1635503453796/single-media-viewer/?profileId=ACoAADJjirIBu_xHOO6zG1x6uOSxLvSuApNlTIE" target="_blank" rel="noopener" class="project-link"><i class="fas fa-file-lines"></i> Poster</a></div>
+            <div class="project-links"><a href="https://www.linkedin.com/in/hector-lugo-3rd/overlay/1635503453796/single-media-viewer/?profileId=ACoAADJjirIBu_xHOO6zG1x6uOSxLvSuApNlTIE" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fas fa-file-lines"></i> Poster</a></div>
           </div>
         </div>
       </div>
@@ -238,74 +260,74 @@
         <article class="project-card">
           <div class="project-head">
             <span class="project-index">01</span>
-            <i class="fas fa-comments"></i>
+            <i aria-hidden="true" class="fas fa-comments"></i>
           </div>
           <h3>Vision-Language Models</h3>
           <p>Experiments connecting vision and language — grounding instructions in what a model sees so an agent can follow directions and reason about a scene.</p>
           <div class="chips"><span>VLMs</span><span>Reinforcement Learning</span><span>Transformers</span><span>Multimodal</span><span>PyTorch</span></div>
           <div class="project-links">
-            <a href="https://github.com/Wavy-Hec/VLM" target="_blank" rel="noopener" class="project-link"><i class="fa-brands fa-github"></i> GitHub</a>
+            <a href="https://github.com/Wavy-Hec/VLM" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fa-brands fa-github"></i> GitHub</a>
           </div>
         </article>
         <article class="project-card">
           <div class="project-head">
             <span class="project-index">02</span>
-            <i class="fas fa-robot"></i>
+            <i aria-hidden="true" class="fas fa-robot"></i>
           </div>
           <h3>RL Isaac Lab Framework</h3>
           <p>A reinforcement-learning framework built on Isaac Lab for robotic simulation and training — multi-agent systems and legged locomotion in physics-based environments, with LocoMuJoCo for imitation and benchmarking.</p>
           <div class="chips"><span>Isaac Lab</span><span>LocoMuJoCo</span><span>Reinforcement Learning</span><span>Robotic Locomotion</span></div>
           <div class="project-links">
-            <a href="https://github.com/Wavy-Hec/RL_IsaacLab" target="_blank" rel="noopener" class="project-link"><i class="fa-brands fa-github"></i> GitHub</a>
-            <a href="https://miutrgv.github.io/" target="_blank" rel="noopener" class="project-link"><i class="fas fa-flask"></i> Lab</a>
+            <a href="https://github.com/Wavy-Hec/RL_IsaacLab" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fa-brands fa-github"></i> GitHub</a>
+            <a href="https://miutrgv.github.io/" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fas fa-flask"></i> Lab</a>
           </div>
         </article>
         <article class="project-card">
           <div class="project-head">
             <span class="project-index">03</span>
-            <i class="fas fa-wave-square"></i>
+            <i aria-hidden="true" class="fas fa-wave-square"></i>
           </div>
           <h3>Signal Denoising — Idaho National Lab</h3>
           <p>ML for smart-grid anomaly detection: a ResNet autoencoder denoises noisy TDMS signals, with FFT preprocessing and HPC tuning that cut training time by over 93% (30 days → 1–2 days).</p>
           <div class="chips"><span>ResNet Autoencoder</span><span>FFT</span><span>Signal Processing</span><span>PyTorch</span></div>
           <div class="project-links">
-            <a href="https://github.com/IdahoLabUnsupported/FFT-Denoising" target="_blank" rel="noopener" class="project-link"><i class="fa-brands fa-github"></i> GitHub</a>
+            <a href="https://github.com/IdahoLabUnsupported/FFT-Denoising" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fa-brands fa-github"></i> GitHub</a>
           </div>
         </article>
         <article class="project-card">
           <div class="project-head">
             <span class="project-index">04</span>
-            <i class="fas fa-eye"></i>
+            <i aria-hidden="true" class="fas fa-eye"></i>
           </div>
           <h3>Object Detection with YOLO</h3>
           <p>Real-time object detection using YOLO for computer-vision applications in robotics and autonomous systems.</p>
           <div class="chips"><span>YOLO</span><span>Computer Vision</span><span>OpenCV</span><span>Deep Learning</span></div>
           <div class="project-links">
-            <a href="https://github.com/Wavy-Hec/ObjectDetection" target="_blank" rel="noopener" class="project-link"><i class="fa-brands fa-github"></i> GitHub</a>
+            <a href="https://github.com/Wavy-Hec/ObjectDetection" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fa-brands fa-github"></i> GitHub</a>
           </div>
         </article>
         <article class="project-card">
           <div class="project-head">
             <span class="project-index">05</span>
-            <i class="fas fa-compress-arrows-alt"></i>
+            <i aria-hidden="true" class="fas fa-compress-arrows-alt"></i>
           </div>
           <h3>Senior AE Project — RL Compression</h3>
           <p>Reinforcement learning for neural-network compression — efficient deployment in resource-constrained environments and the impact of compression on RL performance.</p>
           <div class="chips"><span>Reinforcement Learning</span><span>Neural Compression</span><span>PyTorch</span><span>Python</span></div>
           <div class="project-links">
-            <a href="https://github.com/Wavy-Hec/Senior_AEproject" target="_blank" rel="noopener" class="project-link"><i class="fa-brands fa-github"></i> GitHub</a>
+            <a href="https://github.com/Wavy-Hec/Senior_AEproject" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fa-brands fa-github"></i> GitHub</a>
           </div>
         </article>
         <article class="project-card">
           <div class="project-head">
             <span class="project-index">06</span>
-            <i class="fas fa-train"></i>
+            <i aria-hidden="true" class="fas fa-train"></i>
           </div>
           <h3>Summer REU — Railway Systems</h3>
           <p>Research Experience for Undergraduates on intelligent railway systems — ML for predictive maintenance, route optimization, and safety analysis across transportation networks.</p>
           <div class="chips"><span>Machine Learning</span><span>Data Analysis</span><span>Predictive Modeling</span></div>
           <div class="project-links">
-            <a href="https://github.com/Wavy-Hec/summer-REU-project" target="_blank" rel="noopener" class="project-link"><i class="fa-brands fa-github"></i> GitHub</a>
+            <a href="https://github.com/Wavy-Hec/summer-REU-project" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fa-brands fa-github"></i> GitHub</a>
           </div>
         </article>
       </div>
@@ -352,7 +374,7 @@
       <p class="kicker">// résumé</p>
       <h2 class="section-title">Résumé <span class="hl">/ cv</span></h2>
       <div class="resume-actions">
-        <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn"><i class="fas fa-arrow-down"></i> Download PDF</a>
+        <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn"><i aria-hidden="true" class="fas fa-arrow-down"></i> Download PDF</a>
       </div>
       <div class="resume-grid">
         <div class="resume-block">
@@ -397,26 +419,23 @@
       <h2 class="section-title">Beyond the <span class="hl">code</span></h2>
       <div class="beyond-grid">
         <article class="beyond-card">
-          <i class="fas fa-gamepad"></i>
+          <i aria-hidden="true" class="fas fa-gamepad"></i>
           <h3>Metal Gear Solid 2</h3>
           <p>My favorite game — I've replayed it more times than I should admit. That's Raiden up top.</p>
         </article>
         <article class="beyond-card">
-          <i class="fas fa-hand-fist"></i>
+          <i aria-hidden="true" class="fas fa-hand-fist"></i>
           <h3>Taekwondo</h3>
           <p>I train Taekwondo. It keeps me disciplined and clears my head.</p>
         </article>
         <article class="beyond-card">
-          <i class="fas fa-mountain"></i>
+          <i aria-hidden="true" class="fas fa-mountain"></i>
           <h3>Hiking</h3>
           <p>I hike when I can. The goal is to summit a real mountain.</p>
         </article>
       </div>
       <div class="terminal">
         <div class="terminal-bar">
-          <span class="term-dot red"></span>
-          <span class="term-dot yellow"></span>
-          <span class="term-dot green"></span>
           <span class="terminal-title">hector@big-shell: ~</span>
         </div>
         <div class="terminal-body">
@@ -443,7 +462,8 @@
       <h2 class="section-title">Get in <span class="hl">touch</span></h2>
       <div class="codec-call">
         <div class="codec-portrait cc-left">
-          <img src="headshot-dither.png" data-light="headshot-dither.png" data-codec="headshot-dither-green.png" alt="Hector Lugo">
+          <img src="headshot-dither.png" width="200" height="200" data-light="headshot-dither.png" data-codec="headshot-dither-green.png" alt="Hector Lugo">
+          <script>if(document.documentElement.dataset.theme==='codec'){var i=document.currentScript.previousElementSibling;i.src=i.dataset.codec;}</script>
           <span class="codec-name">HECTOR</span>
           <span class="codec-mhz">140.85</span>
         </div>
@@ -453,7 +473,8 @@
           <span class="codec-status">▸ incoming transmission · 140.85</span>
         </div>
         <div class="codec-portrait cc-right">
-          <img src="raiden-dither.png" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" alt="Raiden">
+          <img src="raiden-dither.png" width="482" height="442" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" alt="Raiden">
+          <script>if(document.documentElement.dataset.theme==='codec'){var i=document.currentScript.previousElementSibling;i.src=i.dataset.codec;}</script>
           <span class="codec-name">RAIDEN</span>
           <span class="codec-mhz">140.85</span>
         </div>
@@ -464,24 +485,25 @@
           <p>I'm always interested in new opportunities and research collaborations. Whether you have a project in mind or just want to connect, drop me a line.</p>
           <div class="command-block">
             <code><span class="term-prompt">$</span> echo $EMAIL<br><span class="cmd-out">hlugo576@gmail.com</span></code>
-            <button type="button" class="copy-btn" data-copy="hlugo576@gmail.com" title="Copy email"><i class="fas fa-copy"></i></button>
+            <button type="button" class="copy-btn" data-copy="hlugo576@gmail.com" title="Copy email" aria-label="Copy email address"><i aria-hidden="true" class="fas fa-copy"></i></button>
           </div>
           <div class="contact-details">
-            <div class="contact-item"><i class="fas fa-envelope"></i><div><h4>Email</h4><p>hlugo576@gmail.com</p></div></div>
-            <div class="contact-item"><i class="fas fa-map-marker-alt"></i><div><h4>Location</h4><p>Available Worldwide</p></div></div>
-            <div class="contact-item"><i class="fas fa-clock"></i><div><h4>Response Time</h4><p>Within 24 hours</p></div></div>
+            <div class="contact-item"><i aria-hidden="true" class="fas fa-envelope"></i><div><h4>Email</h4><p>hlugo576@gmail.com</p></div></div>
+            <div class="contact-item"><i aria-hidden="true" class="fas fa-map-marker-alt"></i><div><h4>Location</h4><p>Available Worldwide</p></div></div>
+            <div class="contact-item"><i aria-hidden="true" class="fas fa-clock"></i><div><h4>Response Time</h4><p>Within 24 hours</p></div></div>
           </div>
         </div>
-        <form class="contact-form" id="contact-form">
+        <!-- action/method give no-JS visitors a real POST fallback (Web3Forms accepts plain HTML posts); the JS handler preventDefaults and keeps the AJAX path primary -->
+        <form class="contact-form" id="contact-form" action="https://api.web3forms.com/submit" method="POST">
           <!-- Web3Forms: get your free access key at https://web3forms.com (enter your email, it's emailed to you) and paste it below. -->
           <input type="hidden" name="access_key" value="61eedb2b-902c-4041-beef-455c06ebb945">
           <!-- Anti-spam honeypot: bots fill this, humans never see it. -->
           <input type="checkbox" name="botcheck" style="display:none;" tabindex="-1" autocomplete="off">
-          <div class="form-group"><input type="text" id="name" name="name" placeholder="Your Name" aria-label="Your name" required></div>
-          <div class="form-group"><input type="email" id="email" name="email" placeholder="Your Email" aria-label="Your email" required></div>
-          <div class="form-group"><input type="text" id="subject" name="subject" placeholder="Subject" aria-label="Subject" required></div>
-          <div class="form-group"><textarea id="message" name="message" placeholder="Your Message" rows="5" aria-label="Your message" required></textarea></div>
-          <button type="submit" class="btn"><i class="fas fa-paper-plane"></i> Send Message</button>
+          <div class="form-group"><label for="name">Name</label><input type="text" id="name" name="name" placeholder="Your Name" autocomplete="name" required></div>
+          <div class="form-group"><label for="email">Email</label><input type="email" id="email" name="email" placeholder="Your Email" autocomplete="email" required></div>
+          <div class="form-group"><label for="subject">Subject</label><input type="text" id="subject" name="subject" placeholder="Subject" required></div>
+          <div class="form-group"><label for="message">Message</label><textarea id="message" name="message" placeholder="Your Message" rows="5" required></textarea></div>
+          <button type="submit" class="btn"><i aria-hidden="true" class="fas fa-paper-plane"></i> Send Message</button>
         </form>
       </div>
     </div>
@@ -491,16 +513,17 @@
   <footer>
     <div class="container footer-content">
       <p>© 2026 Hector Lugo · built with too much coffee</p>
+      <!-- Touch-reachable launcher for the hidden stealth mini-game (Konami code still works on keyboards) -->
+      <button type="button" class="codec-launch" id="codec-launch" title="Incoming codec call" aria-label="CODEC 140.85 — launch the codec infiltration mini-game">CODEC 140.85</button>
       <div class="footer-social">
-        <a href="https://linkedin.com/in/hector-lugo-3rd" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
-        <a href="https://github.com/Wavy-Hec" target="_blank" rel="noopener" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
-        <a href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&hl=en" target="_blank" rel="noopener" aria-label="Google Scholar"><i class="fa-brands fa-google-scholar"></i></a>
+        <a href="https://linkedin.com/in/hector-lugo-3rd" target="_blank" rel="noopener" aria-label="LinkedIn"><i aria-hidden="true" class="fa-brands fa-linkedin-in"></i></a>
+        <a href="https://github.com/Wavy-Hec" target="_blank" rel="noopener" aria-label="GitHub"><i aria-hidden="true" class="fa-brands fa-github"></i></a>
+        <a href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&hl=en" target="_blank" rel="noopener" aria-label="Google Scholar"><i aria-hidden="true" class="fa-brands fa-google-scholar"></i></a>
       </div>
     </div>
   </footer>
 
-  <script src="dither.js?v=12"></script>
-  <script src="radar.js?v=12"></script>
-  <script src="script.js?v=12"></script>
+  <!-- Scripts moved to <head> with defer (earlier download start, same execution order) -->
+
 </body>
 </html>

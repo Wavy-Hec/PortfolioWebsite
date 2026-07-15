@@ -8,7 +8,8 @@
   const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const CELL = 3;          // CSS px per dither cell (chunkier = more retro)
-  const FPS = 18;          // background drift doesn't need 60fps
+  const FPS = 8;           // drift is so slow that 8fps reads identically to 18
+                           // and roughly halves the constant CPU/battery cost
   const DRIFT = 0.000005;      // field drift speed (per ms)
 
   // Theme-dependent ink (set by syncTheme; codec mode = green phosphor)
@@ -147,8 +148,12 @@
     render(now);
   }
 
+  // The starwars theme hides the canvas entirely (CSS starfield instead) —
+  // no point burning CPU rendering into a display:none canvas.
+  const hiddenByTheme = () => document.documentElement.dataset.theme === 'starwars';
+
   function start() {
-    if (raf === null && !REDUCED_MOTION) raf = requestAnimationFrame(loop);
+    if (raf === null && !REDUCED_MOTION && !hiddenByTheme()) raf = requestAnimationFrame(loop);
   }
   function stop() {
     if (raf !== null) { cancelAnimationFrame(raf); raf = null; }
@@ -164,11 +169,14 @@
     document.hidden ? stop() : start();
   });
 
-  // Re-ink when codec mode toggles (works under reduced motion too)
+  // Re-ink when the theme toggles (works under reduced motion too); pause the
+  // loop while starwars hides the canvas, resume when it comes back.
   window.addEventListener('themechange', () => {
     syncTheme();
+    if (hiddenByTheme()) { stop(); return; }
     fillInk();
     render(performance.now());
+    start();
   });
 
   syncTheme();

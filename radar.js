@@ -7,7 +7,10 @@
   'use strict';
 
   const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (window.matchMedia('(max-width: 600px)').matches) return;
+  // Live breakpoint check (not one-shot): the radar appears if the viewport
+  // grows past 600px (e.g. phone rotated to landscape) and the draw loop
+  // stops while the CSS breakpoint hides it — no drawing into a hidden canvas.
+  const smallScreen = window.matchMedia('(max-width: 600px)');
 
   const SIZE = 132;
   const R = SIZE / 2;
@@ -126,16 +129,29 @@
   }
 
   let raf = null, prev = 0;
+  const FRAME_MS = 1000 / 30; // decorative sweep doesn't need 60fps
   function loop(now) {
     raf = requestAnimationFrame(loop);
+    if (now - prev < FRAME_MS) return;
     const dt = now - prev; prev = now;
     sweep += dt * 0.0023;
     if (sweep > Math.PI * 2) sweep -= Math.PI * 2;
     draw(dt);
   }
-  function start() { if (raf === null && !REDUCED) { prev = performance.now(); raf = requestAnimationFrame(loop); } }
+  function start() {
+    if (raf === null && !REDUCED && !document.hidden && !smallScreen.matches) {
+      prev = performance.now();
+      raf = requestAnimationFrame(loop);
+    }
+  }
   function stop() { if (raf !== null) { cancelAnimationFrame(raf); raf = null; } }
   document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+
+  const onBreakpoint = () => {
+    if (smallScreen.matches) { stop(); } else { draw(0); start(); }
+  };
+  if (smallScreen.addEventListener) smallScreen.addEventListener('change', onBreakpoint);
+  else if (smallScreen.addListener) smallScreen.addListener(onBreakpoint); // older Safari
 
   draw(0); // static first frame (and the only frame under reduced motion)
   start();

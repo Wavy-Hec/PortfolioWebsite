@@ -9,10 +9,11 @@
   --ink: #2f54cc;          /* primary blue — headings, accents, links */
   --ink-strong: #2746b4;   /* deeper blue for big headings */
   --text: #46568c;         /* body text (blue-gray) */
-  --text-dim: #687494;     /* secondary (4.7:1 on white) */
-  --text-muted: #8089a8;   /* muted (3.5:1 on white) */
+  --text-dim: #5d6a8c;     /* secondary (4.7:1 on --bg, 5.4:1 on white) */
+  --text-muted: #5f6987;   /* muted (4.8:1 on --bg — AA even for small text) */
   --border: #ccd8f1;       /* hairline light blue */
   --border-strong: #a7bbe7;
+  --input-border: #7487b5; /* form/control boundaries — ≥3:1 vs panel (WCAG 1.4.11) */
   --highlight: #2f54cc;
   --shadow-lift: 0 10px 28px rgba(39, 70, 180, .10);
   --wash: #f5f8fe;
@@ -42,9 +43,10 @@ html[data-theme="codec"] {
   --ink-strong: #a4ecb1;
   --text: #a9cbae;
   --text-dim: #84ab8b;
-  --text-muted: #648a6c;
+  --text-muted: #6f9a78;   /* 5.0:1 on --panel-2 (placeholders) */
   --border: #1e3526;
   --border-strong: #386041;
+  --input-border: #4e8a5e; /* ≥3:1 vs panel (WCAG 1.4.11) */
   --highlight: #6fcf83;
   --shadow-lift: 0 10px 28px rgba(0, 0, 0, .55);
   --wash: #0d2012;
@@ -58,6 +60,42 @@ html[data-theme="codec"] {
   --header-bg: rgba(8, 18, 9, .85);
   --header-bg-solid: rgba(8, 18, 9, .98);
   --error: #e0606d;
+}
+
+/* ===== Star Wars mode — imperial tactical terminal (Andor x Clone Wars) ===== */
+html[data-theme="starwars"] {
+  color-scheme: dark;
+  --bg: #0b0d10;             /* gunmetal near-black */
+  --bg-2: #10141a;
+  --panel: #12161d;          /* graphite console panel */
+  --panel-2: #182029;
+  --ink: #f0a832;            /* ISB terminal amber — accents, buttons, prompts */
+  --ink-strong: #ffc763;     /* lifted amber — big headings (9.5:1 on --bg) */
+  --text: #b6c5cc;           /* cool teal-white body (~10.5:1 on --bg) */
+  --text-dim: #8da0a9;
+  --text-muted: #84939c;     /* ~5:1 on --panel-2 (placeholders) */
+  --border: #242c36;
+  --border-strong: #41505f;
+  --input-border: #8a7648;   /* amber-steel — ≥3:1 vs panel (WCAG 1.4.11) */
+  --highlight: #f0a832;
+  --shadow-lift: 0 10px 28px rgba(0, 0, 0, .6), 0 0 16px rgba(240, 168, 50, .05);
+  --wash: #101720;
+  --grid-line: rgba(240, 168, 50, .035);   /* amber blueprint grid */
+  --on-accent: #151006;      /* near-black warm — text on amber (9.3:1) */
+  --accent-tint: rgba(240, 168, 50, .08);
+  --band: rgba(18, 22, 29, .6);
+  --codec-band: rgba(22, 19, 12, .7);      /* warm dark under amber scanlines */
+  --scanline: rgba(240, 168, 50, .055);
+  --scanline-soft: rgba(240, 168, 50, .04);
+  --header-bg: rgba(11, 13, 16, .85);
+  --header-bg-solid: rgba(11, 13, 16, .98);
+  --error: #e5484d;          /* imperial red — alerts only */
+  /* theme-scoped extras (referenced only by starwars-scoped rules) */
+  --sw-holo: #4aa8ff;        /* clone-trooper hologram blue (7.6:1 on --bg) */
+  --sw-holo-glow: rgba(74, 168, 255, .35);
+  --sw-amber-glow: rgba(240, 168, 50, .3);
+  --sw-gold: #c9a24b;        /* restrained Republic gold */
+  --sw-mono: 'Share Tech Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -178,14 +216,20 @@ nav a:hover::after, nav a.active::after { transform: scaleX(1); }
   text-transform: uppercase;
   color: var(--ink);
   background: transparent;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--input-border);
   border-radius: var(--radius-sm);
   padding: .8rem 1.1rem;
   cursor: pointer;
   transition: all .2s ease;
 }
 .codec-toggle:hover { border-color: var(--ink); background: var(--accent-tint); }
-.codec-toggle[aria-pressed="true"] { background: var(--ink); color: var(--on-accent); border-color: var(--ink); }
+.codec-toggle-text { display: inline-block; min-width: 8ch; text-align: left; }
+
+/* Screen-reader-only content (theme-change announcements) */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+}
 
 /* Skip link (visible on keyboard focus only) */
 .skip-link {
@@ -208,6 +252,7 @@ nav a:hover::after, nav a.active::after { transform: scaleX(1); }
   position: fixed;
   top: 16vh;
   left: 50%;
+  transform: translateX(-50%); /* base centering — keyframes only cover 0-0.15s and 1.1s+ */
   z-index: 3000;
   font-family: 'Share Tech Mono', monospace;
   font-size: 8rem;
@@ -231,7 +276,11 @@ nav a:hover::after, nav a.active::after { transform: scaleX(1); }
 }
 
 /* ===== Codec dial-in loader ===== */
-body:not(.loaded) { overflow: hidden; }
+/* Pure-CSS failsafe: if script.js never runs (fetch failure, early error), the
+   loader self-hides and scrolling unlocks after 6s. The normal JS path removes
+   the loader long before the delay elapses, so this never plays. */
+body:not(.loaded) { overflow: hidden; animation: loaderUnlock 0s 6s forwards; }
+@keyframes loaderUnlock { to { overflow-y: auto; } }
 .codec-loader {
   position: fixed;
   inset: 0;
@@ -241,7 +290,9 @@ body:not(.loaded) { overflow: hidden; }
   justify-content: center;
   background: var(--bg);
   transition: opacity .5s ease;
+  animation: loaderFailsafe .5s ease 6s forwards;
 }
+@keyframes loaderFailsafe { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 .codec-loader.done { opacity: 0; visibility: hidden; pointer-events: none; }
 .codec-loader-box {
   display: flex;
@@ -288,8 +339,14 @@ body:not(.loaded) { overflow: hidden; }
 }
 @media (max-width: 600px) { .soliton-radar { display: none; } }
 
-/* ===== Custom reticle cursor (codec mode) ===== */
-.reticle-on, .reticle-on * { cursor: none !important; }
+/* ===== Custom reticle cursor (codec mode) =====
+   The OS cursor is hidden only over passive content; links/buttons keep the
+   pointer and text fields keep the I-beam so affordances (and OS accessibility
+   cursors) survive over interactive elements. */
+.reticle-on body { cursor: none; }
+.reticle-on a, .reticle-on button { cursor: pointer; }
+.reticle-on input, .reticle-on textarea, .reticle-on select,
+.reticle-on .command-block code { cursor: text; }
 .reticle {
   position: fixed;
   top: 0; left: 0;
@@ -337,8 +394,13 @@ html[data-theme="codec"] .crt { opacity: 1; animation: crtFlicker 7s steps(1) in
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   html[data-theme="codec"] .crt { animation: none; }
   .codec-wave i { animation: none; height: 11px; }
+  .fade-in { transition: none; transform: none; opacity: 1; }
+  .work-card:hover, .project-card:hover, .beyond-card:hover, .timeline-item:hover, .contact-item:hover { transform: none; }
+  .mgs-alert { animation: none; transform: translateX(-50%); }
+  .term-cursor::after, .typing-animation::after { animation: none; } /* matches 404.html */
 }
 
 .mobile-menu-toggle {
@@ -776,7 +838,6 @@ section { padding: 10rem 6%; position: relative; }
   background: var(--panel-2);
   border-bottom: 1px solid var(--border);
 }
-.term-dot { display: none; }
 .terminal-title { font-family: 'Share Tech Mono', monospace; font-size: 1.3rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
 .terminal-body { padding: 2rem; font-family: 'Share Tech Mono', monospace; font-size: 1.4rem; line-height: 1.9; position: relative; }
 /* faint CRT scanlines */
@@ -844,18 +905,28 @@ section { padding: 10rem 6%; position: relative; }
   padding: 2.8rem;
 }
 .form-group { margin-bottom: 1.6rem; }
+.form-group label {
+  display: block;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.25rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: .5rem;
+}
 .form-group input, .form-group textarea {
   width: 100%;
   padding: 1.3rem;
   background: var(--panel-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--input-border); /* ≥3:1 vs panel — fields must be findable without focus */
   border-radius: var(--radius-sm);
   color: var(--text);
   font-family: 'Spectral', serif;
   font-size: 1.6rem; /* 16px — prevents iOS Safari focus auto-zoom */
   transition: border-color .2s ease;
 }
-.form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--ink); }
+/* No outline:none here — keyboard focus keeps the global 2px :focus-visible outline */
+.form-group input:focus, .form-group textarea:focus { border-color: var(--ink); }
 .form-group input::placeholder, .form-group textarea::placeholder { color: var(--text-muted); }
 .contact-form .btn { width: 100%; justify-content: center; }
 
@@ -866,8 +937,21 @@ footer {
   background: var(--header-bg);
   backdrop-filter: blur(8px);
 }
-.footer-content { display: flex; align-items: center; justify-content: space-between; }
+.footer-content { display: flex; align-items: center; justify-content: space-between; gap: 1.6rem; }
 .footer-content p { font-family: 'Share Tech Mono', monospace; font-size: 1.3rem; color: var(--text-dim); }
+/* Footer codec link — touch-reachable launcher for the stealth mini-game */
+.codec-launch {
+  background: none;
+  border: 0;
+  padding: .4rem 0;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.3rem;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color .2s ease;
+}
+.codec-launch:hover { color: var(--ink); }
 .footer-social { display: flex; gap: 1.6rem; }
 .footer-social a { color: var(--ink); font-size: 1.9rem; text-decoration: none; transition: color .2s ease; }
 .footer-social a:hover { color: var(--ink-strong); }
@@ -885,6 +969,196 @@ footer {
 a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
+}
+
+/* ===== Star Wars mode — theme-scoped restyles ===== */
+
+/* --- Background: dim starfield replaces the dither canvas --- */
+html[data-theme="starwars"] #dither-bg { display: none; }
+
+html[data-theme="starwars"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    /* fine distant stars (230px tile) — dim, severe */
+    radial-gradient(1px 1px at 25px 35px,  rgba(190,210,235,.5)  50%, transparent 51%),
+    radial-gradient(1px 1px at 110px 90px, rgba(190,210,235,.35) 50%, transparent 51%),
+    radial-gradient(1px 1px at 170px 20px, rgba(190,210,235,.45) 50%, transparent 51%),
+    radial-gradient(1px 1px at 60px 140px, rgba(190,210,235,.3)  50%, transparent 51%),
+    radial-gradient(1px 1px at 200px 165px,rgba(190,210,235,.4)  50%, transparent 51%),
+    /* mid stars (390px tile) — one amber-tinted for instrument warmth */
+    radial-gradient(1.5px 1.5px at 80px 50px,   rgba(214,230,250,.6)  50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 240px 190px, rgba(150,195,245,.5)  50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 320px 120px, rgba(240,205,130,.45) 50%, transparent 51%),
+    /* rare big stars (520px tile) */
+    radial-gradient(2px 2px at 130px 230px, rgba(225,238,255,.7) 50%, transparent 51%),
+    radial-gradient(2px 2px at 420px 60px,  rgba(170,205,250,.6) 50%, transparent 51%);
+  background-size:
+    230px 230px, 230px 230px, 230px 230px, 230px 230px, 230px 230px,
+    390px 390px, 390px 390px, 390px 390px,
+    520px 520px, 520px 520px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme="starwars"] body::after { animation: swTwinkle 9s ease-in-out infinite alternate; }
+}
+@keyframes swTwinkle { from { opacity: .8; } to { opacity: 1; } }
+
+/* Static CRT vignette (no flicker — severe, not glitchy). Scanlines come from
+   .crt::after; the codec-only flicker animation is NOT applied here. */
+html[data-theme="starwars"] .crt { opacity: .5; }
+
+/* --- Brutalist geometry: square every corner --- */
+html[data-theme="starwars"] .work-card,
+html[data-theme="starwars"] .project-card,
+html[data-theme="starwars"] .beyond-card,
+html[data-theme="starwars"] .timeline-item,
+html[data-theme="starwars"] .contact-item,
+html[data-theme="starwars"] .stat,
+html[data-theme="starwars"] .lab-affiliation,
+html[data-theme="starwars"] .resume-block,
+html[data-theme="starwars"] .terminal,
+html[data-theme="starwars"] .contact-form,
+html[data-theme="starwars"] .codec-call,
+html[data-theme="starwars"] .command-block,
+html[data-theme="starwars"] .btn,
+html[data-theme="starwars"] .chips span,
+html[data-theme="starwars"] .project-link,
+html[data-theme="starwars"] .project-index,
+html[data-theme="starwars"] .copy-btn,
+html[data-theme="starwars"] .codec-toggle,
+html[data-theme="starwars"] .social-icons a,
+html[data-theme="starwars"] .home-img img,
+html[data-theme="starwars"] .codec-portrait img,
+html[data-theme="starwars"] .form-group input,
+html[data-theme="starwars"] .form-group textarea { border-radius: 0; }
+
+/* --- Header / nav: utilitarian mono, amber hairline, holo underline --- */
+html[data-theme="starwars"] header { box-shadow: 0 1px 0 rgba(240, 168, 50, .12); }
+html[data-theme="starwars"] .logo { font-family: var(--sw-mono); letter-spacing: 3px; font-weight: 400; }
+html[data-theme="starwars"] nav a { font-family: var(--sw-mono); letter-spacing: 2.5px; font-size: 1.35rem; }
+html[data-theme="starwars"] nav a:hover,
+html[data-theme="starwars"] nav a.active { color: var(--sw-holo); }
+html[data-theme="starwars"] nav a::after {
+  height: 2px;
+  background: var(--sw-holo);
+  box-shadow: 0 0 6px var(--sw-holo), 0 0 14px var(--sw-holo-glow);
+}
+
+/* --- Section headings: mono, uppercase, two-tone rule (amber | blue) --- */
+html[data-theme="starwars"] .kicker { font-family: var(--sw-mono); font-weight: 400; }
+html[data-theme="starwars"] .section-title {
+  font-family: var(--sw-mono);
+  font-weight: 400;
+  font-size: 3rem;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+html[data-theme="starwars"] .section-title::after {
+  width: 120px;
+  height: 3px;
+  background-image: linear-gradient(to right,
+    var(--ink) 0 34px, transparent 34px 40px, var(--sw-holo) 40px 100%);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+/* hologram flicker on headings */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme="starwars"] .section-title { animation: swHolo 9s steps(1) infinite; }
+}
+@keyframes swHolo {
+  0%, 93%, 100% { opacity: 1; }
+  94% { opacity: .72; } 95% { opacity: 1; }
+  97% { opacity: .85; } 98% { opacity: 1; }
+}
+
+/* --- Hero: terminal boot flicker (replaces the movie-crawl entrance) --- */
+html[data-theme="starwars"] .home-content h1 {
+  letter-spacing: 0;
+  text-shadow: 0 0 26px rgba(240, 168, 50, .22);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme="starwars"] .home-content h1 { animation: swBoot .7s steps(2, jump-none) 1; }
+}
+@keyframes swBoot {
+  0% { opacity: 0; } 25% { opacity: .6; } 40% { opacity: .25; }
+  60% { opacity: .9; } 75% { opacity: .55; } 100% { opacity: 1; }
+}
+/* accent spans go clone blue — the Clone Wars pop against amber */
+html[data-theme="starwars"] .hl { color: var(--sw-holo); text-shadow: 0 0 14px var(--sw-holo-glow); }
+
+/* --- Buttons: squared, mono, amber fill / holo outline --- */
+html[data-theme="starwars"] .btn {
+  font-family: var(--sw-mono);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 1.4rem;
+}
+html[data-theme="starwars"] .btn:hover { box-shadow: 0 0 12px var(--sw-amber-glow); }
+html[data-theme="starwars"] .btn-outline { color: var(--sw-holo); }
+html[data-theme="starwars"] .btn-outline:hover {
+  color: #8cc6ff;
+  border-color: var(--sw-holo);
+  background: rgba(74, 168, 255, .08);
+  box-shadow: 0 0 12px var(--sw-holo-glow);
+}
+
+/* --- Chips: amber telemetry tags --- */
+html[data-theme="starwars"] .chips span:hover { box-shadow: 0 0 8px var(--sw-amber-glow); }
+
+/* --- Cards: thin top rule = console module header --- */
+html[data-theme="starwars"] .work-card,
+html[data-theme="starwars"] .beyond-card,
+html[data-theme="starwars"] .timeline-item { border-top: 2px solid var(--border-strong); }
+
+/* --- Project cards: dossier brackets in hologram blue --- */
+html[data-theme="starwars"] .project-card::before,
+html[data-theme="starwars"] .project-card::after { border-color: rgba(74, 168, 255, .5); }
+html[data-theme="starwars"] .project-card:hover::before,
+html[data-theme="starwars"] .project-card:hover::after { border-color: var(--sw-holo); }
+
+/* --- Links: clone blue --- */
+html[data-theme="starwars"] .lab-link {
+  color: var(--sw-holo);
+  text-decoration-color: var(--sw-holo);
+  text-decoration-thickness: 2px;
+}
+html[data-theme="starwars"] .lab-link:hover { color: #8cc6ff; }
+html[data-theme="starwars"] .project-link { color: var(--sw-holo); }
+html[data-theme="starwars"] .project-link:hover {
+  border-color: var(--sw-holo);
+  background: rgba(74, 168, 255, .06);
+  box-shadow: 0 0 8px var(--sw-holo-glow);
+}
+
+/* --- Timeline: holo-blue waypoint dots --- */
+html[data-theme="starwars"] .timeline-item::before {
+  background: var(--sw-holo);
+  box-shadow: 0 0 6px var(--sw-holo-glow);
+}
+
+/* --- Republic gold, used once: the sim-to-real pull-quote --- */
+html[data-theme="starwars"] .vr-quote { border-left-color: var(--sw-gold); }
+html[data-theme="starwars"] .vr-quote cite { color: var(--sw-gold); }
+
+/* --- Codec call -> holotable transmission. Portraits reuse the blue
+   (data-light) renders: invert(1) flips paper to black, hue-rotate(180)
+   swings dots back to blue, brightness lifts to hologram blue. --- */
+html[data-theme="starwars"] img[data-light] {
+  filter: invert(1) hue-rotate(180deg) brightness(1.45) saturate(.85)
+          drop-shadow(0 0 8px rgba(74, 168, 255, .28));
+  background: #fff;
+}
+html[data-theme="starwars"] .codec-line { color: var(--sw-holo); text-shadow: 0 0 10px var(--sw-holo-glow); }
+html[data-theme="starwars"] .codec-wave i { background: var(--sw-holo); }
+
+/* --- Form: amber focus glow --- */
+html[data-theme="starwars"] .form-group input:focus,
+html[data-theme="starwars"] .form-group textarea:focus {
+  box-shadow: 0 0 0 1px var(--ink), 0 0 12px rgba(240, 168, 50, .2);
 }
 
 /* ===== Responsive ===== */
