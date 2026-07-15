@@ -182,6 +182,21 @@ body::before {
   background-size: 58px 58px;
 }
 
+/* Theme atmosphere rig — two extra fixed paint surfaces for the dark themes.
+   Paints nothing in ink/codec (pseudos get content only under theme scopes).
+   z:-1 paint order is tree order: #dither-bg < .grain < .atmo < body::after. */
+.atmo {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.atmo::before,
+.atmo::after {
+  position: absolute;
+  inset: 0;
+}
+
 ::selection { background: var(--highlight); color: var(--on-accent); }
 
 .container { max-width: var(--maxw); margin: 0 auto; width: 100%; }
@@ -1146,6 +1161,57 @@ html[data-theme="starwars"] body::after {
 }
 @keyframes swTwinkle { from { opacity: .8; } to { opacity: 1; } }
 
+/* --- Tactical overlay under the starfield. .atmo::before = amber briefing
+   plot rising from the horizon (crossed grid + horizon rule + floor glow)
+   plus a holo-blue planet limb in the lower-left corner, all faded out above
+   38vh by a mask; .atmo::after = one holo-scan band drifting down. The
+   starfield on body::after paints on top (star dots over faint washes —
+   ordering is imperceptible). No mask support = grid at full height at .07:
+   acceptable degradation. --- */
+html[data-theme="starwars"] .atmo::before {
+  content: '';
+  background-image:
+    /* planet limb — dark disc, thin holo rim, atmosphere haze (lower left;
+       radar widget owns the lower right) */
+    radial-gradient(circle at -14% 118%, rgba(4, 6, 9, .55) 0 33vw,
+      rgba(74, 168, 255, .085) 33.1vw 33.5vw,
+      rgba(74, 168, 255, .03) 34.2vw, transparent 36vw),
+    /* horizon rule — the plot's crisp top edge */
+    linear-gradient(0deg, transparent 0 calc(30vh - 1px),
+      rgba(240, 168, 50, .08) calc(30vh - 1px) 30vh, transparent 30vh),
+    /* crossed tactical grid — rhombus mesh reads as a perspective floor
+       once the mask fades it with height */
+    repeating-linear-gradient(64deg,  rgba(240, 168, 50, .07) 0 1px, transparent 1px 64px),
+    repeating-linear-gradient(-64deg, rgba(240, 168, 50, .07) 0 1px, transparent 1px 64px),
+    /* amber floor glow under the plot */
+    radial-gradient(ellipse 120% 30% at 50% 104%, rgba(240, 168, 50, .05), transparent 70%);
+  -webkit-mask-image: linear-gradient(to top, #000 0 12vh, rgba(0, 0, 0, .5) 24vh, transparent 38vh);
+  mask-image: linear-gradient(to top, #000 0 12vh, rgba(0, 0, 0, .5) 24vh, transparent 38vh);
+}
+
+/* Holo-scan band — 18vh sheet with a 1px leading line, drifts down the
+   viewport then holds off-screen 28% of the cycle before re-entering.
+   Reduced motion: the base transform parks it as a static scan line at 62vh. */
+html[data-theme="starwars"] .atmo::after {
+  content: '';
+  inset: 0;
+  height: 18vh;
+  background-image:
+    linear-gradient(180deg, transparent 0, rgba(74, 168, 255, .03) 30%,
+      rgba(74, 168, 255, .06) 48% 52%, rgba(74, 168, 255, .03) 70%, transparent 100%),
+    linear-gradient(180deg, transparent calc(50% - 1px),
+      rgba(74, 168, 255, .08) calc(50% - 1px) 50%, transparent 50%);
+  transform: translateY(62vh);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme="starwars"] .atmo::after { animation: swScan 19s linear infinite; }
+}
+@keyframes swScan {
+  0%   { transform: translateY(-18vh); }
+  72%  { transform: translateY(100vh); }
+  100% { transform: translateY(100vh); }
+}
+
 /* Static CRT vignette (no flicker — severe, not glitchy). Scanlines come from
    .crt::after; the codec-only flicker animation is NOT applied here. */
 html[data-theme="starwars"] .crt { opacity: .5; }
@@ -1285,17 +1351,10 @@ html[data-theme="starwars"] .timeline-item::before {
 html[data-theme="starwars"] .vr-quote { border-left-color: var(--sw-gold); }
 html[data-theme="starwars"] .vr-quote cite { color: var(--sw-gold); }
 
-/* --- Codec call -> holotable transmission. The hero carries a dedicated
-   starwars render (data-starwars, swapped in by the pre-paint swapper and
-   script.js) and takes no filter; remaining portraits reuse the blue
-   (data-light) renders: invert(1) flips paper to black, hue-rotate(180)
-   swings dots back to blue, brightness lifts to hologram blue. --- */
-html[data-theme="starwars"] img[data-starwars] { filter: none; }
-html[data-theme="starwars"] img[data-light]:not([data-starwars]) {
-  filter: invert(1) hue-rotate(180deg) brightness(1.45) saturate(.85)
-          drop-shadow(0 0 8px rgba(74, 168, 255, .28));
-  background: #fff;
-}
+/* --- Codec call -> holotable transmission. Every themed portrait ships a
+   dedicated starwars render (data-starwars, pre-paint swapper + script.js):
+   amber headshot (local console) vs blue-ink Qui-Gon (incoming hologram —
+   SW holograms are blue). No recolor filters. --- */
 html[data-theme="starwars"] .codec-line { color: var(--sw-holo); text-shadow: 0 0 10px var(--sw-holo-glow); }
 html[data-theme="starwars"] .codec-wave i { background: var(--sw-holo); }
 
@@ -1315,47 +1374,95 @@ html[data-theme="starwars"] .soliton-label {
 
 /* ===== Gotham mode — theme-scoped restyles ===== */
 
-/* --- Background: skyline silhouette + twin searchlights replace the dither canvas --- */
+/* --- Background: hand-drawn Gotham nightscape (replaces the dither canvas).
+   Bottom to top: .atmo::before = sky (city-glow horizon, cloud bank, two hazy
+   far-tower rows drawn as irregular SVG silhouettes, ONE bat-signal beam +
+   cloud hit); .atmo::after = near skyline, a single hand-authored clip-path
+   silhouette with lit-window texture clipped inside the towers; body::after =
+   faint rain, the only animation. Deco rule: monochrome blue-gray, the beam
+   is the ONLY yellow. No repeating-gradient towers anywhere — every skyline
+   edge is a drawn polygon (varied widths AND heights, setbacks, spires, roof
+   details, uneven gaps) so the city never reads as a bar chart. */
 html[data-theme="gotham"] #dither-bg { display: none; }
 
-@property --gt-sweep { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+html[data-theme="gotham"] .atmo::before {
+  content: '';
+  background-image:
+    /* bat-signal hit — pale core + halo where the beam meets the cloud deck */
+    radial-gradient(ellipse 11% 5% at 91% 13%, rgba(255, 224, 130, .06), transparent 70%),
+    radial-gradient(ellipse 24% 11% at 91% 13%, rgba(238, 199, 61, .10), rgba(238, 199, 61, .03) 55%, transparent 75%),
+    /* beam — bright core inside a feathered wedge, rising from the rooftop
+       projector housing in the near skyline (leans ~7° right; tuned for
+       ~16:10, drift on other aspects is absorbed by the wide halo) */
+    conic-gradient(from 4.5deg at 86% 103%, transparent 0deg, rgba(238, 199, 61, .08) 1.5deg 3deg, transparent 4.5deg 360deg),
+    conic-gradient(from 1.5deg at 86% 103%, transparent 0deg, rgba(238, 199, 61, .06) 2deg 8.5deg, transparent 10.5deg 360deg),
+    /* far skyline — two hazy rows, lighter than the near silhouette, darker
+       than the horizon glow (atmospheric perspective). Hand-drawn SVG tiles
+       (840px / 1040px wide) with uneven tower widths, stepped setbacks and
+       one spire, so the repeat never scans as evenly-spaced bars */
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 840 100' preserveAspectRatio='none'><path fill='%230d1119' d='M0 100V57H26V43H58V62H96V30H104V18H116V30H126V62H170V49H214V66H262V27H272V38H306V62H338V52H354V62H398V36H442V22H452V36H470V62H514V45H548V58H590V24L596 12L602 24H610V58H654V40H704V64H744V33H788V57H840V100Z'/></svg>"),
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1040 100' preserveAspectRatio='none'><path fill='%230b0e15' d='M0 100V60H88V44H150V68H238V52H304V38H318V52H396V70H472V48H540V62H600V34H648V55H726V68H790V42H856V58H932V72H988V60H1040V100Z'/></svg>"),
+    /* low cloud bank drifting over the far towers */
+    radial-gradient(ellipse 70% 18% at 24% 92%, rgba(93, 124, 178, .07), transparent 70%),
+    radial-gradient(ellipse 90% 22% at 72% 96%, rgba(70, 95, 140, .06), transparent 72%),
+    /* city-glow horizon — sky brightens toward the rooftops */
+    linear-gradient(180deg, rgba(20, 28, 44, 0) 46%, rgba(20, 28, 44, .30) 78%, rgba(30, 42, 64, .48) 100%);
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat,
+                     repeat-x, repeat-x, no-repeat, no-repeat, no-repeat;
+  background-position: 0 0, 0 0, 0 0, 0 0,
+                       left bottom, 313px bottom, 0 0, 0 0, 0 0;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%,
+                   840px 15vh, 1040px 12vh, 100% 100%, 100% 100%, 100% 100%;
+}
 
+/* Near skyline — one designed silhouette (deco setbacks, a cathedral spire
+   at 29%, a water tower at 37%, a slanted roof at 52–56%, a thin antenna at
+   79%, and the GCPD projector housing at 86.5–88.5% that the beam rises
+   from). y% is relative to the 26vh strip; windows are clipped inside it. */
+html[data-theme="gotham"] .atmo::after {
+  content: '';
+  inset: auto 0 0 0;
+  height: 26vh;
+  background-color: #04050a;
+  background-image:
+    radial-gradient(1.5px 2.5px at 19px 15px, rgba(197, 214, 240, .18) 60%, transparent 61%),
+    radial-gradient(1px 2px at 47px 33px, rgba(197, 214, 240, .10) 60%, transparent 61%);
+  background-size: 83px 59px, 127px 73px;
+  clip-path: polygon(
+    0% 100%, 0% 40%, 5% 40%, 5% 62%, 7.5% 62%, 7.5% 84%,
+    10% 84%, 10% 30%, 11.5% 30%, 11.5% 12%, 13% 12%, 13% 30%, 14.5% 30%, 14.5% 84%,
+    18% 84%, 18% 56%, 23% 56%, 23% 44%, 24.5% 44%, 24.5% 84%,
+    27% 84%, 27% 20%, 29% 20%, 29.3% 2%, 29.8% 2%, 30.1% 20%, 32% 20%, 32% 84%,
+    35% 84%, 35% 66%, 36.6% 66%, 36.6% 62.5%, 37.3% 60.5%, 38% 62.5%, 38% 66%, 40% 66%, 40% 84%,
+    44% 84%, 44% 36%, 47% 36%, 47% 50%, 48.5% 50%, 48.5% 84%,
+    52% 84%, 52% 56%, 56% 63%, 56% 84%,
+    60% 84%, 60% 28%, 62% 28%, 62% 16%, 63.5% 16%, 63.5% 28%, 65.5% 28%, 65.5% 84%,
+    69% 84%, 69% 52%, 72.5% 52%, 72.5% 68%, 75% 68%, 75% 84%,
+    78% 84%, 78% 34%, 79.2% 34%, 79.3% 23%, 79.7% 23%, 79.8% 34%, 81% 34%, 81% 84%,
+    83% 84%, 83% 42%, 86.5% 42%, 86.5% 30%, 88.5% 30%, 88.5% 42%, 92% 42%, 92% 84%,
+    95% 84%, 95% 58%, 100% 58%, 100% 100%
+  );
+}
+
+/* Rain — two sparse dash sheets (2×28px and 2×22px streaks), cold blue-gray,
+   max alpha .055. Loops seamlessly: 280px shift = 2 tiles of layer 1, 1 tile
+   of layer 2. Reduced motion: no animation — streaks stay as static texture. */
 html[data-theme="gotham"] body::after {
   content: '';
   position: fixed;
-  inset: 0;
+  inset: -280px 0 0 0;
   z-index: -1;
   pointer-events: none;
-  --gt-sweep: 0deg;
   background-image:
-    /* skyline row A — tall towers, darker than --bg (silhouette) */
-    repeating-linear-gradient(90deg,
-      #05060a 0 42px, transparent 42px 74px,
-      #05060a 74px 128px, transparent 128px 166px,
-      #05060a 166px 208px, transparent 208px 236px),
-    /* skyline row B — shorter towers, offset rhythm */
-    repeating-linear-gradient(90deg,
-      #070910 0 64px, transparent 64px 90px,
-      #070910 90px 132px, transparent 132px 178px),
-    /* searchlight L — bat-signal yellow wedge from below the horizon */
-    conic-gradient(from calc(-12deg + var(--gt-sweep)) at 18% 118%,
-      transparent 0deg, rgba(238, 199, 61, .05) 3.5deg, transparent 7deg 360deg),
-    /* searchlight R — cold steel wedge, counter-sweeping */
-    conic-gradient(from calc(9deg - var(--gt-sweep)) at 82% 122%,
-      transparent 0deg, rgba(196, 210, 232, .04) 3.5deg, transparent 7deg 360deg),
-    /* low cloud wash the beams graze */
-    radial-gradient(ellipse 120% 42% at 50% 112%, rgba(93, 124, 178, .10), transparent 68%),
-    radial-gradient(ellipse 70% 30% at 20% 108%, rgba(238, 199, 61, .045), transparent 70%);
-  background-repeat: repeat-x, repeat-x, no-repeat, no-repeat, no-repeat, no-repeat;
-  background-position: left bottom, left 118px bottom 0, center, center, center, center;
-  background-size: 236px 13vh, 178px 8vh, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+    radial-gradient(1px 14px at 35px 46px, rgba(178, 195, 222, .055) 55%, transparent 56%),
+    radial-gradient(1px 11px at 87px 190px, rgba(178, 195, 222, .04) 55%, transparent 56%);
+  background-size: 71px 140px, 113px 280px;
+  background-position: 0 0, 31px 60px;
 }
-/* Slow beam sweep — reduced-motion users get static beams (no animation).
-   Browsers without @property show static/stepped beams at 5% opacity: acceptable. */
 @media (prefers-reduced-motion: no-preference) {
-  html[data-theme="gotham"] body::after { animation: gtSweep 26s ease-in-out infinite alternate; }
+  html[data-theme="gotham"] body::after { animation: gtRain 3.2s linear infinite; }
 }
-@keyframes gtSweep { from { --gt-sweep: -8deg; } to { --gt-sweep: 8deg; } }
+@keyframes gtRain { to { transform: translateY(280px); } }
 
 /* Static vignette, no flicker — noir, not glitch */
 html[data-theme="gotham"] .crt { opacity: .45; }
@@ -1485,16 +1592,9 @@ html[data-theme="gotham"] .timeline-item::before {
 html[data-theme="gotham"] .vr-quote { border-left-color: var(--gt-brass); }
 html[data-theme="gotham"] .vr-quote cite { color: var(--gt-brass); }
 
-/* --- Codec call -> rooftop channel. Dedicated gotham renders (data-gotham)
-   are swapped in by script.js and take no filter; the headshot has no gotham
-   render — invert(1) alone flips its blue ink (#2f54cc) to bat-signal gold
-   (#d0ab33) on black. --- */
-html[data-theme="gotham"] img[data-gotham] { filter: none; }
-html[data-theme="gotham"] img[data-light]:not([data-gotham]) {
-  filter: invert(1) saturate(.85) brightness(1.05)
-          drop-shadow(0 0 8px rgba(238, 199, 61, .25));
-  background: #fff;
-}
+/* --- Codec call -> rooftop channel. Every themed portrait ships a dedicated
+   gotham render (data-gotham): cold blue-white headshot + Nightwing blue.
+   The old invert()-to-gold headshot filter is gone. --- */
 html[data-theme="gotham"] .codec-line { color: var(--gt-wing); text-shadow: 0 0 10px var(--gt-wing-glow); }
 html[data-theme="gotham"] .codec-wave i { background: var(--gt-wing); }
 

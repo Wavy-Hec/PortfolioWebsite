@@ -842,14 +842,15 @@
     knockCD = KNOCK_CD; emitNoise(player.x, player.y, KNOCK_R); sfxKnock(); announce('Knock — luring a guard.');
   }
   function doCQC() {
-    if (alertPhase === 'alert' || alertPhase === 'evasion') { announce('Too hot for CQC — they are alerted.'); return; }
+    // CQC works in every alert phase — the only skill check is the rear-arc
+    // approach (a guard you're behind can't be seeing you, so no seeing check).
     if (cqcCD > 0) return;
     var best = null, bestd = CQC_R;
     for (var i = 0; i < guards.length; i++) {
       var g = guards[i]; if (g.down) continue;
       var d = Math.hypot(g.x - player.x, g.y - player.y); if (d > CQC_R) continue;
       var ang = Math.atan2(player.y - g.y, player.x - g.x);
-      if (Math.abs(angDiff(ang, g.facing)) >= CQC_REAR && !g.seeing && d < bestd) { bestd = d; best = g; }
+      if (Math.abs(angDiff(ang, g.facing)) >= CQC_REAR && d < bestd) { bestd = d; best = g; }
     }
     if (best) { cqcCD = CQC_CD; best.down = true; best.seeing = false; best.spotTimer = 0; addPulse(best.x, best.y, '164,236,177'); sfxCQC(); announce('Guard subdued.'); }
     else announce('No guard to subdue.');

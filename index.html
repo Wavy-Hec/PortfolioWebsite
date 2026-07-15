@@ -35,7 +35,7 @@
   <!-- Icons load async (media swap) — no above-the-fold text depends on them -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></noscript>
-  <link rel="stylesheet" href="style.css?v=18">
+  <link rel="stylesheet" href="style.css?v=20">
   <!-- Without JS the codec loader can never dismiss itself — hide it outright.
        Must come AFTER style.css so it wins the cascade (equal specificity). -->
   <noscript><style>.codec-loader{display:none!important}body:not(.loaded){overflow-y:auto!important}</style></noscript>
@@ -43,8 +43,8 @@
        order (script.js dispatches 'themechange'; dither/radar listen) and runs
        post-parse. game.js is lazy-loaded by script.js on first launch. -->
   <script src="dither.js?v=14" defer></script>
-  <script src="radar.js?v=14" defer></script>
-  <script src="script.js?v=20" defer></script>
+  <script src="radar.js?v=15" defer></script>
+  <script src="script.js?v=21" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -78,6 +78,7 @@
     </div>
   </div>
   <div class="grain" aria-hidden="true"></div>
+  <div class="atmo" aria-hidden="true"></div>
   <div class="crt" aria-hidden="true"></div>
   <div class="scroll-progress" id="scroll-progress"></div>
 
@@ -467,8 +468,8 @@
       <h2 class="section-title">Get in <span class="hl">touch</span></h2>
       <div class="codec-call">
         <div class="codec-portrait cc-left">
-          <img src="headshot-dither.png" width="200" height="200" data-light="headshot-dither.png" data-codec="headshot-dither-green.png" alt="Hector Lugo">
-          <script>if(document.documentElement.dataset.theme==='codec'){var i=document.currentScript.previousElementSibling;i.src=i.dataset.codec;}</script>
+          <img src="headshot-dither.png" width="200" height="200" data-light="headshot-dither.png" data-codec="headshot-dither-green.png" data-starwars="headshot-starwars-dither.png" data-gotham="headshot-gotham-dither.png" alt="Hector Lugo">
+          <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars)i.src=i.dataset.starwars;else if(t==='gotham'&&i.dataset.gotham)i.src=i.dataset.gotham;</script>
           <span class="codec-name">HECTOR</span>
           <span class="codec-mhz">140.85</span>
         </div>
@@ -478,8 +479,8 @@
           <span class="codec-status">▸ incoming transmission · 140.85</span>
         </div>
         <div class="codec-portrait cc-right">
-          <img src="raiden-dither.png" width="482" height="442" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" data-gotham="nightwing-dither.png" data-gotham-alt="Nightwing" alt="Raiden">
-          <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='gotham'&&i.dataset.gotham){i.dataset.baseAlt=i.alt;i.src=i.dataset.gotham;i.alt=i.dataset.gothamAlt;}</script>
+          <img src="raiden-dither.png" width="482" height="442" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" data-starwars="lego-quigon-dither.png" data-starwars-alt="Qui-Gon Jinn — LEGO minifigure, dithered render" data-gotham="nightwing-dither.png" data-gotham-alt="Nightwing" alt="Raiden">
+          <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars){i.dataset.baseAlt=i.alt;i.src=i.dataset.starwars;i.alt=i.dataset.starwarsAlt;}else if(t==='gotham'&&i.dataset.gotham){i.dataset.baseAlt=i.alt;i.src=i.dataset.gotham;i.alt=i.dataset.gothamAlt;}</script>
           <span class="codec-name">RAIDEN</span>
           <span class="codec-mhz">140.85</span>
         </div>

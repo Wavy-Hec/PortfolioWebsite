@@ -74,6 +74,20 @@ const THEME_META = {
     gotham:   { label: 'gotham',  icon: 'fa-city',            color: '#08090d' }, // color = gotham --bg
 };
 
+// Codec-call strings per theme. light/codec share the MGS set; the static HTML
+// in index.html's contact section IS the light set, so ink/codec never repaint.
+// 1138 — Lucas's THX-1138 easter egg (ANH cell block 1138). 38.40 — Detective
+// Comics #38 (1940), Dick Grayson's debut. Starwars quote matches the pictured
+// caller (Qui-Gon, TPM); gotham carries Batman's comics vow (Batman: Year One)
+// over NIGHTWING's encrypted channel.
+const MGS_CC = { callsign: 'RAIDEN', quote: '"Kept you waiting, huh?"', status: '▸ incoming transmission · 140.85', kicker: '// codec · 140.85', mhz: '140.85' };
+const CC_TEXT = {
+    light: MGS_CC,
+    codec: MGS_CC,
+    starwars: { callsign: 'QUI-GON',   quote: '"Your focus determines your reality."', status: '▸ incoming transmission · channel 1138', kicker: '// holonet · 1138',        mhz: '1138' },
+    gotham:   { callsign: 'NIGHTWING', quote: '"I shall become a bat."',               status: '▸ encrypted call · 38.40',               kicker: '// oracle uplink · 38.40', mhz: '38.40' },
+};
+
 function currentTheme() {
     const t = document.documentElement.dataset.theme;
     return THEMES.includes(t) ? t : 'light';
@@ -92,10 +106,10 @@ function applyTheme(name) {
         btn.setAttribute('aria-checked', on ? 'true' : 'false');
         btn.tabIndex = on ? 0 : -1;   // roving tabindex — Tab lands on the checked radio
     });
-    // Portraits: codec has dedicated green renders; starwars/gotham swap in a
-    // dedicated render where one exists (hero → anakin/batman, codec-call right
-    // → nightwing in gotham); everything else falls back to the blue data-light
-    // render, which the theme CSS recolors via filter where needed.
+    // Portraits: codec has dedicated green renders; starwars/gotham each ship a
+    // dedicated render for every themed portrait (hero → anakin/batman,
+    // codec-call left → amber/blue-white headshots, right → qui-gon/nightwing).
+    // data-light stays the ink fallback; no CSS recolor filters remain.
     themedPortraits.forEach(img => {
         if (name === 'codec') {
             img.src = img.dataset.codec;
@@ -111,16 +125,26 @@ function applyTheme(name) {
             img.alt = img.dataset.baseAlt;
         }
     });
-    // Hero figcaption + codec-call callsign follow the active portrait.
+    // Hero figcaption + codec-call callsign/quote/status/kicker follow the theme.
+    // Starwars/gotham captions read in-universe (no fake filename/seed framing);
+    // ink/codec keeps the original generator-output caption.
     const heroCaption = document.querySelector('.img-caption');
     if (heroCaption) {
         heroCaption.textContent =
-            name === 'gotham'   ? 'output 01 · seed: 1992 · batman.png'   // 1992 — Batman: TAS premiere
-          : name === 'starwars' ? 'output 01 · seed: 1999 · anakin.png'   // 1999 — Episode I (N64-era render)
+            name === 'gotham'   ? 'case file no. 27 · gotham archives'    // Detective Comics #27 — Batman's debut
+          : name === 'starwars' ? 'holocron record · jedi archives'
           :                       'output 01 · seed: 2001 · raiden.png';  // 2001 — MGS2
     }
+    const cc = CC_TEXT[name];
     const ccRightName = document.querySelector('.cc-right .codec-name');
-    if (ccRightName) ccRightName.textContent = name === 'gotham' ? 'NIGHTWING' : 'RAIDEN';
+    if (ccRightName) ccRightName.textContent = cc.callsign;
+    const ccQuote = document.querySelector('.codec-line');
+    if (ccQuote) ccQuote.textContent = cc.quote;
+    const ccStatus = document.querySelector('.codec-status');
+    if (ccStatus) ccStatus.textContent = cc.status;
+    const ccKicker = document.querySelector('.contact .kicker');
+    if (ccKicker) ccKicker.textContent = cc.kicker;
+    document.querySelectorAll('.codec-mhz').forEach(el => { el.textContent = cc.mhz; });
     // Radar HUD label — radar.js re-labels itself on themechange; these strings
     // mirror radar.js's MODE_LABEL exactly so the two writers never disagree.
     // (Label may not exist ≤600px.)
@@ -186,7 +210,7 @@ function openGame() {
     if (gameScriptRequested) return;
     gameScriptRequested = true;
     const s = document.createElement('script');
-    s.src = 'game.js?v=7';
+    s.src = 'game.js?v=8';
     s.onload = () => { if (window.MGSGame) window.MGSGame.open(); };
     s.onerror = () => {
         gameScriptRequested = false; // allow a retry
