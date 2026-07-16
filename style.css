@@ -62,76 +62,76 @@ html[data-theme="codec"] {
   --error: #e0606d;
 }
 
-/* ===== Star Wars mode — imperial tactical terminal (Andor x Clone Wars) ===== */
+/* ===== Star Wars mode — Clone Wars hologram briefing room ===== */
 html[data-theme="starwars"] {
   color-scheme: dark;
-  --bg: #0b0d10;             /* gunmetal near-black */
-  --bg-2: #10141a;
-  --panel: #12161d;          /* graphite console panel */
-  --panel-2: #182029;
-  --ink: #f0a832;            /* ISB terminal amber — accents, buttons, prompts */
-  --ink-strong: #ffc763;     /* lifted amber — big headings (9.5:1 on --bg) */
-  --text: #b6c5cc;           /* cool teal-white body (~10.5:1 on --bg) */
-  --text-dim: #8da0a9;
-  --text-muted: #84939c;     /* ~5:1 on --panel-2 (placeholders) */
-  --border: #242c36;
-  --border-strong: #41505f;
-  --input-border: #8a7648;   /* amber-steel — ≥3:1 vs panel (WCAG 1.4.11) */
-  --highlight: #f0a832;
-  --shadow-lift: 0 10px 28px rgba(0, 0, 0, .6), 0 0 16px rgba(240, 168, 50, .05);
-  --wash: #101720;
-  --grid-line: rgba(240, 168, 50, .035);   /* amber blueprint grid */
-  --on-accent: #151006;      /* near-black warm — text on amber (9.3:1) */
-  --accent-tint: rgba(240, 168, 50, .08);
-  --band: rgba(18, 22, 29, .6);
-  --codec-band: rgba(22, 19, 12, .7);      /* warm dark under amber scanlines */
-  --scanline: rgba(240, 168, 50, .055);
-  --scanline-soft: rgba(240, 168, 50, .04);
-  --header-bg: rgba(11, 13, 16, .85);
-  --header-bg-solid: rgba(11, 13, 16, .98);
-  --error: #e5484d;          /* imperial red — alerts only */
+  --bg: #060a12;             /* void — deep blue-black briefing room */
+  --bg-2: #0a1220;
+  --panel: rgba(13, 24, 40, .82);    /* holo glass — composites to #0b1523 on --bg */
+  --panel-2: rgba(19, 39, 61, .85);  /* brighter glass — composites to #112337 */
+  --ink: #4aa8ff;            /* hologram blue — accents, buttons, links (7.9:1 on --bg) */
+  --ink-strong: #8cc6ff;     /* lifted holo — big headings (11.0:1 on --bg) */
+  --text: #c3d6ec;           /* cool blue-white body (13.4:1 on --bg, 12.4:1 on panel) */
+  --text-dim: #92a9c4;       /* 7.6:1 on panel */
+  --text-muted: #8aa2bd;     /* ≥5.7:1 on --panel-2 (placeholders) */
+  --border: rgba(74, 168, 255, .22);
+  --border-strong: rgba(74, 168, 255, .42);
+  --input-border: #4d7fae;   /* steel-holo — 4.3:1 vs panel, 3.6:1 vs field (≥3:1, WCAG 1.4.11) */
+  --highlight: #4aa8ff;
+  --shadow-lift: 0 10px 28px rgba(0, 0, 0, .6), 0 0 16px rgba(74, 168, 255, .08);
+  --wash: #0a1424;
+  --grid-line: rgba(74, 168, 255, .028);   /* faint emitter grid */
+  --on-accent: #04101c;      /* near-black blue — text on holo fill (7.6:1) */
+  --accent-tint: rgba(74, 168, 255, .08);
+  --band: rgba(11, 21, 35, .55);
+  --codec-band: rgba(10, 20, 36, .72);     /* cool dark under blue scanlines */
+  --scanline: rgba(74, 168, 255, .05);
+  --scanline-soft: rgba(74, 168, 255, .035);
+  --header-bg: rgba(6, 12, 22, .85);
+  --header-bg-solid: rgba(6, 12, 22, .98);
+  --error: #f0a832;          /* AMBER — warnings/alerts ONLY (9.8:1 on --bg) */
   /* theme-scoped extras (referenced only by starwars-scoped rules) */
-  --sw-holo: #4aa8ff;        /* clone-trooper hologram blue (7.6:1 on --bg) */
+  --sw-holo: #4aa8ff;        /* hologram blue, same as --ink */
   --sw-holo-glow: rgba(74, 168, 255, .35);
-  --sw-amber-glow: rgba(240, 168, 50, .3);
-  --sw-gold: #c9a24b;        /* restrained Republic gold */
+  --sw-amber-glow: rgba(240, 168, 50, .3);  /* reserved: warning glow (radar lock lives in canvas) */
+  --sw-gold: #f0a832;        /* amber highlight token #1 — the pull-quote only */
   --sw-mono: 'Share Tech Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 }
 
-/* ===== Gotham mode — deco noir (Batman: TAS x Nightwing) ===== */
+/* ===== Gotham mode — BTAS red-sky noir (dark deco x Nightwing) ===== */
 html[data-theme="gotham"] {
   color-scheme: dark;
-  --bg: #08090d;             /* Gotham night — near-black, hint of blue */
-  --bg-2: #0c0e14;
-  --panel: #10131a;          /* cold graphite panel */
-  --panel-2: #161a23;
-  --ink: #eec73d;            /* bat-signal yellow — accents, buttons (12.2:1 on --bg) */
-  --ink-strong: #ffe082;     /* pale signal glow — big headings (~15:1 on --bg) */
-  --text: #b9c2d0;           /* cold steel body (~11:1 on --bg) */
-  --text-dim: #8d97a8;
-  --text-muted: #8791a3;     /* ~5.5:1 on --panel-2 (placeholders) */
-  --border: #232936;
-  --border-strong: #3f4a5e;
-  --input-border: #6f7a92;   /* steel — 4.3:1 vs --panel (≥3:1, WCAG 1.4.11) */
-  --highlight: #eec73d;
-  --shadow-lift: 0 10px 28px rgba(0, 0, 0, .65), 0 0 16px rgba(238, 199, 61, .04);
-  --wash: #0d1018;
-  --grid-line: rgba(93, 124, 178, .045);   /* cold blueprint grid */
-  --on-accent: #131107;      /* near-black warm — text on yellow (~11:1) */
-  --accent-tint: rgba(238, 199, 61, .08);
-  --band: rgba(16, 19, 26, .6);
-  --codec-band: rgba(12, 15, 23, .7);      /* cold dark under scanlines */
-  --scanline: rgba(154, 176, 210, .05);    /* rain-gray scanlines, not yellow */
-  --scanline-soft: rgba(154, 176, 210, .035);
-  --header-bg: rgba(8, 9, 13, .85);
-  --header-bg-solid: rgba(8, 9, 13, .98);
-  --error: #ee4b5e;          /* crimson — alerts only (5.5:1 on --bg) */
+  --bg: #0b0709;             /* warm near-black; the red sky lives in .atmo */
+  --bg-2: #120a0d;
+  --panel: #0a0a0c;          /* pure-black deco card */
+  --panel-2: #121114;
+  --ink: #d4af6a;            /* deco gold — rules, kickers, buttons (9.6:1 on --panel) */
+  --ink-strong: #e8cf9a;     /* pale gold — big headings (13.2:1 on --bg) */
+  --text: #c4bfb4;           /* warm gray body (10.8:1 on --panel) */
+  --text-dim: #9a948a;       /* 6.6:1 on --panel */
+  --text-muted: #8f897f;     /* 5.4:1 on --panel-2 (placeholders) */
+  --border: #2b2723;         /* thin warm-gray hairline */
+  --border-strong: #4a443c;
+  --input-border: #776f61;   /* warm steel — 4.0:1 vs --panel (≥3:1, WCAG 1.4.11) */
+  --highlight: #d4af6a;
+  --shadow-lift: 0 10px 28px rgba(0, 0, 0, .7), 0 0 16px rgba(212, 175, 106, .04);
+  --wash: #1f090d;           /* red-black top wash (mostly behind the .atmo sky) */
+  --grid-line: rgba(212, 175, 106, .03);  /* vestigial — opaque sky covers .grain */
+  --on-accent: #171107;      /* warm near-black — text on gold (9.1:1) */
+  --accent-tint: rgba(212, 175, 106, .08);
+  --band: rgba(12, 10, 11, .6);
+  --codec-band: rgba(17, 10, 11, .7);      /* warm dark under scanlines */
+  --scanline: rgba(196, 191, 180, .045);   /* warm-gray scanlines */
+  --scanline-soft: rgba(196, 191, 180, .032);
+  --header-bg: rgba(10, 7, 9, .88);
+  --header-bg-solid: rgba(10, 7, 9, .98);
+  --error: #f0564f;          /* imperial scarlet — 5.8:1 on --panel; hue/brightness distinct from the maroon sky */
   /* theme-scoped extras (referenced only by gotham-scoped rules) */
-  --gt-wing: #35b6e0;        /* Nightwing electric blue (8.4:1 on --bg) — links/highlights */
-  --gt-wing-glow: rgba(53, 182, 224, .35);
-  --gt-wing-bright: #7fd0f2; /* hover lift for wing-blue links */
-  --gt-brass: #b49b5e;       /* deco brass — rules and the pull-quote (7.4:1 on --bg) */
-  --gt-yellow-glow: rgba(238, 199, 61, .28);
+  --gt-wing: #2fbcf2;        /* Nightwing electric blue (9.0:1 on --panel) — links/focus/small accents ONLY */
+  --gt-wing-glow: rgba(47, 188, 242, .32);
+  --gt-wing-bright: #7dd4f7; /* hover lift for wing-blue links */
+  --gt-brass: #a08a5c;       /* muted old gold — pull-quote only (6.0:1 on --bg) */
+  --gt-yellow-glow: rgba(212, 175, 106, .25);  /* name kept; now gold glow */
   --gt-deco: 'Franklin Gothic Medium', 'ITC Franklin Gothic', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif; /* system-only condensed gothic */
 }
 
@@ -1128,88 +1128,30 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 
 /* ===== Star Wars mode — theme-scoped restyles ===== */
 
-/* --- Background: dim starfield replaces the dither canvas --- */
+/* --- Background: dark void replaces the dither canvas --- */
 html[data-theme="starwars"] #dither-bg { display: none; }
 
-html[data-theme="starwars"] body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    /* fine distant stars (230px tile) — dim, severe */
-    radial-gradient(1px 1px at 25px 35px,  rgba(190,210,235,.5)  50%, transparent 51%),
-    radial-gradient(1px 1px at 110px 90px, rgba(190,210,235,.35) 50%, transparent 51%),
-    radial-gradient(1px 1px at 170px 20px, rgba(190,210,235,.45) 50%, transparent 51%),
-    radial-gradient(1px 1px at 60px 140px, rgba(190,210,235,.3)  50%, transparent 51%),
-    radial-gradient(1px 1px at 200px 165px,rgba(190,210,235,.4)  50%, transparent 51%),
-    /* mid stars (390px tile) — one amber-tinted for instrument warmth */
-    radial-gradient(1.5px 1.5px at 80px 50px,   rgba(214,230,250,.6)  50%, transparent 51%),
-    radial-gradient(1.5px 1.5px at 240px 190px, rgba(150,195,245,.5)  50%, transparent 51%),
-    radial-gradient(1.5px 1.5px at 320px 120px, rgba(240,205,130,.45) 50%, transparent 51%),
-    /* rare big stars (520px tile) */
-    radial-gradient(2px 2px at 130px 230px, rgba(225,238,255,.7) 50%, transparent 51%),
-    radial-gradient(2px 2px at 420px 60px,  rgba(170,205,250,.6) 50%, transparent 51%);
-  background-size:
-    230px 230px, 230px 230px, 230px 230px, 230px 230px, 230px 230px,
-    390px 390px, 390px 390px, 390px 390px,
-    520px 520px, 520px 520px;
-}
-@media (prefers-reduced-motion: no-preference) {
-  html[data-theme="starwars"] body::after { animation: swTwinkle 9s ease-in-out infinite alternate; }
-}
-@keyframes swTwinkle { from { opacity: .8; } to { opacity: 1; } }
-
-/* --- Tactical overlay under the starfield. .atmo::before = amber briefing
-   plot rising from the horizon (crossed grid + horizon rule + floor glow)
-   plus a holo-blue planet limb in the lower-left corner, all faded out above
-   38vh by a mask; .atmo::after = one holo-scan band drifting down. The
-   starfield on body::after paints on top (star dots over faint washes —
-   ordering is imperceptible). No mask support = grid at full height at .07:
-   acceptable degradation. --- */
+/* --- Briefing-room atmosphere: dark void + a faint blue projection glow
+   rising from the bottom center, as if the page is cast up from a holotable.
+   Static by design — no animation, nothing to gate. --- */
 html[data-theme="starwars"] .atmo::before {
   content: '';
   background-image:
-    /* planet limb — dark disc, thin holo rim, atmosphere haze (lower left;
-       radar widget owns the lower right) */
-    radial-gradient(circle at -14% 118%, rgba(4, 6, 9, .55) 0 33vw,
-      rgba(74, 168, 255, .085) 33.1vw 33.5vw,
-      rgba(74, 168, 255, .03) 34.2vw, transparent 36vw),
-    /* horizon rule — the plot's crisp top edge */
-    linear-gradient(0deg, transparent 0 calc(30vh - 1px),
-      rgba(240, 168, 50, .08) calc(30vh - 1px) 30vh, transparent 30vh),
-    /* crossed tactical grid — rhombus mesh reads as a perspective floor
-       once the mask fades it with height */
-    repeating-linear-gradient(64deg,  rgba(240, 168, 50, .07) 0 1px, transparent 1px 64px),
-    repeating-linear-gradient(-64deg, rgba(240, 168, 50, .07) 0 1px, transparent 1px 64px),
-    /* amber floor glow under the plot */
-    radial-gradient(ellipse 120% 30% at 50% 104%, rgba(240, 168, 50, .05), transparent 70%);
-  -webkit-mask-image: linear-gradient(to top, #000 0 12vh, rgba(0, 0, 0, .5) 24vh, transparent 38vh);
-  mask-image: linear-gradient(to top, #000 0 12vh, rgba(0, 0, 0, .5) 24vh, transparent 38vh);
+    /* projector core — brightest at the bottom edge */
+    radial-gradient(ellipse 34% 8% at 50% 100%, rgba(140, 198, 255, .10), transparent 70%),
+    /* main cone rising from the table */
+    radial-gradient(ellipse 70% 42% at 50% 108%, rgba(74, 168, 255, .07), transparent 68%),
+    /* wide ambient spill */
+    radial-gradient(ellipse 120% 60% at 50% 112%, rgba(74, 168, 255, .03), transparent 75%);
 }
 
-/* Holo-scan band — 18vh sheet with a 1px leading line, drifts down the
-   viewport then holds off-screen 28% of the cycle before re-entering.
-   Reduced motion: the base transform parks it as a static scan line at 62vh. */
+/* Ultra-faint horizontal emitter lines, bottom-weighted (the projector's
+   raster). No mask support = full-height lines at .04: acceptable degradation. */
 html[data-theme="starwars"] .atmo::after {
   content: '';
-  inset: 0;
-  height: 18vh;
-  background-image:
-    linear-gradient(180deg, transparent 0, rgba(74, 168, 255, .03) 30%,
-      rgba(74, 168, 255, .06) 48% 52%, rgba(74, 168, 255, .03) 70%, transparent 100%),
-    linear-gradient(180deg, transparent calc(50% - 1px),
-      rgba(74, 168, 255, .08) calc(50% - 1px) 50%, transparent 50%);
-  transform: translateY(62vh);
-}
-@media (prefers-reduced-motion: no-preference) {
-  html[data-theme="starwars"] .atmo::after { animation: swScan 19s linear infinite; }
-}
-@keyframes swScan {
-  0%   { transform: translateY(-18vh); }
-  72%  { transform: translateY(100vh); }
-  100% { transform: translateY(100vh); }
+  background: repeating-linear-gradient(0deg, rgba(74, 168, 255, .04) 0 1px, transparent 1px 7px);
+  -webkit-mask-image: linear-gradient(to top, #000 0, rgba(0, 0, 0, .35) 14vh, transparent 34vh);
+  mask-image: linear-gradient(to top, #000 0, rgba(0, 0, 0, .35) 14vh, transparent 34vh);
 }
 
 /* Static CRT vignette (no flicker — severe, not glitchy). Scanlines come from
@@ -1242,8 +1184,8 @@ html[data-theme="starwars"] .codec-portrait img,
 html[data-theme="starwars"] .form-group input,
 html[data-theme="starwars"] .form-group textarea { border-radius: 0; }
 
-/* --- Header / nav: utilitarian mono, amber hairline, holo underline --- */
-html[data-theme="starwars"] header { box-shadow: 0 1px 0 rgba(240, 168, 50, .12); }
+/* --- Header / nav: utilitarian mono, holo hairline + underline --- */
+html[data-theme="starwars"] header { box-shadow: 0 1px 0 rgba(74, 168, 255, .14); }
 html[data-theme="starwars"] .logo { font-family: var(--sw-mono); letter-spacing: 3px; font-weight: 400; }
 html[data-theme="starwars"] nav a { font-family: var(--sw-mono); letter-spacing: 2.5px; font-size: 1.35rem; }
 html[data-theme="starwars"] nav a:hover,
@@ -1254,7 +1196,7 @@ html[data-theme="starwars"] nav a::after {
   box-shadow: 0 0 6px var(--sw-holo), 0 0 14px var(--sw-holo-glow);
 }
 
-/* --- Section headings: mono, uppercase, two-tone rule (amber | blue) --- */
+/* --- Section headings: mono, uppercase, two-tone rule (bright | dim holo) --- */
 html[data-theme="starwars"] .kicker { font-family: var(--sw-mono); font-weight: 400; }
 html[data-theme="starwars"] .section-title {
   font-family: var(--sw-mono);
@@ -1267,7 +1209,7 @@ html[data-theme="starwars"] .section-title::after {
   width: 120px;
   height: 3px;
   background-image: linear-gradient(to right,
-    var(--ink) 0 34px, transparent 34px 40px, var(--sw-holo) 40px 100%);
+    var(--sw-holo) 0 34px, transparent 34px 40px, rgba(74, 168, 255, .45) 40px 100%);
   background-size: 100% 100%;
   background-repeat: no-repeat;
 }
@@ -1276,15 +1218,17 @@ html[data-theme="starwars"] .section-title::after {
   html[data-theme="starwars"] .section-title { animation: swHolo 9s steps(1) infinite; }
 }
 @keyframes swHolo {
-  0%, 93%, 100% { opacity: 1; }
-  94% { opacity: .72; } 95% { opacity: 1; }
-  97% { opacity: .85; } 98% { opacity: 1; }
+  0%, 92%, 100% { opacity: 1; }
+  93%   { opacity: .92; }
+  94%   { opacity: 1; }
+  97.5% { opacity: .95; }
+  98.5% { opacity: 1; }
 }
 
-/* --- Hero: terminal boot flicker (replaces the movie-crawl entrance) --- */
+/* --- Hero: hologram materialization (boot flicker on first paint) --- */
 html[data-theme="starwars"] .home-content h1 {
   letter-spacing: 0;
-  text-shadow: 0 0 26px rgba(240, 168, 50, .22);
+  text-shadow: 0 0 26px rgba(74, 168, 255, .20);
 }
 @media (prefers-reduced-motion: no-preference) {
   html[data-theme="starwars"] .home-content h1 { animation: swBoot .7s steps(2, jump-none) 1; }
@@ -1293,10 +1237,10 @@ html[data-theme="starwars"] .home-content h1 {
   0% { opacity: 0; } 25% { opacity: .6; } 40% { opacity: .25; }
   60% { opacity: .9; } 75% { opacity: .55; } 100% { opacity: 1; }
 }
-/* accent spans go clone blue — the Clone Wars pop against amber */
+/* accent spans glow — a brighter node in the projection */
 html[data-theme="starwars"] .hl { color: var(--sw-holo); text-shadow: 0 0 14px var(--sw-holo-glow); }
 
-/* --- Buttons: squared, mono, amber fill / holo outline --- */
+/* --- Buttons: squared, mono, holo fill / holo outline --- */
 html[data-theme="starwars"] .btn {
   font-family: var(--sw-mono);
   font-weight: 400;
@@ -1304,7 +1248,7 @@ html[data-theme="starwars"] .btn {
   letter-spacing: 1.5px;
   font-size: 1.4rem;
 }
-html[data-theme="starwars"] .btn:hover { box-shadow: 0 0 12px var(--sw-amber-glow); }
+html[data-theme="starwars"] .btn:hover { box-shadow: 0 0 12px var(--sw-holo-glow); }
 html[data-theme="starwars"] .btn-outline { color: var(--sw-holo); }
 html[data-theme="starwars"] .btn-outline:hover {
   color: #8cc6ff;
@@ -1313,13 +1257,45 @@ html[data-theme="starwars"] .btn-outline:hover {
   box-shadow: 0 0 12px var(--sw-holo-glow);
 }
 
-/* --- Chips: amber telemetry tags --- */
-html[data-theme="starwars"] .chips span:hover { box-shadow: 0 0 8px var(--sw-amber-glow); }
+/* --- Chips: holo telemetry tags --- */
+html[data-theme="starwars"] .chips span:hover { box-shadow: 0 0 8px var(--sw-holo-glow); }
 
 /* --- Cards: thin top rule = console module header --- */
 html[data-theme="starwars"] .work-card,
 html[data-theme="starwars"] .beyond-card,
 html[data-theme="starwars"] .timeline-item { border-top: 2px solid var(--border-strong); }
+
+/* --- Holo glass: soft outer glow, 1px bright top edge, internal raster.
+   background-image layers over the base rules' background: var(--panel)
+   (shorthand resets image; these scoped rules re-add it and win the cascade). --- */
+html[data-theme="starwars"] .work-card,
+html[data-theme="starwars"] .project-card,
+html[data-theme="starwars"] .beyond-card,
+html[data-theme="starwars"] .timeline-item,
+html[data-theme="starwars"] .contact-item,
+html[data-theme="starwars"] .stat,
+html[data-theme="starwars"] .lab-affiliation,
+html[data-theme="starwars"] .resume-block,
+html[data-theme="starwars"] .terminal,
+html[data-theme="starwars"] .contact-form,
+html[data-theme="starwars"] .codec-call,
+html[data-theme="starwars"] .command-block {
+  background-image: repeating-linear-gradient(0deg, rgba(74, 168, 255, .04) 0 1px, transparent 1px 4px);
+  box-shadow: 0 0 18px rgba(74, 168, 255, .06), inset 0 1px 0 rgba(140, 198, 255, .18);
+}
+/* hover-lift cards: keep the bright edge when --shadow-lift takes over */
+html[data-theme="starwars"] .work-card:hover,
+html[data-theme="starwars"] .project-card:hover,
+html[data-theme="starwars"] .beyond-card:hover,
+html[data-theme="starwars"] .timeline-item:hover,
+html[data-theme="starwars"] .contact-item:hover {
+  box-shadow: var(--shadow-lift), inset 0 1px 0 rgba(140, 198, 255, .18);
+}
+/* form fields as dark glass */
+html[data-theme="starwars"] .form-group input,
+html[data-theme="starwars"] .form-group textarea {
+  background: rgba(8, 18, 32, .6);
+}
 
 /* --- Project cards: dossier brackets in hologram blue --- */
 html[data-theme="starwars"] .project-card::before,
@@ -1347,71 +1323,73 @@ html[data-theme="starwars"] .timeline-item::before {
   box-shadow: 0 0 6px var(--sw-holo-glow);
 }
 
-/* --- Republic gold, used once: the sim-to-real pull-quote --- */
+/* --- Amber highlight #1 (of a strict budget of two): the sim-to-real
+   pull-quote — a warning-colored callout in an otherwise all-blue room --- */
 html[data-theme="starwars"] .vr-quote { border-left-color: var(--sw-gold); }
 html[data-theme="starwars"] .vr-quote cite { color: var(--sw-gold); }
 
 /* --- Codec call -> holotable transmission. Every themed portrait ships a
    dedicated starwars render (data-starwars, pre-paint swapper + script.js):
-   amber headshot (local console) vs blue-ink Qui-Gon (incoming hologram —
-   SW holograms are blue). No recolor filters. --- */
+   both participants read as blue holograms — in the briefing room, everyone
+   is a projection. No recolor filters. --- */
 html[data-theme="starwars"] .codec-line { color: var(--sw-holo); text-shadow: 0 0 10px var(--sw-holo-glow); }
 html[data-theme="starwars"] .codec-wave i { background: var(--sw-holo); }
 
-/* --- Form: amber focus glow --- */
+/* --- Form: holo focus glow --- */
 html[data-theme="starwars"] .form-group input:focus,
 html[data-theme="starwars"] .form-group textarea:focus {
-  box-shadow: 0 0 0 1px var(--ink), 0 0 12px rgba(240, 168, 50, .2);
+  box-shadow: 0 0 0 1px var(--ink), 0 0 12px rgba(74, 168, 255, .25);
 }
 
 /* --- Corner widget: radar.js renders the TARGETING array in starwars; the
-   label ("TARGETING", set by radar.js) glows amber --- */
+   label ("TARGETING", set by radar.js) glows holo blue --- */
 html[data-theme="starwars"] .soliton-label {
   color: var(--ink);
   letter-spacing: 2.5px;
-  text-shadow: 0 0 8px var(--sw-amber-glow);
+  text-shadow: 0 0 8px var(--sw-holo-glow);
 }
 
 /* ===== Gotham mode — theme-scoped restyles ===== */
 
-/* --- Background: hand-drawn Gotham nightscape (replaces the dither canvas).
-   Bottom to top: .atmo::before = sky (city-glow horizon, cloud bank, two hazy
-   far-tower rows drawn as irregular SVG silhouettes, ONE bat-signal beam +
-   cloud hit); .atmo::after = near skyline, a single hand-authored clip-path
-   silhouette with lit-window texture clipped inside the towers; body::after =
-   faint rain, the only animation. Deco rule: monochrome blue-gray, the beam
-   is the ONLY yellow. No repeating-gradient towers anywhere — every skyline
-   edge is a drawn polygon (varied widths AND heights, setbacks, spires, roof
-   details, uneven gaps) so the city never reads as a bar chart. */
+/* --- Background: hand-drawn BTAS Gotham (replaces the dither canvas).
+   Bottom to top: .atmo::before = blood-red flat-painted sky fading toward the
+   skyline, red ember glow pooling low, two hazy far-tower rows drawn as
+   irregular SVG silhouettes (black-on-red), ONE searchlight beam + cloud hit;
+   .atmo::after = near skyline, a single hand-authored clip-path silhouette in
+   PURE BLACK with warm lit-window texture clipped inside the towers;
+   body::after = faint rain, the only animation. Deco rule: red sky + black
+   deco dominates; the beam is pale warm; gold is the only metal. No
+   repeating-gradient towers anywhere — every skyline edge is a drawn polygon
+   (varied widths AND heights, setbacks, spires, roof details, uneven gaps)
+   so the city never reads as a bar chart. */
 html[data-theme="gotham"] #dither-bg { display: none; }
 
 html[data-theme="gotham"] .atmo::before {
   content: '';
   background-image:
-    /* bat-signal hit — pale core + halo where the beam meets the cloud deck */
-    radial-gradient(ellipse 11% 5% at 91% 13%, rgba(255, 224, 130, .06), transparent 70%),
-    radial-gradient(ellipse 24% 11% at 91% 13%, rgba(238, 199, 61, .10), rgba(238, 199, 61, .03) 55%, transparent 75%),
-    /* beam — bright core inside a feathered wedge, rising from the rooftop
-       projector housing in the near skyline (leans ~7° right; tuned for
-       ~16:10, drift on other aspects is absorbed by the wide halo) */
-    conic-gradient(from 4.5deg at 86% 103%, transparent 0deg, rgba(238, 199, 61, .08) 1.5deg 3deg, transparent 4.5deg 360deg),
-    conic-gradient(from 1.5deg at 86% 103%, transparent 0deg, rgba(238, 199, 61, .06) 2deg 8.5deg, transparent 10.5deg 360deg),
-    /* far skyline — two hazy rows, lighter than the near silhouette, darker
-       than the horizon glow (atmospheric perspective). Hand-drawn SVG tiles
-       (840px / 1040px wide) with uneven tower widths, stepped setbacks and
-       one spire, so the repeat never scans as evenly-spaced bars */
-    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 840 100' preserveAspectRatio='none'><path fill='%230d1119' d='M0 100V57H26V43H58V62H96V30H104V18H116V30H126V62H170V49H214V66H262V27H272V38H306V62H338V52H354V62H398V36H442V22H452V36H470V62H514V45H548V58H590V24L596 12L602 24H610V58H654V40H704V64H744V33H788V57H840V100Z'/></svg>"),
-    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1040 100' preserveAspectRatio='none'><path fill='%230b0e15' d='M0 100V60H88V44H150V68H238V52H304V38H318V52H396V70H472V48H540V62H600V34H648V55H726V68H790V42H856V58H932V72H988V60H1040V100Z'/></svg>"),
-    /* low cloud bank drifting over the far towers */
-    radial-gradient(ellipse 70% 18% at 24% 92%, rgba(93, 124, 178, .07), transparent 70%),
-    radial-gradient(ellipse 90% 22% at 72% 96%, rgba(70, 95, 140, .06), transparent 72%),
-    /* city-glow horizon — sky brightens toward the rooftops */
-    linear-gradient(180deg, rgba(20, 28, 44, 0) 46%, rgba(20, 28, 44, .30) 78%, rgba(30, 42, 64, .48) 100%);
-  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat,
+    /* searchlight hit — pale warm core + halo where the beam meets the cloud deck */
+    radial-gradient(ellipse 11% 5% at 91% 13%, rgba(240, 230, 210, .05), transparent 70%),
+    radial-gradient(ellipse 24% 11% at 91% 13%, rgba(236, 224, 200, .08), rgba(236, 224, 200, .02) 55%, transparent 75%),
+    /* beam — pale warm searchlight, same wedge geometry as before */
+    conic-gradient(from 4.5deg at 86% 103%, transparent 0deg, rgba(236, 224, 200, .07) 1.5deg 3deg, transparent 4.5deg 360deg),
+    conic-gradient(from 1.5deg at 86% 103%, transparent 0deg, rgba(236, 224, 200, .05) 2deg 8.5deg, transparent 10.5deg 360deg),
+    /* high red cloud wash, upper-left (balances the beam upper-right) */
+    radial-gradient(ellipse 60% 24% at 30% 18%, rgba(120, 30, 40, .12), transparent 70%),
+    /* far skyline — SAME two hand-drawn SVG paths, recolored to black-on-red:
+       mid row picks up a whisper of maroon, farthest row a touch more (aerial depth) */
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 840 100' preserveAspectRatio='none'><path fill='%23120609' d='M0 100V57H26V43H58V62H96V30H104V18H116V30H126V62H170V49H214V66H262V27H272V38H306V62H338V52H354V62H398V36H442V22H452V36H470V62H514V45H548V58H590V24L596 12L602 24H610V58H654V40H704V64H744V33H788V57H840V100Z'/></svg>"),
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1040 100' preserveAspectRatio='none'><path fill='%231e0b10' d='M0 100V60H88V44H150V68H238V52H304V38H318V52H396V70H472V48H540V62H600V34H648V55H726V68H790V42H856V58H932V72H988V60H1040V100Z'/></svg>"),
+    /* red ember glow pooling low behind the towers */
+    radial-gradient(ellipse 70% 18% at 24% 92%, rgba(164, 52, 60, .16), transparent 70%),
+    radial-gradient(ellipse 90% 22% at 72% 96%, rgba(140, 40, 50, .14), transparent 72%),
+    /* THE SKY — blood-red up high fading toward the skyline (opaque; BTAS flat-painted
+       gradient. Intentionally covers .grain and body::before in this theme) */
+    linear-gradient(180deg, #3d0d12 0%, #2f0b10 30%, #1d080c 62%, #12060a 100%);
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat,
                      repeat-x, repeat-x, no-repeat, no-repeat, no-repeat;
-  background-position: 0 0, 0 0, 0 0, 0 0,
+  background-position: 0 0, 0 0, 0 0, 0 0, 0 0,
                        left bottom, 313px bottom, 0 0, 0 0, 0 0;
-  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%,
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%,
                    840px 15vh, 1040px 12vh, 100% 100%, 100% 100%, 100% 100%;
 }
 
@@ -1423,10 +1401,10 @@ html[data-theme="gotham"] .atmo::after {
   content: '';
   inset: auto 0 0 0;
   height: 26vh;
-  background-color: #04050a;
+  background-color: #000000;
   background-image:
-    radial-gradient(1.5px 2.5px at 19px 15px, rgba(197, 214, 240, .18) 60%, transparent 61%),
-    radial-gradient(1px 2px at 47px 33px, rgba(197, 214, 240, .10) 60%, transparent 61%);
+    radial-gradient(1.5px 2.5px at 19px 15px, rgba(240, 214, 160, .16) 60%, transparent 61%),
+    radial-gradient(1px 2px at 47px 33px, rgba(240, 214, 160, .09) 60%, transparent 61%);
   background-size: 83px 59px, 127px 73px;
   clip-path: polygon(
     0% 100%, 0% 40%, 5% 40%, 5% 62%, 7.5% 62%, 7.5% 84%,
@@ -1444,9 +1422,10 @@ html[data-theme="gotham"] .atmo::after {
   );
 }
 
-/* Rain — two sparse dash sheets (2×28px and 2×22px streaks), cold blue-gray,
-   max alpha .055. Loops seamlessly: 280px shift = 2 tiles of layer 1, 1 tile
-   of layer 2. Reduced motion: no animation — streaks stay as static texture. */
+/* Rain — two sparse dash sheets (2×28px and 2×22px streaks), pale warm so
+   they read on the red sky, max alpha .05. Loops seamlessly: 280px shift =
+   2 tiles of layer 1, 1 tile of layer 2. Reduced motion: no animation —
+   streaks stay as static texture. */
 html[data-theme="gotham"] body::after {
   content: '';
   position: fixed;
@@ -1454,8 +1433,8 @@ html[data-theme="gotham"] body::after {
   z-index: -1;
   pointer-events: none;
   background-image:
-    radial-gradient(1px 14px at 35px 46px, rgba(178, 195, 222, .055) 55%, transparent 56%),
-    radial-gradient(1px 11px at 87px 190px, rgba(178, 195, 222, .04) 55%, transparent 56%);
+    radial-gradient(1px 14px at 35px 46px, rgba(226, 214, 198, .05) 55%, transparent 56%),
+    radial-gradient(1px 11px at 87px 190px, rgba(226, 214, 198, .038) 55%, transparent 56%);
   background-size: 71px 140px, 113px 280px;
   background-position: 0 0, 31px 60px;
 }
@@ -1494,7 +1473,7 @@ html[data-theme="gotham"] .form-group input,
 html[data-theme="gotham"] .form-group textarea { border-radius: 0; }
 
 /* --- Header / nav: condensed gothic, wing-blue underline --- */
-html[data-theme="gotham"] header { box-shadow: 0 1px 0 rgba(238, 199, 61, .10); }
+html[data-theme="gotham"] header { box-shadow: 0 1px 0 rgba(212, 175, 106, .12); }
 html[data-theme="gotham"] .logo { font-family: var(--gt-deco); letter-spacing: 4px; font-weight: 500; }
 html[data-theme="gotham"] nav a { font-family: var(--gt-deco); text-transform: uppercase; letter-spacing: 3px; font-size: 1.4rem; }
 html[data-theme="gotham"] nav a:hover,
@@ -1505,7 +1484,7 @@ html[data-theme="gotham"] nav a::after {
   box-shadow: 0 0 6px var(--gt-wing), 0 0 14px var(--gt-wing-glow);
 }
 
-/* --- Section headings: condensed gothic caps + double deco rule (yellow | blue) --- */
+/* --- Section headings: condensed gothic caps + all-gold double deco rule --- */
 html[data-theme="gotham"] .kicker { font-family: 'Spectral', serif; font-variant: small-caps; text-transform: none; letter-spacing: 3px; }
 html[data-theme="gotham"] .section-title {
   font-family: var(--gt-deco);
@@ -1518,8 +1497,8 @@ html[data-theme="gotham"] .section-title::after {
   width: 120px;
   height: 6px;
   background-image:
-    linear-gradient(to right, var(--ink) 0 34px, transparent 34px 40px, var(--gt-wing) 40px 100%),
-    linear-gradient(to right, var(--ink) 0 34px, transparent 34px 40px, var(--gt-wing) 40px 100%);
+    linear-gradient(var(--ink), var(--ink)),
+    linear-gradient(var(--ink), var(--ink));
   background-size: 100% 2px, 100% 1px;
   background-position: top left, bottom left;
   background-repeat: no-repeat;
@@ -1528,7 +1507,7 @@ html[data-theme="gotham"] .section-title::after {
 /* --- Hero: spotlight reveal (no flicker) --- */
 html[data-theme="gotham"] .home-content h1 {
   letter-spacing: 1px;
-  text-shadow: 0 0 26px rgba(238, 199, 61, .16);
+  text-shadow: 0 0 26px rgba(212, 175, 106, .14);
 }
 @media (prefers-reduced-motion: no-preference) {
   html[data-theme="gotham"] .home-content h1 { animation: gtSpot .9s ease-out 1; }
@@ -1537,7 +1516,7 @@ html[data-theme="gotham"] .home-content h1 {
 /* accent spans go Nightwing blue against the yellow */
 html[data-theme="gotham"] .hl { color: var(--gt-wing); text-shadow: 0 0 14px var(--gt-wing-glow); }
 
-/* --- Buttons: squared, gothic caps, yellow fill / wing-blue outline --- */
+/* --- Buttons: squared, gothic caps, gold fill / wing-blue outline --- */
 html[data-theme="gotham"] .btn {
   font-family: var(--gt-deco);
   font-weight: 500;
@@ -1550,23 +1529,23 @@ html[data-theme="gotham"] .btn-outline { color: var(--gt-wing); }
 html[data-theme="gotham"] .btn-outline:hover {
   color: var(--gt-wing-bright);
   border-color: var(--gt-wing);
-  background: rgba(53, 182, 224, .08);
+  background: rgba(47, 188, 242, .08);
   box-shadow: 0 0 12px var(--gt-wing-glow);
 }
 
-/* --- Chips: signal-yellow evidence tags --- */
+/* --- Chips: deco-gold evidence tags --- */
 html[data-theme="gotham"] .chips span:hover { box-shadow: 0 0 8px var(--gt-yellow-glow); }
 
 /* --- Cards: 5px double = thin deco twin-rule (renders as 2px/1px/2px) --- */
 html[data-theme="gotham"] .work-card,
 html[data-theme="gotham"] .beyond-card,
-html[data-theme="gotham"] .timeline-item { border-top: 5px double rgba(180, 155, 94, .55); }
+html[data-theme="gotham"] .timeline-item { border-top: 5px double rgba(212, 175, 106, .5); }
 
-/* --- Project cards: case-file brackets in wing blue --- */
+/* --- Project cards: case-file brackets, gold hairline ornament --- */
 html[data-theme="gotham"] .project-card::before,
-html[data-theme="gotham"] .project-card::after { border-color: rgba(53, 182, 224, .5); }
+html[data-theme="gotham"] .project-card::after { border-color: rgba(212, 175, 106, .5); }
 html[data-theme="gotham"] .project-card:hover::before,
-html[data-theme="gotham"] .project-card:hover::after { border-color: var(--gt-wing); }
+html[data-theme="gotham"] .project-card:hover::after { border-color: var(--ink); }
 
 /* --- Links: Nightwing blue --- */
 html[data-theme="gotham"] .lab-link {
@@ -1578,7 +1557,7 @@ html[data-theme="gotham"] .lab-link:hover { color: var(--gt-wing-bright); }
 html[data-theme="gotham"] .project-link { color: var(--gt-wing); }
 html[data-theme="gotham"] .project-link:hover {
   border-color: var(--gt-wing);
-  background: rgba(53, 182, 224, .06);
+  background: rgba(47, 188, 242, .06);
   box-shadow: 0 0 8px var(--gt-wing-glow);
 }
 
@@ -1600,16 +1579,22 @@ html[data-theme="gotham"] .codec-wave i { background: var(--gt-wing); }
 
 /* --- Corner widget: radar.js renders the GCPD bat-signal in gotham; the
    label ("GCPD SIGNAL", set by radar.js) picks up its signal gold --- */
-html[data-theme="gotham"] .soliton-label { color: rgba(245, 197, 24, .7); letter-spacing: 2px; }
+html[data-theme="gotham"] .soliton-label { color: rgba(212, 175, 106, .8); letter-spacing: 2px; }
 
-/* --- Form: signal-yellow focus glow --- */
+/* --- Form: deco-gold focus glow --- */
 html[data-theme="gotham"] .form-group input:focus,
 html[data-theme="gotham"] .form-group textarea:focus {
-  box-shadow: 0 0 0 1px var(--ink), 0 0 12px rgba(238, 199, 61, .2);
+  box-shadow: 0 0 0 1px var(--ink), 0 0 12px rgba(212, 175, 106, .18);
 }
 
+/* --- Focus: Nightwing blue ring (blue = links/focus in this theme) --- */
+html[data-theme="gotham"] a:focus-visible,
+html[data-theme="gotham"] button:focus-visible,
+html[data-theme="gotham"] input:focus-visible,
+html[data-theme="gotham"] textarea:focus-visible { outline-color: var(--gt-wing); }
+
 /* --- Footer: deco twin-rule caps the page --- */
-html[data-theme="gotham"] footer { border-top: 5px double rgba(180, 155, 94, .45); }
+html[data-theme="gotham"] footer { border-top: 5px double rgba(212, 175, 106, .42); }
 html[data-theme="gotham"] .footer-content p,
 html[data-theme="gotham"] .codec-launch { font-family: var(--gt-deco); letter-spacing: 2px; }
 

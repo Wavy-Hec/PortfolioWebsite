@@ -46,9 +46,10 @@
   const rgba = a => `rgba(${ink[0]},${ink[1]},${ink[2]},${a})`;
 
   // --- fixed palettes for the themed modes (independent of CSS variables) ---
-  const AMBER = a => `rgba(240,168,50,${a})`;   // starwars --ink
+  const AMBER = a => `rgba(240,168,50,${a})`;   // starwars lock/warning only
   const HOLO  = a => `rgba(74,168,255,${a})`;   // starwars --sw-holo
-  const GOLD  = a => `rgba(245,197,24,${a})`;   // gotham signal yellow
+  const GOLD  = a => `rgba(212,175,106,${a})`;  // gotham deco gold #d4af6a
+  const PALE  = a => `rgba(236,224,200,${a})`;  // pale warm searchlight
 
   // --- render mode, selected by theme ---
   const MODE_LABEL = { soliton: 'SOLITON', targeting: 'TARGETING', signal: 'GCPD SIGNAL' };
@@ -94,7 +95,7 @@
   const SWEEP_MS = 11000;                        // full left-right-left period
   const WAYPOINTS = [[-25, 28], [-8, 16], [10, 24], [27, 12]];  // rooftop patrol points
   const BLIP_SPEED = 0.011;                      // px per ms
-  const GRAY = a => `rgba(140,160,185,${a})`;    // blue-gray instrument/trail ink
+  const GRAY = a => `rgba(176,168,153,${a})`;    // warm-gray instrument/trail ink
   let sigT = 0;                                  // gotham-mode clock (ms, dt-accumulated)
   let blipX = 10, blipY = 24;                    // starts ON W2 -> static frame is the lock
   let wpIndex = 3, wpDir = 1;                    // next target W3, then ping-pong back
@@ -107,7 +108,7 @@
   let lastTrail = 0;
   const trail = [];                              // ring buffer, max 14 {x,y}
   for (let i = 0; i < 8; i++) trail.push({ x: -8 + 18 * (i / 8), y: 16 + 8 * (i / 8) }); // seeded W1->W2 so the static frame shows a trail
-  let skyCanvas = null, cityCanvas = null, beamGrad = null;
+  let skyCanvas = null, cityCanvas = null, beamGrad = null, skyGrad = null;
   const angDiff = (a, b) => ((a - b + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
   function beamRim(ang) {   // distance from SIG_O to circle r=58 along ang (emblem ray)
     const dx = Math.cos(ang), dy = Math.sin(ang);
@@ -118,11 +119,16 @@
   function buildSignalAssets() {
     // beam gradient, centred on the searchlight origin
     beamGrad = ctx.createRadialGradient(SIG_O.x, SIG_O.y, 2, SIG_O.x, SIG_O.y, 115);
-    beamGrad.addColorStop(0, GOLD(0.5));
-    beamGrad.addColorStop(0.55, GOLD(0.17));
-    beamGrad.addColorStop(1, GOLD(0.02));
+    beamGrad.addColorStop(0, PALE(0.5));
+    beamGrad.addColorStop(0.55, PALE(0.17));
+    beamGrad.addColorStop(1, PALE(0.02));
 
-    // sky: thinned cloud texture (8 blotches, was 14; alpha 0.07, was 0.10),
+    skyGrad = ctx.createLinearGradient(0, -R, 0, R);   // disc-spanning red sky
+    skyGrad.addColorStop(0, '#360c11');
+    skyGrad.addColorStop(0.55, '#22080d');
+    skyGrad.addColorStop(1, '#12060a');
+
+    // sky: thinned red cloud texture (8 blotches, was 14),
     // sky band only, drawn 3x per blotch (x, x-SIZE, x+SIZE) so horizontal drift tiles seamlessly
     skyCanvas = document.createElement('canvas');
     skyCanvas.width = skyCanvas.height = SIZE * dpr;
@@ -133,8 +139,8 @@
       const x = rnd() * SIZE, y = 10 + rnd() * 50, r = 10 + rnd() * 18;
       for (const ox of [x, x - SIZE, x + SIZE]) {
         const g = s.createRadialGradient(ox, y, 0, ox, y, r);
-        g.addColorStop(0, 'rgba(185,195,215,0.07)');
-        g.addColorStop(1, 'rgba(185,195,215,0)');
+        g.addColorStop(0, 'rgba(196,84,92,0.08)');
+        g.addColorStop(1, 'rgba(196,84,92,0)');
         s.fillStyle = g;
         s.beginPath(); s.arc(ox, y, r, 0, Math.PI * 2); s.fill();
       }
@@ -149,7 +155,7 @@
       { x: -18, w: 20, top: 18 }, { x: 2, w: 16, top: 26 }, { x: 18, w: 18, top: 14 },
       { x: 36, w: 30, top: 22 },
     ];
-    c.fillStyle = 'rgba(10,13,20,0.97)';
+    c.fillStyle = 'rgba(0,0,0,0.98)';
     for (const b of ROOFS) c.fillRect(b.x, b.top, b.w, 66 - b.top);
     c.lineWidth = 1; c.strokeStyle = GRAY(0.30);            // 1px roof-edge highlight
     c.beginPath();
@@ -184,7 +190,7 @@
     ctx.lineTo(-3, -3);
     ctx.quadraticCurveTo(-6, -3.4, -13, -1);
     ctx.closePath();
-    ctx.fillStyle = `rgba(5,6,8,${0.92 * alpha})`;
+    ctx.fillStyle = `rgba(0,0,0,${0.92 * alpha})`;
     ctx.fill();
     ctx.restore();
   }
@@ -255,13 +261,13 @@
     if (!REDUCED) tickAngle += dt * 0.0005;   // full rotation ~12.5s
 
     // console panel backdrop + hairline frame
-    ctx.fillStyle = 'rgba(13,17,22,0.72)';
+    ctx.fillStyle = 'rgba(6,10,18,0.72)';
     ctx.fillRect(-R + 1, -R + 1, SIZE - 2, SIZE - 2);
-    ctx.lineWidth = 1; ctx.strokeStyle = AMBER(0.28);
+    ctx.lineWidth = 1; ctx.strokeStyle = HOLO(0.30);
     ctx.strokeRect(-R + 1.5, -R + 1.5, SIZE - 3, SIZE - 3);
 
     // corner brackets (static) — 4 L-shapes, 14px arms, 6px inset
-    ctx.lineWidth = 1.5; ctx.strokeStyle = AMBER(0.75);
+    ctx.lineWidth = 1.5; ctx.strokeStyle = HOLO(0.75);
     ctx.beginPath();
     for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
       const ox = sx * (R - 6), oy = sy * (R - 6);
@@ -271,9 +277,9 @@
     }
     ctx.stroke();
 
-    // concentric angular guides (static): amber square + holo diamond
+    // concentric angular guides (static): holo square + holo diamond
     ctx.lineWidth = 1;
-    ctx.strokeStyle = AMBER(0.30);
+    ctx.strokeStyle = HOLO(0.30);
     ctx.strokeRect(-26, -26, 52, 52);
     ctx.strokeStyle = HOLO(0.25);
     ctx.beginPath();
@@ -282,14 +288,14 @@
 
     // slow-rotating tick ring on a faint guide circle
     ctx.beginPath(); ctx.arc(0, 0, 45.5, 0, Math.PI * 2);
-    ctx.strokeStyle = AMBER(0.22); ctx.stroke();
+    ctx.strokeStyle = HOLO(0.22); ctx.stroke();
     ctx.save(); ctx.rotate(tickAngle);
     ctx.beginPath();
     for (let i = 0; i < 24; i++) {
       const a = (i / 24) * Math.PI * 2, c = Math.cos(a), s = Math.sin(a);
       ctx.moveTo(c * 43, s * 43); ctx.lineTo(c * 48, s * 48);
     }
-    ctx.strokeStyle = AMBER(0.5); ctx.stroke();
+    ctx.strokeStyle = HOLO(0.5); ctx.stroke();
     ctx.restore();
 
     // crosshair with a centre gap
@@ -298,10 +304,10 @@
     ctx.moveTo(9, 0);      ctx.lineTo(R - 8, 0);
     ctx.moveTo(0, -R + 8); ctx.lineTo(0, -9);
     ctx.moveTo(0, 9);      ctx.lineTo(0, R - 8);
-    ctx.strokeStyle = AMBER(0.35); ctx.stroke();
+    ctx.strokeStyle = HOLO(0.35); ctx.stroke();
 
     // centre range gate
-    ctx.lineWidth = 1.5; ctx.strokeStyle = AMBER(0.8);
+    ctx.lineWidth = 1.5; ctx.strokeStyle = HOLO(0.85);
     ctx.strokeRect(-8, -8, 16, 16);
 
     // ambient contacts (open holo squares, orbiting)
@@ -371,9 +377,9 @@
     const locked = sigT < lockUntil;
 
     // ---- render ----
-    // 1. night-sky disc (unchanged from old drawSignal)
+    // 1. red-sky disc (BTAS blood-red gradient, bright up top)
     ctx.beginPath(); ctx.arc(0, 0, R - 1, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(6,7,10,0.9)'; ctx.fill();
+    ctx.fillStyle = skyGrad; ctx.fill();
 
     // 2. clip to disc
     ctx.save();
@@ -402,10 +408,10 @@
     ctx.save();
     ctx.translate(px, py); ctx.rotate(beamAngle + Math.PI / 2);   // ellipse faces along the beam
     ctx.beginPath(); ctx.ellipse(0, 0, 15, 10, 0, 0, Math.PI * 2); // soft outer glow
-    ctx.fillStyle = GOLD(0.08 + 0.14 * lockGlow); ctx.fill();
+    ctx.fillStyle = PALE(0.08 + 0.14 * lockGlow); ctx.fill();
     ctx.beginPath(); ctx.ellipse(0, 0, 11, 7.5, 0, 0, Math.PI * 2); // light pool
-    ctx.fillStyle = GOLD(0.28 + 0.34 * lockGlow); ctx.fill();
-    ctx.lineWidth = 1; ctx.strokeStyle = GOLD(0.5 + 0.4 * lockGlow); ctx.stroke();
+    ctx.fillStyle = PALE(0.28 + 0.34 * lockGlow); ctx.fill();
+    ctx.lineWidth = 1; ctx.strokeStyle = PALE(0.5 + 0.4 * lockGlow); ctx.stroke();
     ctx.restore();
     drawBat(px, py, 0.75 + 0.25 * lockGlow, 0.6);                 // upright dark silhouette
 
@@ -424,7 +430,7 @@
 
     // 8. Batman blip (+ expanding pulse ring while locked)
     ctx.beginPath(); ctx.arc(blipX, blipY, 2.2, 0, Math.PI * 2);
-    ctx.fillStyle = locked ? GOLD(0.95) : 'rgba(190,205,220,0.9)';
+    ctx.fillStyle = locked ? GOLD(0.95) : 'rgba(214,206,192,0.9)';
     ctx.fill();
     if (lockGlow > 0.05) {
       const k = ((sigT - lockStart) % 600) / 600;   // static frame: (0-(-300))%600/600 = 0.5

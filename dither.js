@@ -148,8 +148,8 @@
     render(now);
   }
 
-  // The starwars theme hides the canvas entirely (CSS starfield instead) —
-  // no point burning CPU rendering into a display:none canvas.
+  // starwars (holo void) and gotham (red-sky nightscape) hide the canvas and
+  // paint their own CSS atmosphere — no point rendering into display:none.
   const hiddenByTheme = () => {
     const t = document.documentElement.dataset.theme;
     return t === 'starwars' || t === 'gotham';

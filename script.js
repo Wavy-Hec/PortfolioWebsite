@@ -126,14 +126,14 @@ function applyTheme(name) {
         }
     });
     // Hero figcaption + codec-call callsign/quote/status/kicker follow the theme.
-    // Starwars/gotham captions read in-universe (no fake filename/seed framing);
-    // ink/codec keeps the original generator-output caption.
+    // Starwars/gotham captions read in-universe; ink/codec reads as a codec
+    // transmission label (140.85 — codec freq; Big Shell — MGS2 setting).
     const heroCaption = document.querySelector('.img-caption');
     if (heroCaption) {
         heroCaption.textContent =
             name === 'gotham'   ? 'case file no. 27 · gotham archives'    // Detective Comics #27 — Batman's debut
           : name === 'starwars' ? 'holocron record · jedi archives'
-          :                       'output 01 · seed: 2001 · raiden.png';  // 2001 — MGS2
+          :                       'codec visual · 140.85 · big shell';
     }
     const cc = CC_TEXT[name];
     const ccRightName = document.querySelector('.cc-right .codec-name');
