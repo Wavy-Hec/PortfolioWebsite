@@ -67,8 +67,8 @@ html[data-theme="starwars"] {
   color-scheme: dark;
   --bg: #060a12;             /* void — deep blue-black briefing room */
   --bg-2: #0a1220;
-  --panel: rgba(13, 24, 40, .82);    /* holo glass — composites to #0b1523 on --bg */
-  --panel-2: rgba(19, 39, 61, .85);  /* brighter glass — composites to #112337 */
+  --panel: rgba(13, 24, 40, .80);    /* clean glass — composites to ~#0c1524 on --bg, ~#0e1929 over nebula peak */
+  --panel-2: rgba(19, 39, 61, .84);  /* brighter glass — composites to ~#132539 worst case */
   --ink: #4aa8ff;            /* hologram blue — accents, buttons, links (7.9:1 on --bg) */
   --ink-strong: #8cc6ff;     /* lifted holo — big headings (11.0:1 on --bg) */
   --text: #c3d6ec;           /* cool blue-white body (13.4:1 on --bg, 12.4:1 on panel) */
@@ -80,13 +80,13 @@ html[data-theme="starwars"] {
   --highlight: #4aa8ff;
   --shadow-lift: 0 10px 28px rgba(0, 0, 0, .6), 0 0 16px rgba(74, 168, 255, .08);
   --wash: #0a1424;
-  --grid-line: rgba(74, 168, 255, .028);   /* faint emitter grid */
+  --grid-line: rgba(74, 168, 255, .028);   /* vestigial — .grain is repainted as star sheets below */
   --on-accent: #04101c;      /* near-black blue — text on holo fill (7.6:1) */
   --accent-tint: rgba(74, 168, 255, .08);
   --band: rgba(11, 21, 35, .55);
   --codec-band: rgba(10, 20, 36, .72);     /* cool dark under blue scanlines */
-  --scanline: rgba(74, 168, 255, .05);
-  --scanline-soft: rgba(74, 168, 255, .035);
+  --scanline: rgba(74, 168, 255, 0);
+  --scanline-soft: rgba(74, 168, 255, 0);
   --header-bg: rgba(6, 12, 22, .85);
   --header-bg-solid: rgba(6, 12, 22, .98);
   --error: #f0a832;          /* AMBER — warnings/alerts ONLY (9.8:1 on --bg) */
@@ -1131,32 +1131,112 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 /* --- Background: dark void replaces the dither canvas --- */
 html[data-theme="starwars"] #dither-bg { display: none; }
 
-/* --- Briefing-room atmosphere: dark void + a faint blue projection glow
-   rising from the bottom center, as if the page is cast up from a holotable.
-   Static by design — no animation, nothing to gate. --- */
+/* Blueprint grid -> starfield. Two tiled sheets (mid + far); tile sizes are
+   non-harmonic so the repeats never align into a grid. */
+html[data-theme="starwars"] .grain {
+  background-image:
+    /* mid sheet — 331x293 tile: triple cluster top-right, pair lower-left, loner */
+    radial-gradient(1.5px 1.5px at 210px 64px,  rgba(199,222,255,.45) 50%, transparent 51%),
+    radial-gradient(1px 1px     at 233px 52px,  rgba(199,222,255,.25) 50%, transparent 51%),
+    radial-gradient(1px 1px     at 247px 79px,  rgba(199,222,255,.30) 50%, transparent 51%),
+    radial-gradient(1px 1px     at 48px 210px,  rgba(199,222,255,.38) 50%, transparent 51%),
+    radial-gradient(1px 1px     at 67px 224px,  rgba(199,222,255,.28) 50%, transparent 51%),
+    radial-gradient(1px 1px     at 140px 150px, rgba(199,222,255,.30) 50%, transparent 51%),
+    /* far sheet — 219x191 tile: triple cluster top-left, pair mid-right, 2 loners */
+    radial-gradient(1px 1px at 34px 29px,   rgba(199,222,255,.26) 50%, transparent 51%),
+    radial-gradient(1px 1px at 52px 44px,   rgba(199,222,255,.22) 50%, transparent 51%),
+    radial-gradient(1px 1px at 61px 23px,   rgba(199,222,255,.18) 50%, transparent 51%),
+    radial-gradient(1px 1px at 146px 87px,  rgba(199,222,255,.30) 50%, transparent 51%),
+    radial-gradient(1px 1px at 131px 101px, rgba(199,222,255,.20) 50%, transparent 51%),
+    radial-gradient(1px 1px at 95px 158px,  rgba(199,222,255,.22) 50%, transparent 51%),
+    radial-gradient(1px 1px at 203px 140px, rgba(199,222,255,.18) 50%, transparent 51%);
+  background-size:
+    331px 293px, 331px 293px, 331px 293px, 331px 293px, 331px 293px, 331px 293px,
+    219px 191px, 219px 191px, 219px 191px, 219px 191px, 219px 191px, 219px 191px, 219px 191px;
+  background-position:
+    47px 83px, 47px 83px, 47px 83px, 47px 83px, 47px 83px, 47px 83px,
+    0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+}
+
+/* Deep space: near star sheet + two 4-point glints above a blue nebula with
+   one restrained ember cloud (echoes the Mustafar hero), plus two abstract
+   wedge silhouettes reading as distant capital ships. The ember cloud is
+   atmosphere, not a UI accent — the amber-=-warnings-only budget is untouched.
+   Static by design — no animation, nothing to gate. */
 html[data-theme="starwars"] .atmo::before {
   content: '';
   background-image:
-    /* projector core — brightest at the bottom edge */
-    radial-gradient(ellipse 34% 8% at 50% 100%, rgba(140, 198, 255, .10), transparent 70%),
-    /* main cone rising from the table */
-    radial-gradient(ellipse 70% 42% at 50% 108%, rgba(74, 168, 255, .07), transparent 68%),
-    /* wide ambient spill */
-    radial-gradient(ellipse 120% 60% at 50% 112%, rgba(74, 168, 255, .03), transparent 75%);
+    /* near sheet — 487x431 tile, 5 brighter stars */
+    radial-gradient(2px 2px     at 72px 63px,   rgba(235,244,255,.80) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 419px 141px, rgba(199,222,255,.55) 50%, transparent 51%),
+    radial-gradient(1px 1px     at 391px 118px, rgba(199,222,255,.40) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 180px 342px, rgba(235,244,255,.60) 50%, transparent 51%),
+    radial-gradient(1px 1px     at 310px 255px, rgba(199,222,255,.45) 50%, transparent 51%),
+    /* glint 1 — 4-point star, upper right inside the nebula */
+    radial-gradient(ellipse 1.5px 11px at 67% 17%, rgba(235,244,255,.50), transparent 70%),
+    radial-gradient(ellipse 11px 1.5px at 67% 17%, rgba(235,244,255,.50), transparent 70%),
+    radial-gradient(circle 1.7px at 67% 17%, rgba(255,255,255,.90) 0 45%, transparent 100%),
+    /* glint 2 — smaller, upper left */
+    radial-gradient(ellipse 1.2px 8px at 23% 33%, rgba(199,222,255,.42), transparent 70%),
+    radial-gradient(ellipse 8px 1.2px at 23% 33%, rgba(199,222,255,.42), transparent 70%),
+    radial-gradient(circle 1.4px at 23% 33%, rgba(235,244,255,.80) 0 45%, transparent 100%),
+    /* distant wedges — abstract dark triangles silhouetted on the nebula glow */
+    conic-gradient(from 82deg at 0% 50%, rgba(9,15,26,.92) 0 16deg, transparent 16.5deg),
+    conic-gradient(from 86deg at 0% 50%, rgba(9,15,26,.85) 0 13deg, transparent 13.5deg),
+    /* nebula — bright wisp core, main holo cloud, cooler secondary, ember accent */
+    radial-gradient(ellipse 26% 18% at 74% 20%, rgba(140,198,255,.055), transparent 70%),
+    radial-gradient(ellipse 52% 38% at 70% 26%, rgba(74,168,255,.07),  transparent 72%),
+    radial-gradient(ellipse 44% 34% at 16% 58%, rgba(64,140,230,.055), transparent 74%),
+    radial-gradient(ellipse 30% 22% at 87% 68%, rgba(240,127,40,.045), transparent 70%);
+  background-size:
+    487px 431px, 487px 431px, 487px 431px, 487px 431px, 487px 431px,
+    auto, auto, auto, auto, auto, auto,
+    84px 20px, 56px 14px,
+    auto, auto, auto, auto;
+  background-position:
+    0 0, 0 0, 0 0, 0 0, 0 0,
+    0 0, 0 0, 0 0, 0 0, 0 0, 0 0,
+    61% 21%, 72% 15%,
+    0 0, 0 0, 0 0, 0 0;
+  background-repeat:
+    repeat, repeat, repeat, repeat, repeat,
+    no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat,
+    no-repeat, no-repeat,
+    no-repeat, no-repeat, no-repeat, no-repeat;
 }
 
-/* Ultra-faint horizontal emitter lines, bottom-weighted (the projector's
-   raster). No mask support = full-height lines at .04: acceptable degradation. */
+/* Planet limb — lower-left. Opaque body occludes the starfield below it;
+   thin bright atmosphere line + soft halo past the edge. Static. */
 html[data-theme="starwars"] .atmo::after {
   content: '';
-  background: repeating-linear-gradient(0deg, rgba(74, 168, 255, .04) 0 1px, transparent 1px 7px);
-  -webkit-mask-image: linear-gradient(to top, #000 0, rgba(0, 0, 0, .35) 14vh, transparent 34vh);
-  mask-image: linear-gradient(to top, #000 0, rgba(0, 0, 0, .35) 14vh, transparent 34vh);
+  background-image:
+    radial-gradient(ellipse 74vw 36vh at 6% 122%,
+      #0a121f 0 96.6%, #101d33 97.2%,
+      rgba(140,198,255,.34) 97.8% 98.2%,
+      rgba(74,168,255,.12) 98.9%, transparent 99.8%),
+    radial-gradient(ellipse 78vw 38vh at 6% 122%,
+      transparent 0 94%, rgba(74,168,255,.10) 97.5%,
+      rgba(74,168,255,.04) 102%, transparent 107%);
+  background-repeat: no-repeat;
+}
+/* portrait viewports make 74vw small — widen the arc so the limb still reads */
+@media (max-width: 768px) {
+  html[data-theme="starwars"] .atmo::after {
+    background-image:
+      radial-gradient(ellipse 130vw 30vh at 0% 116%,
+        #0a121f 0 96.6%, #101d33 97.2%,
+        rgba(140,198,255,.34) 97.8% 98.2%,
+        rgba(74,168,255,.12) 98.9%, transparent 99.8%),
+      radial-gradient(ellipse 136vw 32vh at 0% 116%,
+        transparent 0 94%, rgba(74,168,255,.10) 97.5%,
+        rgba(74,168,255,.04) 102%, transparent 107%);
+  }
 }
 
-/* Static CRT vignette (no flicker — severe, not glitchy). Scanlines come from
-   .crt::after; the codec-only flicker animation is NOT applied here. */
+/* Static CRT vignette only (no flicker — severe, not glitchy). The shared
+   .crt::after scanlines are a line pattern — killed for deep space. */
 html[data-theme="starwars"] .crt { opacity: .5; }
+html[data-theme="starwars"] .crt::after { background: none; }
 
 /* --- Brutalist geometry: square every corner --- */
 html[data-theme="starwars"] .work-card,
@@ -1265,9 +1345,8 @@ html[data-theme="starwars"] .work-card,
 html[data-theme="starwars"] .beyond-card,
 html[data-theme="starwars"] .timeline-item { border-top: 2px solid var(--border-strong); }
 
-/* --- Holo glass: soft outer glow, 1px bright top edge, internal raster.
-   background-image layers over the base rules' background: var(--panel)
-   (shorthand resets image; these scoped rules re-add it and win the cascade). --- */
+/* --- Holo glass: soft outer glow, 1px bright top edge; clean glass —
+   the nebula reads through the .80 panel alpha. --- */
 html[data-theme="starwars"] .work-card,
 html[data-theme="starwars"] .project-card,
 html[data-theme="starwars"] .beyond-card,
@@ -1280,7 +1359,6 @@ html[data-theme="starwars"] .terminal,
 html[data-theme="starwars"] .contact-form,
 html[data-theme="starwars"] .codec-call,
 html[data-theme="starwars"] .command-block {
-  background-image: repeating-linear-gradient(0deg, rgba(74, 168, 255, .04) 0 1px, transparent 1px 4px);
   box-shadow: 0 0 18px rgba(74, 168, 255, .06), inset 0 1px 0 rgba(140, 198, 255, .18);
 }
 /* hover-lift cards: keep the bright edge when --shadow-lift takes over */

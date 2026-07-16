@@ -107,7 +107,7 @@ function applyTheme(name) {
         btn.tabIndex = on ? 0 : -1;   // roving tabindex — Tab lands on the checked radio
     });
     // Portraits: codec has dedicated green renders; starwars/gotham each ship a
-    // dedicated render for every themed portrait (hero → anakin/batman,
+    // dedicated render for every themed portrait (hero → obi-wan/batman,
     // codec-call left → amber/blue-white headshots, right → qui-gon/nightwing).
     // data-light stays the ink fallback; no CSS recolor filters remain.
     themedPortraits.forEach(img => {
@@ -132,7 +132,7 @@ function applyTheme(name) {
     if (heroCaption) {
         heroCaption.textContent =
             name === 'gotham'   ? 'case file no. 27 · gotham archives'    // Detective Comics #27 — Batman's debut
-          : name === 'starwars' ? 'holocron record · jedi archives'
+          : name === 'starwars' ? 'holo capture · mustafar · high ground secured'
           :                       'codec visual · 140.85 · big shell';
     }
     const cc = CC_TEXT[name];

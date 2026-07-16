@@ -35,7 +35,7 @@
   <!-- Icons load async (media swap) — no above-the-fold text depends on them -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></noscript>
-  <link rel="stylesheet" href="style.css?v=21">
+  <link rel="stylesheet" href="style.css?v=22">
   <!-- Without JS the codec loader can never dismiss itself — hide it outright.
        Must come AFTER style.css so it wins the cascade (equal specificity). -->
   <noscript><style>.codec-loader{display:none!important}body:not(.loaded){overflow-y:auto!important}</style></noscript>
@@ -44,7 +44,7 @@
        post-parse. game.js is lazy-loaded by script.js on first launch. -->
   <script src="dither.js?v=14" defer></script>
   <script src="radar.js?v=16" defer></script>
-  <script src="script.js?v=22" defer></script>
+  <script src="script.js?v=23" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -127,7 +127,7 @@
     </div>
     <div class="home-img">
       <figure>
-        <img src="raiden-dither.png" width="460" height="596" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" data-starwars="anakin-dither.png" data-starwars-alt="Anakin Skywalker — dithered render" data-gotham="batman-dither.png" data-gotham-alt="Batman — dithered render" alt="Raiden — Metal Gear Solid 2, dithered render">
+        <img src="raiden-dither.png" width="460" height="596" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" data-starwars="obiwan-dither.png" data-starwars-alt="LEGO Obi-Wan Kenobi taking a selfie on Mustafar, Anakin fuming in the lava behind — dithered render" data-gotham="batman-dither.png" data-gotham-alt="Batman — dithered render" alt="Raiden — Metal Gear Solid 2, dithered render">
         <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars){i.dataset.baseAlt=i.alt;i.src=i.dataset.starwars;i.alt=i.dataset.starwarsAlt;}else if(t==='gotham'&&i.dataset.gotham){i.dataset.baseAlt=i.alt;i.src=i.dataset.gotham;i.alt=i.dataset.gothamAlt;}</script>
         <figcaption class="img-caption">codec visual · 140.85 · big shell</figcaption>
       </figure>
