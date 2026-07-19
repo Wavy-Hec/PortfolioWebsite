@@ -1414,13 +1414,28 @@ html[data-theme="starwars"] body::after {
   94.01%, 100% { transform: translate3d(106vw, 9vh, 0); }   /* reset while fully offscreen */
 }
 
-/* Planet limb — lower-left. Opaque body occludes the starfield below it;
-   thin bright atmosphere line + soft halo past the edge. Static. */
+/* Death Star limb — lower-left. Steel body occludes the starfield; superlaser
+   dish (concentric rings + lit rim, upper quadrant of the visible face) and
+   one thin trench line concentric with the limb. Dish/trench are vh-sized so
+   they stay inside the 96.6% body radius at any viewport height. Static. */
 html[data-theme="starwars"] .atmo::after {
   content: '';
   background-image:
+    radial-gradient(circle 4.2vh at 10vw 92.4vh,
+      rgba(6,9,14,.85) 0 .7vh,
+      transparent .85vh 1.7vh,
+      rgba(6,9,14,.6) 1.85vh 2.4vh,
+      transparent 2.55vh 3.1vh,
+      rgba(6,9,14,.7) 3.2vh 3.75vh,
+      rgba(140,198,255,.20) 3.85vh 4vh,
+      transparent 4.15vh),
     radial-gradient(ellipse 74vw 36vh at 6% 122%,
-      #0a121f 0 96.6%, #101d33 97.2%,
+      transparent 0 67.6%,
+      rgba(4,7,12,.55) 67.9% 68.3%,
+      rgba(140,198,255,.08) 68.4% 68.55%,
+      transparent 68.9%),
+    radial-gradient(ellipse 74vw 36vh at 6% 122%,
+      #0c1016 0 96.6%, #171c23 97.2%,
       rgba(140,198,255,.34) 97.8% 98.2%,
       rgba(74,168,255,.12) 98.9%, transparent 99.8%),
     radial-gradient(ellipse 78vw 38vh at 6% 122%,
@@ -1432,8 +1447,21 @@ html[data-theme="starwars"] .atmo::after {
 @media (max-width: 768px) {
   html[data-theme="starwars"] .atmo::after {
     background-image:
+      radial-gradient(circle 3.4vh at 8vw 92.6vh,
+        rgba(6,9,14,.85) 0 .55vh,
+        transparent .7vh 1.35vh,
+        rgba(6,9,14,.6) 1.5vh 1.95vh,
+        transparent 2.1vh 2.5vh,
+        rgba(6,9,14,.7) 2.6vh 3vh,
+        rgba(140,198,255,.20) 3.1vh 3.22vh,
+        transparent 3.4vh),
       radial-gradient(ellipse 130vw 30vh at 0% 116%,
-        #0a121f 0 96.6%, #101d33 97.2%,
+        transparent 0 61.6%,
+        rgba(4,7,12,.55) 61.9% 62.35%,
+        rgba(140,198,255,.08) 62.45% 62.6%,
+        transparent 63%),
+      radial-gradient(ellipse 130vw 30vh at 0% 116%,
+        #0c1016 0 96.6%, #171c23 97.2%,
         rgba(140,198,255,.34) 97.8% 98.2%,
         rgba(74,168,255,.12) 98.9%, transparent 99.8%),
       radial-gradient(ellipse 136vw 32vh at 0% 116%,
@@ -1612,6 +1640,7 @@ html[data-theme="starwars"] .section-title::after {
 /* hologram flicker on headings */
 @media (prefers-reduced-motion: no-preference) {
   html[data-theme="starwars"] .section-title { animation: swHolo 9s steps(1) infinite; }
+  html[data-theme="starwars"] .home-img img { animation: swHolo 9s steps(1) -3s infinite; }
 }
 @keyframes swHolo {
   0%, 92%, 100% { opacity: 1; }
@@ -1620,6 +1649,90 @@ html[data-theme="starwars"] .section-title::after {
   97.5% { opacity: .95; }
   98.5% { opacity: 1; }
 }
+
+/* --- Lightsaber section dividers: the site's between-section seams get the
+   divider treatment the markup never had — hilt + blade on the free
+   section::before/::after pseudos. The clone-chevron title rule is untouched
+   (no stacking). Explicit per-section color hooks, not nth-of-type. Static:
+   no animation, nothing to reduce. --- */
+html[data-theme="starwars"] main section + section {
+  --saber: #4aa8ff;
+  --saber-glow: rgba(74, 168, 255, .55);
+  --saber-halo: rgba(74, 168, 255, .22);
+}
+html[data-theme="starwars"] .about,
+html[data-theme="starwars"] .skills,
+html[data-theme="starwars"] .contact {
+  --saber: #63d977;
+  --saber-glow: rgba(99, 217, 119, .55);
+  --saber-halo: rgba(99, 217, 119, .22);
+}
+html[data-theme="starwars"] .experience,
+html[data-theme="starwars"] .resume {
+  --saber: #f0a832;
+  --saber-glow: rgba(240, 168, 50, .55);
+  --saber-halo: rgba(240, 168, 50, .22);
+}
+/* hilt — 34x10 metal grip: two 1px notch lines at 8px/13px, emitter cap 28-34px */
+html[data-theme="starwars"] main section + section::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: max(6%, 50% - 560px);
+  width: 34px;
+  height: 10px;
+  border-radius: 2px;
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg,
+      transparent 0 8px, rgba(4, 8, 14, .85) 8px 9px,
+      transparent 9px 13px, rgba(4, 8, 14, .85) 13px 14px,
+      transparent 14px 28px, #0a1119 28px 34px),
+    linear-gradient(180deg, #3a4a5c 0, #202b38 40%, #0c1219 100%);
+}
+/* blade — 2px near-white core centered on the seam, colored triple glow */
+html[data-theme="starwars"] main section + section::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: calc(max(6%, 50% - 560px) + 36px);
+  right: max(6%, 50% - 560px);
+  height: 2px;
+  border-radius: 1px;
+  pointer-events: none;
+  background: #f2f9ff;
+  box-shadow:
+    0 0 5px 1px var(--saber),
+    0 0 14px 3px var(--saber-glow),
+    0 0 30px 6px var(--saber-halo);
+}
+
+/* --- Aurebesh subtitle strips: decorative glyph line under each title, below
+   the clone chevron (chevron keeps ::after; this is an absolute ::before in
+   the title's margin — zero layout cost, invisible to screen readers, and it
+   inherits the title's swHolo flicker). 218x8 tile, 18px glyph pitch; widths
+   are 18n+12 so glyphs never clip mid-stroke; offsets phase the "phrase". --- */
+html[data-theme="starwars"] .section-title { position: relative; }
+html[data-theme="starwars"] .section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: calc(100% + 1rem);
+  height: 8px;
+  width: 156px;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 218 8'><g fill='none' stroke='%234aa8ff' stroke-opacity='.35' stroke-width='1.2'><path d='M2 7.5L7 .5L12 7.5M4.3 4.8H9.7'/><path d='M30 .5H20V7.5H30M25 .5V7.5'/><path d='M38 7.5V.5H48M38 4H45'/><path d='M56 .5L66 7.5M66 .5L56 7.5'/><path d='M74 7.5L79 .5L84 7.5Z'/><path d='M92 .5H102L92 7.5H102'/><path d='M110 4H120M115 .5V7.5'/><path d='M128 .5V7.5H138V4H133'/><path d='M146 7.5L151 .5L156 7.5'/><path d='M164 .5H174V7.5M169 4H174'/><path d='M182 7.5V.5L192 7.5V.5'/><path d='M200 4L205 .5L210 4L205 7.5Z'/></g></svg>");
+  background-size: 218px 8px;
+  background-repeat: repeat-x;
+  background-position: 0 0;
+}
+html[data-theme="starwars"] .about .section-title::before      { width: 120px; background-position: -36px 0; }
+html[data-theme="starwars"] .experience .section-title::before { width: 174px; background-position: -72px 0; }
+html[data-theme="starwars"] .projects .section-title::before   { width: 138px; background-position: -108px 0; }
+html[data-theme="starwars"] .skills .section-title::before     { width: 156px; background-position: -144px 0; }
+html[data-theme="starwars"] .resume .section-title::before     { width: 102px; background-position: -180px 0; }
+html[data-theme="starwars"] .beyond .section-title::before     { width: 138px; background-position: -54px 0; }
+html[data-theme="starwars"] .contact .section-title::before    { width: 120px; background-position: -126px 0; }
 
 /* --- Hero: hologram materialization (boot flicker on first paint) --- */
 html[data-theme="starwars"] .home-content h1 {
@@ -1635,6 +1748,45 @@ html[data-theme="starwars"] .home-content h1 {
 }
 /* accent spans glow — a brighter node in the projection */
 html[data-theme="starwars"] .hl { color: var(--sw-holo); text-shadow: 0 0 14px var(--sw-holo-glow); }
+
+/* --- Holo-projector hero: figure becomes a column flex so the emitter
+   (::after, order 1) slots between the frame (img, order 0) and the caption
+   (order 2) — no new markup, no absolute math against the variable image
+   height. ::before lays faint holo banding over the frame only; the caption
+   below stays clean and readable. --- */
+html[data-theme="starwars"] .home-img figure {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+html[data-theme="starwars"] .img-caption { order: 2; }
+/* emitter: cone rows 0-15px (200px -> 28px lens), base trapezoid rows 15-26px */
+html[data-theme="starwars"] .home-img figure::after {
+  content: '';
+  order: 1;
+  width: min(220px, 84%);
+  height: 26px;
+  margin-top: -2px;
+  pointer-events: none;
+  clip-path: polygon(4.5% 0, 95.5% 0, 56.4% 15px, 71.8% 15px, 75.5% 26px, 24.5% 26px, 28.2% 15px, 43.6% 15px);
+  background-image:
+    radial-gradient(ellipse 30px 5px at 50% 15px, rgba(140, 198, 255, .55), transparent 70%),
+    linear-gradient(180deg, transparent 0 15px, #223a58 15px 16px, #12233a 19px, #081525 26px),
+    linear-gradient(180deg, rgba(74, 168, 255, .03) 0, rgba(74, 168, 255, .10) 14px, transparent 15px);
+  filter: drop-shadow(0 0 7px rgba(74, 168, 255, .30));
+}
+/* holo banding — frame only; 5.2rem = emitter(26 - 2 overlap) + caption margin(9) + one caption line(~18) */
+html[data-theme="starwars"] .home-img figure::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(100% - 5.2rem);
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(74, 168, 255, .05) 0 1px, transparent 1px 4px);
+}
 
 /* --- Buttons: squared, mono, holo fill / holo outline --- */
 html[data-theme="starwars"] .btn {
