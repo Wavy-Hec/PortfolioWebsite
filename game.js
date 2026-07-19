@@ -163,53 +163,100 @@
     }
   ];
 
+  /* ---- per-theme CHROME palettes (frame/bar/HUD/buttons/screens/toast only).
+     The canvas playfield stays codec-green in every theme — in-fiction it is a
+     codec transmission; only the shell around it dresses for the site theme.
+     One map drives everything: CSS custom properties on .mgsg-overlay carry the
+     values, the stylesheet defaults are generated from CHROME.codec (so ink/codec
+     render the current green EXACTLY), and applyChrome() overrides the vars
+     inline for starwars/gotham. Alarm/caution reds+ambers stay literal in the
+     stylesheet — a red alert reads as a red alert in every theme. ---- */
+  var CHROME = {
+    // ink + codec — the existing codec-green chrome, byte-for-byte
+    codec: {
+      bg: '#07140b', panel: '#0c2114', line: '#1b402a', edge: '#3f7a4f', border: '#386041',
+      text: '#6fcf83', hi: '#a4ecb1', dim: '#4f8a5e', glow: '111,207,131', hglow: '164,236,177',
+      shade: '4,12,6', pad: '14,29,19', veil: 'rgba(3,8,4,0.92)', toastbg: 'rgba(3,10,5,.82)'
+    },
+    // holonet — hologram blue on dark glass (site --sw-holo #4aa8ff family)
+    starwars: {
+      bg: '#060a12', panel: '#0c1726', line: '#16283e', edge: '#3d6a99', border: '#2e5578',
+      text: '#4aa8ff', hi: '#8cc6ff', dim: '#7d9fc4', glow: '74,168,255', hglow: '140,198,255',
+      shade: '5,10,18', pad: '13,24,38', veil: 'rgba(4,8,14,0.92)', toastbg: 'rgba(6,12,22,.85)'
+    },
+    // gotham — BTAS deco: black shell, gold chrome (site --ink #d4af6a), red alerts
+    gotham: {
+      bg: '#0a0a0c', panel: '#121114', line: '#2b2723', edge: '#6a5a38', border: '#4a3f28',
+      text: '#d4af6a', hi: '#e8cf9a', dim: '#9a8f78', glow: '212,175,106', hglow: '232,207,154',
+      shade: '10,9,8', pad: '22,20,17', veil: 'rgba(6,5,7,0.92)', toastbg: 'rgba(12,11,10,.85)'
+    }
+  };
+  var CHROME_VARS = {
+    bg: '--mg-bg', panel: '--mg-panel', line: '--mg-line', edge: '--mg-edge', border: '--mg-border',
+    text: '--mg-text', hi: '--mg-hi', dim: '--mg-dim', glow: '--mg-glow', hglow: '--mg-hglow',
+    shade: '--mg-shade', pad: '--mg-pad', veil: '--mg-veil', toastbg: '--mg-toastbg'
+  };
+  function chromeVarsCSS(p) { var s = '', k; for (k in CHROME_VARS) s += CHROME_VARS[k] + ':' + p[k] + ';'; return s; }
+  // read html[data-theme] and dress the overlay chrome; inline custom properties
+  // beat the stylesheet defaults, and removing them falls back to codec-green
+  function applyChrome() {
+    if (!overlay) return;
+    var t = document.documentElement.getAttribute('data-theme');
+    var pal = CHROME[t] || CHROME.codec;   // light/codec/unknown -> green defaults
+    for (var k in CHROME_VARS) {
+      if (pal === CHROME.codec) overlay.style.removeProperty(CHROME_VARS[k]);
+      else overlay.style.setProperty(CHROME_VARS[k], pal[k]);
+    }
+  }
+
   /* ---- injected stylesheet (one-time).
      Perf guardrails: all glow here is text-shadow/box-shadow (composited once);
-     CRT/vignette/alarm wash are CSS pseudo-elements — GPU compositor only. ---- */
+     CRT/vignette/alarm wash are CSS pseudo-elements — GPU compositor only.
+     Chrome colors are var(--mg-*) refs so applyChrome() can reskin per theme. ---- */
   var CSS = ''
-    + '.mgsg-overlay{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;'
-    + 'background:rgba(3,8,4,0.92);backdrop-filter:blur(2px);font-family:"Share Tech Mono",ui-monospace,monospace;'
-    + 'color:' + C.green + ';opacity:0;transition:opacity .25s ease;padding:16px;overscroll-behavior:contain;overflow-y:auto;}'
+    + '.mgsg-overlay{' + chromeVarsCSS(CHROME.codec) + 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;'
+    + 'background:var(--mg-veil);backdrop-filter:blur(2px);font-family:"Share Tech Mono",ui-monospace,monospace;'
+    + 'color:var(--mg-text);opacity:0;transition:opacity .25s ease;padding:16px;overscroll-behavior:contain;overflow-y:auto;}'
     + '.mgsg-overlay.in{opacity:1;}'
     /* max-height + shrinking stage keep HUD/footer reachable on short viewports;
        margin:auto = safe centering (overflow stays scrollable, never clipped off-top) */
     + '.mgsg-frame{width:min(94vw,760px);margin:auto;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);'
-    + 'background:' + C.bg + ';border:1px solid #386041;border-radius:8px;'
-    + 'box-shadow:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(111,207,131,.08),0 0 32px rgba(111,207,131,.12);'
+    + 'background:var(--mg-bg);border:1px solid var(--mg-border);border-radius:8px;'
+    + 'box-shadow:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(var(--mg-glow),.08),0 0 32px rgba(var(--mg-glow),.12);'
     + 'overflow:hidden;display:flex;flex-direction:column;'
-    + 'outline:1px solid rgba(111,207,131,.12);outline-offset:-4px;}'
-    + '.mgsg-bar{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid ' + C.wallFace + ';'
-    + 'background:' + C.panel + ';font-size:13px;letter-spacing:1.5px;flex-shrink:0;}'
-    + '.mgsg-bar .t{color:' + C.bright + ';text-transform:uppercase;text-shadow:0 0 8px rgba(111,207,131,.5);}'
+    + 'outline:1px solid rgba(var(--mg-glow),.12);outline-offset:-4px;}'
+    + '.mgsg-bar{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--mg-line);'
+    + 'background:var(--mg-panel);font-size:13px;letter-spacing:1.5px;flex-shrink:0;}'
+    + '.mgsg-bar .t{color:var(--mg-hi);text-transform:uppercase;text-shadow:0 0 8px rgba(var(--mg-glow),.5);}'
     /* frequency readout as an LCD chip */
-    + '.mgsg-bar .f{margin-left:auto;color:' + C.bright + ';letter-spacing:2px;font-size:12px;'
-    + 'background:rgba(2,8,4,.6);border:1px solid #386041;border-radius:3px;padding:3px 9px;'
-    + 'text-shadow:0 0 6px rgba(111,207,131,.6);font-variant-numeric:tabular-nums;}'
+    + '.mgsg-bar .f{margin-left:auto;color:var(--mg-hi);letter-spacing:2px;font-size:12px;'
+    + 'background:rgba(var(--mg-shade),.6);border:1px solid var(--mg-border);border-radius:3px;padding:3px 9px;'
+    + 'text-shadow:0 0 6px rgba(var(--mg-glow),.6);font-variant-numeric:tabular-nums;}'
     + '.mgsg-frame.alarm .f{color:' + C.redHi + ';border-color:#7a2e35;text-shadow:0 0 6px rgba(224,96,109,.6);}'
     + '.mgsg-bar .f::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;'
-    + 'background:' + C.green + ';margin-right:8px;vertical-align:1px;box-shadow:0 0 6px rgba(111,207,131,.8);'
+    + 'background:var(--mg-text);margin-right:8px;vertical-align:1px;box-shadow:0 0 6px rgba(var(--mg-glow),.8);'
     + 'animation:mgsgBlink 1.4s steps(1) infinite;}'
     + '.mgsg-frame.alarm .f::before{background:' + C.red + ';box-shadow:0 0 6px rgba(224,96,109,.8);animation-duration:.5s;}'
     /* caution: the LCD chip and stage pick up the amber state color */
     + '.mgsg-frame.caution .f{color:' + C.amberHi + ';border-color:#6a5a28;text-shadow:0 0 6px rgba(224,194,90,.6);}'
     + '.mgsg-frame.caution .f::before{background:' + C.amber + ';box-shadow:0 0 6px rgba(224,194,90,.8);animation-duration:.9s;}'
-    + '.mgsg-btn{background:transparent;border:1px solid ' + C.wallEdge + ';color:' + C.green + ';font:inherit;font-size:12px;'
+    + '.mgsg-btn{background:transparent;border:1px solid var(--mg-edge);color:var(--mg-text);font:inherit;font-size:12px;'
     + 'line-height:1;padding:5px 8px;border-radius:4px;cursor:pointer;}'
-    + '.mgsg-btn:hover{background:rgba(111,207,131,.1);color:' + C.bright + ';}'
-    + '.mgsg-hud{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid ' + C.wallFace + ';'
-    + 'font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:' + C.dim + ';flex-shrink:0;}'
-    + '.mgsg-hud b{color:' + C.green + ';font-weight:400;text-shadow:0 0 5px rgba(111,207,131,.35);}'
-    + '.mgsg-stbadge{padding:2px 8px;border:1px solid currentColor;border-radius:3px;letter-spacing:2px;color:' + C.green + ';background:rgba(111,207,131,.08);}'
+    + '.mgsg-btn:hover{background:rgba(var(--mg-glow),.1);color:var(--mg-hi);}'
+    + '.mgsg-hud{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--mg-line);'
+    + 'font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mg-dim);flex-shrink:0;}'
+    + '.mgsg-hud b{color:var(--mg-text);font-weight:400;text-shadow:0 0 5px rgba(var(--mg-glow),.35);}'
+    + '.mgsg-stbadge{padding:2px 8px;border:1px solid currentColor;border-radius:3px;letter-spacing:2px;color:var(--mg-text);background:rgba(var(--mg-glow),.08);}'
     + '.mgsg-stbadge.alert,.mgsg-stbadge.evasion{color:' + C.red + ';}.mgsg-stbadge.caution{color:' + C.amber + ';background:rgba(224,194,90,.10);}'
     + '.mgsg-stbadge.evasion{background:rgba(224,96,109,.10);}'
     + '.mgsg-stbadge.alert{background:rgba(224,96,109,.14);animation:mgsgBlink .5s steps(1) infinite;}'
-    + '.mgsg-lifebar{position:relative;width:88px;height:8px;border:1px solid ' + C.wallEdge + ';border-radius:5px;overflow:hidden;background:rgba(0,0,0,.3);}'
-    + '.mgsg-lifebar i{display:block;height:100%;width:100%;background:' + C.green + ';transition:width .12s linear;}'
+    + '.mgsg-lifebar{position:relative;width:88px;height:8px;border:1px solid var(--mg-edge);border-radius:5px;overflow:hidden;background:rgba(0,0,0,.3);}'
+    + '.mgsg-lifebar i{display:block;height:100%;width:100%;background:var(--mg-text);transition:width .12s linear;}'
     + '.mgsg-lifebar::after{content:"";position:absolute;inset:0;pointer-events:none;'
-    + 'background:repeating-linear-gradient(90deg,transparent 0 7px,rgba(4,12,6,.7) 7px 8px);}'
+    + 'background:repeating-linear-gradient(90deg,transparent 0 7px,rgba(var(--mg-shade),.7) 7px 8px);}'
     + '.mgsg-lifebar.low i{animation:mgsgBlink .6s steps(1) infinite;}'
-    + '.mgsg-stage{position:relative;flex:1 1 auto;min-height:0;background:' + C.bg + ';transition:box-shadow .2s ease;'
-    + 'box-shadow:inset 0 0 70px rgba(111,207,131,.06);}'
+    + '.mgsg-stage{position:relative;flex:1 1 auto;min-height:0;background:var(--mg-bg);transition:box-shadow .2s ease;'
+    + 'box-shadow:inset 0 0 70px rgba(var(--mg-glow),.06);}'
     /* CRT vignette + scanlines (mirrors the site .crt) — pseudo-elements, zero canvas cost */
     + '.mgsg-stage::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:5;'
     + 'background:radial-gradient(ellipse 105% 105% at 50% 50%,transparent 55%,rgba(0,0,0,.42) 100%);'
@@ -231,40 +278,48 @@
     + 'text-align:center;gap:12px;padding:24px;backdrop-filter:blur(1px);'
     + 'opacity:0;visibility:hidden;transform:translateY(6px);'
     + 'transition:opacity .22s ease,transform .22s ease,visibility .22s;'
-    + 'background:linear-gradient(rgba(4,12,6,.93),rgba(4,12,6,.86) 30%,rgba(4,12,6,.86) 70%,rgba(4,12,6,.95));}'
+    + 'background:linear-gradient(rgba(var(--mg-shade),.93),rgba(var(--mg-shade),.86) 30%,rgba(var(--mg-shade),.86) 70%,rgba(var(--mg-shade),.95));}'
     + '.mgsg-screen.show{opacity:1;visibility:visible;transform:none;}'
-    + '.mgsg-screen h2{font-size:clamp(20px,4.4vw,32px);color:' + C.bright + ';letter-spacing:3px;margin:0;'
-    + 'text-shadow:0 0 12px rgba(164,236,177,.45),0 0 2px rgba(164,236,177,.8);}'
+    + '.mgsg-screen h2{font-size:clamp(20px,4.4vw,32px);color:var(--mg-hi);letter-spacing:3px;margin:0;'
+    + 'text-shadow:0 0 12px rgba(var(--mg-hglow),.45),0 0 2px rgba(var(--mg-hglow),.8);}'
     /* title logotype — double-rule plate + hard drop shadow */
     + '.mgsg-screen.title h2{font-size:clamp(30px,7vw,52px);letter-spacing:8px;padding:10px 18px;'
-    + 'border-top:3px double #386041;border-bottom:3px double #386041;'
-    + 'text-shadow:3px 3px 0 rgba(6,16,10,.9),0 0 22px rgba(111,207,131,.35),0 0 2px rgba(164,236,177,.9);}'
+    + 'border-top:3px double var(--mg-border);border-bottom:3px double var(--mg-border);'
+    + 'text-shadow:3px 3px 0 rgba(var(--mg-shade),.9),0 0 22px rgba(var(--mg-glow),.35),0 0 2px rgba(var(--mg-hglow),.9);}'
     + '.mgsg-screen .caller{color:' + C.amber + ';font-size:12px;letter-spacing:3px;}'
-    + '.mgsg-screen p{max-width:46ch;font-size:13px;line-height:1.65;color:' + C.green + ';margin:0;}'
-    + '.mgsg-screen .sub{color:' + C.dim + ';font-size:12px;letter-spacing:1px;}'
-    + '.mgsg-screen .go{margin-top:6px;color:' + C.bright + ';animation:mgsgBlink 1.1s steps(1) infinite;}'
+    + '.mgsg-screen p{max-width:46ch;font-size:13px;line-height:1.65;color:var(--mg-text);margin:0;}'
+    + '.mgsg-screen .sub{color:var(--mg-dim);font-size:12px;letter-spacing:1px;}'
+    + '.mgsg-screen .go{margin-top:6px;color:var(--mg-hi);animation:mgsgBlink 1.1s steps(1) infinite;}'
     + '.mgsg-screen.fail h2{color:' + C.red + ';}'
     /* GAME OVER letterbox bars */
     + '.mgsg-screen.fail::before,.mgsg-screen.fail::after{content:"";position:absolute;left:0;right:0;height:13%;background:#020603;}'
     + '.mgsg-screen.fail::before{top:0}.mgsg-screen.fail::after{bottom:0}'
     + '.mgsg-screen .snaaake{font-size:clamp(26px,7vw,56px);color:' + C.red + ';letter-spacing:4px;margin:0;'
     + 'text-shadow:0 0 16px rgba(224,96,109,.6);animation:mgsgFlicker .8s steps(2) 2;}'
-    + '.mgsg-screen .rank{font-size:clamp(40px,10vw,80px);color:' + C.bright + ';letter-spacing:2px;line-height:1;margin:0;'
-    + 'text-shadow:0 0 18px rgba(164,236,177,.5);animation:mgsgStamp .35s cubic-bezier(.2,1.6,.4,1) 1;}'
+    + '.mgsg-screen .rank{font-size:clamp(40px,10vw,80px);color:var(--mg-hi);letter-spacing:2px;line-height:1;margin:0;'
+    + 'text-shadow:0 0 18px rgba(var(--mg-hglow),.5);animation:mgsgStamp .35s cubic-bezier(.2,1.6,.4,1) 1;}'
+    /* NEW RECORD flourish — stamped chip under the rank on clear/complete screens
+       (scoped like .rank so it outranks the .mgsg-screen p color) */
+    + '.mgsg-screen .mgsg-rec{margin:0;font-size:13px;letter-spacing:4px;color:var(--mg-hi);'
+    + 'border:1px solid var(--mg-edge);border-radius:3px;padding:4px 12px;background:rgba(var(--mg-glow),.10);'
+    + 'text-shadow:0 0 10px rgba(var(--mg-hglow),.6);'
+    + 'animation:mgsgStamp .35s cubic-bezier(.2,1.6,.4,1) 1,mgsgBlink 1.1s steps(1) 2 .4s;}'
     /* codec audio wave (matches the site .codec-wave) — title/brief screens only */
     + '.mgsg-wave{display:none;align-items:flex-end;gap:3px;height:16px;}'
     + '.mgsg-screen.title.show .mgsg-wave,.mgsg-screen.brief.show .mgsg-wave{display:inline-flex;}'
-    + '.mgsg-wave i{width:3px;height:6px;background:' + C.green + ';animation:mgsgWave 1s ease-in-out infinite;}'
+    /* transform (compositor-only), not height — mirrors the site .codec-wave fix;
+       15px tall, bottom-anchored, base scaleY(.4)=6px = old static height */
+    + '.mgsg-wave i{width:3px;height:15px;transform:scaleY(.4);transform-origin:50% 100%;background:var(--mg-text);animation:mgsgWave 1s ease-in-out infinite;}'
     + '.mgsg-wave i:nth-child(2){animation-delay:.15s}.mgsg-wave i:nth-child(3){animation-delay:.3s}'
     + '.mgsg-wave i:nth-child(4){animation-delay:.45s}.mgsg-wave i:nth-child(5){animation-delay:.6s}'
-    + '.mgsg-foot{padding:8px 12px;border-top:1px solid ' + C.wallFace + ';font-size:11px;color:' + C.dim + ';letter-spacing:.5px;'
-    + 'display:flex;gap:12px;flex-wrap:wrap;flex-shrink:0;}.mgsg-foot kbd{border:1px solid ' + C.wallEdge + ';border-radius:3px;padding:0 4px;color:' + C.green + ';}'
+    + '.mgsg-foot{padding:8px 12px;border-top:1px solid var(--mg-line);font-size:11px;color:var(--mg-dim);letter-spacing:.5px;'
+    + 'display:flex;gap:12px;flex-wrap:wrap;flex-shrink:0;}.mgsg-foot kbd{border:1px solid var(--mg-edge);border-radius:3px;padding:0 4px;color:var(--mg-text);}'
     + '.mgsg-flash{position:absolute;inset:0;background:' + C.red + ';opacity:0;pointer-events:none;}'
     + '.mgsg-flash.on{animation:mgsgFlash .5s ease-out;}'
     /* codec subtitle toast — visible mirror of the aria-live announcements */
     + '.mgsg-toast{position:absolute;left:50%;bottom:10px;z-index:6;max-width:88%;padding:4px 12px;'
-    + 'background:rgba(3,10,5,.82);border:1px solid ' + C.wallEdge + ';border-radius:3px;'
-    + 'color:' + C.bright + ';font-size:12px;letter-spacing:1px;text-align:center;pointer-events:none;'
+    + 'background:var(--mg-toastbg);border:1px solid var(--mg-edge);border-radius:3px;'
+    + 'color:var(--mg-hi);font-size:12px;letter-spacing:1px;text-align:center;pointer-events:none;'
     + 'opacity:0;transform:translateX(-50%) translateY(4px);transition:opacity .18s ease,transform .18s ease;}'
     + '.mgsg-toast.show{opacity:1;transform:translateX(-50%);}'
     + '.mgsg-touch .mgsg-toast{bottom:72px;}'
@@ -279,34 +334,49 @@
     + '.mgsg-canvas.on{animation:mgsgPowerOn .3s cubic-bezier(.2,.8,.3,1) 1;transform-origin:50% 50%;}'
     /* stats grid on clear/complete/fail screens */
     + '.mgsg-stats{display:none;grid-template-columns:auto auto;gap:4px 18px;font-size:13px;letter-spacing:2px;margin:4px 0;}'
-    + '.mgsg-stats span:nth-child(odd){color:' + C.dim + ';text-align:left;}'
-    + '.mgsg-stats span:nth-child(even){color:' + C.bright + ';text-align:right;text-shadow:0 0 6px rgba(111,207,131,.4);}'
+    + '.mgsg-stats span:nth-child(odd){color:var(--mg-dim);text-align:left;}'
+    + '.mgsg-stats span:nth-child(even){color:var(--mg-hi);text-align:right;text-shadow:0 0 6px rgba(var(--mg-glow),.4);}'
     + '.mgsg-screen.show .mgsg-stats span{animation:mgsgStatIn .3s both;}'
     + '.mgsg-screen.show .mgsg-stats span:nth-child(n+3){animation-delay:.12s}'
     + '.mgsg-screen.show .mgsg-stats span:nth-child(n+5){animation-delay:.24s}'
     + '.mgsg-screen .mgsg-btn{margin-top:4px;padding:7px 14px;font-size:12px;letter-spacing:2px;}'
     + '.mgsg-pad{position:absolute;left:12px;bottom:12px;display:none;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(3,46px);gap:5px;touch-action:none;}'
     + '.mgsg-acts{position:absolute;right:12px;bottom:12px;display:none;grid-template-columns:repeat(2,52px);grid-template-rows:repeat(2,44px);gap:6px;touch-action:none;}'
-    + '.mgsg-pad button,.mgsg-acts button{background:rgba(14,29,19,.85);border:1px solid ' + C.wallEdge + ';color:' + C.green + ';'
+    + '.mgsg-pad button,.mgsg-acts button{background:rgba(var(--mg-pad),.85);border:1px solid var(--mg-edge);color:var(--mg-text);'
     + 'border-radius:8px;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;-webkit-user-select:none;user-select:none;}'
-    + '.mgsg-pad button:active,.mgsg-acts button:active{background:rgba(111,207,131,.2);}'
+    + '.mgsg-pad button:active,.mgsg-acts button:active{background:rgba(var(--mg-glow),.2);}'
     + '.mgsg-pad .u{grid-area:1/2}.mgsg-pad .l{grid-area:2/1}.mgsg-pad .r{grid-area:2/3}.mgsg-pad .d{grid-area:3/2}'
-    + '.mgsg-pad .p{grid-area:2/2;font-size:10px;letter-spacing:1px;color:' + C.dim + ';}'
+    + '.mgsg-pad .p{grid-area:2/2;font-size:10px;letter-spacing:1px;color:var(--mg-dim);}'
     + '.mgsg-touch .mgsg-pad,.mgsg-touch .mgsg-acts{display:grid;}'
     + '.mgsg-touch .mgsg-foot{display:none;}'
+    /* SND/EXIT are the only affordances in touch mode — give them touch-size targets */
+    + '.mgsg-touch .mgsg-bar .mgsg-btn{min-height:40px;min-width:44px;}'
     + '.mgsg-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}'
     + '.mgsg-overlay,.mgsg-overlay *{cursor:auto !important;}'
     + '.mgsg-overlay .mgsg-btn,.mgsg-overlay .mgsg-pad button,.mgsg-overlay .mgsg-acts button{cursor:pointer !important;}'
+    /* Phone portrait: overlaid on the letterboxed stage the touch controls
+       covered ~72% of the playfield. Drop them below the stage into real frame
+       padding (frame is overflow:hidden, so negative bottom alone would clip);
+       the overlay already scrolls + margin:auto safe-centers on short
+       viewports, so the taller frame degrades gracefully. Toast reclaims the
+       stage bottom it vacated. Must sit AFTER the base .mgsg-pad/.mgsg-acts/
+       .mgsg-touch .mgsg-toast rules — equal specificity, source order wins. */
+    + '@media (max-width:700px) and (orientation:portrait){'
+    + '.mgsg-touch .mgsg-frame{padding-bottom:172px;}'
+    + '.mgsg-touch .mgsg-pad{bottom:-160px;}'
+    + '.mgsg-touch .mgsg-acts{bottom:-133px;}'
+    + '.mgsg-touch .mgsg-toast{bottom:10px;}'
+    + '}'
     + '@media (prefers-reduced-motion:reduce){.mgsg-screen .go{animation:none}.mgsg-overlay{transition:none}.mgsg-stage{transition:none}'
     + '.mgsg-stage.alarm::before,.mgsg-bar .f::before,.mgsg-stbadge.alert,.mgsg-lifebar.low i,.mgsg-wave i,'
-    + '.mgsg-screen .snaaake,.mgsg-screen .rank{animation:none}'
+    + '.mgsg-screen .snaaake,.mgsg-screen .rank,.mgsg-screen .mgsg-rec{animation:none}'
     + '.mgsg-roll{display:none}.mgsg-stage.alarm .mgsg-hazard{animation:none}.mgsg-canvas.on{animation:none}'
     + '.mgsg-screen.show .mgsg-stats span{animation:none}.mgsg-toast{transition:none}'
     + '.mgsg-screen{transition:opacity .22s ease;transform:none}}'
     + '@keyframes mgsgBlink{50%{opacity:.25}}@keyframes mgsgFlash{from{opacity:.5}to{opacity:0}}'
     + '@keyframes mgsgAlarmPulse{50%{opacity:.55}}@keyframes mgsgFlicker{50%{opacity:.4}}'
     + '@keyframes mgsgStamp{from{transform:scale(2.4);opacity:0}to{transform:scale(1);opacity:1}}'
-    + '@keyframes mgsgWave{0%,100%{height:5px}50%{height:15px}}'
+    + '@keyframes mgsgWave{0%,100%{transform:scaleY(.333)}50%{transform:scaleY(1)}}'
     + '@keyframes mgsgRoll{from{transform:translateY(0)}to{transform:translateY(520%)}}'
     + '@keyframes mgsgHzScroll{from{transform:translateX(0)}to{transform:translateX(-28.3px)}}'
     + '@keyframes mgsgPowerOn{0%{transform:scaleY(.005) scaleX(1.1);opacity:.4}60%{transform:scaleY(1.04)}100%{transform:none;opacity:1}}'
@@ -316,7 +386,7 @@
   var built = false, open = false;
   var overlay, frame, stage, canvas, ctx, dpr = 1;
   var stateBadge, lifeFill, hudIntel, hudLevel, hudTime;
-  var screenEl, scrCaller, scrTitle, scrBody, scrSub, scrGo, scrRank, scrStats, scrRetry, flashEl, srLive, muteBtn;
+  var screenEl, scrCaller, scrTitle, scrBody, scrSub, scrGo, scrRank, scrStats, scrRec, scrRetry, flashEl, srLive, muteBtn;
   var toastEl = null, toastTimer = null, typeTimer = null;
   var rafId = null, lastT = 0, muted = false, audioCtx = null, prevFocus = null, alertLoop = null;
   var bgLayer = null;    // pre-rendered floor+walls (rebuilt on loadLevel/sizeCanvas)
@@ -379,6 +449,7 @@
       + '<h2 data-scr="title">CODEC INFILTRATION</h2>'
       + '<p class="rank" data-scr="big" style="display:none"></p>'
       + '<div class="mgsg-stats" data-scr="stats" style="display:none"></div>'
+      + '<p class="mgsg-rec" data-scr="rec" style="display:none"></p>'
       + '<p data-scr="body"></p><p class="sub" data-scr="sub"></p>'
       + '<p class="go" data-scr="go">PRESS ENTER</p>'
       + '<button type="button" class="mgsg-btn" data-scr="retry" style="display:none">RETRY OP</button></div>'
@@ -409,7 +480,7 @@
     screenEl = $('.mgsg-screen'); scrCaller = $('[data-scr="caller"]'); scrTitle = $('[data-scr="title"]');
     scrRank = $('[data-scr="big"]'); scrBody = $('[data-scr="body"]'); scrSub = $('[data-scr="sub"]'); scrGo = $('[data-scr="go"]');
     flashEl = $('.mgsg-flash'); srLive = $('.mgsg-sr'); muteBtn = $('[data-act="mute"]');
-    toastEl = $('.mgsg-toast'); scrStats = $('[data-scr="stats"]'); scrRetry = $('[data-scr="retry"]');
+    toastEl = $('.mgsg-toast'); scrStats = $('[data-scr="stats"]'); scrRec = $('[data-scr="rec"]'); scrRetry = $('[data-scr="retry"]');
 
     buildSprites();
     sizeCanvas();
@@ -419,7 +490,7 @@
     muteBtn.addEventListener('click', function () {
       unlockAudio();  // real gesture — resume a policy-suspended AudioContext
       muted = !muted; muteBtn.textContent = muted ? 'MUTE' : 'SND';
-      muteBtn.style.color = muted ? C.dim : '';
+      muteBtn.style.color = muted ? 'var(--mg-dim)' : '';
       if (muted) stopAlertMusic();
       else if (alertPhase === 'alert' || alertPhase === 'evasion') startAlertMusic();
     });
@@ -919,7 +990,8 @@
     stateBadge.textContent = ph === 'alert' ? '! ALERT' : ph === 'evasion' ? 'EVASION ' + Math.ceil(Math.max(0, evasionTimer))
       : ph === 'caution' ? 'CAUTION ' + Math.ceil(Math.max(0, cautionTimer)) : 'NORMAL';
     lifeFill.style.width = (life * 100).toFixed(0) + '%';
-    lifeFill.style.background = life > 0.5 ? C.green : life > 0.25 ? C.amber : C.red;
+    // healthy = theme chrome color; warning/critical stay amber/red in every theme
+    lifeFill.style.background = life > 0.5 ? 'var(--mg-text)' : life > 0.25 ? C.amber : C.red;
     lifeFill.parentNode.classList.toggle('low', life < 0.25);
     hudIntel.textContent = intel ? (intelGot ? '[OK]' : '[ ]') : '[--]';
     var s = Math.floor(elapsed); hudTime.textContent = Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
@@ -1238,8 +1310,9 @@
       });
       scrStats.style.display = 'grid';
     } else scrStats.style.display = 'none';
+    scrRec.textContent = o.rec || ''; scrRec.style.display = o.rec ? '' : 'none';
     scrRetry.style.display = o.retry ? '' : 'none';
-    announce((o.title || '') + '. ' + (o.body || ''));
+    announce((o.title || '') + '. ' + (o.rec ? o.rec + '. ' : '') + (o.body || ''));
   }
   function hideScreen() {
     screenEl.className = 'mgsg-screen'; scrRetry.style.display = 'none';
@@ -1248,8 +1321,33 @@
   function fmt(s) { s = Math.floor(s); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
   function rankFor(alerts, time, sTime) { if (alerts === 0 && time < (sTime || 55)) return 'S'; if (alerts === 0) return 'A'; if (alerts <= 2) return 'B'; return 'C'; }
 
+  /* ---- per-op best completion times (localStorage 'mgs-best': {op1:s,op2:s,op3:s,total:s}).
+     Flat schema, every read guarded — corrupt/foreign JSON degrades to "no best". ---- */
+  var BEST_KEY = 'mgs-best';
+  function readBest() {
+    var b = null;
+    try { b = JSON.parse(localStorage.getItem(BEST_KEY)); } catch (e) {}
+    return (b && typeof b === 'object' && !Array.isArray(b)) ? b : {};
+  }
+  function bestFor(key) {
+    var v = readBest()[key];
+    return (typeof v === 'number' && isFinite(v) && v > 0) ? v : null;
+  }
+  // store secs under key if it beats (or first sets) the best; true = new record
+  function noteBest(key, secs) {
+    var prev = bestFor(key);
+    if (prev !== null && prev <= secs) return false;
+    var b = readBest(); b[key] = Math.round(secs * 100) / 100;
+    try { localStorage.setItem(BEST_KEY, JSON.stringify(b)); } catch (e) {}
+    return true;
+  }
+
   function startTitle() { state = 'title'; loadLevel(0); render(); showScreen({ cls: 'title', caller: 'CODEC INFILTRATION · 140.85', title: 'METAL GEAR', body: 'A stealth drill on an encrypted burst channel. Get the intel, reach the exit, stay unseen.', sub: 'WASD move · Shift run · B box · K knock · F CQC', go: 'PRESS ENTER' }); }
-  function startBriefing() { state = 'briefing'; loadLevel(levelIdx); render(); showScreen({ cls: 'brief', caller: '▸ ' + level.caller + ' · 140.85', title: 'OP ' + (levelIdx + 1) + ' — ' + level.name, body: level.brief, sub: 'incoming codec · transmission secure', go: 'PRESS ENTER TO INFILTRATE' }); }
+  function startBriefing() {
+    state = 'briefing'; loadLevel(levelIdx); render();
+    var pb = bestFor('op' + (levelIdx + 1));   // personal best line — omitted until an op is cleared once
+    showScreen({ cls: 'brief', caller: '▸ ' + level.caller + ' · 140.85', title: 'OP ' + (levelIdx + 1) + ' — ' + level.name, stats: pb !== null ? [['PERSONAL BEST', fmt(pb)]] : null, body: level.brief, sub: 'incoming codec · transmission secure', go: 'PRESS ENTER TO INFILTRATE' });
+  }
   function startPlay() {
     hideScreen(); keys = Object.create(null); touchDir = { up: 0, down: 0, left: 0, right: 0 }; running = false;
     // CRT power-on sweep as gameplay starts
@@ -1269,13 +1367,22 @@
   }
   function levelClear() {
     totalTime += elapsed; totalAlerts += alertsThisLevel; stopAlertMusic(); sfxClear();
+    // op best is recorded on every clear (incl. op3) so its briefing shows a PB
+    var opPrev = bestFor('op' + (levelIdx + 1));
+    var opRec = noteBest('op' + (levelIdx + 1), elapsed);
     if (levelIdx + 1 < LEVELS.length) {
       var rank = rankFor(alertsThisLevel, elapsed);
-      state = 'clear'; render(); showScreen({ title: 'OP ' + (levelIdx + 1) + ' CLEAR', big: rank, body: alertsThisLevel ? ('Extracted — ' + alertsThisLevel + ' alert(s) raised.') : 'Clean extraction. No alerts.', stats: [['TIME', fmt(elapsed)], ['ALERTS', String(alertsThisLevel)]], go: 'PRESS ENTER TO CONTINUE' });
+      var stats = [['TIME', fmt(elapsed)], ['ALERTS', String(alertsThisLevel)]];
+      if (!opRec && opPrev !== null) stats.push(['BEST', fmt(opPrev)]);
+      state = 'clear'; render(); showScreen({ title: 'OP ' + (levelIdx + 1) + ' CLEAR', big: rank, rec: opRec ? 'NEW RECORD' : '', body: alertsThisLevel ? ('Extracted — ' + alertsThisLevel + ' alert(s) raised.') : 'Clean extraction. No alerts.', stats: stats, go: 'PRESS ENTER TO CONTINUE' });
     } else {
       // mission rank counts every op: total alerts + total time
       var mRank = rankFor(totalAlerts, totalTime, 165);
-      state = 'complete'; render(); showScreen({ title: 'MISSION COMPLETE', big: mRank, body: (totalAlerts ? 'All sectors cleared — ' + totalAlerts + ' alert(s) across the mission.' : 'All sectors cleared and the intel is out.') + ' Kept you waiting, huh?', stats: [['TOTAL TIME', fmt(totalTime)], ['TOTAL ALERTS', String(totalAlerts)]], go: 'PRESS ENTER TO REPLAY' });
+      var totPrev = bestFor('total');
+      var totRec = noteBest('total', totalTime);
+      var mStats = [['TOTAL TIME', fmt(totalTime)], ['TOTAL ALERTS', String(totalAlerts)]];
+      if (!totRec && totPrev !== null) mStats.push(['BEST', fmt(totPrev)]);
+      state = 'complete'; render(); showScreen({ title: 'MISSION COMPLETE', big: mRank, rec: totRec ? 'NEW RECORD' : '', body: (totalAlerts ? 'All sectors cleared — ' + totalAlerts + ' alert(s) across the mission.' : 'All sectors cleared and the intel is out.') + ' Kept you waiting, huh?', stats: mStats, go: 'PRESS ENTER TO REPLAY' });
     }
   }
   function gameOver() {
@@ -1356,6 +1463,10 @@
     build();
     if (open) return;
     open = true; sizeCanvas();
+    // Let the page's background loops (dither/radar) pause under the overlay
+    document.body.classList.add('game-open');
+    window.dispatchEvent(new CustomEvent('gameopen'));
+    applyChrome();   // dress the chrome for the current site theme
     levelIdx = 0; totalTime = 0; totalAlerts = 0; keys = Object.create(null); touchDir = { up: 0, down: 0, left: 0, right: 0 }; running = false; boxed = false;
     prevFocus = document.activeElement;
     document.body.style.overflow = 'hidden'; overlay.style.display = 'flex';
@@ -1364,6 +1475,7 @@
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('blur', onBlur);
     window.addEventListener('resize', onResize);
+    window.addEventListener('themechange', applyChrome);   // live reskin while open
     requestAnimationFrame(function () { overlay.classList.add('in'); });
     frame.focus();
     startTitle();
@@ -1372,12 +1484,15 @@
   function closeGame() {
     if (!open) return;
     open = false; stopAlertMusic();
+    document.body.classList.remove('game-open');   // resume dither/radar loops
+    window.dispatchEvent(new CustomEvent('gameclose'));
     if (rafId) cancelAnimationFrame(rafId); rafId = null;
     document.removeEventListener('keydown', onKey, true);
     document.removeEventListener('keyup', onKey, true);
     document.removeEventListener('visibilitychange', onVisibility);
     window.removeEventListener('blur', onBlur);
     window.removeEventListener('resize', onResize);
+    window.removeEventListener('themechange', applyChrome);
     overlay.classList.remove('in'); document.body.style.overflow = '';
     hideToast(); if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
     resetInput(); boxed = false;  // resetInput also clears touchDir — no stuck d-pad on reopen

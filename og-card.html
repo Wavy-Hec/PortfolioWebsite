@@ -2,24 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Source page for og-card.png (1200x630). Re-render: open at 1200x630 and screenshot. -->
+  <!--
+    Human-editable visual reference for og-card.png (1200x630) — codec-frame identity:
+    dark ink-navy panel, thin codec frame + corner brackets, blue-ink palette (#2f54cc family),
+    raiden-dither.png portrait inset right (chunky pixels), subtle scanlines.
+
+    og-card.png itself is authored by a Python+Pillow script (fonts: Georgia Bold + Consolas
+    from C:\Windows\Fonts; output PNG-8 quantized, target < 120KB). Script last lived at:
+      %LOCALAPPDATA%\Temp\claude\C--Users-hlugo-Downloads-PortfolioWebsite\1b852f4f-7753-4fe3-b23f-ffb98e219461\scratchpad\make_og_card.py
+    If the script is gone, re-render by opening this page at exactly 1200x630 and screenshotting.
+    Self-contained on purpose: system fonts only, no external requests, no site JS.
+  -->
   <meta name="robots" content="noindex">
   <title>og card</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@600;700;800&family=Share+Tech+Mono&display=swap">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       width: 1200px;
       height: 630px;
       overflow: hidden;
-      background: #eaf0fb;
-      font-family: 'Spectral', Georgia, serif;
       position: relative;
+      font-family: Georgia, 'Times New Roman', serif;
+      background:
+        repeating-linear-gradient(to bottom, rgba(7,11,26,.25) 0 1px, transparent 1px 4px),
+        linear-gradient(to bottom, #0b1228, #090e1f);
     }
-    #dither-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    /* thin codec frame + corner brackets */
+    .frame { position: absolute; inset: 26px; border: 1px solid #2b4494; pointer-events: none; }
+    .frame i { position: absolute; width: 26px; height: 26px; border: 3px solid #4f72ea; }
+    .frame i:nth-child(1) { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+    .frame i:nth-child(2) { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
+    .frame i:nth-child(3) { bottom: -2px; left: -2px; border-right: 0; border-top: 0; }
+    .frame i:nth-child(4) { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
     .card {
       position: relative;
       z-index: 1;
@@ -27,78 +42,94 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 90px;
-      gap: 60px;
+      padding: 0 84px 0 100px;
     }
     .kicker {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 21px;
-      letter-spacing: 4px;
+      font-family: Consolas, 'Courier New', monospace;
+      font-size: 22px;
+      letter-spacing: 5px;
       text-transform: uppercase;
-      color: #2f54cc;
-      margin-bottom: 22px;
-    }
-    h1 {
-      font-size: 96px;
-      font-weight: 800;
-      line-height: 1.02;
-      letter-spacing: -2px;
-      color: #2746b4;
+      color: #8ca3f0;
       margin-bottom: 26px;
     }
-    .role {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 26px;
-      color: #2f54cc;
-      margin-bottom: 34px;
+    h1 {
+      font-size: 128px;
+      font-weight: 700;
+      line-height: .98;
+      text-transform: uppercase;
+      color: #e8eefc;
+      margin-left: -6px;
+      margin-bottom: 30px;
     }
     .rule {
-      width: 130px;
+      width: 150px;
       height: 2px;
-      background-image: linear-gradient(to right, #a7bbe7 60%, transparent 0%);
+      background-image: linear-gradient(to right, #33509e 60%, transparent 0%);
       background-size: 14px 2px;
       background-repeat: repeat-x;
-      margin-bottom: 34px;
+      margin-bottom: 28px;
+    }
+    .accent {
+      font-family: Consolas, 'Courier New', monospace;
+      font-size: 26px;
+      color: #5f81f0;
+      margin-bottom: 18px;
     }
     .url {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 20px;
+      font-family: Consolas, 'Courier New', monospace;
+      font-size: 19px;
       letter-spacing: 1px;
-      color: #687494;
+      color: #6a769c;
     }
+    /* portrait slot: framed, chunky dither pixels kept 1:1 (source is 2x-block dithered) */
     .portrait {
       flex: 0 0 auto;
-      background: #ffffff;
-      border: 1px solid #ccd8f1;
-      border-radius: 8px;
-      padding: 16px 16px 12px;
+      position: relative;
+      background: #0d1735;
+      border: 1px solid #2b4494;
+      padding: 13px 13px 12px;
       text-align: center;
     }
-    .portrait img { width: 360px; display: block; border-radius: 4px; }
+    .portrait::before, .portrait::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #4f72ea;
+      pointer-events: none;
+    }
+    .portrait::before { top: 5px; left: 5px; border-right: 0; border-bottom: 0; }
+    .portrait::after { bottom: 5px; right: 5px; border-left: 0; border-top: 0; }
+    .crop { width: 390px; height: 480px; overflow: hidden; }
+    .crop img {
+      display: block;
+      image-rendering: pixelated;
+      margin: -16px 0 0 -34px; /* crop box (34,16)-(424,496) of 460x596 source */
+    }
     .portrait figcaption {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 12px;
+      font-family: Consolas, 'Courier New', monospace;
+      font-size: 15px;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #8089a8;
-      margin-top: 10px;
+      color: #6d7ba6;
+      margin-top: 9px;
     }
   </style>
 </head>
 <body>
+  <div class="frame"><i></i><i></i><i></i><i></i></div>
   <div class="card">
     <div class="text">
-      <p class="kicker">// ai researcher · robotics engineer</p>
-      <h1>Hector Lugo</h1>
-      <p class="role">&gt; rl · computer vision · vlms — robotics</p>
+      <p class="kicker">AI Researcher · Robotics Engineer</p>
+      <h1>Hector<br>Lugo</h1>
       <div class="rule"></div>
-      <p class="url">wavy-hec.github.io/PortfolioWebsite · codec 140.85</p>
+      <p class="accent">// codec · 140.85</p>
+      <p class="url">wavy-hec.github.io/PortfolioWebsite</p>
     </div>
     <figure class="portrait">
-      <img src="raiden-dither.png" alt="">
+      <div class="crop"><img src="raiden-dither.png" alt=""></div>
       <figcaption>output 01 · seed: 2001</figcaption>
     </figure>
   </div>
-  <script src="dither.js"></script>
 </body>
 </html>

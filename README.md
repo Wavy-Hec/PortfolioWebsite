@@ -3,21 +3,24 @@
 Personal portfolio for **Hector Lugo** — MS Computer Science @ UTRGV, researching
 **reinforcement learning, computer vision, and vision-language models (VLMs) for robotics**.
 
-A static site with a Hermes-inspired teal + cream theme (near-black teal `#041c1c`
-+ warm cream `#ffe6cb`, flat panels, film grain, monospace terminal touches).
+A static site with four switchable themes — **ink** (blue-ink editorial with a
+dithered Nous-style background), **codec** (MGS2 green phosphor, with a hidden
+Konami-code mini-game), **holonet** (Star Wars deep-space hologram), and
+**gotham** (Batman: TAS red-sky deco) — plus per-theme portraits, corner
+widgets, and easter eggs. Vanilla HTML/CSS/JS, zero build step, zero runtime
+dependencies (icons are an inline SVG sprite).
 
 ## Stack
 Plain HTML, CSS, and vanilla JavaScript — no build step, no dependencies
-(Font Awesome + Google Fonts via CDN).
+(Google Fonts via CDN; icons are a hand-authored inline SVG sprite in `index.html`).
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | Markup and content |
+| `index.html` | Markup and content (incl. the icon sprite) |
 | `style.css` | Theme + all component styles |
 | `script.js` | Typing animation, mobile nav, scroll effects, terminal reveal, copy-to-clipboard |
 | `Hector_Lugo_Resume_Spring_2026.pdf` | Résumé (linked from the hero, nav, and résumé section) |
-| `pfp.jpg` | Profile photo (optimized) |
-| `raiden.png` | Metal Gear Solid 2 artwork (Beyond the Code section) |
+| `*-dither.png` | Dithered portrait renders (per-theme hero + codec-call portraits) |
 
 ## Sections
 Home · What I Do · About · Experience · Projects · Skills · Résumé · Beyond the Code · Contact

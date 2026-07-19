@@ -28,23 +28,20 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-  <!-- Fonts load async (media swap) like the icons below — display=swap already accepts FOUT, so don't block first paint on a cross-origin CSS fetch -->
+  <!-- Fonts load async (media swap) — display=swap already accepts FOUT, so don't block first paint on a cross-origin CSS fetch.
+       Icons are an inline SVG sprite at the top of <body> (zero requests; replaced Font Awesome's ~298KB CSS+woff2). -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap"></noscript>
-  <!-- Icons load async (media swap) — no above-the-fold text depends on them -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></noscript>
-  <link rel="stylesheet" href="style.css?v=22">
+  <link rel="stylesheet" href="style.css?v=23">
   <!-- Without JS the codec loader can never dismiss itself — hide it outright.
        Must come AFTER style.css so it wins the cascade (equal specificity). -->
   <noscript><style>.codec-loader{display:none!important}body:not(.loaded){overflow-y:auto!important}</style></noscript>
   <!-- Deferred: downloads start with the preload scanner, execution keeps this
        order (script.js dispatches 'themechange'; dither/radar listen) and runs
        post-parse. game.js is lazy-loaded by script.js on first launch. -->
-  <script src="dither.js?v=14" defer></script>
-  <script src="radar.js?v=16" defer></script>
-  <script src="script.js?v=23" defer></script>
+  <script src="dither.js?v=15" defer></script>
+  <script src="radar.js?v=17" defer></script>
+  <script src="script.js?v=24" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -65,6 +62,42 @@
   </script>
 </head>
 <body>
+  <!-- Icon sprite — hand-authored 24x24 currentColor glyphs (github is 16x16).
+       Call sites use <svg class="icon"><use href="#i-name"/></svg>; sizing via
+       font-size (.icon is 1em square), mirroring the old Font Awesome rendering. -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="i-pen-nib" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M9.2 1.8h5.6v3.4H9.2V1.8zM9.6 6.4h4.8a2.2 2.2 0 0 1 2 1.3l2.4 4.9a3.2 3.2 0 0 1-.6 3.7L12 22.6l-6.2-6.3a3.2 3.2 0 0 1-.6-3.7l2.4-4.9a2.2 2.2 0 0 1 2-1.3zm2.4 8.2a1.9 1.9 0 1 0 0-3.8 1.9 1.9 0 0 0 0 3.8zm-.4 1.3h.8L12 21.4l-.4-5.5z"/></symbol>
+    <symbol id="i-tower-broadcast" viewBox="0 0 24 24"><path d="M12 7.6a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8zM11 12.9a3.6 3.6 0 0 0 2 0L14.8 22h-1.7L12 16.6 10.9 22H9.2l1.8-9.1zM5.9 3.6l1.5 1.2a8.4 8.4 0 0 0 0 10.4l-1.5 1.2a10.3 10.3 0 0 1 0-12.8zm12.2 0a10.3 10.3 0 0 1 0 12.8l-1.5-1.2a8.4 8.4 0 0 0 0-10.4l1.5-1.2zM8.6 6.1l1.5 1.2a4.6 4.6 0 0 0 0 5.4l-1.5 1.2a6.5 6.5 0 0 1 0-7.8zm6.8 0a6.5 6.5 0 0 1 0 7.8l-1.5-1.2a4.6 4.6 0 0 0 0-5.4l1.5-1.2z"/></symbol>
+    <symbol id="i-satellite-dish" viewBox="0 0 24 24"><path d="M13.1 2a9 9 0 0 1 8.9 8.9h-2a6.9 6.9 0 0 0-6.9-6.9V2zm0 4a5 5 0 0 1 4.9 4.9h-2a2.9 2.9 0 0 0-2.9-2.9V6zM3.7 7.4l12.9 12.9A9.8 9.8 0 0 1 3.7 7.4zm2.7-1.6 9.6 9.6 1.2-1.2-9.6-9.6a10 10 0 0 0-1.2 1.2z"/></symbol>
+    <symbol id="i-city" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M2 22V9h4V3h6v8h3V7h7v15H2zm2-11h1.6v1.6H4V11zm0 3.4h1.6V16H4v-1.6zM8 5.5h1.6v1.6H8V5.5zm0 3.5h1.6v1.6H8V9zm0 3.5h1.6v1.6H8v-1.6zm0 3.5h1.6v1.6H8V16zm9.5-6.5h1.6v1.6h-1.6V9.5zm0 3.5h1.6v1.6h-1.6V13zm0 3.5h1.6v1.6h-1.6v-1.6z"/></symbol>
+    <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M11 3h2v12.17l4.59-4.58L19 12l-7 7-7-7 1.41-1.41L11 15.17V3z"/></symbol>
+    <symbol id="i-bars" viewBox="0 0 24 24"><path d="M3 5h18v2H3V5zm0 6h18v2H3v-2zm0 6h18v2H3v-2z"/></symbol>
+    <symbol id="i-times" viewBox="0 0 24 24"><path d="M6.4 4.98 4.98 6.4 10.59 12l-5.61 5.6L6.4 19.02 12 13.41l5.6 5.61 1.42-1.42L13.41 12l5.61-5.6L17.6 4.98 12 10.59 6.4 4.98z"/></symbol>
+    <symbol id="i-spinner" viewBox="0 0 24 24"><path d="M14 4a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm5.66 2.34a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM22 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm-2.34 5.66a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 20a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm-5.66-2.34a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM6 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm2.34-5.66a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></symbol>
+    <symbol id="i-envelope" viewBox="0 0 24 24"><path d="M12 12.9 2.2 6.06A1.8 1.8 0 0 1 3.8 5h16.4a1.8 1.8 0 0 1 1.6 1.06L12 12.9zM2 8.1l9.43 6.6a1 1 0 0 0 1.14 0L22 8.1v9.1a1.8 1.8 0 0 1-1.8 1.8H3.8A1.8 1.8 0 0 1 2 17.2V8.1z"/></symbol>
+    <symbol id="i-brain" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2c1.9 0 3.4 1 4.1 2.5A4.6 4.6 0 0 1 21 9.1c0 .9-.3 1.8-.8 2.5.5.7.8 1.6.8 2.5a4.6 4.6 0 0 1-4.9 4.6A4.3 4.3 0 0 1 12 22a4.3 4.3 0 0 1-4.1-3.3A4.6 4.6 0 0 1 3 14.1c0-.9.3-1.8.8-2.5A4.3 4.3 0 0 1 3 9.1a4.6 4.6 0 0 1 4.9-4.6A4.4 4.4 0 0 1 12 2zm-.7 2.5h1.4v15h-1.4v-15z"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></symbol>
+    <symbol id="i-comments" viewBox="0 0 24 24"><path d="M2 5.3C2 4 3 3 4.3 3h9.4C15 3 16 4 16 5.3v4.9c0 1.3-1 2.3-2.3 2.3H8.9L4.6 16v-3.5h-.3C3 12.5 2 11.5 2 10.2V5.3zm16 3.2h1.7c1.3 0 2.3 1 2.3 2.3v4.9c0 1.3-1 2.3-2.3 2.3h-.3V21l-4.3-3.5h-4.8a2.3 2.3 0 0 1-2.1-1.4h6.3c2 0 3.5-1.6 3.5-3.5V8.5z"/></symbol>
+    <symbol id="i-person-walking" viewBox="0 0 24 24"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9 7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7z"/></symbol>
+    <symbol id="i-file-lines" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.8L18.2 9H13V3.8zM8 12.5h8v1.7H8v-1.7zm0 3.6h8v1.7H8v-1.7z"/></symbol>
+    <symbol id="i-robot" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M11 2h2v3.2h-2V2zM5 6.2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2zm3.2 4.1a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6zm7.6 0a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6zM9 16h6v1.6H9V16zM.5 10.5H2v5H.5v-5zM22 10.5h1.5v5H22v-5z"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 2h6v2h-1v4.4l5.6 9.7A1.9 1.9 0 0 1 18 21H6a1.9 1.9 0 0 1-1.6-2.9L10 8.4V4H9V2z"/></symbol>
+    <symbol id="i-wave-square" viewBox="0 0 24 24"><path d="M3 13V5h10v12h6v-6h2v8H11V7H5v6H3z"/></symbol>
+    <symbol id="i-compress-arrows-alt" viewBox="0 0 24 24"><path d="M22 3.41 16.71 8.7 20 12h-8V4l3.29 3.29L20.59 2 22 3.41zM3.41 22l5.29-5.29L12 20v-8H4l3.29 3.29L2 20.59 3.41 22z"/></symbol>
+    <symbol id="i-train" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2c4.4 0 8 .5 8 4v9.5a3.5 3.5 0 0 1-3.5 3.5l1.5 1.5v.5h-2.2l-2-2h-3.6l-2 2H6v-.5L7.5 19A3.5 3.5 0 0 1 4 15.5V6c0-3.5 3.6-4 8-4zM7 7v3h4V7H7zm6 0v3h4V7h-4zm-4.5 6.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm7 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></symbol>
+    <symbol id="i-gamepad" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M7 6.5h10a6 6 0 0 1 6 6.2 3.6 3.6 0 0 1-6.2 2.4l-1.6-1.6H8.8l-1.6 1.6A3.6 3.6 0 0 1 1 12.7a6 6 0 0 1 6-6.2zm-.8 2.2v1.7H4.5V12h1.7v1.7h1.6V12h1.7v-1.6H7.8V8.7H6.2zm10.1.2a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4zm2.8 2.7a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z"/></symbol>
+    <symbol id="i-hand-fist" viewBox="0 0 24 24"><path d="M9.2 3.2c.9 0 1.6.6 1.7 1.4a1.7 1.7 0 0 1 3.1.6 1.7 1.7 0 0 1 3.1.7v2.2a1.7 1.7 0 0 1 3.3.6v5.1a6.6 6.6 0 0 1-2.1 4.8V22H10v-3L5.1 14.2a2 2 0 0 1 2.4-3.1V4.9c0-.9.8-1.7 1.7-1.7z"/></symbol>
+    <symbol id="i-mountain" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 3.3 1.6 20a1 1 0 0 0 .9 1.5h19a1 1 0 0 0 .9-1.5L12 3.3zm0 3.2 2.6 4.2-1.3 1.2-1.3-1.1-1.3 1.1-1.3-1.2L12 6.5z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v13h2V3h12V1zm4 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h12v14z"/></symbol>
+    <symbol id="i-map-marker-alt" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm.8 4.5h-1.6v6.4l5 3 .8-1.3-4.2-2.5V6.5z"/></symbol>
+    <symbol id="i-paper-plane" viewBox="0 0 24 24"><path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2 .01 7z"/></symbol>
+    <symbol id="i-linkedin-in" viewBox="0 0 24 24"><path d="M4.5 3.2a2.3 2.3 0 1 1 0 4.6 2.3 2.3 0 0 1 0-4.6zM2.6 9.2h3.8v12.3H2.6V9.2zm6.6 0h3.6V11h.1c.5-1 1.7-2 3.6-2 3.8 0 4.5 2.5 4.5 5.8v6.7h-3.8v-5.9c0-1.4 0-3.2-2-3.2s-2.2 1.5-2.2 3.1v6H9.2V9.2z"/></symbol>
+    <symbol id="i-github" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></symbol>
+    <symbol id="i-google-scholar" viewBox="0 0 24 24"><path d="M12 2.4 1.4 8.2 12 14l10.6-5.8L12 2.4zM5.7 11.3l6.3 4.5 6.3-4.5c.4.9.7 2 .7 3.1a7 7 0 1 1-14 0c0-1.1.3-2.2.7-3.1z"/></symbol>
+    <symbol id="i-spotify" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.7 14.5c-.2.3-.6.4-.9.2-2.5-1.5-5.7-1.9-9.4-1-.3.1-.7-.1-.8-.5-.1-.3.1-.7.5-.8 4.1-.9 7.6-.5 10.4 1.2.3.2.4.6.2.9zm1.3-3c-.2.4-.7.5-1.1.3-2.9-1.8-7.3-2.3-10.7-1.2-.4.1-.9-.1-1-.6-.1-.4.1-.9.6-1 3.9-1.2 8.8-.6 12.1 1.4.3.2.5.7.1 1.1zm.1-3.1c-3.4-2-9-2.2-12.3-1.2-.5.2-1.1-.1-1.2-.6-.2-.5.1-1.1.6-1.2 3.8-1.1 9.9-.9 13.9 1.4.5.3.6.9.3 1.4-.2.4-.8.5-1.3.2z"/></symbol>
+  </svg>
   <a href="#home" class="skip-link">skip to content</a>
   <!-- Permanent live regions: pre-existing empty regions announce reliably;
        notifications created on the fly do not (script.js writes in here). -->
@@ -92,16 +125,16 @@
       <a href="#beyond">beyond</a>
       <a href="#contact">contact</a>
       <div class="theme-picker" id="theme-picker" role="radiogroup" aria-label="Site theme">
-        <button type="button" role="radio" aria-checked="true" tabindex="0" data-theme-value="light" aria-label="ink" title="ink — light editorial"><i aria-hidden="true" class="fas fa-pen-nib"></i><span class="tp-label">ink</span></button>
-        <button type="button" role="radio" aria-checked="false" tabindex="-1" data-theme-value="codec" aria-label="codec" title="codec — green phosphor"><i aria-hidden="true" class="fas fa-tower-broadcast"></i><span class="tp-label">codec</span></button>
-        <button type="button" role="radio" aria-checked="false" tabindex="-1" data-theme-value="starwars" aria-label="holonet" title="holonet — imperial amber"><i aria-hidden="true" class="fas fa-satellite-dish"></i><span class="tp-label">holonet</span></button>
-        <button type="button" role="radio" aria-checked="false" tabindex="-1" data-theme-value="gotham" aria-label="gotham" title="gotham — dark knight"><i aria-hidden="true" class="fas fa-city"></i><span class="tp-label">gotham</span></button>
+        <button type="button" role="radio" aria-checked="true" tabindex="0" data-theme-value="light" aria-label="ink" title="ink — light editorial"><svg class="icon" aria-hidden="true"><use href="#i-pen-nib"/></svg><span class="tp-label">ink</span></button>
+        <button type="button" role="radio" aria-checked="false" tabindex="-1" data-theme-value="codec" aria-label="codec" title="codec — green phosphor"><svg class="icon" aria-hidden="true"><use href="#i-tower-broadcast"/></svg><span class="tp-label">codec</span></button>
+        <button type="button" role="radio" aria-checked="false" tabindex="-1" data-theme-value="starwars" aria-label="holonet" title="holonet — imperial amber"><svg class="icon" aria-hidden="true"><use href="#i-satellite-dish"/></svg><span class="tp-label">holonet</span></button>
+        <button type="button" role="radio" aria-checked="false" tabindex="-1" data-theme-value="gotham" aria-label="gotham" title="gotham — dark knight"><svg class="icon" aria-hidden="true"><use href="#i-city"/></svg><span class="tp-label">gotham</span></button>
       </div>
     </nav>
     <div class="header-actions">
       <span id="theme-announce" class="visually-hidden" aria-live="polite"></span>
-      <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn btn-sm"><i aria-hidden="true" class="fas fa-arrow-down"></i> Résumé</a>
-      <button type="button" class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Menu" aria-expanded="false" aria-controls="nav"><i aria-hidden="true" class="fas fa-bars"></i></button>
+      <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn btn-sm"><svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg> Résumé</a>
+      <button type="button" class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Menu" aria-expanded="false" aria-controls="nav"><svg class="icon" aria-hidden="true"><use href="#i-bars"/></svg></button>
     </div>
   </header>
 
@@ -114,15 +147,15 @@
       <p class="typing-text">&gt;&nbsp;<span class="typing-animation"></span></p>
       <p class="lead">MS Computer Science @ UTRGV, building intelligent systems across <strong>reinforcement learning</strong>, <strong>computer vision</strong>, and <strong>vision-language models</strong> for robotics. I'm an AI/ML research intern at the <strong>Air Force Research Laboratory</strong>, working on multi-agent, multi-camera perception and deepfake research, and I train locomotion policies in LocoMuJoCo and NVIDIA Isaac Sim.</p>
       <div class="btn-group">
-        <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn"><i aria-hidden="true" class="fas fa-arrow-down"></i> Download Résumé</a>
+        <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn"><svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg> Download Résumé</a>
         <a href="#projects" class="btn btn-outline">View Projects</a>
       </div>
       <div class="social-icons">
-        <a href="https://linkedin.com/in/hector-lugo-3rd" target="_blank" rel="noopener" aria-label="LinkedIn"><i aria-hidden="true" class="fa-brands fa-linkedin-in"></i></a>
-        <a href="https://github.com/Wavy-Hec" target="_blank" rel="noopener" aria-label="GitHub"><i aria-hidden="true" class="fa-brands fa-github"></i></a>
-        <a href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&hl=en" target="_blank" rel="noopener" aria-label="Google Scholar"><i aria-hidden="true" class="fa-brands fa-google-scholar"></i></a>
-        <a href="mailto:hlugo576@gmail.com" aria-label="Email"><i aria-hidden="true" class="fa-solid fa-envelope"></i></a>
-        <a href="https://open.spotify.com/user/karatekid1222" target="_blank" rel="noopener" aria-label="Spotify"><i aria-hidden="true" class="fa-brands fa-spotify"></i></a>
+        <a href="https://linkedin.com/in/hector-lugo-3rd" target="_blank" rel="noopener" aria-label="LinkedIn"><svg class="icon" aria-hidden="true"><use href="#i-linkedin-in"/></svg></a>
+        <a href="https://github.com/Wavy-Hec" target="_blank" rel="noopener" aria-label="GitHub"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg></a>
+        <a href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&hl=en" target="_blank" rel="noopener" aria-label="Google Scholar"><svg class="icon" aria-hidden="true"><use href="#i-google-scholar"/></svg></a>
+        <a href="mailto:hlugo576@gmail.com" aria-label="Email"><svg class="icon" aria-hidden="true"><use href="#i-envelope"/></svg></a>
+        <a href="https://open.spotify.com/user/karatekid1222" target="_blank" rel="noopener" aria-label="Spotify"><svg class="icon" aria-hidden="true"><use href="#i-spotify"/></svg></a>
       </div>
     </div>
     <div class="home-img">
@@ -141,22 +174,22 @@
       <h2 class="section-title">Research <span class="hl">focus</span></h2>
       <div class="work-grid">
         <div class="work-card">
-          <i aria-hidden="true" class="fas fa-brain"></i>
+          <svg class="icon" aria-hidden="true"><use href="#i-brain"/></svg>
           <h3>Reinforcement Learning</h3>
           <p>Training agents and locomotion policies in simulation — multi-agent systems, policy learning, and sim-to-real transfer.</p>
         </div>
         <div class="work-card">
-          <i aria-hidden="true" class="fas fa-eye"></i>
+          <svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg>
           <h3>Computer Vision</h3>
           <p>Perception for robotics — object detection, real-time vision pipelines, and visual grounding.</p>
         </div>
         <div class="work-card">
-          <i aria-hidden="true" class="fas fa-comments"></i>
+          <svg class="icon" aria-hidden="true"><use href="#i-comments"/></svg>
           <h3>Vision-Language Models</h3>
           <p>Connecting perception and language so robots can follow instructions and reason about the world.</p>
         </div>
         <div class="work-card">
-          <i aria-hidden="true" class="fas fa-person-walking"></i>
+          <svg class="icon" aria-hidden="true"><use href="#i-person-walking"/></svg>
           <h3>Robotic Locomotion</h3>
           <p>Legged locomotion and control with LocoMuJoCo &amp; Isaac Sim — from dynamic path planning to low-level motor control.</p>
         </div>
@@ -250,7 +283,7 @@
             <h4>The University of Texas Rio Grande Valley</h4>
             <p>Completed a 9-week research program on the carbon footprint and energy usage of cryptocurrency, presenting findings in a research poster.</p>
             <div class="chips"><span>Research</span><span>Data Analysis</span></div>
-            <div class="project-links"><a href="https://www.linkedin.com/in/hector-lugo-3rd/overlay/1635503453796/single-media-viewer/?profileId=ACoAADJjirIBu_xHOO6zG1x6uOSxLvSuApNlTIE" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fas fa-file-lines"></i> Poster</a></div>
+            <div class="project-links"><a href="https://www.linkedin.com/in/hector-lugo-3rd/overlay/1635503453796/single-media-viewer/?profileId=ACoAADJjirIBu_xHOO6zG1x6uOSxLvSuApNlTIE" target="_blank" rel="noopener" class="project-link"><svg class="icon" aria-hidden="true"><use href="#i-file-lines"/></svg> Poster</a></div>
           </div>
         </div>
       </div>
@@ -262,78 +295,108 @@
     <div class="container">
       <p class="kicker">// projects</p>
       <h2 class="section-title">Selected <span class="hl">projects</span></h2>
+      <!-- Project thumbnails are generated placeholder "dither plates".
+           To swap any plate for a real screenshot later: export a 16:9 image (1280x720 works)
+           and save it over the same filename, e.g. `proj-yolo-dither.png` — no HTML or CSS
+           edits needed. Optionally update the `alt` to describe the screenshot. The
+           `width/height` attributes just reserve the 16:9 box; any 16:9 file is
+           cropped-to-fit by `object-fit: cover`. -->
       <div class="projects-grid">
         <article class="project-card">
+          <figure class="proj-thumb">
+            <img src="proj-vlm-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 alt="Stylized dither plate: camera frustum projecting onto a grid, one grounded object linked to token rows — placeholder art">
+          </figure>
           <div class="project-head">
             <span class="project-index">01</span>
-            <i aria-hidden="true" class="fas fa-comments"></i>
+            <svg class="icon" aria-hidden="true"><use href="#i-comments"/></svg>
           </div>
           <h3>Vision-Language Models</h3>
           <p>Experiments connecting vision and language — grounding instructions in what a model sees so an agent can follow directions and reason about a scene.</p>
           <div class="chips"><span>VLMs</span><span>Reinforcement Learning</span><span>Transformers</span><span>Multimodal</span><span>PyTorch</span></div>
           <div class="project-links">
-            <a href="https://github.com/Wavy-Hec/VLM" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fa-brands fa-github"></i> GitHub</a>
+            <a href="https://github.com/Wavy-Hec/VLM" target="_blank" rel="noopener" class="project-link"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg> GitHub</a>
           </div>
         </article>
         <article class="project-card">
+          <figure class="proj-thumb">
+            <img src="proj-rl-isaaclab-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 alt="Stylized dither plate: articulated robot-leg linkage walking a tick-marked ground line with foot-swing arcs and a rising reward sparkline — placeholder art">
+          </figure>
           <div class="project-head">
             <span class="project-index">02</span>
-            <i aria-hidden="true" class="fas fa-robot"></i>
+            <svg class="icon" aria-hidden="true"><use href="#i-robot"/></svg>
           </div>
           <h3>RL Isaac Lab Framework</h3>
           <p>A reinforcement-learning framework built on Isaac Lab for robotic simulation and training — multi-agent systems and legged locomotion in physics-based environments, with LocoMuJoCo for imitation and benchmarking.</p>
           <div class="chips"><span>Isaac Lab</span><span>LocoMuJoCo</span><span>Reinforcement Learning</span><span>Robotic Locomotion</span></div>
           <div class="project-links">
-            <a href="https://github.com/Wavy-Hec/RL_IsaacLab" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fa-brands fa-github"></i> GitHub</a>
-            <a href="https://miutrgv.github.io/" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fas fa-flask"></i> Lab</a>
+            <a href="https://github.com/Wavy-Hec/RL_IsaacLab" target="_blank" rel="noopener" class="project-link"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg> GitHub</a>
+            <a href="https://miutrgv.github.io/" target="_blank" rel="noopener" class="project-link"><svg class="icon" aria-hidden="true"><use href="#i-flask"/></svg> Lab</a>
           </div>
         </article>
         <article class="project-card">
+          <figure class="proj-thumb">
+            <img src="proj-fft-denoise-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 alt="Stylized dither plate: noisy waveform passing through an encoder-decoder hourglass and emerging as a clean sine, FFT bars in the margin — placeholder art">
+          </figure>
           <div class="project-head">
             <span class="project-index">03</span>
-            <i aria-hidden="true" class="fas fa-wave-square"></i>
+            <svg class="icon" aria-hidden="true"><use href="#i-wave-square"/></svg>
           </div>
           <h3>Signal Denoising — Idaho National Lab</h3>
           <p>ML for smart-grid anomaly detection: a ResNet autoencoder denoises noisy TDMS signals, with FFT preprocessing and HPC tuning that cut training time by over 93% (30 days → 1–2 days).</p>
           <div class="chips"><span>ResNet Autoencoder</span><span>FFT</span><span>Signal Processing</span><span>PyTorch</span></div>
           <div class="project-links">
-            <a href="https://github.com/IdahoLabUnsupported/FFT-Denoising" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fa-brands fa-github"></i> GitHub</a>
+            <a href="https://github.com/IdahoLabUnsupported/FFT-Denoising" target="_blank" rel="noopener" class="project-link"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg> GitHub</a>
           </div>
         </article>
         <article class="project-card">
+          <figure class="proj-thumb">
+            <img src="proj-yolo-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 alt="Stylized dither plate: corner-bracket detection boxes with confidence tags over an abstract dithered field — placeholder art">
+          </figure>
           <div class="project-head">
             <span class="project-index">04</span>
-            <i aria-hidden="true" class="fas fa-eye"></i>
+            <svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg>
           </div>
           <h3>Object Detection with YOLO</h3>
           <p>Real-time object detection using YOLO for computer-vision applications in robotics and autonomous systems.</p>
           <div class="chips"><span>YOLO</span><span>Computer Vision</span><span>OpenCV</span><span>Deep Learning</span></div>
           <div class="project-links">
-            <a href="https://github.com/Wavy-Hec/ObjectDetection" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fa-brands fa-github"></i> GitHub</a>
+            <a href="https://github.com/Wavy-Hec/ObjectDetection" target="_blank" rel="noopener" class="project-link"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg> GitHub</a>
           </div>
         </article>
         <article class="project-card">
+          <figure class="proj-thumb">
+            <img src="proj-rl-compression-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 alt="Stylized dither plate: dense weight grid funneled down to a sparse grid, with a reward-versus-size curve — placeholder art">
+          </figure>
           <div class="project-head">
             <span class="project-index">05</span>
-            <i aria-hidden="true" class="fas fa-compress-arrows-alt"></i>
+            <svg class="icon" aria-hidden="true"><use href="#i-compress-arrows-alt"/></svg>
           </div>
           <h3>Senior AE Project — RL Compression</h3>
           <p>Reinforcement learning for neural-network compression — efficient deployment in resource-constrained environments and the impact of compression on RL performance.</p>
           <div class="chips"><span>Reinforcement Learning</span><span>Neural Compression</span><span>PyTorch</span><span>Python</span></div>
           <div class="project-links">
-            <a href="https://github.com/Wavy-Hec/Senior_AEproject" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fa-brands fa-github"></i> GitHub</a>
+            <a href="https://github.com/Wavy-Hec/Senior_AEproject" target="_blank" rel="noopener" class="project-link"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg> GitHub</a>
           </div>
         </article>
         <article class="project-card">
+          <figure class="proj-thumb">
+            <img src="proj-railway-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 alt="Stylized dither plate: perspective rail tracks with a turnout, signal mast, and a route graph above the horizon — placeholder art">
+          </figure>
           <div class="project-head">
             <span class="project-index">06</span>
-            <i aria-hidden="true" class="fas fa-train"></i>
+            <svg class="icon" aria-hidden="true"><use href="#i-train"/></svg>
           </div>
           <h3>Summer REU — Railway Systems</h3>
           <p>Research Experience for Undergraduates on intelligent railway systems — ML for predictive maintenance, route optimization, and safety analysis across transportation networks.</p>
           <div class="chips"><span>Machine Learning</span><span>Data Analysis</span><span>Predictive Modeling</span></div>
           <div class="project-links">
-            <a href="https://github.com/Wavy-Hec/summer-REU-project" target="_blank" rel="noopener" class="project-link"><i aria-hidden="true" class="fa-brands fa-github"></i> GitHub</a>
+            <a href="https://github.com/Wavy-Hec/summer-REU-project" target="_blank" rel="noopener" class="project-link"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg> GitHub</a>
           </div>
         </article>
       </div>
@@ -380,7 +443,7 @@
       <p class="kicker">// résumé</p>
       <h2 class="section-title">Résumé <span class="hl">/ cv</span></h2>
       <div class="resume-actions">
-        <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn"><i aria-hidden="true" class="fas fa-arrow-down"></i> Download PDF</a>
+        <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn"><svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg> Download PDF</a>
       </div>
       <div class="resume-grid">
         <div class="resume-block">
@@ -425,17 +488,17 @@
       <h2 class="section-title">Beyond the <span class="hl">code</span></h2>
       <div class="beyond-grid">
         <article class="beyond-card">
-          <i aria-hidden="true" class="fas fa-gamepad"></i>
+          <svg class="icon" aria-hidden="true"><use href="#i-gamepad"/></svg>
           <h3>Metal Gear Solid 2</h3>
           <p>My favorite game — I've replayed it more times than I should admit. That's Raiden up top.</p>
         </article>
         <article class="beyond-card">
-          <i aria-hidden="true" class="fas fa-hand-fist"></i>
+          <svg class="icon" aria-hidden="true"><use href="#i-hand-fist"/></svg>
           <h3>Taekwondo</h3>
           <p>I train Taekwondo. It keeps me disciplined and clears my head.</p>
         </article>
         <article class="beyond-card">
-          <i aria-hidden="true" class="fas fa-mountain"></i>
+          <svg class="icon" aria-hidden="true"><use href="#i-mountain"/></svg>
           <h3>Hiking</h3>
           <p>I hike when I can. The goal is to summit a real mountain.</p>
         </article>
@@ -491,12 +554,12 @@
           <p>I'm always interested in new opportunities and research collaborations. Whether you have a project in mind or just want to connect, drop me a line.</p>
           <div class="command-block">
             <code><span class="term-prompt">$</span> echo $EMAIL<br><span class="cmd-out">hlugo576@gmail.com</span></code>
-            <button type="button" class="copy-btn" data-copy="hlugo576@gmail.com" title="Copy email" aria-label="Copy email address"><i aria-hidden="true" class="fas fa-copy"></i></button>
+            <button type="button" class="copy-btn" data-copy="hlugo576@gmail.com" title="Copy email" aria-label="Copy email address"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button>
           </div>
           <div class="contact-details">
-            <div class="contact-item"><i aria-hidden="true" class="fas fa-envelope"></i><div><h4>Email</h4><p>hlugo576@gmail.com</p></div></div>
-            <div class="contact-item"><i aria-hidden="true" class="fas fa-map-marker-alt"></i><div><h4>Location</h4><p>Available Worldwide</p></div></div>
-            <div class="contact-item"><i aria-hidden="true" class="fas fa-clock"></i><div><h4>Response Time</h4><p>Within 24 hours</p></div></div>
+            <div class="contact-item"><svg class="icon" aria-hidden="true"><use href="#i-envelope"/></svg><div><h4>Email</h4><p>hlugo576@gmail.com</p></div></div>
+            <div class="contact-item"><svg class="icon" aria-hidden="true"><use href="#i-map-marker-alt"/></svg><div><h4>Location</h4><p>Available Worldwide</p></div></div>
+            <div class="contact-item"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg><div><h4>Response Time</h4><p>Within 24 hours</p></div></div>
           </div>
         </div>
         <!-- action/method give no-JS visitors a real POST fallback (Web3Forms accepts plain HTML posts); the JS handler preventDefaults and keeps the AJAX path primary -->
@@ -509,7 +572,7 @@
           <div class="form-group"><label for="email">Email</label><input type="email" id="email" name="email" placeholder="Your Email" autocomplete="email" required></div>
           <div class="form-group"><label for="subject">Subject</label><input type="text" id="subject" name="subject" placeholder="Subject" required></div>
           <div class="form-group"><label for="message">Message</label><textarea id="message" name="message" placeholder="Your Message" rows="5" required></textarea></div>
-          <button type="submit" class="btn"><i aria-hidden="true" class="fas fa-paper-plane"></i> Send Message</button>
+          <button type="submit" class="btn"><svg class="icon" aria-hidden="true"><use href="#i-paper-plane"/></svg> Send Message</button>
         </form>
       </div>
     </div>
@@ -522,9 +585,9 @@
       <!-- Touch-reachable launcher for the hidden stealth mini-game (Konami code still works on keyboards) -->
       <button type="button" class="codec-launch" id="codec-launch" data-tip="&#8593; &#8593; &#8595; &#8595; &#8592; &#8594; &#8592; &#8594; B A" aria-label="CODEC 140.85 — launch the codec infiltration mini-game. Keyboard: up, up, down, down, left, right, left, right, B, A.">CODEC 140.85</button>
       <div class="footer-social">
-        <a href="https://linkedin.com/in/hector-lugo-3rd" target="_blank" rel="noopener" aria-label="LinkedIn"><i aria-hidden="true" class="fa-brands fa-linkedin-in"></i></a>
-        <a href="https://github.com/Wavy-Hec" target="_blank" rel="noopener" aria-label="GitHub"><i aria-hidden="true" class="fa-brands fa-github"></i></a>
-        <a href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&hl=en" target="_blank" rel="noopener" aria-label="Google Scholar"><i aria-hidden="true" class="fa-brands fa-google-scholar"></i></a>
+        <a href="https://linkedin.com/in/hector-lugo-3rd" target="_blank" rel="noopener" aria-label="LinkedIn"><svg class="icon" aria-hidden="true"><use href="#i-linkedin-in"/></svg></a>
+        <a href="https://github.com/Wavy-Hec" target="_blank" rel="noopener" aria-label="GitHub"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg></a>
+        <a href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&hl=en" target="_blank" rel="noopener" aria-label="Google Scholar"><svg class="icon" aria-hidden="true"><use href="#i-google-scholar"/></svg></a>
       </div>
     </div>
   </footer>

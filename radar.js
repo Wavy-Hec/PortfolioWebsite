@@ -464,22 +464,36 @@
     ctx.restore();
   }
 
-  let raf = null, prev = 0;
+  // Timer-paced at 30fps: scheduling the next rAF from a timeout (instead of a
+  // bare 60Hz rAF chain that skipped every other tick) lets the renderer idle
+  // between draws. dt semantics unchanged — prev still tracks drawn frames.
+  let raf = null, timer = null, prev = 0;
   const FRAME_MS = 1000 / 30; // decorative sweep doesn't need 60fps
   function loop(now) {
-    raf = requestAnimationFrame(loop);
-    if (now - prev < FRAME_MS) return;
+    raf = null;
     const dt = now - prev; prev = now;
     draw(dt);
+    timer = setTimeout(() => {
+      timer = null;
+      raf = requestAnimationFrame(loop);
+    }, Math.max(0, FRAME_MS - (performance.now() - now)));
   }
+  // Codec Infiltration overlay covers the page — pause while it's open
+  // (game.js toggles the class and dispatches gameopen/gameclose).
+  const gameOpen = () => document.body.classList.contains('game-open');
   function start() {
-    if (raf === null && !REDUCED && !document.hidden && !smallScreen.matches) {
+    if (raf === null && timer === null && !REDUCED && !document.hidden && !smallScreen.matches && !gameOpen()) {
       prev = performance.now();
       raf = requestAnimationFrame(loop);
     }
   }
-  function stop() { if (raf !== null) { cancelAnimationFrame(raf); raf = null; } }
+  function stop() {
+    if (raf !== null) { cancelAnimationFrame(raf); raf = null; }
+    if (timer !== null) { clearTimeout(timer); timer = null; }
+  }
   document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+  window.addEventListener('gameopen', stop);
+  window.addEventListener('gameclose', start);
 
   const onBreakpoint = () => {
     if (smallScreen.matches) { stop(); } else { draw(0); start(); }

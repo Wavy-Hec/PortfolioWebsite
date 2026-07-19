@@ -1,5 +1,16 @@
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// ===== Inline SVG icon helpers (sprite lives at the top of index.html <body>) =====
+// iconSVG builds markup for innerHTML injection; setIcon retargets an existing
+// <use> in place (cheaper than replacing the node, keeps .icon sizing rules).
+function iconSVG(name, extraClass) {
+    return '<svg class="icon' + (extraClass ? ' ' + extraClass : '') + '" aria-hidden="true"><use href="#' + name + '"/></svg>';
+}
+function setIcon(scope, name) {
+    const use = scope && scope.querySelector('.icon use');
+    if (use) use.setAttribute('href', '#' + name);
+}
+
 // ===== Theme picker (segmented radiogroup at the end of the header nav) =====
 const themePicker = document.getElementById('theme-picker');
 const themeRadios = themePicker ? Array.from(themePicker.querySelectorAll('[role="radio"]')) : [];
@@ -67,11 +78,12 @@ const THEMES = ['light', 'codec', 'starwars', 'gotham'];
 let lastAppliedTheme = null;  // previous theme applyTheme saw (null = initial sync not done)
 let konamiHintedMem = false;  // fallback flag when sessionStorage is unavailable
 // icon/label here must mirror the static picker markup in index.html
+// (icons are sprite symbol ids — see the inline <svg> sprite at body top)
 const THEME_META = {
-    light:    { label: 'ink',     icon: 'fa-pen-nib',         color: '#eaf0fb' },
-    codec:    { label: 'codec',   icon: 'fa-tower-broadcast', color: '#081209' },
-    starwars: { label: 'holonet', icon: 'fa-satellite-dish',  color: '#0b0d10' },
-    gotham:   { label: 'gotham',  icon: 'fa-city',            color: '#08090d' }, // color = gotham --bg
+    light:    { label: 'ink',     icon: 'i-pen-nib',         color: '#eaf0fb' },
+    codec:    { label: 'codec',   icon: 'i-tower-broadcast', color: '#081209' },
+    starwars: { label: 'holonet', icon: 'i-satellite-dish',  color: '#0b0d10' },
+    gotham:   { label: 'gotham',  icon: 'i-city',            color: '#08090d' }, // color = gotham --bg
 };
 
 // Codec-call strings per theme. light/codec share the MGS set; the static HTML
@@ -170,6 +182,7 @@ try { storedTheme = localStorage.getItem('theme'); } catch (e) {}
 applyTheme(THEMES.includes(storedTheme) ? storedTheme : currentTheme());
 
 function selectTheme(name, moveFocus) {
+    markThemeHinted(); // they found the picker — the discovery hint is moot forever
     applyTheme(name);
     const announce = document.getElementById('theme-announce');
     if (announce) announce.textContent = 'Theme changed to ' + THEME_META[name].label;
@@ -200,6 +213,48 @@ if (themePicker) themePicker.addEventListener('keydown', (e) => {
     selectTheme(themeRadios[j].dataset.themeValue, true);
 });
 
+// ===== Theme-discovery hint — one subtle nudge, once ever =====
+// On a visitor's second-ever page view with no non-default theme saved, the
+// picker pulses twice (soft glow — keyframe in style.css, reduced-motion
+// gated there) with a self-dismissing 'try a theme' title tooltip. Fires once
+// ever (localStorage 'theme-hinted'); never for anyone who already picked.
+function themeHinted() {
+    try { return localStorage.getItem('theme-hinted') === '1'; } catch (e) { return true; }
+}
+function markThemeHinted() {
+    try { localStorage.setItem('theme-hinted', '1'); } catch (e) {}
+}
+(function themeDiscoveryHint() {
+    if (!themePicker) return;
+    // storedTheme was captured BEFORE applyTheme() auto-persisted a value, so
+    // it still tells a deliberate pick apart from the auto-saved 'light'.
+    if (storedTheme && storedTheme !== 'light') { markThemeHinted(); return; }
+    let views = 0;
+    try {
+        if (localStorage.getItem('theme-hinted') === '1') return;
+        views = (parseInt(localStorage.getItem('theme-hint-views'), 10) || 0) + 1;
+        localStorage.setItem('theme-hint-views', String(views));
+    } catch (e) { return; } // no storage -> "once ever" can't be guaranteed: never hint
+    if (views < 2) return;
+    // Wait out the codec loader + settle before glowing.
+    setTimeout(() => {
+        if (themeHinted()) return;               // picked or hinted in the meantime
+        if (currentTheme() !== 'light') return;  // picked a theme during this visit
+        // Picker hidden (inside the closed mobile menu) — don't burn the
+        // once-ever flag on a pulse nobody could see; retry next page view.
+        if (!themePicker.offsetParent) return;
+        markThemeHinted();
+        themePicker.classList.add('tp-hint');
+        themePicker.title = 'try a theme';
+        const dismiss = () => {
+            themePicker.classList.remove('tp-hint');
+            themePicker.removeAttribute('title');
+        };
+        themePicker.addEventListener('animationend', dismiss, { once: true });
+        setTimeout(dismiss, 4000); // reduced motion never fires animationend
+    }, 2600);
+})();
+
 // Codec Infiltration launchers: the Konami code (keyboard) and the footer
 // "CODEC 140.85" link (touch/mouse) share the same "!" alert + ring sequence.
 // game.js is lazy-loaded on first launch — it costs nothing at page load and
@@ -210,7 +265,7 @@ function openGame() {
     if (gameScriptRequested) return;
     gameScriptRequested = true;
     const s = document.createElement('script');
-    s.src = 'game.js?v=8';
+    s.src = 'game.js?v=9';
     s.onload = () => { if (window.MGSGame) window.MGSGame.open(); };
     s.onerror = () => {
         gameScriptRequested = false; // allow a retry
@@ -381,14 +436,7 @@ mobileMenuToggle.addEventListener('click', () => {
     mobileMenuToggle.setAttribute('aria-expanded', nav.classList.contains('active'));
 
     // Change icon based on menu state
-    const icon = mobileMenuToggle.querySelector('i');
-    if (nav.classList.contains('active')) {
-        icon.classList.remove('fa-bars');
-        icon.classList.add('fa-times');
-    } else {
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-bars');
-    }
+    setIcon(mobileMenuToggle, nav.classList.contains('active') ? 'i-times' : 'i-bars');
 });
 
 // Close mobile menu when clicking on nav links
@@ -396,9 +444,7 @@ document.querySelectorAll('nav a').forEach(link => {
     link.addEventListener('click', () => {
         nav.classList.remove('active');
         mobileMenuToggle.setAttribute('aria-expanded', 'false');
-        const icon = mobileMenuToggle.querySelector('i');
-        icon.classList.remove('fa-times');
-        icon.classList.add('fa-bars');
+        setIcon(mobileMenuToggle, 'i-bars');
     });
 });
 
@@ -408,9 +454,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape' || !nav.classList.contains('active')) return;
     nav.classList.remove('active');
     mobileMenuToggle.setAttribute('aria-expanded', 'false');
-    const icon = mobileMenuToggle.querySelector('i');
-    icon.classList.remove('fa-times');
-    icon.classList.add('fa-bars');
+    setIcon(mobileMenuToggle, 'i-bars');
     mobileMenuToggle.focus();
 });
 
@@ -447,10 +491,11 @@ let lastScrollTop = 0;
 function handleHeaderScroll() {
     const scrollTop = window.pageYOffset;
     const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const scrollPercent = (scrollTop / docHeight) * 100;
+    const scrollFraction = docHeight > 0 ? Math.min(1, scrollTop / docHeight) : 0;
 
-    // Update scroll progress bar
-    scrollProgress.style.width = scrollPercent + '%';
+    // Update scroll progress bar (transform = compositor-only; a width write
+    // invalidated layout on every scrolled frame)
+    scrollProgress.style.transform = 'scaleX(' + scrollFraction + ')';
 
     // Hide/show header on scroll (never while the mobile menu is open —
     // hiding would silently carry the open menu off-screen)
@@ -476,8 +521,11 @@ window.addEventListener('scroll', () => {
     scrollTicking = true;
     requestAnimationFrame(() => {
         scrollTicking = false;
-        handleHeaderScroll();
+        // Reads first: updateActiveNavLink measures offsetTop/offsetHeight, so
+        // it runs before handleHeaderScroll's style writes (no write-then-read
+        // forced reflow; handleHeaderScroll now only writes transforms).
         updateActiveNavLink();
+        handleHeaderScroll();
     });
 });
 
@@ -514,9 +562,9 @@ contactForm.addEventListener('submit', async (e) => {
     const submitBtn = contactForm.querySelector('button[type="submit"]');
     const originalBtnHTML = submitBtn.innerHTML;
 
-    // Show sending state
+    // Show sending state (.icon-spin rotation is reduced-motion gated in CSS)
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Sending...';
+    submitBtn.innerHTML = iconSVG('i-spinner', 'icon-spin') + ' Sending...';
 
     try {
         // Submit directly to Web3Forms (no email app, stays on the page)
@@ -775,11 +823,11 @@ document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
             document.execCommand('copy');
             ta.remove();
         }
-        const icon = btn.querySelector('i');
-        const prev = icon ? icon.className : '';
-        if (icon) icon.className = 'fas fa-check';
+        const use = btn.querySelector('.icon use');
+        const prev = use ? use.getAttribute('href') : '';
+        if (use) use.setAttribute('href', '#i-check');
         showNotification('Copied ' + text + ' to clipboard', 'success');
-        setTimeout(() => { if (icon) icon.className = prev; }, 1500);
+        setTimeout(() => { if (use) use.setAttribute('href', prev); }, 1500);
     });
 });
 

@@ -201,6 +201,19 @@ body::before {
 
 .container { max-width: var(--maxw); margin: 0 auto; width: 100%; }
 
+/* ===== Inline SVG icons (sprite at the top of index.html <body>; replaced
+   Font Awesome). 1em square + -0.125em baseline shift mirrors FA's rendered
+   geometry, so the existing per-context font-size rules keep working. ===== */
+.icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  fill: currentColor;
+  vertical-align: -0.125em;
+}
+@keyframes iconSpin { to { transform: rotate(360deg); } }
+.icon-spin { animation: iconSpin 1s linear infinite; }
+
 /* ===== Header / Nav ===== */
 header {
   position: fixed;
@@ -212,8 +225,10 @@ header {
   gap: 2rem;
   padding: 1.4rem 6%;
   z-index: 100;
-  background: var(--header-bg);
-  backdrop-filter: blur(8px);
+  /* Solid .98-alpha composite instead of --header-bg + backdrop-filter blur:
+     the blur re-sampled its input (scrolling content, dither canvas, gotham
+     rain) every animated frame on the GPU. Both read as the same flat band. */
+  background: var(--header-bg-solid);
   border-bottom: 1px solid var(--border);
   transition: transform .3s ease;
 }
@@ -290,7 +305,7 @@ nav a:hover::after, nav a.active::after { transform: scaleX(1); }
 .theme-picker [role="radio"]:focus-visible { position: relative; z-index: 1; }
 .theme-picker [role="radio"]:first-child { border-radius: calc(var(--radius-sm) - 1px) 0 0 calc(var(--radius-sm) - 1px); }
 .theme-picker [role="radio"]:last-child { border-radius: 0 calc(var(--radius-sm) - 1px) calc(var(--radius-sm) - 1px) 0; }
-.theme-picker i { font-size: 1.3rem; }
+.theme-picker .icon { font-size: 1.3rem; }
 .tp-label { display: none; }
 @media (min-width: 1440px) { .theme-picker .tp-label { display: inline; } }
 html:not([data-theme]) .theme-picker [data-theme-value="light"],
@@ -299,6 +314,18 @@ html[data-theme="starwars"] .theme-picker [data-theme-value="starwars"],
 html[data-theme="gotham"] .theme-picker [data-theme-value="gotham"] {
   background: var(--ink);
   color: var(--on-accent);
+}
+
+/* One-time theme-discovery hint — script.js adds .tp-hint (plus a 'try a
+   theme' title) on a visitor's second-ever page view if they never saved a
+   non-default theme; both self-remove after the two pulses. Once ever
+   (localStorage 'theme-hinted'). */
+@media (prefers-reduced-motion: no-preference) {
+  .theme-picker.tp-hint { animation: tpHint 1.5s ease-in-out 2; }
+}
+@keyframes tpHint {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 1px var(--ink), 0 0 10px 0 var(--ink); }
 }
 
 /* Screen-reader-only content (theme-change announcements) */
@@ -475,7 +502,8 @@ html[data-theme="codec"] .crt { opacity: 1; animation: crtFlicker 7s steps(1) in
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   html[data-theme="codec"] .crt { animation: none; }
-  .codec-wave i { animation: none; height: 11px; }
+  .icon-spin { animation: none; }
+  /* .codec-wave i override lives next to its base rule (source order matters) */
   .fade-in { transition: none; transform: none; opacity: 1; }
   .work-card:hover, .project-card:hover, .beyond-card:hover, .timeline-item:hover, .contact-item:hover { transform: none; }
   .mgs-alert { animation: none; transform: translateX(-50%); }
@@ -522,13 +550,16 @@ html[data-theme="codec"] .crt { opacity: 1; animation: crtFlicker 7s steps(1) in
 .btn-outline:hover { background: var(--accent-tint); color: var(--ink-strong); border-color: var(--ink); }
 .btn-sm { padding: .7rem 1.5rem; font-size: 1.4rem; }
 
-/* Scroll progress */
+/* Scroll progress — full-width bar revealed via transform (script.js writes
+   scaleX), so per-scroll updates stay compositor-only instead of relayouting */
 .scroll-progress {
   position: fixed;
   top: 0; left: 0;
-  width: 0%;
+  width: 100%;
   height: 2px;
   background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: 0 0;
   z-index: 1001;
 }
 
@@ -656,7 +687,7 @@ section { padding: 10rem 6%; position: relative; }
   border-radius: var(--radius);
   padding: 2.8rem;
 }
-.work-card i { font-size: 2.4rem; color: var(--ink); margin-bottom: 1.6rem; }
+.work-card .icon { font-size: 2.4rem; color: var(--ink); margin-bottom: 1.6rem; }
 .work-card h3 { font-size: 2rem; font-weight: 700; color: var(--ink-strong); margin-bottom: 1rem; }
 .work-card p { font-size: 1.5rem; color: var(--text-dim); line-height: 1.7; }
 
@@ -707,12 +738,21 @@ section { padding: 10rem 6%; position: relative; }
 .codec-line { font-family: 'Spectral', serif; font-style: italic; font-size: 2.2rem; line-height: 1.3; color: var(--ink-strong); margin: 0 0 .8rem; }
 .codec-status { font-family: 'Share Tech Mono', monospace; font-size: 1.15rem; letter-spacing: 1px; color: var(--text-dim); }
 .codec-wave { display: inline-flex; align-items: flex-end; gap: 3px; height: 18px; margin-bottom: 1rem; }
-.codec-wave i { width: 3px; height: 6px; background: var(--ink); display: inline-block; animation: codecWave 1s ease-in-out infinite; }
+/* Bars animate transform (compositor-only), not height: a height animation
+   forces style+layout+paint at 60fps forever, in every theme, even offscreen.
+   17px tall, bottom-anchored scaleY .294–1 = the exact old 5px–17px sweep. */
+.codec-wave i { width: 3px; height: 17px; transform: scaleY(.353); transform-origin: 50% 100%; background: var(--ink); display: inline-block; animation: codecWave 1s ease-in-out infinite; }
 .codec-wave i:nth-child(2) { animation-delay: .15s; }
 .codec-wave i:nth-child(3) { animation-delay: .3s; }
 .codec-wave i:nth-child(4) { animation-delay: .45s; }
 .codec-wave i:nth-child(5) { animation-delay: .6s; }
-@keyframes codecWave { 0%, 100% { height: 5px; } 50% { height: 17px; } }
+@keyframes codecWave { 0%, 100% { transform: scaleY(.294); } 50% { transform: scaleY(1); } }
+/* Reduced motion: static mid-height bars (11px, matching the old height: 11px).
+   Lives HERE — after the base rule — so it wins the equal-specificity cascade
+   (in the early global reduce block it would be overridden by the rule above). */
+@media (prefers-reduced-motion: reduce) {
+  .codec-wave i { animation: none; transform: scaleY(.65); }
+}
 
 @media (max-width: 640px) {
   .codec-call { grid-template-columns: 1fr 1fr; grid-template-areas: "left right" "mid mid"; gap: 1.6rem; }
@@ -840,7 +880,7 @@ section { padding: 10rem 6%; position: relative; }
   padding: .25rem .8rem;
 }
 .project-index::before { content: 'FILE '; color: var(--text-muted); }
-.project-head i { font-size: 2.2rem; color: var(--ink); }
+.project-head .icon { font-size: 2.2rem; color: var(--ink); }
 .project-card h3 { font-size: 2rem; font-weight: 700; color: var(--ink-strong); }
 .project-card > p { font-size: 1.5rem; color: var(--text-dim); line-height: 1.7; flex: 1; }
 .project-links { display: flex; gap: 1.2rem; margin-top: .4rem; flex-wrap: wrap; }
@@ -858,6 +898,29 @@ section { padding: 10rem 6%; position: relative; }
   transition: all .2s ease;
 }
 .project-link:hover { border-color: var(--ink); background: var(--panel-2); }
+/* Project thumbnails — dithered placeholder plates.
+   Drop a real 16:9 screenshot over the same filename to replace one.
+   The -2.8rem bleed must track .project-card's padding above. */
+.proj-thumb {
+  margin: -2.8rem -2.8rem 0;                     /* bleed to card edges, above content */
+  border-bottom: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: var(--wash);                       /* graceful field while loading / if file missing */
+}
+.proj-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* broken-image fallback: alt text renders inside the box */
+  color: var(--text-dim);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.3rem;
+  line-height: 1.5;
+  padding: 1rem;                                  /* only visible when alt text shows */
+}
 
 /* ===== Skills ===== */
 .skills-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3rem 4rem; }
@@ -897,7 +960,7 @@ section { padding: 10rem 6%; position: relative; }
   border-radius: var(--radius);
   padding: 2.8rem;
 }
-.beyond-card i { font-size: 2.4rem; color: var(--ink); margin-bottom: 1.6rem; }
+.beyond-card .icon { font-size: 2.4rem; color: var(--ink); margin-bottom: 1.6rem; }
 .beyond-card h3 { font-size: 2rem; font-weight: 700; color: var(--ink-strong); margin-bottom: 1rem; }
 .beyond-card p { font-size: 1.5rem; color: var(--text-dim); line-height: 1.7; }
 
@@ -962,8 +1025,15 @@ section { padding: 10rem 6%; position: relative; }
   font-size: 1.4rem;
   flex: 0 0 auto;
   transition: all .2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .copy-btn:hover { border-color: var(--ink); background: var(--panel-2); }
+/* was 32x30 — grow to a 42px target on touch only; desktop stays pixel-identical */
+@media (pointer: coarse) {
+  .copy-btn { min-width: 4.2rem; min-height: 4.2rem; }
+}
 .contact-details { display: flex; flex-direction: column; gap: 1.4rem; }
 .contact-item {
   display: flex;
@@ -974,7 +1044,9 @@ section { padding: 10rem 6%; position: relative; }
   border-radius: var(--radius);
   padding: 1.6rem 1.8rem;
 }
-.contact-item i { font-size: 2rem; color: var(--ink); width: 2.6rem; text-align: center; }
+/* 2.6rem-wide column keeps the old FA fixed-width alignment; the svg's
+   preserveAspectRatio centers the 2rem glyph inside it. */
+.contact-item .icon { font-size: 2rem; color: var(--ink); width: 2.6rem; }
 .contact-item h4 { font-family: 'Share Tech Mono', monospace; font-size: 1.35rem; text-transform: uppercase; letter-spacing: 1px; color: var(--ink); margin-bottom: .3rem; }
 .contact-item p { font-size: 1.45rem; color: var(--text-dim); }
 .contact-form {
@@ -1013,8 +1085,7 @@ section { padding: 10rem 6%; position: relative; }
 footer {
   border-top: 1px solid var(--border);
   padding: 3rem 6%;
-  background: var(--header-bg);
-  backdrop-filter: blur(8px);
+  background: var(--header-bg-solid); /* solid composite — see header note */
 }
 .footer-content { display: flex; align-items: center; justify-content: space-between; gap: 1.6rem; }
 .footer-content p { font-family: 'Share Tech Mono', monospace; font-size: 1.3rem; color: var(--text-dim); }
@@ -1023,7 +1094,11 @@ footer {
   position: relative; /* anchors the Konami tooltip below */
   background: none;
   border: 0;
-  padding: .4rem 0;
+  /* hit area only (was .4rem 0 / 102x23) — negative margins cancel the visual
+     shift, same trick as .mobile-menu-toggle. This is the game's only entry
+     point on touch, where the Konami code is impossible. */
+  padding: 1.3rem 1.2rem;
+  margin: -0.9rem -1.2rem;
   font-family: 'Share Tech Mono', monospace;
   font-size: 1.3rem;
   letter-spacing: 1.5px;
@@ -1107,8 +1182,22 @@ html[data-theme="starwars"] .codec-launch::after { border-radius: 0; }
   .nightwing-cameo { transform: translateY(12%); opacity: 0; transition: opacity .4s ease; }
   .nightwing-cameo.show { opacity: 1; }
 }
-.footer-social { display: flex; gap: 1.6rem; }
-.footer-social a { color: var(--ink); font-size: 1.9rem; text-decoration: none; transition: color .2s ease; }
+/* 44x44 touch targets (glyphs were 17–19px wide bare links). Tight gap keeps
+   the visual pitch close to the old 1.6rem spacing; the negative vertical
+   margin stops the taller boxes from growing the footer. */
+.footer-social { display: flex; gap: .4rem; }
+.footer-social a {
+  color: var(--ink);
+  font-size: 1.9rem;
+  text-decoration: none;
+  transition: color .2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.4rem;
+  height: 4.4rem;
+  margin: -0.7rem 0;
+}
 .footer-social a:hover { color: var(--ink-strong); }
 
 /* ===== Fade-in ===== */
@@ -1677,14 +1766,16 @@ html[data-theme="gotham"] .footer-content p,
 html[data-theme="gotham"] .codec-launch { font-family: var(--gt-deco); letter-spacing: 2px; }
 
 /* ===== Responsive ===== */
-/* Tight desktop band: keep the one-line header from crowding */
+/* Tight desktop band: the one-row header needs ~1060px in ink/codec (Spectral
+   uppercase nav links are min-content-bound and the logo can't wrap), so at
+   993–1060px it used to overflow ~47px past the right edge. Spacing-only diet
+   below (~100px recovered at 993px, measured in all four themes) — no font or
+   identity change; ≥1121px untouched. */
 @media (max-width: 1120px) {
-  header { padding: 1.4rem 3%; }
-  nav { gap: 1.6rem; }
-  /* .5rem sides (not the spec's .8rem): keeps the 4-segment picker no wider
-     than the old toggle it replaced, so the tight 993–1120 band is no more
-     crowded than it was before the swap. */
-  .theme-picker [role="radio"] { padding: .8rem .5rem; }
+  header { padding: 1.4rem 1.6rem; gap: 1rem; }
+  nav { gap: 1rem; }
+  .theme-picker [role="radio"] { padding: .8rem .4rem; }
+  .header-actions .btn-sm { padding: .7rem 1.1rem; }
 }
 
 @media (max-width: 992px) {
@@ -1734,7 +1825,7 @@ html[data-theme="gotham"] .codec-launch { font-family: var(--gt-deco); letter-sp
     min-height: 5.6rem;
   }
   .theme-picker .tp-label { display: inline; font-size: 1.1rem; }
-  .theme-picker i { font-size: 1.5rem; }
+  .theme-picker .icon { font-size: 1.5rem; }
   .theme-picker [role="radio"]:first-child { border-radius: 0 0 0 calc(var(--radius-sm) - 1px); }
   .theme-picker [role="radio"]:last-child { border-radius: 0 0 calc(var(--radius-sm) - 1px) 0; }
 

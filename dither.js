@@ -137,15 +137,20 @@
     ctx.drawImage(buffer, 0, 0, bw, bh, 0, 0, bw * CELL, bh * CELL);
   }
 
-  // --- Animation loop (throttled, pauses when tab hidden) ---
-  let last = 0, raf = null;
+  // --- Animation loop (timer-paced at FPS, pauses when tab hidden) ---
+  // A timer schedules each rAF instead of a bare 60Hz rAF chain: a rAF pending
+  // every vsync kept the compositor producing frames on the 7-of-8 ticks this
+  // loop skipped. Behavior/visuals unchanged; the renderer idles between frames.
+  let raf = null, timer = null;
   const FRAME_MS = 1000 / FPS;
 
   function loop(now) {
-    raf = requestAnimationFrame(loop);
-    if (now - last < FRAME_MS) return;
-    last = now;
+    raf = null;
     render(now);
+    timer = setTimeout(() => {
+      timer = null;
+      raf = requestAnimationFrame(loop);
+    }, Math.max(0, FRAME_MS - (performance.now() - now)));
   }
 
   // starwars (holo void) and gotham (red-sky nightscape) hide the canvas and
@@ -154,13 +159,19 @@
     const t = document.documentElement.dataset.theme;
     return t === 'starwars' || t === 'gotham';
   };
+  // Codec Infiltration overlay covers the page — no point painting under it
+  // (game.js toggles the class and dispatches gameopen/gameclose).
+  const gameOpen = () => document.body.classList.contains('game-open');
 
   function start() {
-    if (raf === null && !REDUCED_MOTION && !hiddenByTheme()) raf = requestAnimationFrame(loop);
+    if (raf === null && timer === null && !REDUCED_MOTION && !hiddenByTheme() && !gameOpen()) raf = requestAnimationFrame(loop);
   }
   function stop() {
     if (raf !== null) { cancelAnimationFrame(raf); raf = null; }
+    if (timer !== null) { clearTimeout(timer); timer = null; }
   }
+  window.addEventListener('gameopen', stop);
+  window.addEventListener('gameclose', start);
 
   let resizeTimer = null;
   window.addEventListener('resize', () => {
