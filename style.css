@@ -182,9 +182,10 @@ body::before {
   background-size: 58px 58px;
 }
 
-/* Theme atmosphere rig — two extra fixed paint surfaces for the dark themes.
-   Paints nothing in ink/codec (pseudos get content only under theme scopes).
-   z:-1 paint order is tree order: #dither-bg < .grain < .atmo < body::after. */
+/* Theme atmosphere rig — three extra fixed paint surfaces for the dark themes.
+   Paints nothing in ink/codec (backgrounds/pseudos exist only under theme
+   scopes). z:-1 paint order is tree order:
+   #dither-bg < .grain < .atmo < .atmo-fx < body::after. */
 .atmo {
   position: fixed;
   inset: 0;
@@ -195,6 +196,16 @@ body::before {
 .atmo::after {
   position: absolute;
   inset: 0;
+}
+.atmo-fx {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.atmo-fx::before,
+.atmo-fx::after {
+  position: absolute;
 }
 
 ::selection { background: var(--highlight); color: var(--on-accent); }
@@ -1247,51 +1258,142 @@ html[data-theme="starwars"] .grain {
     0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
 }
 
-/* Deep space: near star sheet + two 4-point glints above a blue nebula with
-   one restrained ember cloud (echoes the Mustafar hero), plus two abstract
-   wedge silhouettes reading as distant capital ships. The ember cloud is
-   atmosphere, not a UI accent — the amber-=-warnings-only budget is untouched.
-   Static by design — no animation, nothing to gate. */
+/* Deep space, near plane: repeating near-star sheet + ONE static wedge
+   (fleet anchor). The glints, nebula, ember, and second wedge moved to
+   their own animatable surfaces: glints -> .atmo-fx pseudos (twinkle),
+   nebula/ember -> body::before (drift), wedge 2 -> body::after (traverse). */
 html[data-theme="starwars"] .atmo::before {
   content: '';
   background-image:
-    /* near sheet — 487x431 tile, 5 brighter stars */
     radial-gradient(2px 2px     at 72px 63px,   rgba(235,244,255,.80) 50%, transparent 51%),
     radial-gradient(1.5px 1.5px at 419px 141px, rgba(199,222,255,.55) 50%, transparent 51%),
     radial-gradient(1px 1px     at 391px 118px, rgba(199,222,255,.40) 50%, transparent 51%),
     radial-gradient(1.5px 1.5px at 180px 342px, rgba(235,244,255,.60) 50%, transparent 51%),
     radial-gradient(1px 1px     at 310px 255px, rgba(199,222,255,.45) 50%, transparent 51%),
-    /* glint 1 — 4-point star, upper right inside the nebula */
-    radial-gradient(ellipse 1.5px 11px at 67% 17%, rgba(235,244,255,.50), transparent 70%),
-    radial-gradient(ellipse 11px 1.5px at 67% 17%, rgba(235,244,255,.50), transparent 70%),
-    radial-gradient(circle 1.7px at 67% 17%, rgba(255,255,255,.90) 0 45%, transparent 100%),
-    /* glint 2 — smaller, upper left */
-    radial-gradient(ellipse 1.2px 8px at 23% 33%, rgba(199,222,255,.42), transparent 70%),
-    radial-gradient(ellipse 8px 1.2px at 23% 33%, rgba(199,222,255,.42), transparent 70%),
-    radial-gradient(circle 1.4px at 23% 33%, rgba(235,244,255,.80) 0 45%, transparent 100%),
-    /* distant wedges — abstract dark triangles silhouetted on the nebula glow */
-    conic-gradient(from 82deg at 0% 50%, rgba(9,15,26,.92) 0 16deg, transparent 16.5deg),
-    conic-gradient(from 86deg at 0% 50%, rgba(9,15,26,.85) 0 13deg, transparent 13.5deg),
-    /* nebula — bright wisp core, main holo cloud, cooler secondary, ember accent */
-    radial-gradient(ellipse 26% 18% at 74% 20%, rgba(140,198,255,.055), transparent 70%),
-    radial-gradient(ellipse 52% 38% at 70% 26%, rgba(74,168,255,.07),  transparent 72%),
-    radial-gradient(ellipse 44% 34% at 16% 58%, rgba(64,140,230,.055), transparent 74%),
-    radial-gradient(ellipse 30% 22% at 87% 68%, rgba(240,127,40,.045), transparent 70%);
+    conic-gradient(from 82deg at 0% 50%, rgba(9,15,26,.92) 0 16deg, transparent 16.5deg);
   background-size:
     487px 431px, 487px 431px, 487px 431px, 487px 431px, 487px 431px,
-    auto, auto, auto, auto, auto, auto,
-    84px 20px, 56px 14px,
-    auto, auto, auto, auto;
+    84px 20px;
   background-position:
     0 0, 0 0, 0 0, 0 0, 0 0,
-    0 0, 0 0, 0 0, 0 0, 0 0, 0 0,
-    61% 21%, 72% 15%,
-    0 0, 0 0, 0 0, 0 0;
+    61% 21%;
   background-repeat:
     repeat, repeat, repeat, repeat, repeat,
-    no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat,
-    no-repeat, no-repeat,
-    no-repeat, no-repeat, no-repeat, no-repeat;
+    no-repeat;
+}
+
+/* Nebula drift — nebula + ember + the theme's wash move to body::before so
+   they can drift as one composited layer (transform only, never repainted).
+   The box is overscanned 6vw/6vh on every side; all geometry below is
+   re-specified in viewport units offset by that overscan, so the resting
+   frame is pixel-identical to the old .atmo::before composition. Max drift
+   (2.5vw, 1.8vh) < overscan, so no edge is ever exposed. */
+html[data-theme="starwars"] body::before {
+  inset: -6vh -6vw;
+  background:
+    radial-gradient(ellipse 26vw 18vh at 80vw 26vh, rgba(140,198,255,.055), transparent 70%),
+    radial-gradient(ellipse 52vw 38vh at 76vw 32vh, rgba(74,168,255,.07),  transparent 72%),
+    radial-gradient(ellipse 44vw 34vh at 22vw 64vh, rgba(64,140,230,.055), transparent 74%),
+    radial-gradient(ellipse 30vw 22vh at 93vw 74vh, rgba(240,127,40,.045), transparent 70%),
+    radial-gradient(ellipse 90vw 55vh at 56vw 6vh,  var(--wash), transparent 60%);
+  background-repeat: no-repeat;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme="starwars"] body::before {
+    animation: swNebulaDrift 130s ease-in-out infinite alternate;
+  }
+}
+@keyframes swNebulaDrift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(2.5vw, -1.8vh, 0); }
+}
+
+/* 4-point glints — each on its own 44px box so the twinkle animates a tiny
+   composited layer, not the full viewport. Centers match the old in-stack
+   positions (67% 17% and 23% 33%). Opacity keyframes only. */
+html[data-theme="starwars"] .atmo-fx::before,
+html[data-theme="starwars"] .atmo-fx::after {
+  content: '';
+  width: 44px;
+  height: 44px;
+  background-repeat: no-repeat;
+}
+html[data-theme="starwars"] .atmo-fx::before {
+  left: calc(67% - 22px);
+  top: calc(17% - 22px);
+  background-image:
+    radial-gradient(ellipse 1.5px 11px at 50% 50%, rgba(235,244,255,.50), transparent 70%),
+    radial-gradient(ellipse 11px 1.5px at 50% 50%, rgba(235,244,255,.50), transparent 70%),
+    radial-gradient(circle 1.7px at 50% 50%, rgba(255,255,255,.90) 0 45%, transparent 100%);
+}
+html[data-theme="starwars"] .atmo-fx::after {
+  left: calc(23% - 22px);
+  top: calc(33% - 22px);
+  background-image:
+    radial-gradient(ellipse 1.2px 8px at 50% 50%, rgba(199,222,255,.42), transparent 70%),
+    radial-gradient(ellipse 8px 1.2px at 50% 50%, rgba(199,222,255,.42), transparent 70%),
+    radial-gradient(circle 1.4px at 50% 50%, rgba(235,244,255,.80) 0 45%, transparent 100%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme="starwars"] .atmo-fx::before { animation: swTwinkle 7s ease-in-out infinite; }
+  html[data-theme="starwars"] .atmo-fx::after  { animation: swTwinkle 9s ease-in-out -4s infinite; }
+}
+@keyframes swTwinkle {
+  0%, 55%, 100% { opacity: 1; }
+  67% { opacity: .45; }
+  74% { opacity: .9; }
+  82% { opacity: .6; }
+  90% { opacity: 1; }
+}
+
+/* Roundel watermark — abstract Republic reticle, bottom-right, bleeding
+   60px off the corner. Circle center sits at (100% - 90px, 100% - 90px).
+   Decorative only; hidden on small viewports where the corner is busy. */
+html[data-theme="starwars"] .atmo-fx {
+  background-image:
+    radial-gradient(circle closest-side, transparent 0 130px, rgba(74,168,255,.04) 131px 142px, transparent 143px),
+    radial-gradient(circle closest-side, transparent 0 78px,  rgba(74,168,255,.03) 79px 84px,   transparent 85px),
+    radial-gradient(circle closest-side, rgba(74,168,255,.04) 0 5px, transparent 6px),
+    linear-gradient(rgba(74,168,255,.04), rgba(74,168,255,.04)),
+    linear-gradient(rgba(74,168,255,.04), rgba(74,168,255,.04));
+  background-size: 300px 300px, 300px 300px, 300px 300px, 2px 18px, 18px 2px;
+  background-position:
+    right -60px bottom -60px,
+    right -60px bottom -60px,
+    right -60px bottom -60px,
+    calc(100% - 91px) calc(100% - 232px),
+    calc(100% - 232px) calc(100% - 91px);
+  background-repeat: no-repeat;
+}
+@media (max-width: 768px) {
+  html[data-theme="starwars"] .atmo-fx { background-image: none; }
+}
+
+/* Distant capital ship — the old second wedge, now a 56x14 element that
+   crosses the upper sky nose-first (right -> left, slight descent) once per
+   120s, parked offscreen ~70s of every loop. Path stays above 24vh so it
+   never crosses the planet limb, and passes ~6vh above the static wedge.
+   Reduced motion: rests at the wedge's old static position (72vw, 15vh). */
+html[data-theme="starwars"] body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 56px;
+  height: 14px;
+  z-index: -1;
+  pointer-events: none;
+  background: conic-gradient(from 86deg at 0% 50%, rgba(9,15,26,.85) 0 13deg, transparent 13.5deg);
+  opacity: .5;
+  transform: translate3d(72vw, 15vh, 0);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme="starwars"] body::after { animation: swShipPass 120s linear infinite; }
+}
+@keyframes swShipPass {
+  0%, 58%      { transform: translate3d(106vw, 9vh, 0); }   /* parked offscreen right ~70s */
+  94%          { transform: translate3d(calc(-10vw - 64px), 24vh, 0); }  /* 43s crossing; -64px keeps the 56px ship fully offscreen on narrow viewports */
+  94.01%, 100% { transform: translate3d(106vw, 9vh, 0); }   /* reset while fully offscreen */
 }
 
 /* Planet limb — lower-left. Opaque body occludes the starfield below it;
@@ -1366,7 +1468,26 @@ html[data-theme="starwars"] nav a::after {
 }
 
 /* --- Section headings: mono, uppercase, two-tone rule (bright | dim holo) --- */
-html[data-theme="starwars"] .kicker { font-family: var(--sw-mono); font-weight: 400; }
+/* Episode title card: dim series stamp stacked over the glowing holo kicker
+   (the section-title below completes the card). Stamp uses the alt-text
+   syntax where supported so screen readers skip it; the plain declaration
+   is the fallback for engines without the slash syntax. */
+html[data-theme="starwars"] .kicker {
+  font-family: var(--sw-mono);
+  font-weight: 400;
+  letter-spacing: 3px;
+  text-shadow: 0 0 12px var(--sw-holo-glow);
+}
+html[data-theme="starwars"] .kicker::before {
+  content: 'holonet // secure feed';
+  content: 'holonet // secure feed' / '';
+  display: block;
+  font-size: 1.05rem;
+  letter-spacing: 3.5px;
+  color: var(--text-dim);
+  text-shadow: none;
+  margin-bottom: .4rem;
+}
 html[data-theme="starwars"] .section-title {
   font-family: var(--sw-mono);
   font-weight: 400;
@@ -1374,12 +1495,19 @@ html[data-theme="starwars"] .section-title {
   text-transform: uppercase;
   letter-spacing: 3px;
 }
+/* Clone striping — 501st blue plate with canted blue-white tally notches
+   (4px striped bar, 1px gap, 72px dim seam line), replacing the plain
+   two-tone rule. Decorative; no text sits on it. */
 html[data-theme="starwars"] .section-title::after {
   width: 120px;
-  height: 3px;
-  background-image: linear-gradient(to right,
-    var(--sw-holo) 0 34px, transparent 34px 40px, rgba(74, 168, 255, .45) 40px 100%);
-  background-size: 100% 100%;
+  height: 6px;
+  background-image:
+    repeating-linear-gradient(115deg,
+      var(--sw-holo) 0 12px,
+      rgba(235,244,255,.85) 12px 15px),
+    linear-gradient(rgba(74,168,255,.45), rgba(74,168,255,.45));
+  background-size: 100% 4px, 72px 1px;
+  background-position: top left, bottom left;
   background-repeat: no-repeat;
 }
 /* hologram flicker on headings */
@@ -1521,10 +1649,13 @@ html[data-theme="starwars"] .soliton-label {
 /* --- Background: hand-drawn BTAS Gotham (replaces the dither canvas).
    Bottom to top: .atmo::before = blood-red flat-painted sky fading toward the
    skyline, red ember glow pooling low, two hazy far-tower rows drawn as
-   irregular SVG silhouettes (black-on-red), ONE searchlight beam + cloud hit;
+   irregular SVG silhouettes (black-on-red); the beam + cloud hit live on the
+   .gt-beam child so they can sweep; drifting smoke on .gt-cloud-a/-b;
+   blinking windows on .gt-blink; rare bat flock on .gt-bats — all
+   transform/opacity-only, gated behind prefers-reduced-motion;
    .atmo::after = near skyline, a single hand-authored clip-path silhouette in
    PURE BLACK with warm lit-window texture clipped inside the towers;
-   body::after = faint rain, the only animation. Deco rule: red sky + black
+   body::after = faint rain. Deco rule: red sky + black
    deco dominates; the beam is pale warm; gold is the only metal. No
    repeating-gradient towers anywhere — every skyline edge is a drawn polygon
    (varied widths AND heights, setbacks, spires, roof details, uneven gaps)
@@ -1534,30 +1665,17 @@ html[data-theme="gotham"] #dither-bg { display: none; }
 html[data-theme="gotham"] .atmo::before {
   content: '';
   background-image:
-    /* searchlight hit — pale warm core + halo where the beam meets the cloud deck */
-    radial-gradient(ellipse 11% 5% at 91% 13%, rgba(240, 230, 210, .05), transparent 70%),
-    radial-gradient(ellipse 24% 11% at 91% 13%, rgba(236, 224, 200, .08), rgba(236, 224, 200, .02) 55%, transparent 75%),
-    /* beam — pale warm searchlight, same wedge geometry as before */
-    conic-gradient(from 4.5deg at 86% 103%, transparent 0deg, rgba(236, 224, 200, .07) 1.5deg 3deg, transparent 4.5deg 360deg),
-    conic-gradient(from 1.5deg at 86% 103%, transparent 0deg, rgba(236, 224, 200, .05) 2deg 8.5deg, transparent 10.5deg 360deg),
-    /* high red cloud wash, upper-left (balances the beam upper-right) */
+    /* high red cloud wash, upper-left (drifting sheets ride above this) */
     radial-gradient(ellipse 60% 24% at 30% 18%, rgba(120, 30, 40, .12), transparent 70%),
-    /* far skyline — SAME two hand-drawn SVG paths, recolored to black-on-red:
-       mid row picks up a whisper of maroon, farthest row a touch more (aerial depth) */
+    /* far skyline — unchanged hand-drawn SVG rows */
     url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 840 100' preserveAspectRatio='none'><path fill='%23120609' d='M0 100V57H26V43H58V62H96V30H104V18H116V30H126V62H170V49H214V66H262V27H272V38H306V62H338V52H354V62H398V36H442V22H452V36H470V62H514V45H548V58H590V24L596 12L602 24H610V58H654V40H704V64H744V33H788V57H840V100Z'/></svg>"),
     url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1040 100' preserveAspectRatio='none'><path fill='%231e0b10' d='M0 100V60H88V44H150V68H238V52H304V38H318V52H396V70H472V48H540V62H600V34H648V55H726V68H790V42H856V58H932V72H988V60H1040V100Z'/></svg>"),
-    /* red ember glow pooling low behind the towers */
     radial-gradient(ellipse 70% 18% at 24% 92%, rgba(164, 52, 60, .16), transparent 70%),
     radial-gradient(ellipse 90% 22% at 72% 96%, rgba(140, 40, 50, .14), transparent 72%),
-    /* THE SKY — blood-red up high fading toward the skyline (opaque; BTAS flat-painted
-       gradient. Intentionally covers .grain and body::before in this theme) */
     linear-gradient(180deg, #3d0d12 0%, #2f0b10 30%, #1d080c 62%, #12060a 100%);
-  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat,
-                     repeat-x, repeat-x, no-repeat, no-repeat, no-repeat;
-  background-position: 0 0, 0 0, 0 0, 0 0, 0 0,
-                       left bottom, 313px bottom, 0 0, 0 0, 0 0;
-  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%,
-                   840px 15vh, 1040px 12vh, 100% 100%, 100% 100%, 100% 100%;
+  background-repeat: no-repeat, repeat-x, repeat-x, no-repeat, no-repeat, no-repeat;
+  background-position: 0 0, left bottom, 313px bottom, 0 0, 0 0, 0 0;
+  background-size: 100% 100%, 840px 15vh, 1040px 12vh, 100% 100%, 100% 100%, 100% 100%;
 }
 
 /* Near skyline — one designed silhouette (deco setbacks, a cathedral spire
@@ -1587,6 +1705,92 @@ html[data-theme="gotham"] .atmo::after {
     83% 84%, 83% 42%, 86.5% 42%, 86.5% 30%, 88.5% 30%, 88.5% 42%, 92% 42%, 92% 84%,
     95% 84%, 95% 58%, 100% 58%, 100% 100%
   );
+}
+
+/* Drifting smoke: tile == shift for seamless loops; blobs never touch tile edges */
+html[data-theme="gotham"] .gt-cloud { position: absolute; top: 0; height: 38vh; }
+html[data-theme="gotham"] .gt-cloud-a {
+  left: -900px; right: -900px;
+  background-image:
+    radial-gradient(ellipse 30% 55% at 30% 30%, rgba(8, 3, 5, .32), transparent 70%),
+    radial-gradient(ellipse 22% 42% at 58% 16%, rgba(10, 4, 6, .26), transparent 72%),
+    radial-gradient(ellipse 26% 48% at 74% 42%, rgba(8, 3, 5, .28), transparent 68%),
+    radial-gradient(ellipse 12% 22% at 42% 20%, rgba(139, 36, 46, .10), transparent 70%);
+  background-size: 900px 100%;
+  background-repeat: repeat-x;
+}
+html[data-theme="gotham"] .gt-cloud-b {
+  left: -1100px; right: -1100px;
+  background-image:
+    radial-gradient(ellipse 34% 46% at 24% 22%, rgba(12, 5, 7, .20), transparent 72%),
+    radial-gradient(ellipse 28% 38% at 62% 34%, rgba(12, 5, 7, .17), transparent 74%),
+    radial-gradient(ellipse 20% 30% at 82% 18%, rgba(12, 5, 7, .15), transparent 72%);
+  background-size: 1100px 100%;
+  background-repeat: repeat-x;
+}
+
+/* GCPD beam: sweeps -4deg..3deg about the projector housing */
+html[data-theme="gotham"] .gt-beam {
+  position: absolute; top: 0; bottom: 0; left: 50%; right: 0;
+  background-image:
+    radial-gradient(ellipse 22% 5% at 82% 13%, rgba(240, 230, 210, .05), transparent 70%),
+    radial-gradient(ellipse 48% 11% at 82% 13%, rgba(236, 224, 200, .08), rgba(236, 224, 200, .02) 55%, transparent 75%),
+    conic-gradient(from 4.5deg at 72% 103%, transparent 0deg, rgba(236, 224, 200, .07) 1.5deg 3deg, transparent 4.5deg 360deg),
+    conic-gradient(from 1.5deg at 72% 103%, transparent 0deg, rgba(236, 224, 200, .05) 2deg 8.5deg, transparent 10.5deg 360deg);
+  background-repeat: no-repeat;
+  transform-origin: 72% 103%;
+}
+
+/* Two lit windows with independent blink rhythms (17s / 23s, non-harmonic) */
+html[data-theme="gotham"] .gt-blink { position: absolute; inset: auto 0 0 0; height: 26vh; z-index: 1; }
+html[data-theme="gotham"] .gt-blink::before,
+html[data-theme="gotham"] .gt-blink::after { content: ''; position: absolute; inset: 0; background-repeat: no-repeat; }
+html[data-theme="gotham"] .gt-blink::before {
+  background-image: radial-gradient(2px 3px at 12.2% 46%, rgba(240, 214, 160, .55) 60%, transparent 61%);
+  opacity: .85;   /* reduced-motion static frame: steadily lit */
+}
+html[data-theme="gotham"] .gt-blink::after {
+  background-image: radial-gradient(2px 3px at 61.5% 52%, rgba(240, 214, 160, .5) 60%, transparent 61%);
+  opacity: 0;     /* reduced-motion static frame: dark */
+}
+
+/* Rare bat flock: one linear pass with a slight arc, then 38s of empty sky */
+html[data-theme="gotham"] .gt-bats {
+  position: absolute; top: 16vh; left: -220px; width: 200px; height: 70px;
+  opacity: .42;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 70'><g fill='%23070304'><path transform='translate(30 38)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/><path transform='translate(70 24) scale(.8)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/><path transform='translate(105 44) scale(1.15)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/><path transform='translate(145 30) scale(.7)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/><path transform='translate(64 56) scale(.55)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/></g></svg>");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html[data-theme="gotham"] .gt-cloud-a { animation: gtCloudA 84s linear infinite; }
+  html[data-theme="gotham"] .gt-cloud-b { animation: gtCloudB 138s linear infinite; }
+  html[data-theme="gotham"] .gt-beam { animation: gtSweep 26s ease-in-out infinite alternate; }
+  html[data-theme="gotham"] .gt-blink::before { animation: gtBlinkA 17s linear infinite; }
+  html[data-theme="gotham"] .gt-blink::after { animation: gtBlinkB 23s linear infinite; }
+  html[data-theme="gotham"] .gt-bats { animation: gtBats 52s linear infinite; }
+}
+@keyframes gtCloudA { to { transform: translate3d(-900px, 0, 0); } }
+@keyframes gtCloudB { to { transform: translate3d(-1100px, 0, 0); } }
+@keyframes gtSweep { from { transform: rotate(-4deg); } to { transform: rotate(3deg); } }
+@keyframes gtBlinkA {  /* lit window: double off-flicker at ~10.5s, else on */
+  0%, 61.9% { opacity: .85; }
+  62%, 63.4% { opacity: 0; }
+  63.5%, 65.9% { opacity: .85; }
+  66%, 68.9% { opacity: 0; }
+  69%, 100% { opacity: .85; }
+}
+@keyframes gtBlinkB {  /* dark window: lights up for ~3s at ~13s, then off */
+  0%, 55.9% { opacity: 0; }
+  56%, 68.9% { opacity: .8; }
+  69%, 100% { opacity: 0; }
+}
+@keyframes gtBats {    /* 14s crossing with a gentle rise, 38s parked off-screen right */
+  0% { transform: translate3d(0, 0, 0); }
+  13.5% { transform: translate3d(calc(50vw + 220px), -3vh, 0); }
+  27% { transform: translate3d(calc(100vw + 440px), -1vh, 0); }
+  100% { transform: translate3d(calc(100vw + 440px), -1vh, 0); }
 }
 
 /* Rain — two sparse dash sheets (2×28px and 2×22px streaks), pale warm so
@@ -1652,7 +1856,14 @@ html[data-theme="gotham"] nav a::after {
 }
 
 /* --- Section headings: condensed gothic caps + all-gold double deco rule --- */
-html[data-theme="gotham"] .kicker { font-family: 'Spectral', serif; font-variant: small-caps; text-transform: none; letter-spacing: 3px; }
+html[data-theme="gotham"] .kicker {
+  font-family: 'Spectral', serif; font-variant: small-caps; text-transform: none; letter-spacing: 3px;
+  display: inline-block;
+  padding: .5rem 1.6rem .4rem;
+  background: linear-gradient(180deg, #3d0d12, #12060a 85%);
+  border-top: 1px solid rgba(212, 175, 106, .55);
+  border-bottom: 1px solid rgba(212, 175, 106, .55);
+}
 html[data-theme="gotham"] .section-title {
   font-family: var(--gt-deco);
   font-weight: 500;
