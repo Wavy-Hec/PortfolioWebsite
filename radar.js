@@ -123,12 +123,12 @@
     beamGrad.addColorStop(0.55, PALE(0.17));
     beamGrad.addColorStop(1, PALE(0.02));
 
-    skyGrad = ctx.createLinearGradient(0, -R, 0, R);   // disc-spanning red sky
-    skyGrad.addColorStop(0, '#360c11');
-    skyGrad.addColorStop(0.55, '#22080d');
-    skyGrad.addColorStop(1, '#12060a');
+    skyGrad = ctx.createLinearGradient(0, -R, 0, R);   // disc-spanning storm sky
+    skyGrad.addColorStop(0, '#0c0d10');
+    skyGrad.addColorStop(0.55, '#16181c');
+    skyGrad.addColorStop(1, '#262a31');
 
-    // sky: thinned red cloud texture (8 blotches, was 14),
+    // sky: thinned storm-cloud texture (8 blotches, was 14),
     // sky band only, drawn 3x per blotch (x, x-SIZE, x+SIZE) so horizontal drift tiles seamlessly
     skyCanvas = document.createElement('canvas');
     skyCanvas.width = skyCanvas.height = SIZE * dpr;
@@ -139,8 +139,8 @@
       const x = rnd() * SIZE, y = 10 + rnd() * 50, r = 10 + rnd() * 18;
       for (const ox of [x, x - SIZE, x + SIZE]) {
         const g = s.createRadialGradient(ox, y, 0, ox, y, r);
-        g.addColorStop(0, 'rgba(196,84,92,0.08)');
-        g.addColorStop(1, 'rgba(196,84,92,0)');
+        g.addColorStop(0, 'rgba(148,155,166,0.09)');
+        g.addColorStop(1, 'rgba(148,155,166,0)');
         s.fillStyle = g;
         s.beginPath(); s.arc(ox, y, r, 0, Math.PI * 2); s.fill();
       }
@@ -247,8 +247,12 @@
     ctx.beginPath(); ctx.arc(0, 0, 2.6, 0, Math.PI * 2);
     ctx.fillStyle = rgba(0.95); ctx.fill();
 
-    // tracked cursor blip
-    blipDot(Math.max(-1, Math.min(1, mx)) * (R - 9), Math.max(-1, Math.min(1, my)) * (R - 9));
+    // tracked cursor blip — clamp radially, not per-axis: a screen corner maps
+    // to the unit square's corner (length √2), which would escape the rings
+    let cbx = Math.max(-1, Math.min(1, mx)), cby = Math.max(-1, Math.min(1, my));
+    const cbl = Math.hypot(cbx, cby);
+    if (cbl > 1) { cbx /= cbl; cby /= cbl; }
+    blipDot(cbx * (R - 9), cby * (R - 9));
 
     // ambient blips
     for (const b of blips) {
@@ -320,9 +324,13 @@
     }
 
     // primary target tracks the cursor (mirrors soliton's tracked blip);
-    // static frame (reduced motion / first paint) shows it centred and locked
-    const tx = Math.max(-1, Math.min(1, mx)) * (R - 12);
-    const ty = Math.max(-1, Math.min(1, my)) * (R - 12);
+    // static frame (reduced motion / first paint) shows it centred and locked.
+    // Radial clamp — per-axis clamping lets screen corners escape the rings.
+    let ux = Math.max(-1, Math.min(1, mx)), uy = Math.max(-1, Math.min(1, my));
+    const ul = Math.hypot(ux, uy);
+    if (ul > 1) { ux /= ul; uy /= ul; }
+    const tx = ux * (R - 12);
+    const ty = uy * (R - 12);
     const locked = Math.abs(tx) < 9 && Math.abs(ty) < 9;
     ctx.strokeStyle = locked ? AMBER(0.95) : HOLO(0.9);
     ctx.strokeRect(tx - 3, ty - 3, 6, 6);
@@ -377,7 +385,7 @@
     const locked = sigT < lockUntil;
 
     // ---- render ----
-    // 1. red-sky disc (BTAS blood-red gradient, bright up top)
+    // 1. storm-sky disc (BTAS storm gradient, moonlit at the horizon)
     ctx.beginPath(); ctx.arc(0, 0, R - 1, 0, Math.PI * 2);
     ctx.fillStyle = skyGrad; ctx.fill();
 

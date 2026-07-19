@@ -98,11 +98,11 @@ html[data-theme="starwars"] {
   --sw-mono: 'Share Tech Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 }
 
-/* ===== Gotham mode — BTAS red-sky noir (dark deco x Nightwing) ===== */
+/* ===== Gotham mode — BTAS storm-sky noir (dark deco x Nightwing) ===== */
 html[data-theme="gotham"] {
   color-scheme: dark;
-  --bg: #0b0709;             /* warm near-black; the red sky lives in .atmo */
-  --bg-2: #120a0d;
+  --bg: #0b0c0e;             /* cold near-black; the storm sky lives in .atmo */
+  --bg-2: #101114;
   --panel: #0a0a0c;          /* pure-black deco card */
   --panel-2: #121114;
   --ink: #d4af6a;            /* deco gold — rules, kickers, buttons (9.6:1 on --panel) */
@@ -115,17 +115,17 @@ html[data-theme="gotham"] {
   --input-border: #74726d;   /* neutral steel — 4.1:1 vs --panel (≥3:1, WCAG 1.4.11) */
   --highlight: #d4af6a;
   --shadow-lift: 12px 12px 0 rgba(0, 0, 0, .7);   /* hover: hard poster offset, no blur */
-  --wash: #1f090d;           /* red-black top wash (mostly behind the .atmo sky) */
+  --wash: #14161a;           /* storm-gray top wash (mostly behind the .atmo sky) */
   --grid-line: rgba(212, 175, 106, .03);  /* vestigial — opaque sky covers .grain */
   --on-accent: #171107;      /* warm near-black — text on gold (9.1:1) */
   --accent-tint: rgba(212, 175, 106, .08);
-  --band: rgba(12, 10, 11, .6);
-  --codec-band: rgba(17, 10, 11, .7);      /* warm dark under scanlines */
+  --band: rgba(11, 12, 14, .6);
+  --codec-band: rgba(15, 16, 18, .7);      /* cold dark under scanlines */
   --scanline: rgba(198, 197, 194, .045);   /* neutral-gray scanlines */
   --scanline-soft: rgba(198, 197, 194, .032);
-  --header-bg: rgba(10, 7, 9, .88);
-  --header-bg-solid: rgba(10, 7, 9, .98);
-  --error: #f0564f;          /* imperial scarlet — 5.8:1 on --panel; hue/brightness distinct from the maroon sky */
+  --header-bg: rgba(10, 11, 13, .88);
+  --header-bg-solid: rgba(10, 11, 13, .98);
+  --error: #f0564f;          /* imperial scarlet — 5.8:1 on --panel; only red in the theme, reads as alarm against the storm */
   /* theme-scoped extras (referenced only by gotham-scoped rules) */
   --gt-brass: #a08a5c;       /* muted old gold — pull-quote only (6.0:1 on --bg) */
   --gt-yellow-glow: rgba(212, 175, 106, .25);  /* name kept; now gold glow */
@@ -1181,6 +1181,26 @@ html[data-theme="starwars"] .codec-launch::after { border-radius: 0; }
   padding: .3rem .8rem;
   white-space: nowrap;
 }
+/* Robin roll-call plates (share .nightwing-cameo container + slide/fade) */
+.nightwing-caption.robin-name {
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+.robin-emblem {
+  width: 110px;
+  height: 110px;
+  display: grid;
+  place-items: center;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+.robin-emblem svg { width: 72px; height: 72px; display: block; }
+.robin-emblem--dick   { box-shadow: inset 0 0 18px rgba(246, 215, 106, .12); }
+.robin-emblem--jason  { box-shadow: inset 0 0 18px rgba(240, 86, 79, .12); }
+.robin-emblem--tim    { box-shadow: inset 0 0 18px rgba(212, 175, 106, .12); }
+.robin-emblem--damian { box-shadow: inset 0 0 18px rgba(127, 208, 138, .12); }
 /* Reduced motion for the two egg surfaces above. Lives HERE (not in the global
    reduce block earlier in the file) because it must come after the base rules
    in source order to win the equal-specificity cascade. */
@@ -1725,15 +1745,16 @@ html[data-theme="starwars"] .soliton-label {
 /* ===== Gotham mode — theme-scoped restyles ===== */
 
 /* --- Background: hand-drawn BTAS Gotham (replaces the dither canvas).
-   Bottom to top: .atmo::before = blood-red flat-painted sky fading toward the
-   skyline, red ember glow pooling low, two hazy far-tower rows drawn as
-   irregular SVG silhouettes (black-on-red); the beam + cloud hit live on the
-   .gt-beam child so they can sweep; drifting smoke on .gt-cloud-a/-b;
+   Bottom to top: .atmo::before = near-black storm sky (darkest at zenith,
+   storm-gray horizon), cold moonlit glow pooling low, two hazy far-tower rows
+   drawn as irregular SVG silhouettes (slate-on-storm); the beam + cloud hit
+   live on the .gt-beam child so they can sweep; drifting storm clouds on
+   .gt-cloud-a/-b; rare distant lightning on .atmo-fx::before;
    blinking windows on .gt-blink; rare bat flock on .gt-bats — all
    transform/opacity-only, gated behind prefers-reduced-motion;
    .atmo::after = near skyline, a single hand-authored clip-path silhouette in
    PURE BLACK with warm lit-window texture clipped inside the towers;
-   body::after = faint rain. Deco rule: red sky + black
+   body::after = faint rain. Deco rule: storm sky + black
    deco dominates; the beam is pale warm; gold is the only metal. No
    repeating-gradient towers anywhere — every skyline edge is a drawn polygon
    (varied widths AND heights, setbacks, spires, roof details, uneven gaps)
@@ -1743,14 +1764,15 @@ html[data-theme="gotham"] #dither-bg { display: none; }
 html[data-theme="gotham"] .atmo::before {
   content: '';
   background-image:
-    /* high red cloud wash, upper-left (drifting sheets ride above this) */
-    radial-gradient(ellipse 60% 24% at 30% 18%, rgba(120, 30, 40, .12), transparent 70%),
-    /* far skyline — unchanged hand-drawn SVG rows */
-    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 840 100' preserveAspectRatio='none'><path fill='%23120609' d='M0 100V57H26V43H58V62H96V30H104V18H116V30H126V62H170V49H214V66H262V27H272V38H306V62H338V52H354V62H398V36H442V22H452V36H470V62H514V45H548V58H590V24L596 12L602 24H610V58H654V40H704V64H744V33H788V57H840V100Z'/></svg>"),
-    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1040 100' preserveAspectRatio='none'><path fill='%231e0b10' d='M0 100V60H88V44H150V68H238V52H304V38H318V52H396V70H472V48H540V62H600V34H648V55H726V68H790V42H856V58H932V72H988V60H1040V100Z'/></svg>"),
-    radial-gradient(ellipse 70% 18% at 24% 92%, rgba(164, 52, 60, .16), transparent 70%),
-    radial-gradient(ellipse 90% 22% at 72% 96%, rgba(140, 40, 50, .14), transparent 72%),
-    linear-gradient(180deg, #3d0d12 0%, #2f0b10 30%, #1d080c 62%, #12060a 100%);
+    /* high storm wash, upper-left (drifting cloud sheets ride above this) */
+    radial-gradient(ellipse 60% 24% at 30% 18%, rgba(148, 155, 166, .05), transparent 70%),
+    /* far skyline — unchanged hand-drawn SVG rows, recolored to cold slate */
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 840 100' preserveAspectRatio='none'><path fill='%230b0c0e' d='M0 100V57H26V43H58V62H96V30H104V18H116V30H126V62H170V49H214V66H262V27H272V38H306V62H338V52H354V62H398V36H442V22H452V36H470V62H514V45H548V58H590V24L596 12L602 24H610V58H654V40H704V64H744V33H788V57H840V100Z'/></svg>"),
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1040 100' preserveAspectRatio='none'><path fill='%2316181c' d='M0 100V60H88V44H150V68H238V52H304V38H318V52H396V70H472V48H540V62H600V34H648V55H726V68H790V42H856V58H932V72H988V60H1040V100Z'/></svg>"),
+    /* cold moonlit glow, low behind the skyline: broad sheen + moon core at 26% */
+    radial-gradient(ellipse 60% 26% at 26% 94%, rgba(201, 205, 212, .09), transparent 70%),
+    radial-gradient(ellipse 16% 10% at 26% 90%, rgba(214, 220, 230, .13), transparent 72%),
+    linear-gradient(180deg, #0c0d10 0%, #101114 30%, #16181c 62%, #262a31 100%);
   background-repeat: no-repeat, repeat-x, repeat-x, no-repeat, no-repeat, no-repeat;
   background-position: 0 0, left bottom, 313px bottom, 0 0, 0 0, 0 0;
   background-size: 100% 100%, 840px 15vh, 1040px 12vh, 100% 100%, 100% 100%, 100% 100%;
@@ -1785,26 +1807,39 @@ html[data-theme="gotham"] .atmo::after {
   );
 }
 
-/* Drifting smoke: tile == shift for seamless loops; blobs never touch tile edges */
+/* Drifting storm clouds: tile == shift for seamless loops; blobs never touch tile edges */
 html[data-theme="gotham"] .gt-cloud { position: absolute; top: 0; height: 38vh; }
 html[data-theme="gotham"] .gt-cloud-a {
   left: -900px; right: -900px;
   background-image:
-    radial-gradient(ellipse 30% 55% at 30% 30%, rgba(8, 3, 5, .32), transparent 70%),
-    radial-gradient(ellipse 22% 42% at 58% 16%, rgba(10, 4, 6, .26), transparent 72%),
-    radial-gradient(ellipse 26% 48% at 74% 42%, rgba(8, 3, 5, .28), transparent 68%),
-    radial-gradient(ellipse 12% 22% at 42% 20%, rgba(139, 36, 46, .10), transparent 70%);
+    radial-gradient(ellipse 30% 55% at 30% 30%, rgba(96, 102, 112, .14), transparent 70%),
+    radial-gradient(ellipse 22% 42% at 58% 16%, rgba(96, 102, 112, .11), transparent 72%),
+    radial-gradient(ellipse 26% 48% at 74% 42%, rgba(96, 102, 112, .12), transparent 68%),
+    radial-gradient(ellipse 12% 22% at 42% 20%, rgba(201, 205, 212, .06), transparent 70%);
   background-size: 900px 100%;
   background-repeat: repeat-x;
 }
 html[data-theme="gotham"] .gt-cloud-b {
   left: -1100px; right: -1100px;
   background-image:
-    radial-gradient(ellipse 34% 46% at 24% 22%, rgba(12, 5, 7, .20), transparent 72%),
-    radial-gradient(ellipse 28% 38% at 62% 34%, rgba(12, 5, 7, .17), transparent 74%),
-    radial-gradient(ellipse 20% 30% at 82% 18%, rgba(12, 5, 7, .15), transparent 72%);
+    radial-gradient(ellipse 34% 46% at 24% 22%, rgba(72, 77, 86, .10), transparent 72%),
+    radial-gradient(ellipse 28% 38% at 62% 34%, rgba(72, 77, 86, .085), transparent 74%),
+    radial-gradient(ellipse 20% 30% at 82% 18%, rgba(72, 77, 86, .075), transparent 72%);
   background-size: 1100px 100%;
   background-repeat: repeat-x;
+}
+
+/* Distant sheet lightning: top-anchored pale wash, dead by 55vh so it never
+   tints the black skyline (bottom 26vh). Fires once per 31s cycle (~2/min);
+   base opacity 0 = invisible under reduced motion. */
+html[data-theme="gotham"] .atmo-fx::before {
+  content: '';
+  inset: 0 0 auto 0;
+  height: 55vh;
+  background:
+    radial-gradient(ellipse 42% 60% at 63% 0%, rgba(214, 220, 230, .20), transparent 70%),
+    radial-gradient(ellipse 80% 45% at 55% 8%, rgba(201, 205, 212, .10), transparent 75%);
+  opacity: 0;
 }
 
 /* GCPD beam: sweeps -4deg..3deg about the projector housing */
@@ -1836,7 +1871,7 @@ html[data-theme="gotham"] .gt-blink::after {
 html[data-theme="gotham"] .gt-bats {
   position: absolute; top: 16vh; left: -220px; width: 200px; height: 70px;
   opacity: .42;
-  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 70'><g fill='%23070304'><path transform='translate(30 38)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/><path transform='translate(70 24) scale(.8)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/><path transform='translate(105 44) scale(1.15)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/><path transform='translate(145 30) scale(.7)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/><path transform='translate(64 56) scale(.55)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/></g></svg>");
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 70'><g fill='%233d434c'><path transform='translate(30 38)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/><path transform='translate(70 24) scale(.8)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/><path transform='translate(105 44) scale(1.15)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/><path transform='translate(145 30) scale(.7)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/><path transform='translate(64 56) scale(.55)' d='M-11 0Q-7 -6 -2 -3Q-1 -6 0 -6Q1 -6 2 -3Q7 -6 11 0Q6 -2 3 1Q1 -2 0 -2Q-1 -2 -3 1Q-6 -2 -11 0Z'/></g></svg>");
   background-size: 100% 100%;
   background-repeat: no-repeat;
 }
@@ -1848,6 +1883,7 @@ html[data-theme="gotham"] .gt-bats {
   html[data-theme="gotham"] .gt-blink::before { animation: gtBlinkA 17s linear infinite; }
   html[data-theme="gotham"] .gt-blink::after { animation: gtBlinkB 23s linear infinite; }
   html[data-theme="gotham"] .gt-bats { animation: gtBats 52s linear infinite; }
+  html[data-theme="gotham"] .atmo-fx::before { animation: gtLightning 31s linear infinite; }
 }
 @keyframes gtCloudA { to { transform: translate3d(-900px, 0, 0); } }
 @keyframes gtCloudB { to { transform: translate3d(-1100px, 0, 0); } }
@@ -1870,9 +1906,17 @@ html[data-theme="gotham"] .gt-bats {
   27% { transform: translate3d(calc(100vw + 440px), -1vh, 0); }
   100% { transform: translate3d(calc(100vw + 440px), -1vh, 0); }
 }
+@keyframes gtLightning {   /* one double-pulse strike ~14.6s into each 31s cycle */
+  0%, 46.9%   { opacity: 0; }
+  47%         { opacity: .55; }
+  47.5%       { opacity: .06; }
+  48.1%       { opacity: .85; }
+  49.3%       { opacity: .18; }
+  50.6%, 100% { opacity: 0; }
+}
 
-/* Rain — two sparse dash sheets (2×28px and 2×22px streaks), pale warm so
-   they read on the red sky, max alpha .05. Loops seamlessly: 280px shift =
+/* Rain — two sparse dash sheets (2×28px and 2×22px streaks), cold pale so
+   they read on the storm sky, max alpha .05. Loops seamlessly: 280px shift =
    2 tiles of layer 1, 1 tile of layer 2. Reduced motion: no animation —
    streaks stay as static texture. */
 html[data-theme="gotham"] body::after {
@@ -1882,8 +1926,8 @@ html[data-theme="gotham"] body::after {
   z-index: -1;
   pointer-events: none;
   background-image:
-    radial-gradient(1px 14px at 35px 46px, rgba(226, 214, 198, .05) 55%, transparent 56%),
-    radial-gradient(1px 11px at 87px 190px, rgba(226, 214, 198, .038) 55%, transparent 56%);
+    radial-gradient(1px 14px at 35px 46px, rgba(201, 205, 212, .05) 55%, transparent 56%),
+    radial-gradient(1px 11px at 87px 190px, rgba(201, 205, 212, .038) 55%, transparent 56%);
   background-size: 71px 140px, 113px 280px;
   background-position: 0 0, 31px 60px;
 }
@@ -1894,39 +1938,6 @@ html[data-theme="gotham"] body::after {
 
 /* Static vignette, no flicker — noir, not glitch */
 html[data-theme="gotham"] .crt { opacity: .45; }
-
-/* --- Venetian key light: one raking window-blind light per scene. Hero gets
-   the full field; other sections get a band that dies before the card zone.
-   Two blade widths per period (22/34px) + uneven gaps = hand-set, not looped. --- */
-html[data-theme="gotham"] .home::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;               /* paints above in-flow content and hovered (transformed, z-auto) cards */
-  pointer-events: none;
-  background: repeating-linear-gradient(118deg,
-    rgba(236, 226, 208, .045) 0 22px,
-    transparent 22px 170px,
-    rgba(236, 226, 208, .038) 170px 204px,
-    transparent 204px 362px);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 62%, transparent 96%);
-  mask-image: linear-gradient(180deg, #000 0%, #000 62%, transparent 96%);
-}
-html[data-theme="gotham"] section:not(.home)::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 300px;            /* covers kicker + title (~215px) then fades */
-  z-index: 1;
-  pointer-events: none;
-  background: repeating-linear-gradient(118deg,
-    rgba(236, 226, 208, .035) 0 18px,
-    transparent 18px 150px,
-    rgba(236, 226, 208, .028) 150px 176px,
-    transparent 176px 320px);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 40%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 0%, #000 40%, transparent 100%);
-}
 
 /* --- Deco geometry: square every corner (same selector list as starwars) --- */
 html[data-theme="gotham"] .work-card,
@@ -1980,7 +1991,7 @@ html[data-theme="gotham"] .kicker {
   font-family: 'Spectral', serif; font-variant: small-caps; text-transform: none; letter-spacing: 3px;
   display: inline-block;
   padding: .5rem 1.6rem .4rem;
-  background: linear-gradient(180deg, #3d0d12, #12060a 85%);
+  background: linear-gradient(180deg, #2a2d33, #101114 85%);
   border-top: 1px solid rgba(212, 175, 106, .55);
   border-bottom: 1px solid rgba(212, 175, 106, .55);
 }

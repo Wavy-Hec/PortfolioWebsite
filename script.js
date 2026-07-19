@@ -860,24 +860,47 @@ document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
     });
 });
 
-// ===== Gotham egg: 3 clicks on the GCPD signal -> LEGO Nightwing cameo =====
+// ===== Gotham egg: 3 clicks on the GCPD signal -> Robin roll-call cameo =====
 // The click listener lives here (not radar.js) — style.css re-enables
 // pointer-events on .soliton-radar in gotham only, so this is inert elsewhere.
+const ROBIN_CYCLE = [
+    { name: 'NIGHTWING', img: 'lego-nightwing-dither.png' },
+    { name: 'DICK GRAYSON', mod: 'dick',
+      svg: '<svg viewBox="0 0 72 72" aria-hidden="true" focusable="false"><circle cx="36" cy="36" r="30" fill="#f6d76a"/><circle cx="36" cy="36" r="30" fill="none" stroke="#0a0a0c" stroke-width="3"/><text x="36" y="48" text-anchor="middle" font-family="\'Share Tech Mono\',monospace" font-size="36" font-weight="700" fill="#0a0a0c">R</text></svg>' },
+    { name: 'JASON TODD', mod: 'jason',
+      svg: '<svg viewBox="0 0 72 72" aria-hidden="true" focusable="false"><path d="M14 56 V36 A22 22 0 0 1 58 36 V56 Z" fill="#f0564f"/><rect x="22" y="34" width="28" height="6" rx="3" fill="#0a0a0c"/></svg>' },
+    { name: 'TIM DRAKE', mod: 'tim',
+      svg: '<svg viewBox="0 0 72 72" aria-hidden="true" focusable="false"><circle cx="36" cy="36" r="30" fill="#f0564f"/><circle cx="36" cy="36" r="30" fill="none" stroke="#d4af6a" stroke-width="3"/><circle cx="40" cy="36" r="12" fill="#0a0a0c"/><path d="M16 36 L30 29 L30 43 Z" fill="#0a0a0c"/><circle cx="42" cy="33" r="2.5" fill="#d4af6a"/></svg>' },
+    { name: 'DAMIAN WAYNE', mod: 'damian',
+      svg: '<svg viewBox="0 0 72 72" aria-hidden="true" focusable="false"><line x1="10" y1="62" x2="62" y2="10" stroke="#d4af6a" stroke-width="2.5" stroke-linecap="round"/><circle cx="36" cy="36" r="24" fill="#0a0a0c"/><circle cx="36" cy="36" r="24" fill="none" stroke="#7fd08a" stroke-width="3"/><text x="36" y="46" text-anchor="middle" font-family="\'Share Tech Mono\',monospace" font-size="30" font-weight="700" fill="#7fd08a">R</text></svg>' }
+];
 let gcpdClicks = 0, gcpdTimer = null, nightwingWarm = false;
 function nightwingCameo() {
     if (document.querySelector('.nightwing-cameo')) return; // never stack two
+    let idx = 0;
+    try { idx = parseInt(localStorage.getItem('robin-cycle'), 10); } catch (err) {}
+    if (!Number.isInteger(idx) || idx < 0 || idx >= ROBIN_CYCLE.length) idx = 0;
+    const entry = ROBIN_CYCLE[idx];
+    try { localStorage.setItem('robin-cycle', String((idx + 1) % ROBIN_CYCLE.length)); } catch (err) {}
     const egg = document.createElement('div');
     egg.className = 'nightwing-cameo';
     egg.setAttribute('aria-hidden', 'true');       // purely decorative
     const cap = document.createElement('span');
-    cap.className = 'nightwing-caption';
-    cap.textContent = 'you never saw me.';
-    const img = document.createElement('img');
-    img.src = 'lego-nightwing-dither.png';
-    img.alt = '';
-    img.onerror = () => egg.remove();              // PNG missing -> vanish silently
+    cap.className = 'nightwing-caption robin-name';
+    cap.textContent = entry.name;
     egg.appendChild(cap);
-    egg.appendChild(img);
+    if (entry.img) {
+        const img = document.createElement('img');
+        img.src = entry.img;
+        img.alt = '';
+        img.onerror = () => egg.remove();          // PNG missing -> vanish silently
+        egg.appendChild(img);
+    } else {
+        const plate = document.createElement('div');
+        plate.className = 'robin-emblem robin-emblem--' + entry.mod;
+        plate.innerHTML = entry.svg;               // static literal above — no user input
+        egg.appendChild(plate);
+    }
     document.body.appendChild(egg);
     // double-rAF so the entrance transition actually plays
     requestAnimationFrame(() => requestAnimationFrame(() => egg.classList.add('show')));
