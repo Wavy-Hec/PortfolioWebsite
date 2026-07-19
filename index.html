@@ -32,7 +32,7 @@
        Icons are an inline SVG sprite at the top of <body> (zero requests; replaced Font Awesome's ~298KB CSS+woff2). -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap"></noscript>
-  <link rel="stylesheet" href="style.css?v=26">
+  <link rel="stylesheet" href="style.css?v=27">
   <!-- Without JS the codec loader can never dismiss itself — hide it outright.
        Must come AFTER style.css so it wins the cascade (equal specificity). -->
   <noscript><style>.codec-loader{display:none!important}body:not(.loaded){overflow-y:auto!important}</style></noscript>
@@ -41,7 +41,7 @@
        post-parse. game.js is lazy-loaded by script.js on first launch. -->
   <script src="dither.js?v=15" defer></script>
   <script src="radar.js?v=19" defer></script>
-  <script src="script.js?v=26" defer></script>
+  <script src="script.js?v=27" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -135,7 +135,7 @@
     </nav>
     <div class="header-actions">
       <span id="theme-announce" class="visually-hidden" aria-live="polite"></span>
-      <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn btn-sm"><svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg> Résumé</a>
+      <a href="Hector_Lugo_Resume_Summer.pdf" target="_blank" rel="noopener" download class="btn btn-sm"><svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg> Résumé</a>
       <button type="button" class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Menu" aria-expanded="false" aria-controls="nav"><svg class="icon" aria-hidden="true"><use href="#i-bars"/></svg></button>
     </div>
   </header>
@@ -147,9 +147,9 @@
       <p class="kicker">// ai researcher · robotics engineer</p>
       <h1>Hi, I'm <span class="hl">Hector</span></h1>
       <p class="typing-text">&gt;&nbsp;<span class="typing-animation"></span></p>
-      <p class="lead">MS Computer Science @ UTRGV, building intelligent systems across <strong>reinforcement learning</strong>, <strong>computer vision</strong>, and <strong>vision-language models</strong> for robotics. I'm an AI/ML research intern at the <strong>Air Force Research Laboratory</strong>, working on multi-agent, multi-camera perception and deepfake research, and I train locomotion policies in LocoMuJoCo and NVIDIA Isaac Sim.</p>
+      <p class="lead">MS Computer Science @ UTRGV, building intelligent systems across <strong>reinforcement learning</strong>, <strong>computer vision</strong>, and <strong>vision-language models</strong> for robotics. I'm an AI/ML research intern at the <strong>Air Force Research Laboratory</strong>, researching how vision-language models understand multi-camera video, and I train locomotion policies in LocoMuJoCo and NVIDIA Isaac Sim.</p>
       <div class="btn-group">
-        <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn"><svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg> Download Résumé</a>
+        <a href="Hector_Lugo_Resume_Summer.pdf" target="_blank" rel="noopener" download class="btn"><svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg> Download Résumé</a>
         <a href="#projects" class="btn btn-outline">View Projects</a>
       </div>
       <div class="social-icons">
@@ -207,7 +207,7 @@
       <div class="about-content">
         <div class="about-text">
           <p>👋 Hey there! I'm Hector, a Master's student in Computer Science at The University of Texas Rio Grande Valley. My passion is combining <strong>reinforcement learning</strong>, <strong>computer vision</strong>, and <strong>vision-language models</strong>, with a focus on autonomous navigation and locomotion for robotics.</p>
-          <p>Right now I'm an AI/ML research intern at the <strong>Air Force Research Laboratory</strong>, where my focus is deepfake research and multi-camera, multi-agent perception. Day to day I build RL pipelines and train agents in simulation with <strong>LocoMuJoCo</strong> and <strong>NVIDIA Isaac Sim</strong> — mostly locomotion, perception, and getting policies to transfer from sim to real.</p>
+          <p>Right now I'm an AI/ML research intern at the <strong>Air Force Research Laboratory</strong>, where I research how vision-language models understand multi-camera video — comparing centralized and decentralized fusion of camera feeds and digging into failure cases. I also build RL pipelines and train agents in simulation with <strong>LocoMuJoCo</strong> and <strong>NVIDIA Isaac Sim</strong> — mostly locomotion, perception, and getting policies to transfer from sim to real.</p>
           <blockquote class="vr-quote">
             <p>Raiden trained for the real thing entirely in VR. My agents do the same — policies learned in simulation, then carried across the <strong>sim-to-real</strong> gap.</p>
             <cite>// yes, that's why Raiden's up there</cite>
@@ -238,44 +238,44 @@
           <div class="timeline-content">
             <h3>AI/ML Research Intern</h3>
             <h4>Air Force Research Laboratory (AFRL)</h4>
-            <p>Working on multi-agent, multi-camera perception systems and deepfake research, alongside ongoing robotics work.</p>
-            <div class="chips"><span>Multi-Agent Systems</span><span>Multi-Camera</span><span>Computer Vision</span><span>Reinforcement Learning</span><span>Deepfakes</span></div>
+            <p>Researching how vision-language models understand multi-camera video — comparing centralized vs. decentralized fusion of camera feeds on a 1,000-question benchmark (best centralized method 61.8% vs 55.7%). Built and open-sourced the end-to-end evaluation pipeline on a multi-GPU cluster; analyzing failure cases to inform stronger multi-camera systems.</p>
+            <div class="chips"><span>VLMs</span><span>Multi-Camera Perception</span><span>Computer Vision</span><span>Multi-GPU</span></div>
           </div>
         </div>
         <div class="timeline-item">
           <div class="timeline-date">May 2025 — Jun 2026</div>
           <div class="timeline-content">
-            <h3>Machine Learning Engineer</h3>
+            <h3>Machine Learning Engineer Intern</h3>
             <h4>Idaho National Laboratory</h4>
-            <p>Implemented a ResNet autoencoder to denoise TDMS signals for smart-grid anomaly detection. Accelerated training by over 93% (30 days → 1–2 days) via FFT preprocessing and HPC optimization, improving clarity of 10–100 kHz frequency sweeps for high-voltage anomaly evaluation.</p>
+            <p>Implemented a ResNet autoencoder to denoise smart-grid sensor signals for anomaly detection. Accelerated training by over 93% (30 days → 1–2 days) via signal preprocessing and parallel computing.</p>
             <div class="chips"><span>Machine Learning</span><span>Deep Learning</span><span>Signal Processing</span><span>HPC</span></div>
           </div>
         </div>
         <div class="timeline-item">
-          <div class="timeline-date">Jan 2024 — Aug 2024</div>
+          <div class="timeline-date">Jan 2024 — Present</div>
           <div class="timeline-content">
-            <h3>Teaching Assistant</h3>
+            <h3>Graduate Teaching Assistant</h3>
             <h4>The University of Texas Rio Grande Valley</h4>
-            <p>Mentored 100+ students in assembly design and testing with an emphasis on low-level systems programming. Conducted 50+ code reviews and debugging sessions to strengthen technical competency and coding practices.</p>
-            <div class="chips"><span>Assembly</span><span>Systems Programming</span><span>Mentoring</span></div>
+            <p>Teach CS 1101 (Intro to Computer Science) and Digital Image Processing — lectures, labs, and grading — while mentoring 40+ students.</p>
+            <div class="chips"><span>Teaching</span><span>Digital Image Processing</span><span>Mentoring</span></div>
           </div>
         </div>
         <div class="timeline-item">
           <div class="timeline-date">Jun 2023 — Aug 2023</div>
           <div class="timeline-content">
-            <h3>Research Collaborator — AI &amp; Machine Learning</h3>
+            <h3>Summer Research Intern</h3>
             <h4>University of California, Riverside</h4>
-            <p>Analyzed U.S. railway accident data to identify critical safety zones using clustering, and built predictive models with integrated weather data to forecast high-risk rail corridors. Findings published at the ASME Joint Rail Conference (JRC2024).</p>
-            <div class="chips"><span>Python</span><span>Data Analysis</span><span>Clustering</span><span>Predictive Modeling</span></div>
+            <p>Applied spectral clustering to U.S. railway accident data to identify critical spatial safety zones. Findings published at the ASME Joint Rail Conference (JRC 2024).</p>
+            <div class="chips"><span>Python</span><span>Spectral Clustering</span><span>Data Analysis</span></div>
           </div>
         </div>
         <div class="timeline-item">
           <div class="timeline-date">Jan 2023 — Present</div>
           <div class="timeline-content">
-            <h3>Graduate Teaching Assistant</h3>
-            <h4>The University of Texas Rio Grande Valley</h4>
-            <p>Teach programming fundamentals and computational thinking to 40+ students in CS 1101 (Intro to Computer Science), while conducting research in reinforcement learning, computer vision, vision-language models, and robotics at the Machine Intelligence Lab.</p>
-            <div class="chips"><span>Reinforcement Learning</span><span>Computer Vision</span><span>Vision-Language Models</span><span>Teaching</span></div>
+            <h3>Research Assistant</h3>
+            <h4>Machine Intelligence Lab, UTRGV</h4>
+            <p>VLM and VLA research for humanoid locomotion — building Isaac Sim environments and RL policies for Unitree Go2 quadruped navigation, plus autoencoders that compress robot state inputs.</p>
+            <div class="chips"><span>VLMs / VLAs</span><span>Reinforcement Learning</span><span>Isaac Sim</span><span>Robotics</span></div>
           </div>
         </div>
         <div class="timeline-item">
@@ -308,15 +308,15 @@
           <figure class="proj-thumb">
             <img src="proj-vlm-dither.png" width="640" height="360" loading="lazy" decoding="async"
                  data-light="proj-vlm-dither.png" data-codec="proj-vlm-codec.png" data-starwars="proj-vlm-sw.png" data-gotham="proj-vlm-gotham.png"
-                 alt="Stylized dither plate: camera frustum projecting onto a grid, one grounded object linked to token rows — placeholder art">
+                 alt="Stylized dither plate: three camera-agent frustums linked by dashed arcs to a central hexagonal orchestrator holding symbolic query glyphs — placeholder art">
           </figure>
           <div class="project-head">
-            <span class="project-index">01</span>
+            <span class="project-index">01 · IN PROGRESS</span>
             <svg class="icon" aria-hidden="true"><use href="#i-comments"/></svg>
           </div>
-          <h3>Vision-Language Models</h3>
-          <p>Experiments connecting vision and language — grounding instructions in what a model sees so an agent can follow directions and reason about a scene.</p>
-          <div class="chips"><span>VLMs</span><span>Reinforcement Learning</span><span>Transformers</span><span>Multimodal</span><span>PyTorch</span></div>
+          <h3>Multi-Agent Neuro-Symbolic Video Search</h3>
+          <p>A multi-agent system that searches asynchronous, distributed video streams: per-stream agents evaluate temporal-logic queries locally while a central orchestrator fuses their results against a global neuro-symbolic spec — e.g. tracking an entity across disjoint camera networks — extending retrieval into automated response.</p>
+          <div class="chips"><span>Temporal Logic</span><span>VLMs</span><span>Multi-Agent Systems</span><span>Neuro-Symbolic</span></div>
           <div class="project-links">
             <a href="https://github.com/Wavy-Hec/VLM" target="_blank" rel="noopener" class="project-link"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg> GitHub</a>
           </div>
@@ -350,25 +350,22 @@
             <svg class="icon" aria-hidden="true"><use href="#i-wave-square"/></svg>
           </div>
           <h3>Signal Denoising — Idaho National Lab</h3>
-          <p>ML for smart-grid anomaly detection: a ResNet autoencoder denoises noisy TDMS signals, with FFT preprocessing and HPC tuning that cut training time by over 93% (30 days → 1–2 days).</p>
-          <div class="chips"><span>ResNet Autoencoder</span><span>FFT</span><span>Signal Processing</span><span>PyTorch</span></div>
-          <div class="project-links">
-            <a href="https://github.com/IdahoLabUnsupported/FFT-Denoising" target="_blank" rel="noopener" class="project-link"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg> GitHub</a>
-          </div>
+          <p>ML for smart-grid anomaly detection: a ResNet autoencoder denoises noisy sensor signals, with signal preprocessing and parallel computing that cut training time by over 93% (30 days → 1–2 days).</p>
+          <div class="chips"><span>ResNet Autoencoder</span><span>Signal Processing</span><span>Parallel Computing</span><span>PyTorch</span></div>
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
             <img src="proj-yolo-dither.png" width="640" height="360" loading="lazy" decoding="async"
                  data-light="proj-yolo-dither.png" data-codec="proj-yolo-codec.png" data-starwars="proj-yolo-sw.png" data-gotham="proj-yolo-gotham.png"
-                 alt="Stylized dither plate: corner-bracket detection boxes with confidence tags over an abstract dithered field — placeholder art">
+                 alt="Stylized dither plate: two tracked objects in corner-bracket boxes with ID chips #03 and #07 and confidence tags, ghost boxes at past positions and dashed Kalman trajectory trails — placeholder art">
           </figure>
           <div class="project-head">
             <span class="project-index">04</span>
             <svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg>
           </div>
-          <h3>Object Detection with YOLO</h3>
-          <p>Real-time object detection using YOLO for computer-vision applications in robotics and autonomous systems.</p>
-          <div class="chips"><span>YOLO</span><span>Computer Vision</span><span>OpenCV</span><span>Deep Learning</span></div>
+          <h3>Real-Time Detection &amp; Tracking</h3>
+          <p>YOLOv8 detections feed a SORT tracker — Kalman-filter motion models matched by the Hungarian algorithm — holding unique per-object IDs across frames. Class-aware tracking over all 80 COCO classes, with FP16 GPU inference, trajectory trails, and a configurable CLI for webcam or video.</p>
+          <div class="chips"><span>YOLOv8</span><span>SORT</span><span>OpenCV</span><span>Computer Vision</span></div>
           <div class="project-links">
             <a href="https://github.com/Wavy-Hec/ObjectDetection" target="_blank" rel="noopener" class="project-link"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg> GitHub</a>
           </div>
@@ -407,6 +404,20 @@
             <a href="https://github.com/Wavy-Hec/summer-REU-project" target="_blank" rel="noopener" class="project-link"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg> GitHub</a>
           </div>
         </article>
+        <article class="project-card">
+          <figure class="proj-thumb">
+            <img src="proj-chemo-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="proj-chemo-dither.png" data-codec="proj-chemo-codec.png" data-starwars="proj-chemo-sw.png" data-gotham="proj-chemo-gotham.png"
+                 alt="Stylized dither plate: patient-state sparkline and stacked transformer blocks with attention arcs feeding a rising dose-schedule curve of square dose points — placeholder art">
+          </figure>
+          <div class="project-head">
+            <span class="project-index">07</span>
+            <svg class="icon" aria-hidden="true"><use href="#i-flask"/></svg>
+          </div>
+          <h3>Personalized Chemotherapy Dosing</h3>
+          <p>A Decision Transformer learns personalized dosing from offline patient data — treatment planning framed as offline RL, conditioning each dose on the patient's evolving state. Published at ICICT 2025.</p>
+          <div class="chips"><span>Decision Transformer</span><span>Offline RL</span><span>PyTorch</span></div>
+        </article>
       </div>
     </div>
   </section>
@@ -418,27 +429,27 @@
       <h2 class="section-title">Technical <span class="hl">expertise</span></h2>
       <div class="skills-grid">
         <div class="skill-category">
-          <h3>AI &amp; Machine Learning</h3>
+          <h3>Languages</h3>
           <div class="chips">
-            <span>Reinforcement Learning</span><span>Computer Vision</span><span>Vision-Language Models</span><span>Deep Learning</span>
+            <span>Python</span><span>C++</span><span>Java</span><span>SQL</span>
           </div>
         </div>
         <div class="skill-category">
           <h3>Frameworks &amp; Tools</h3>
           <div class="chips">
-            <span>NVIDIA Isaac Sim</span><span>LocoMuJoCo</span><span>PyTorch</span><span>ROS / ROS2</span>
+            <span>PyTorch</span><span>OpenCV</span><span>NumPy</span><span>Pandas</span><span>Git</span><span>Docker</span><span>Linux</span><span>HPC (Slurm)</span><span>FastAPI</span><span>Flask</span>
           </div>
         </div>
         <div class="skill-category">
-          <h3>Programming &amp; Research</h3>
+          <h3>Robotics &amp; Edge</h3>
           <div class="chips">
-            <span>Python</span><span>C++</span><span>Multi-Agent Systems</span><span>Sim-to-Real Transfer</span>
+            <span>Isaac Lab</span><span>Isaac Sim</span><span>MuJoCo</span><span>LocoMuJoCo</span><span>ROS</span><span>Unitree Go2</span><span>NVIDIA Jetson Nano</span>
           </div>
         </div>
         <div class="skill-category">
-          <h3>Specialized Areas</h3>
+          <h3>Concepts</h3>
           <div class="chips">
-            <span>Path Planning</span><span>Robotic Locomotion</span><span>Policy Learning</span><span>Signal Analysis</span>
+            <span>Reinforcement Learning</span><span>VLMs / VLAs</span><span>Multi-Agent Systems</span><span>Multi-Camera Perception</span><span>Computer Vision</span>
           </div>
         </div>
       </div>
@@ -451,14 +462,14 @@
       <p class="kicker">// résumé</p>
       <h2 class="section-title">Résumé <span class="hl">/ cv</span></h2>
       <div class="resume-actions">
-        <a href="Hector_Lugo_Resume_Spring_2026.pdf" target="_blank" rel="noopener" download class="btn"><svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg> Download PDF</a>
+        <a href="Hector_Lugo_Resume_Summer.pdf" target="_blank" rel="noopener" download class="btn"><svg class="icon" aria-hidden="true"><use href="#i-arrow-down"/></svg> Download PDF</a>
       </div>
       <div class="resume-grid">
         <div class="resume-block">
           <h3>Education</h3>
           <div class="resume-entry">
             <h4>MS, Computer Science</h4>
-            <span class="resume-meta">UTRGV · Aug 2024 – Expected Dec 2026</span>
+            <span class="resume-meta">UTRGV · Aug 2024 – Expected Dec 2026 · GPA 3.79/4.00</span>
             <p>Reinforcement learning, computer vision, and vision-language models for robotics. Active member of the Machine Intelligence Lab.</p>
           </div>
           <div class="resume-entry">
@@ -469,21 +480,25 @@
         <div class="resume-block">
           <h3>Experience</h3>
           <div class="resume-entry"><h4>AI/ML Research Intern</h4><span class="resume-meta">Air Force Research Laboratory · May 2026 – Present</span></div>
-          <div class="resume-entry"><h4>Machine Learning Engineer</h4><span class="resume-meta">Idaho National Laboratory · May 2025 – Jun 2026</span></div>
-          <div class="resume-entry"><h4>Teaching Assistant</h4><span class="resume-meta">UTRGV · Jan – Aug 2024</span></div>
-          <div class="resume-entry"><h4>Research Collaborator — AI &amp; ML</h4><span class="resume-meta">UC Riverside · Jun – Aug 2023</span></div>
-          <div class="resume-entry"><h4>Graduate Teaching Assistant</h4><span class="resume-meta">UTRGV · Jan 2023 – Present</span></div>
+          <div class="resume-entry"><h4>Machine Learning Engineer Intern</h4><span class="resume-meta">Idaho National Laboratory · May 2025 – Jun 2026</span></div>
+          <div class="resume-entry"><h4>Graduate Teaching Assistant</h4><span class="resume-meta">UTRGV · Jan 2024 – Present</span></div>
+          <div class="resume-entry"><h4>Summer Research Intern</h4><span class="resume-meta">UC Riverside · Jun – Aug 2023</span></div>
+          <div class="resume-entry"><h4>Research Assistant</h4><span class="resume-meta">Machine Intelligence Lab, UTRGV · Jan 2023 – Present</span></div>
           <div class="resume-entry"><h4>High Scholars Summer Research</h4><span class="resume-meta">UTRGV · Jun – Jul 2021</span></div>
         </div>
         <div class="resume-block resume-block-wide">
           <h3>Core Skills</h3>
           <div class="chips">
-            <span>Reinforcement Learning</span><span>Computer Vision</span><span>Vision-Language Models</span><span>Deep Learning</span><span>PyTorch</span><span>NVIDIA Isaac Sim</span><span>LocoMuJoCo</span><span>ROS / ROS2</span><span>Python</span><span>C++</span><span>Multi-Agent Systems</span><span>Sim-to-Real Transfer</span>
+            <span>Reinforcement Learning</span><span>Computer Vision</span><span>VLMs / VLAs</span><span>Multi-Agent Systems</span><span>Multi-Camera Perception</span><span>PyTorch</span><span>OpenCV</span><span>Isaac Sim / Isaac Lab</span><span>MuJoCo / LocoMuJoCo</span><span>ROS</span><span>Python</span><span>C++</span>
           </div>
         </div>
         <div class="resume-block resume-block-wide">
           <h3>Publications</h3>
-          <p class="resume-pub">Full list &amp; citations on <a href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&hl=en" target="_blank" rel="noopener" class="lab-link">Google Scholar</a> — including the ASME Joint Rail Conference (JRC2024).</p>
+          <div class="resume-entry"><h4>Vision-Language Guided Quadruped Navigation with RL Control</h4><span class="resume-meta">IEEE ICMLA 2026 · accepted</span></div>
+          <div class="resume-entry"><h4>Decision Transformers for Adaptive Chemotherapy Dosing via Offline RL</h4><span class="resume-meta">ICICT 2025</span></div>
+          <div class="resume-entry"><h4>Offline Reinforcement Learning for Safe and Effective Smart-Grid Control</h4><span class="resume-meta">ICICT 2025</span></div>
+          <div class="resume-entry"><h4>Spatial Safety Analysis of U.S. Railway Accidents via Spectral Clustering</h4><span class="resume-meta">ASME Joint Rail Conference (JRC) 2024</span></div>
+          <p class="resume-pub">Full list &amp; citations on <a href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&hl=en" target="_blank" rel="noopener" class="lab-link">Google Scholar</a>.</p>
         </div>
       </div>
     </div>

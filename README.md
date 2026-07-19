@@ -19,7 +19,7 @@ Plain HTML, CSS, and vanilla JavaScript — no build step, no dependencies
 | `index.html` | Markup and content (incl. the icon sprite) |
 | `style.css` | Theme + all component styles |
 | `script.js` | Typing animation, mobile nav, scroll effects, terminal reveal, copy-to-clipboard |
-| `Hector_Lugo_Resume_Spring_2026.pdf` | Résumé (linked from the hero, nav, and résumé section) |
+| `Hector_Lugo_Resume_Summer.pdf` | Résumé (linked from the hero, nav, and résumé section) |
 | `*-dither.png` | Dithered portrait renders (per-theme hero + codec-call portraits) |
 
 ## Sections

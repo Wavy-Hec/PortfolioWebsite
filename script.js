@@ -932,6 +932,18 @@ document.addEventListener('click', (e) => {
 // a dev-facing surface, not part of the themed page. Prints once per page load.
 (function consoleCodec() {
     try {
+        // Theme-aware lead line, read at print time (data-theme is set by the
+        // inline head script before this file runs). ink/codec go straight to
+        // the codec box; starwars/gotham each open with their classic line —
+        // plain one-liners, no box, styled to stay legible on light devtools.
+        const t = currentTheme();
+        if (t === 'starwars') {
+            console.log('%cA long time ago in a galaxy far, far away....',
+                'font-family:"Share Tech Mono",ui-monospace,Consolas,monospace;font-style:italic;font-size:12px;color:#8cc6ff;background:#0b1523;padding:4px 8px;border-radius:4px;');
+        } else if (t === 'gotham') {
+            console.log('%cI am vengeance. I am the night.',
+                'font-family:"Share Tech Mono",ui-monospace,Consolas,monospace;font-style:italic;font-size:12px;color:#d4af6a;background:#0a0a0c;padding:4px 8px;border-radius:4px;');
+        }
         const box = [
             '',
             '╔══ CODEC ▸ 140.85 ═══════════════════════════',

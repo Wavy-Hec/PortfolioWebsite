@@ -1386,7 +1386,8 @@ html[data-theme="starwars"] .atmo-fx {
   html[data-theme="starwars"] .atmo-fx { background-image: none; }
 }
 
-/* Distant capital ship — the old second wedge, now a 56x14 element that
+/* Distant capital ship — the old second wedge, now a 60x16 SVG silhouette
+   (elongated dagger hull, nose left, stepped bridge tower astern) that
    crosses the upper sky nose-first (right -> left, slight descent) once per
    120s, parked offscreen ~70s of every loop. Path stays above 24vh so it
    never crosses the planet limb, and passes ~6vh above the static wedge.
@@ -1396,11 +1397,11 @@ html[data-theme="starwars"] body::after {
   position: fixed;
   top: 0;
   left: 0;
-  width: 56px;
-  height: 14px;
+  width: 60px;
+  height: 16px;
   z-index: -1;
   pointer-events: none;
-  background: conic-gradient(from 86deg at 0% 50%, rgba(9,15,26,.85) 0 13deg, transparent 13.5deg);
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 16'><path fill='%23090f1a' fill-opacity='.85' d='M0 13 44 6.8 60 6.8 60 15.6Z M45 6.8V4.4H51V6.8Z M43.8 4.4V2.6H52.2V4.4Z'/></svg>") center / contain no-repeat;
   opacity: .5;
   transform: translate3d(72vw, 15vh, 0);
 }
@@ -1409,7 +1410,7 @@ html[data-theme="starwars"] body::after {
 }
 @keyframes swShipPass {
   0%, 58%      { transform: translate3d(106vw, 9vh, 0); }   /* parked offscreen right ~70s */
-  94%          { transform: translate3d(calc(-10vw - 64px), 24vh, 0); }  /* 43s crossing; -64px keeps the 56px ship fully offscreen on narrow viewports */
+  94%          { transform: translate3d(calc(-10vw - 64px), 24vh, 0); }  /* 43s crossing; -64px keeps the 60px ship fully offscreen on narrow viewports */
   94.01%, 100% { transform: translate3d(106vw, 9vh, 0); }   /* reset while fully offscreen */
 }
 
