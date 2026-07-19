@@ -77,6 +77,22 @@ const THEMES = ['light', 'codec', 'starwars', 'gotham'];
 // Declared up here because applyTheme() runs before that block evaluates.
 let lastAppliedTheme = null;  // previous theme applyTheme saw (null = initial sync not done)
 let konamiHintedMem = false;  // fallback flag when sessionStorage is unavailable
+// Hyperspace burst overlay (mandate: plays only on a user-driven switch INTO
+// starwars). Element lives in index.html next to .atmo-fx; all visuals are
+// CSS — JS only toggles .jumping. Cleanup is animationend (swHyperFlash is
+// the longest animation at 1.05s) with a 1400ms safety timeout.
+const hyperjumpEl = document.querySelector('.hyperjump');
+let hyperjumpTimer = 0;
+function endHyperjump() {
+    if (!hyperjumpEl) return;
+    hyperjumpEl.classList.remove('jumping');
+    if (hyperjumpTimer) { clearTimeout(hyperjumpTimer); hyperjumpTimer = 0; }
+}
+if (hyperjumpEl) hyperjumpEl.addEventListener('animationend', (e) => {
+    // Pseudo-element animations also bubble here with other names; only the
+    // flash (the longest animation) ends the burst.
+    if (e.animationName === 'swHyperFlash') endHyperjump();
+});
 // icon/label here must mirror the static picker markup in index.html
 // (icons are sprite symbol ids — see the inline <svg> sprite at body top)
 const THEME_META = {
@@ -172,6 +188,19 @@ function applyTheme(name) {
     // User-driven switch INTO codec (prev !== null excludes the initial load
     // sync, which is handled by the 20s path next to maybeShowKonamiHint)
     if (name === 'codec' && prevTheme !== null && prevTheme !== 'codec') maybeShowKonamiHint(2500);
+    // Hyperspace burst — same prevTheme pattern as the konami hint above:
+    // prevTheme !== null excludes the initial load/reload sync, so a stored
+    // starwars theme never bursts on page load.
+    if (hyperjumpEl) {
+        if (name === 'starwars' && prevTheme !== null && prevTheme !== 'starwars' && !prefersReducedMotion) {
+            endHyperjump();               // cancel any in-flight burst + timer
+            void hyperjumpEl.offsetWidth; // reflow between remove/add so the animation restarts from 0
+            hyperjumpEl.classList.add('jumping');
+            hyperjumpTimer = setTimeout(endHyperjump, 1400); // safety net past 1.05s
+        } else {
+            endHyperjump();               // switching away mid-burst: cut instantly
+        }
+    }
 }
 
 // Sync picker/portraits with the saved theme. Prefer localStorage over the

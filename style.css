@@ -106,30 +106,27 @@ html[data-theme="gotham"] {
   --panel: #0a0a0c;          /* pure-black deco card */
   --panel-2: #121114;
   --ink: #d4af6a;            /* deco gold — rules, kickers, buttons (9.6:1 on --panel) */
-  --ink-strong: #e8cf9a;     /* pale gold — big headings (13.2:1 on --bg) */
-  --text: #c4bfb4;           /* warm gray body (10.8:1 on --panel) */
-  --text-dim: #9a948a;       /* 6.6:1 on --panel */
-  --text-muted: #8f897f;     /* 5.4:1 on --panel-2 (placeholders) */
-  --border: #2b2723;         /* thin warm-gray hairline */
-  --border-strong: #4a443c;
-  --input-border: #776f61;   /* warm steel — 4.0:1 vs --panel (≥3:1, WCAG 1.4.11) */
+  --ink-strong: #e8cf9a;     /* pale gold — big headings (13.0:1 on --panel) */
+  --text: #c5c4c1;           /* neutral gray body (11.3:1 on --panel) */
+  --text-dim: #989692;       /* 6.7:1 on --panel */
+  --text-muted: #8c8a85;     /* 5.5:1 on --panel-2 (placeholders) */
+  --border: #2a2928;         /* thin neutral-gray hairline */
+  --border-strong: #464542;
+  --input-border: #74726d;   /* neutral steel — 4.1:1 vs --panel (≥3:1, WCAG 1.4.11) */
   --highlight: #d4af6a;
-  --shadow-lift: 0 10px 28px rgba(0, 0, 0, .7), 0 0 16px rgba(212, 175, 106, .04);
+  --shadow-lift: 12px 12px 0 rgba(0, 0, 0, .7);   /* hover: hard poster offset, no blur */
   --wash: #1f090d;           /* red-black top wash (mostly behind the .atmo sky) */
   --grid-line: rgba(212, 175, 106, .03);  /* vestigial — opaque sky covers .grain */
   --on-accent: #171107;      /* warm near-black — text on gold (9.1:1) */
   --accent-tint: rgba(212, 175, 106, .08);
   --band: rgba(12, 10, 11, .6);
   --codec-band: rgba(17, 10, 11, .7);      /* warm dark under scanlines */
-  --scanline: rgba(196, 191, 180, .045);   /* warm-gray scanlines */
-  --scanline-soft: rgba(196, 191, 180, .032);
+  --scanline: rgba(198, 197, 194, .045);   /* neutral-gray scanlines */
+  --scanline-soft: rgba(198, 197, 194, .032);
   --header-bg: rgba(10, 7, 9, .88);
   --header-bg-solid: rgba(10, 7, 9, .98);
   --error: #f0564f;          /* imperial scarlet — 5.8:1 on --panel; hue/brightness distinct from the maroon sky */
   /* theme-scoped extras (referenced only by gotham-scoped rules) */
-  --gt-wing: #2fbcf2;        /* Nightwing electric blue (9.0:1 on --panel) — links/focus/small accents ONLY */
-  --gt-wing-glow: rgba(47, 188, 242, .32);
-  --gt-wing-bright: #7dd4f7; /* hover lift for wing-blue links */
   --gt-brass: #a08a5c;       /* muted old gold — pull-quote only (6.0:1 on --bg) */
   --gt-yellow-glow: rgba(212, 175, 106, .25);  /* name kept; now gold glow */
   --gt-deco: 'Franklin Gothic Medium', 'ITC Franklin Gothic', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif; /* system-only condensed gothic */
@@ -1429,6 +1426,87 @@ html[data-theme="starwars"] .atmo::after {
 html[data-theme="starwars"] .crt { opacity: .5; }
 html[data-theme="starwars"] .crt::after { background: none; }
 
+/* Hyperspace switch burst — one-shot star-streak overlay, played by script.js
+   only on a user-driven switch INTO starwars (never on load/reload). Rests as
+   display:none (paints nothing, no layers). Three surfaces: ::before near
+   sheet + ::after far sheet share one scale(1->8) keyframe at different
+   durations (parallax); the <i> child is a centered blue-white flash peaking
+   mid-burst. Transform/opacity only; will-change lives only in the .jumping
+   state; self-cleaning via animationend + safety timeout in script.js.
+   z-index 9000: above all chrome (header 100, alert 3000, reticle 4000),
+   below the codec loader (9999) and the mini-game overlay (10000). */
+.hyperjump {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+  overflow: hidden;
+}
+html[data-theme="starwars"] .hyperjump.jumping { display: block; }
+html[data-theme="starwars"] .hyperjump.jumping::before,
+html[data-theme="starwars"] .hyperjump.jumping::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+}
+/* near sheet — 173x149 tile: 5 bright dots, off-center cluster feel */
+html[data-theme="starwars"] .hyperjump.jumping::before {
+  background-image:
+    radial-gradient(2px 2px     at 31px 22px,   rgba(235,244,255,.90) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 122px 47px,  rgba(199,222,255,.80) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 63px 101px,  rgba(199,222,255,.70) 50%, transparent 51%),
+    radial-gradient(2px 2px     at 149px 118px, rgba(235,244,255,.85) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 92px 137px,  rgba(199,222,255,.75) 50%, transparent 51%);
+  background-size: 173px 149px;
+  background-position: 0 0;
+  animation: swHyperStreak .9s cubic-bezier(.55, 0, .85, .35) both;
+}
+/* far sheet — 257x211 tile: 6 smaller dots; offset origin so the two sheets
+   never register; longer duration = slower rush = depth parallax */
+html[data-theme="starwars"] .hyperjump.jumping::after {
+  background-image:
+    radial-gradient(1.5px 1.5px at 44px 35px,   rgba(199,222,255,.60) 50%, transparent 51%),
+    radial-gradient(1px 1px     at 187px 52px,  rgba(199,222,255,.50) 50%, transparent 51%),
+    radial-gradient(1px 1px     at 96px 88px,   rgba(235,244,255,.55) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 231px 141px, rgba(199,222,255,.55) 50%, transparent 51%),
+    radial-gradient(1px 1px     at 58px 176px,  rgba(199,222,255,.45) 50%, transparent 51%),
+    radial-gradient(1px 1px     at 152px 199px, rgba(235,244,255,.50) 50%, transparent 51%);
+  background-size: 257px 211px;
+  background-position: 31px 57px;
+  animation: swHyperStreak 1s cubic-bezier(.55, 0, .85, .35) both;
+}
+/* flash — centered blue-white radial, opacity only, peaks ~0.44s in;
+   1.05s = the longest animation, so its animationend drives JS cleanup */
+html[data-theme="starwars"] .hyperjump.jumping > i {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(235,244,255,.90) 0,
+    rgba(140,198,255,.40) 26%,
+    rgba(74,168,255,.15) 48%,
+    transparent 72%);
+  opacity: 0;
+  will-change: opacity;
+  animation: swHyperFlash 1.05s ease-out both;
+}
+@keyframes swHyperStreak {
+  0%   { transform: scale(1); opacity: 0; }
+  10%  { opacity: .95; }
+  65%  { opacity: .80; }
+  100% { transform: scale(8); opacity: 0; }
+}
+@keyframes swHyperFlash {
+  0%, 18% { opacity: 0; }
+  42%     { opacity: 1; }
+  100%    { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hyperjump { display: none !important; }
+}
+
 /* --- Brutalist geometry: square every corner --- */
 html[data-theme="starwars"] .work-card,
 html[data-theme="starwars"] .project-card,
@@ -1817,6 +1895,39 @@ html[data-theme="gotham"] body::after {
 /* Static vignette, no flicker — noir, not glitch */
 html[data-theme="gotham"] .crt { opacity: .45; }
 
+/* --- Venetian key light: one raking window-blind light per scene. Hero gets
+   the full field; other sections get a band that dies before the card zone.
+   Two blade widths per period (22/34px) + uneven gaps = hand-set, not looped. --- */
+html[data-theme="gotham"] .home::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;               /* paints above in-flow content and hovered (transformed, z-auto) cards */
+  pointer-events: none;
+  background: repeating-linear-gradient(118deg,
+    rgba(236, 226, 208, .045) 0 22px,
+    transparent 22px 170px,
+    rgba(236, 226, 208, .038) 170px 204px,
+    transparent 204px 362px);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 62%, transparent 96%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 62%, transparent 96%);
+}
+html[data-theme="gotham"] section:not(.home)::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 300px;            /* covers kicker + title (~215px) then fades */
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-linear-gradient(118deg,
+    rgba(236, 226, 208, .035) 0 18px,
+    transparent 18px 150px,
+    rgba(236, 226, 208, .028) 150px 176px,
+    transparent 176px 320px);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 40%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 40%, transparent 100%);
+}
+
 /* --- Deco geometry: square every corner (same selector list as starwars) --- */
 html[data-theme="gotham"] .work-card,
 html[data-theme="gotham"] .project-card,
@@ -1843,17 +1954,26 @@ html[data-theme="gotham"] .codec-portrait img,
 html[data-theme="gotham"] .form-group input,
 html[data-theme="gotham"] .form-group textarea { border-radius: 0; }
 
-/* --- Header / nav: condensed gothic, wing-blue underline --- */
+/* --- Hard poster shadows: solid black offsets, zero blur (light = upper-left) --- */
+html[data-theme="gotham"] .work-card,
+html[data-theme="gotham"] .project-card,
+html[data-theme="gotham"] .beyond-card,
+html[data-theme="gotham"] .timeline-item,
+html[data-theme="gotham"] .resume-block,
+html[data-theme="gotham"] .terminal,
+html[data-theme="gotham"] .contact-form,
+html[data-theme="gotham"] .codec-call,
+html[data-theme="gotham"] .home-img img { box-shadow: 9px 11px 0 rgba(0, 0, 0, .55); }
+html[data-theme="gotham"] .stat,
+html[data-theme="gotham"] .contact-item,
+html[data-theme="gotham"] .lab-affiliation,
+html[data-theme="gotham"] .command-block { box-shadow: 8px 9px 0 rgba(0, 0, 0, .5); }
+
+/* --- Header / nav: condensed gothic, gold underline --- */
 html[data-theme="gotham"] header { box-shadow: 0 1px 0 rgba(212, 175, 106, .12); }
 html[data-theme="gotham"] .logo { font-family: var(--gt-deco); letter-spacing: 4px; font-weight: 500; }
 html[data-theme="gotham"] nav a { font-family: var(--gt-deco); text-transform: uppercase; letter-spacing: 3px; font-size: 1.4rem; }
-html[data-theme="gotham"] nav a:hover,
-html[data-theme="gotham"] nav a.active { color: var(--gt-wing); }
-html[data-theme="gotham"] nav a::after {
-  height: 2px;
-  background: var(--gt-wing);
-  box-shadow: 0 0 6px var(--gt-wing), 0 0 14px var(--gt-wing-glow);
-}
+html[data-theme="gotham"] nav a::after { height: 2px; }
 
 /* --- Section headings: condensed gothic caps + all-gold double deco rule --- */
 html[data-theme="gotham"] .kicker {
@@ -1881,6 +2001,18 @@ html[data-theme="gotham"] .section-title::after {
   background-position: top left, bottom left;
   background-repeat: no-repeat;
 }
+/* title-card plates land slightly off-square, alternating tilt */
+html[data-theme="gotham"] .kicker { transform: rotate(-.4deg); }
+html[data-theme="gotham"] section:nth-of-type(even) .kicker { transform: rotate(.35deg); }
+/* hand-cut rule lengths under section titles (base gotham width stays 120px) */
+html[data-theme="gotham"] .work .section-title::after { width: 108px; }
+html[data-theme="gotham"] .about .section-title::after { width: 131px; }
+html[data-theme="gotham"] .experience .section-title::after { width: 114px; }
+html[data-theme="gotham"] .projects .section-title::after { width: 126px; }
+html[data-theme="gotham"] .skills .section-title::after { width: 119px; }
+html[data-theme="gotham"] .resume .section-title::after { width: 105px; }
+html[data-theme="gotham"] .beyond .section-title::after { width: 133px; }
+html[data-theme="gotham"] .contact .section-title::after { width: 122px; }
 
 /* --- Hero: spotlight reveal (no flicker) --- */
 html[data-theme="gotham"] .home-content h1 {
@@ -1891,10 +2023,15 @@ html[data-theme="gotham"] .home-content h1 {
   html[data-theme="gotham"] .home-content h1 { animation: gtSpot .9s ease-out 1; }
 }
 @keyframes gtSpot { from { opacity: 0; filter: brightness(2.2); } to { opacity: 1; filter: brightness(1); } }
-/* accent spans go Nightwing blue against the yellow */
-html[data-theme="gotham"] .hl { color: var(--gt-wing); text-shadow: 0 0 14px var(--gt-wing-glow); }
+/* hero name: gold + a marker-swipe underline instead of a glow */
+html[data-theme="gotham"] .home-content h1 .hl {
+  background-image: linear-gradient(rgba(212, 175, 106, .28), rgba(212, 175, 106, .28));
+  background-size: 100% 3px;
+  background-position: 0 96%;
+  background-repeat: no-repeat;
+}
 
-/* --- Buttons: squared, gothic caps, gold fill / wing-blue outline --- */
+/* --- Buttons: squared, gothic caps, gold fill / gold outline --- */
 html[data-theme="gotham"] .btn {
   font-family: var(--gt-deco);
   font-weight: 500;
@@ -1903,13 +2040,7 @@ html[data-theme="gotham"] .btn {
   font-size: 1.4rem;
 }
 html[data-theme="gotham"] .btn:hover { box-shadow: 0 0 12px var(--gt-yellow-glow); }
-html[data-theme="gotham"] .btn-outline { color: var(--gt-wing); }
-html[data-theme="gotham"] .btn-outline:hover {
-  color: var(--gt-wing-bright);
-  border-color: var(--gt-wing);
-  background: rgba(47, 188, 242, .08);
-  box-shadow: 0 0 12px var(--gt-wing-glow);
-}
+html[data-theme="gotham"] .btn-outline:hover { box-shadow: 0 0 12px var(--gt-yellow-glow); }
 
 /* --- Chips: deco-gold evidence tags --- */
 html[data-theme="gotham"] .chips span:hover { box-shadow: 0 0 8px var(--gt-yellow-glow); }
@@ -1925,35 +2056,17 @@ html[data-theme="gotham"] .project-card::after { border-color: rgba(212, 175, 10
 html[data-theme="gotham"] .project-card:hover::before,
 html[data-theme="gotham"] .project-card:hover::after { border-color: var(--ink); }
 
-/* --- Links: Nightwing blue --- */
-html[data-theme="gotham"] .lab-link {
-  color: var(--gt-wing);
-  text-decoration-color: var(--gt-wing);
-  text-decoration-thickness: 2px;
-}
-html[data-theme="gotham"] .lab-link:hover { color: var(--gt-wing-bright); }
-html[data-theme="gotham"] .project-link { color: var(--gt-wing); }
-html[data-theme="gotham"] .project-link:hover {
-  border-color: var(--gt-wing);
-  background: rgba(47, 188, 242, .06);
-  box-shadow: 0 0 8px var(--gt-wing-glow);
-}
+/* --- Links: deco gold (base rules already carry the gold/cream pattern) --- */
 
-/* --- Timeline: wing-blue waypoint dots --- */
-html[data-theme="gotham"] .timeline-item::before {
-  background: var(--gt-wing);
-  box-shadow: 0 0 6px var(--gt-wing-glow);
-}
+/* --- Timeline: gold waypoint dots (base rule) --- */
 
 /* --- Deco brass, used once: the pull-quote --- */
 html[data-theme="gotham"] .vr-quote { border-left-color: var(--gt-brass); }
 html[data-theme="gotham"] .vr-quote cite { color: var(--gt-brass); }
 
 /* --- Codec call -> rooftop channel. Every themed portrait ships a dedicated
-   gotham render (data-gotham): cold blue-white headshot + Nightwing blue.
+   gotham render (data-gotham): cold blue-white headshot.
    The old invert()-to-gold headshot filter is gone. --- */
-html[data-theme="gotham"] .codec-line { color: var(--gt-wing); text-shadow: 0 0 10px var(--gt-wing-glow); }
-html[data-theme="gotham"] .codec-wave i { background: var(--gt-wing); }
 
 /* --- Corner widget: radar.js renders the GCPD bat-signal in gotham; the
    label ("GCPD SIGNAL", set by radar.js) picks up its signal gold --- */
@@ -1964,12 +2077,6 @@ html[data-theme="gotham"] .form-group input:focus,
 html[data-theme="gotham"] .form-group textarea:focus {
   box-shadow: 0 0 0 1px var(--ink), 0 0 12px rgba(212, 175, 106, .18);
 }
-
-/* --- Focus: Nightwing blue ring (blue = links/focus in this theme) --- */
-html[data-theme="gotham"] a:focus-visible,
-html[data-theme="gotham"] button:focus-visible,
-html[data-theme="gotham"] input:focus-visible,
-html[data-theme="gotham"] textarea:focus-visible { outline-color: var(--gt-wing); }
 
 /* --- Footer: deco twin-rule caps the page --- */
 html[data-theme="gotham"] footer { border-top: 5px double rgba(212, 175, 106, .42); }

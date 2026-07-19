@@ -32,7 +32,7 @@
        Icons are an inline SVG sprite at the top of <body> (zero requests; replaced Font Awesome's ~298KB CSS+woff2). -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap"></noscript>
-  <link rel="stylesheet" href="style.css?v=24">
+  <link rel="stylesheet" href="style.css?v=25">
   <!-- Without JS the codec loader can never dismiss itself — hide it outright.
        Must come AFTER style.css so it wins the cascade (equal specificity). -->
   <noscript><style>.codec-loader{display:none!important}body:not(.loaded){overflow-y:auto!important}</style></noscript>
@@ -41,7 +41,7 @@
        post-parse. game.js is lazy-loaded by script.js on first launch. -->
   <script src="dither.js?v=15" defer></script>
   <script src="radar.js?v=17" defer></script>
-  <script src="script.js?v=24" defer></script>
+  <script src="script.js?v=25" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -113,6 +113,7 @@
   <div class="grain" aria-hidden="true"></div>
   <div class="atmo" aria-hidden="true"><i class="gt-cloud gt-cloud-a"></i><i class="gt-cloud gt-cloud-b"></i><i class="gt-beam"></i><i class="gt-bats"></i><i class="gt-blink"></i></div>
   <div class="atmo-fx" aria-hidden="true"></div>
+  <div class="hyperjump" aria-hidden="true"><i></i></div>
   <div class="crt" aria-hidden="true"></div>
   <div class="scroll-progress" id="scroll-progress"></div>
 
@@ -306,6 +307,7 @@
         <article class="project-card">
           <figure class="proj-thumb">
             <img src="proj-vlm-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="proj-vlm-dither.png" data-codec="proj-vlm-codec.png" data-starwars="proj-vlm-sw.png" data-gotham="proj-vlm-gotham.png"
                  alt="Stylized dither plate: camera frustum projecting onto a grid, one grounded object linked to token rows — placeholder art">
           </figure>
           <div class="project-head">
@@ -322,6 +324,7 @@
         <article class="project-card">
           <figure class="proj-thumb">
             <img src="proj-rl-isaaclab-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="proj-rl-isaaclab-dither.png" data-codec="proj-rl-isaaclab-codec.png" data-starwars="proj-rl-isaaclab-sw.png" data-gotham="proj-rl-isaaclab-gotham.png"
                  alt="Stylized dither plate: articulated robot-leg linkage walking a tick-marked ground line with foot-swing arcs and a rising reward sparkline — placeholder art">
           </figure>
           <div class="project-head">
@@ -339,6 +342,7 @@
         <article class="project-card">
           <figure class="proj-thumb">
             <img src="proj-fft-denoise-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="proj-fft-denoise-dither.png" data-codec="proj-fft-denoise-codec.png" data-starwars="proj-fft-denoise-sw.png" data-gotham="proj-fft-denoise-gotham.png"
                  alt="Stylized dither plate: noisy waveform passing through an encoder-decoder hourglass and emerging as a clean sine, FFT bars in the margin — placeholder art">
           </figure>
           <div class="project-head">
@@ -355,6 +359,7 @@
         <article class="project-card">
           <figure class="proj-thumb">
             <img src="proj-yolo-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="proj-yolo-dither.png" data-codec="proj-yolo-codec.png" data-starwars="proj-yolo-sw.png" data-gotham="proj-yolo-gotham.png"
                  alt="Stylized dither plate: corner-bracket detection boxes with confidence tags over an abstract dithered field — placeholder art">
           </figure>
           <div class="project-head">
@@ -371,6 +376,7 @@
         <article class="project-card">
           <figure class="proj-thumb">
             <img src="proj-rl-compression-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="proj-rl-compression-dither.png" data-codec="proj-rl-compression-codec.png" data-starwars="proj-rl-compression-sw.png" data-gotham="proj-rl-compression-gotham.png"
                  alt="Stylized dither plate: dense weight grid funneled down to a sparse grid, with a reward-versus-size curve — placeholder art">
           </figure>
           <div class="project-head">
@@ -387,6 +393,7 @@
         <article class="project-card">
           <figure class="proj-thumb">
             <img src="proj-railway-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="proj-railway-dither.png" data-codec="proj-railway-codec.png" data-starwars="proj-railway-sw.png" data-gotham="proj-railway-gotham.png"
                  alt="Stylized dither plate: perspective rail tracks with a turnout, signal mast, and a route graph above the horizon — placeholder art">
           </figure>
           <div class="project-head">
