@@ -98,8 +98,8 @@ if (hyperjumpEl) hyperjumpEl.addEventListener('animationend', (e) => {
 const THEME_META = {
     light:    { label: 'ink',     icon: 'i-pen-nib',         color: '#eaf0fb' },
     codec:    { label: 'codec',   icon: 'i-tower-broadcast', color: '#081209' },
-    starwars: { label: 'holonet', icon: 'i-satellite-dish',  color: '#0b0d10' },
-    gotham:   { label: 'gotham',  icon: 'i-city',            color: '#08090d' }, // color = gotham --bg
+    starwars: { label: 'holonet', icon: 'i-satellite-dish',  color: '#060a12' }, // color = starwars --bg (style.css)
+    gotham:   { label: 'gotham',  icon: 'i-city',            color: '#0b0c0e' }, // color = gotham --bg (style.css)
 };
 
 // Codec-call strings per theme. light/codec share the MGS set; the static HTML
@@ -197,8 +197,9 @@ function applyTheme(name) {
             void hyperjumpEl.offsetWidth; // reflow between remove/add so the animation restarts from 0
             hyperjumpEl.classList.add('jumping');
             hyperjumpTimer = setTimeout(endHyperjump, 1400); // safety net past 1.05s
-        } else {
+        } else if (name !== 'starwars') {
             endHyperjump();               // switching away mid-burst: cut instantly
+            // (re-selecting the active starwars radio leaves an in-flight burst alone)
         }
     }
 }
@@ -222,16 +223,25 @@ function selectTheme(name, moveFocus) {
 }
 
 themeRadios.forEach(btn => {
-    btn.addEventListener('click', () => selectTheme(btn.dataset.themeValue, false));
+    btn.addEventListener('click', (e) => {
+        selectTheme(btn.dataset.themeValue, false);
+        // A pointer click leaves focus on the radio, and the radiogroup's
+        // arrow-key model then swallows arrow-key page scrolling as theme
+        // changes. Drop focus for pointer users; keyboard activations
+        // (detail === 0) keep focus so arrows still work for them.
+        if (e.detail > 0) btn.blur();
+    });
 });
 
 // Radiogroup keyboard model: arrows move AND select (selection follows focus,
 // safe because applying a theme is instant and non-destructive); Home/End jump.
 // Space/Enter need no handler — real <button>s fire click natively.
 if (themePicker) themePicker.addEventListener('keydown', (e) => {
+    // Arrows act only while focus is actually ON a radio — otherwise (e.g.
+    // after a pointer click blurred the group) keys must scroll the page.
+    const i = themeRadios.indexOf(document.activeElement);
+    if (i < 0) return;
     const n = themeRadios.length;
-    let i = themeRadios.indexOf(document.activeElement);
-    if (i < 0) i = Math.max(0, themeRadios.findIndex(b => b.getAttribute('aria-checked') === 'true'));
     let j = -1;
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') j = (i + 1) % n;
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') j = (i - 1 + n) % n;
@@ -272,6 +282,10 @@ function markThemeHinted() {
         // Picker hidden (inside the closed mobile menu) — don't burn the
         // once-ever flag on a pulse nobody could see; retry next page view.
         if (!themePicker.offsetParent) return;
+        // Reduced motion: the glow keyframe is media-gated off in style.css,
+        // so the pulse would render nothing — same rule as above: never burn
+        // the once-ever flag on a hint the visitor can't see.
+        if (prefersReducedMotion) return;
         markThemeHinted();
         themePicker.classList.add('tp-hint');
         themePicker.title = 'try a theme';
@@ -294,7 +308,7 @@ function openGame() {
     if (gameScriptRequested) return;
     gameScriptRequested = true;
     const s = document.createElement('script');
-    s.src = 'game.js?v=9';
+    s.src = 'game.js?v=11';
     s.onload = () => { if (window.MGSGame) window.MGSGame.open(); };
     s.onerror = () => {
         gameScriptRequested = false; // allow a retry
@@ -322,7 +336,14 @@ const KONAMI = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'Ar
 let konamiPos = 0;
 document.addEventListener('keydown', (e) => {
     // While the game is open it swallows keydowns (capture phase), so this won't re-fire.
-    konamiPos = (e.key === KONAMI[konamiPos]) ? konamiPos + 1 : (e.key === KONAMI[0] ? 1 : 0);
+    // Never fire mid-typing (same guard as the 140.85 dial listener below) —
+    // arrow-key caret navigation in the contact form must not build the sequence.
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) { konamiPos = 0; return; }
+    // Letters are matched case-insensitively so 'B A' with Shift/Caps Lock works
+    // (every hint surface prints the code uppercase; game.js normalizes the same way).
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    konamiPos = (k === KONAMI[konamiPos]) ? konamiPos + 1 : (k === KONAMI[0] ? 1 : 0);
     if (konamiPos === KONAMI.length) {
         konamiPos = 0;
         launchGame();
@@ -485,6 +506,19 @@ document.addEventListener('keydown', (e) => {
     mobileMenuToggle.setAttribute('aria-expanded', 'false');
     setIcon(mobileMenuToggle, 'i-bars');
     mobileMenuToggle.focus();
+});
+
+// Light dismiss — the touch/pointer half of the disclosure pattern (Escape
+// above is the keyboard half): a click/tap outside the open menu and its
+// toggle closes the menu instead of leaving it pinned over the viewport.
+// The toggle is excluded so its own handler keeps sole control of toggling.
+document.addEventListener('click', (e) => {
+    if (!nav.classList.contains('active')) return;
+    const t = e.target instanceof Element ? e.target : null;
+    if (t && (nav.contains(t) || mobileMenuToggle.contains(t))) return;
+    nav.classList.remove('active');
+    mobileMenuToggle.setAttribute('aria-expanded', 'false');
+    setIcon(mobileMenuToggle, 'i-bars');
 });
 
 // Smooth Scrolling for Navigation Links (incl. the skip link).
@@ -853,10 +887,15 @@ document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
             ta.remove();
         }
         const use = btn.querySelector('.icon use');
-        const prev = use ? use.getAttribute('href') : '';
-        if (use) use.setAttribute('href', '#i-check');
+        if (use) {
+            // Clear any pending revert so a rapid second click can't capture the
+            // checkmark as the "previous" icon and stick it on permanently;
+            // always revert to the one true resting icon.
+            clearTimeout(btn._iconTimer);
+            use.setAttribute('href', '#i-check');
+            btn._iconTimer = setTimeout(() => use.setAttribute('href', '#i-copy'), 1500);
+        }
         showNotification('Copied ' + text + ' to clipboard', 'success');
-        setTimeout(() => { if (use) use.setAttribute('href', prev); }, 1500);
     });
 });
 

@@ -2314,7 +2314,9 @@ html[data-theme="gotham"] .codec-launch { font-family: var(--gt-deco); letter-sp
   .home { flex-direction: column; text-align: center; align-items: center; gap: 3rem; padding-top: 2rem; }
   .home-content { order: 2; }
   .home-img { order: 1; }
-  .home-img img { width: 60vw; max-width: 260px; }
+  /* height:auto overrides the img's height attribute so the frame follows the
+     portrait's own aspect — without it the 596 attr (capped at 440) letterboxes */
+  .home-img img { width: 60vw; max-width: 260px; height: auto; }
   .btn-group, .social-icons { justify-content: center; }
   .lead { margin-left: auto; margin-right: auto; }
 

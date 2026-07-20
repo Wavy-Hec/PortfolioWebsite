@@ -37,10 +37,14 @@
     return m.map(v => (v + 0.5) / 64);
   })();
 
-  // --- Tileable fractal value-noise texture (computed once) ---
+  // --- Tileable fractal value-noise texture (computed once, at idle) ---
+  // Texture generation + first render used to run synchronously during
+  // deferred-script evaluation — a single ~430ms main-thread task inside the
+  // FCP→TTI window (Lighthouse TBT 440ms). It now runs via requestIdleCallback:
+  // the codec loader covers the page during init, so the delay is invisible.
   const TEX_SIZE = 256;
   const tex = new Float32Array(TEX_SIZE * TEX_SIZE);
-  (() => {
+  function fillTexture() {
     const octaves = [
       { freq: 4, amp: 0.5 },
       { freq: 8, amp: 0.28 },
@@ -64,7 +68,7 @@
         }
       }
     }
-  })();
+  }
 
   // Bilinear sample with wrapping; coords in texture units
   function sample(u, v) {
@@ -93,11 +97,13 @@
   let bw = 0, bh = 0, img = null, data = null;
 
   function resize() {
-    const w = window.innerWidth, h = window.innerHeight;
+    // Clamp to >=1: a hidden/zero-size viewport would make createImageData(0,0)
+    // throw mid-init, leaving data null and every later fillInk() crashing.
+    const w = Math.max(1, window.innerWidth), h = Math.max(1, window.innerHeight);
     canvas.width = w;
     canvas.height = h;
-    bw = Math.ceil(w / CELL);
-    bh = Math.ceil(h / CELL);
+    bw = Math.max(1, Math.ceil(w / CELL));
+    bh = Math.max(1, Math.ceil(h / CELL));
     buffer.width = bw;
     buffer.height = bh;
     img = bctx.createImageData(bw, bh);
@@ -108,6 +114,7 @@
 
   // pre-fill ink color; render animates the alpha channel only
   function fillInk() {
+    if (!data) return;   // belt-and-braces: never crash if init half-completed
     for (let i = 0; i < data.length; i += 4) {
       data[i] = INK[0]; data[i + 1] = INK[1]; data[i + 2] = INK[2]; data[i + 3] = 0;
     }
@@ -171,21 +178,26 @@
     if (timer !== null) { clearTimeout(timer); timer = null; }
   }
   window.addEventListener('gameopen', stop);
-  window.addEventListener('gameclose', start);
+  window.addEventListener('gameclose', () => { if (initialized) start(); });
 
   let resizeTimer = null;
   window.addEventListener('resize', () => {
+    if (!initialized) return;
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { resize(); render(performance.now()); }, 150);
   });
 
   document.addEventListener('visibilitychange', () => {
+    if (!initialized) return;
     document.hidden ? stop() : start();
   });
 
   // Re-ink when the theme toggles (works under reduced motion too); pause the
-  // loop while starwars hides the canvas, resume when it comes back.
+  // loop while starwars/gotham hide the canvas, resume when it comes back.
+  // Before init this is a no-op ON PURPOSE: script.js dispatches themechange
+  // synchronously during load, and init() reads the current theme at idle.
   window.addEventListener('themechange', () => {
+    if (!initialized) return;
     syncTheme();
     if (hiddenByTheme()) { stop(); return; }
     fillInk();
@@ -193,8 +205,18 @@
     start();
   });
 
-  syncTheme();
-  resize();
-  render(0);   // static first frame (also the only frame under reduced motion)
-  start();
+  let initialized = false;
+  function init() {
+    if (initialized) return;
+    initialized = true;
+    fillTexture();
+    syncTheme();
+    resize();
+    if (hiddenByTheme()) return;   // starwars/gotham paint their own atmosphere
+    render(0);   // static first frame (also the only frame under reduced motion)
+    start();
+  }
+  // Defer all heavy init to idle — the codec loader covers the page anyway.
+  if ('requestIdleCallback' in window) requestIdleCallback(init, { timeout: 600 });
+  else setTimeout(init, 250);
 })();

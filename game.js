@@ -487,12 +487,18 @@
     buildStaticGrads();
 
     $('[data-act="close"]').addEventListener('click', closeGame);
-    muteBtn.addEventListener('click', function () {
+    muteBtn.addEventListener('click', function (e) {
       unlockAudio();  // real gesture — resume a policy-suspended AudioContext
       muted = !muted; muteBtn.textContent = muted ? 'MUTE' : 'SND';
       muteBtn.style.color = muted ? 'var(--mg-dim)' : '';
       if (muted) stopAlertMusic();
       else if (alertPhase === 'alert' || alertPhase === 'evasion') startAlertMusic();
+      // A mouse/touch click leaves focus on this button, and onKey defers
+      // Enter/Space to a focused .mgsg-btn — so every Enter would keep toggling
+      // SND instead of advancing the screen. Hand focus back to the frame for
+      // pointer activations; keyboard activations (detail 0) keep focus so
+      // Tab users can toggle repeatedly.
+      if (e.detail > 0) frame.focus();
     });
 
     // tap/click anywhere on a menu screen advances it (touch users have no Enter)
