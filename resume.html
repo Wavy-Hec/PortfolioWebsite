@@ -7,10 +7,12 @@
   <title>Résumé — Hector Lugo</title>
   <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <!-- Résumé is shown as an IMAGE, not an embedded PDF: a browser set to
-       "download PDFs" (common on macOS) can't be forced to render a PDF inline
-       via <object>/<iframe>, but an <img> always displays in every browser.
-       The real PDF stays one click away via Download, as a deliberate choice. -->
+  <!-- The résumé renders as an image so it always displays inline (a browser set
+       to "download PDFs" — common on macOS — can't be forced to render a PDF in
+       an <object>/<iframe>). Every clickable region from the PDF is re-created as
+       a positioned <a> over the image, so hover + links still work. Rect
+       percentages are generated from the PDF's own link annotations, so they
+       track the page exactly at any zoom. Regenerate both when the PDF changes. -->
   <style>
     :root {
       --bg: #0b1020; --panel: #0e1428; --border: #23305c;
@@ -22,7 +24,7 @@
       font-family: 'Share Tech Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
     }
     header {
-      position: sticky; top: 0; z-index: 2;
+      position: sticky; top: 0; z-index: 3;
       display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
       padding: 12px 18px; background: var(--panel); border-bottom: 1px solid var(--border);
     }
@@ -37,13 +39,30 @@
     a.act:hover { border-color: var(--ink); color: var(--ink-strong); }
     a.primary { background: var(--ink); border-color: var(--ink); color: #08101f; font-weight: bold; }
     a.primary:hover { background: var(--ink-strong); border-color: var(--ink-strong); color: #08101f; }
-    main { padding: 24px 16px; display: flex; justify-content: center; }
+    main { padding: 24px 16px 40px; display: flex; justify-content: center; }
+    /* the sheet is the positioning context for the link overlay */
     .sheet {
-      width: 100%; max-width: 850px; height: auto; display: block;
+      position: relative; width: 100%; max-width: 850px;
       border: 1px solid var(--border); border-radius: 6px;
       box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
-      background: #fff;
+      background: #fff; overflow: hidden;
     }
+    .sheet img { width: 100%; height: auto; display: block; }
+    /* link hotspots, positioned in % so they scale with the image */
+    .lk {
+      position: absolute; display: block; border-radius: 2px;
+      text-decoration: none; cursor: pointer;
+      background: rgba(47, 84, 204, 0);
+      box-shadow: 0 0 0 0 rgba(47, 84, 204, 0);
+      transition: background .12s ease, box-shadow .12s ease;
+    }
+    .lk:hover, .lk:focus-visible {
+      background: rgba(47, 84, 204, .16);
+      box-shadow: 0 0 0 2px rgba(47, 84, 204, .45);
+      outline: none;
+    }
+    @media (prefers-reduced-motion: reduce) { .lk { transition: none; } }
+    .hint { text-align: center; color: var(--muted); font-size: 12.5px; letter-spacing: .5px; padding: 0 16px 28px; }
   </style>
 </head>
 <body>
@@ -53,9 +72,23 @@
     <a class="act primary" href="Hector_Lugo_Resume_Summer.pdf" download>Download PDF</a>
   </header>
   <main>
-    <img class="sheet" src="resume-page1.png"
-         alt="Résumé of Hector Lugo — AI/ML research intern, M.S. Computer Science at UTRGV"
-         width="1224" height="1584" decoding="async">
+    <div class="sheet">
+      <img src="resume-page1.png"
+           alt="Résumé of Hector Lugo — AI/ML research intern, M.S. Computer Science at UTRGV"
+           width="1224" height="1584" decoding="async">
+      <a class="lk" href="tel:+19569992401" title="Call +19569992401" aria-label="Call +19569992401" style="left:8.336%;top:6.305%;width:15.610%;height:1.667%"></a>
+      <a class="lk" href="mailto:hlugo576@gmail.com" title="Email hlugo576@gmail.com" aria-label="Email hlugo576@gmail.com" style="left:26.243%;top:6.305%;width:17.328%;height:1.667%"></a>
+      <a class="lk" href="https://linkedin.com/in/hector-lugo-3rd" target="_blank" rel="noopener" title="LinkedIn profile" aria-label="LinkedIn profile" style="left:45.868%;top:6.305%;width:25.092%;height:1.667%"></a>
+      <a class="lk" href="https://github.com/Wavy-Hec" target="_blank" rel="noopener" title="GitHub profile" aria-label="GitHub profile" style="left:73.257%;top:6.305%;width:18.406%;height:1.667%"></a>
+      <a class="lk" href="https://github.com/Wavy-Hec/MultiCam" target="_blank" rel="noopener" title="MultiCam repo on GitHub" aria-label="MultiCam repo on GitHub" style="left:7.484%;top:58.131%;width:35.638%;height:1.962%"></a>
+      <a class="lk" href="https://github.com/Wavy-Hec/MultiCam" target="_blank" rel="noopener" title="MultiCam repo on GitHub" aria-label="MultiCam repo on GitHub" style="left:62.189%;top:58.131%;width:4.441%;height:1.962%"></a>
+      <a class="lk" href="https://github.com/Wavy-Hec/ObjectDetection" target="_blank" rel="noopener" title="Object detection repo on GitHub" aria-label="Object detection repo on GitHub" style="left:7.484%;top:66.435%;width:33.367%;height:1.962%"></a>
+      <a class="lk" href="https://github.com/Wavy-Hec/ObjectDetection" target="_blank" rel="noopener" title="Object detection repo on GitHub" aria-label="Object detection repo on GitHub" style="left:62.747%;top:66.435%;width:4.441%;height:1.962%"></a>
+      <a class="lk" href="https://link.springer.com/chapter/10.1007/978-981-96-6429-0_39" target="_blank" rel="noopener" title="Read the paper (Springer)" aria-label="Read the paper (Springer)" style="left:72.256%;top:84.982%;width:5.259%;height:1.509%"></a>
+      <a class="lk" href="https://par.nsf.gov/servlets/purl/10673002" target="_blank" rel="noopener" title="Read the paper (NSF PAR)" aria-label="Read the paper (NSF PAR)" style="left:71.094%;top:86.481%;width:5.259%;height:1.509%"></a>
+      <a class="lk" href="https://asmedigitalcollection.asme.org/JRC/proceedings/JRC2024/87776/V001T05A011/1201052" target="_blank" rel="noopener" title="Read the paper (ASME)" aria-label="Read the paper (ASME)" style="left:75.906%;top:87.980%;width:5.259%;height:1.509%"></a>
+    </div>
   </main>
+  <p class="hint">links in the résumé are clickable</p>
 </body>
 </html>
