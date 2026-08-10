@@ -445,6 +445,13 @@ let isDeleting = false;
 let typeCycles = 0; // WCAG 2.2.2: the loop must not run forever
 
 function typeWriter() {
+    // Hold while the hero is scrolled offscreen: each tick's textContent
+    // write dirties layout right before the scroll handler's offsetTop
+    // reads, forcing a synchronous relayout per scroll frame for the
+    // ~2 minutes the loop runs — and nobody can see it type from down-page.
+    // The observer below resumes exactly where it left off.
+    if (!heroVisible) { typePaused = true; return; }
+
     const currentRole = roles[roleIndex];
 
     if (isDeleting) {
@@ -470,6 +477,19 @@ function typeWriter() {
     }
 
     setTimeout(typeWriter, isDeleting ? 80 : 120);
+}
+
+// Hero visibility gate for the typewriter (see the hold at the top of it)
+let heroVisible = true, typePaused = false;
+const heroSection = document.querySelector('.home');
+if (heroSection && 'IntersectionObserver' in window) {
+    new IntersectionObserver((entries) => {
+        heroVisible = entries[0].isIntersecting;
+        if (heroVisible && typePaused) {
+            typePaused = false;
+            setTimeout(typeWriter, 200);
+        }
+    }).observe(heroSection);
 }
 
 // Start typing animation when page loads (static text under reduced motion)
