@@ -22,7 +22,11 @@
   <meta name="twitter:description" content="Reinforcement learning, computer vision, and vision-language models for robotics.">
   <meta name="twitter:image" content="https://wavy-hec.github.io/PortfolioWebsite/og-card.png">
   <meta name="twitter:image:alt" content="Hector Lugo — AI researcher and robotics engineer portfolio">
-  <script>try{var t=localStorage.getItem('theme');if(t==='codec'||t==='starwars'||t==='gotham')document.documentElement.dataset.theme=t}catch(e){}</script>
+  <script>try{var t=localStorage.getItem('theme');if(t==='codec'||t==='starwars'||t==='gotham'){document.documentElement.dataset.theme=t;
+  /* Preload the theme's hero render: the swap script mid-body replaces the hero src,
+     so without this the themed LCP image is only discovered a full HTML parse later. */
+  var hero={codec:'raiden-dither-green.png',starwars:'obiwan-dither.png',gotham:'batman-dither.png'}[t];
+  if(hero){var l=document.createElement('link');l.rel='preload';l.as='image';l.href=hero;l.fetchPriority='high';document.head.appendChild(l);}}}catch(e){}</script>
   <!-- PNG first so legacy Safari (no SVG favicon support) picks it up; SVG-capable browsers prefer the later entry -->
   <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -33,16 +37,16 @@
        Icons are an inline SVG sprite at the top of <body> (zero requests; replaced Font Awesome's ~298KB CSS+woff2). -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap"></noscript>
-  <link rel="stylesheet" href="style.css?v=29">
+  <link rel="stylesheet" href="style.css?v=30">
   <!-- Without JS the codec loader can never dismiss itself — hide it outright.
        Must come AFTER style.css so it wins the cascade (equal specificity). -->
   <noscript><style>.codec-loader{display:none!important}body:not(.loaded){overflow-y:auto!important}</style></noscript>
   <!-- Deferred: downloads start with the preload scanner, execution keeps this
        order (script.js dispatches 'themechange'; dither/radar listen) and runs
        post-parse. game.js is lazy-loaded by script.js on first launch. -->
-  <script src="dither.js?v=17" defer></script>
+  <script src="dither.js?v=18" defer></script>
   <script src="radar.js?v=19" defer></script>
-  <script src="script.js?v=29" defer></script>
+  <script src="script.js?v=30" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -555,7 +559,7 @@
       <h2 class="section-title">Get in <span class="hl">touch</span></h2>
       <div class="codec-call">
         <div class="codec-portrait cc-left">
-          <img src="headshot-dither.png" width="200" height="200" data-light="headshot-dither.png" data-codec="headshot-dither-green.png" data-starwars="headshot-starwars-dither.png" data-gotham="headshot-gotham-dither.png" alt="Hector Lugo">
+          <img src="headshot-dither.png" width="200" height="200" loading="lazy" decoding="async" data-light="headshot-dither.png" data-codec="headshot-dither-green.png" data-starwars="headshot-starwars-dither.png" data-gotham="headshot-gotham-dither.png" alt="Hector Lugo">
           <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars)i.src=i.dataset.starwars;else if(t==='gotham'&&i.dataset.gotham)i.src=i.dataset.gotham;</script>
           <span class="codec-name">HECTOR</span>
           <span class="codec-mhz">140.85</span>
@@ -566,7 +570,7 @@
           <span class="codec-status">▸ incoming transmission · 140.85</span>
         </div>
         <div class="codec-portrait cc-right">
-          <img src="cc-raiden-dither.png" width="260" height="260" data-light="cc-raiden-dither.png" data-codec="cc-raiden-green.png" data-starwars="cc-quigon-dither.png" data-starwars-alt="Qui-Gon Jinn — LEGO minifigure, dithered render" data-gotham="cc-nightwing-dither.png" data-gotham-alt="Nightwing" alt="Raiden">
+          <img src="cc-raiden-dither.png" width="260" height="260" loading="lazy" decoding="async" data-light="cc-raiden-dither.png" data-codec="cc-raiden-green.png" data-starwars="cc-quigon-dither.png" data-starwars-alt="Qui-Gon Jinn — LEGO minifigure, dithered render" data-gotham="cc-nightwing-dither.png" data-gotham-alt="Nightwing" alt="Raiden">
           <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars){i.dataset.baseAlt=i.alt;i.src=i.dataset.starwars;i.alt=i.dataset.starwarsAlt;}else if(t==='gotham'&&i.dataset.gotham){i.dataset.baseAlt=i.alt;i.src=i.dataset.gotham;i.alt=i.dataset.gothamAlt;}</script>
           <span class="codec-name">RAIDEN</span>
           <span class="codec-mhz">140.85</span>

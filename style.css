@@ -472,11 +472,22 @@ html[data-theme="gotham"] .soliton-radar { pointer-events: auto; }
   pointer-events: none;
   opacity: 0;
   transition: opacity .2s ease;
-  will-change: transform;
 }
+/* will-change only where the reticle can actually move (codec-exclusive) —
+   a permanent hint keeps a layer eligible in every theme for nothing */
+html[data-theme="codec"] .reticle { will-change: transform; }
 .reticle.active { opacity: 1; }
 .reticle svg { display: block; width: 100%; height: 100%; transition: transform .12s ease; }
 .reticle.lock svg { transform: scale(1.3) rotate(45deg); }
+
+/* Theme swap = snap, not morph. script.js holds this class on <html> for the
+   two frames around a data-theme change: restyling ~700 elements otherwise
+   fires hundreds of simultaneous transitions, and any `transition` list that
+   catches a layout property the themes disagree on (font-size, letter-spacing,
+   border-radius) forces full-page layout every frame of the tween. */
+html.theme-snap *,
+html.theme-snap *::before,
+html.theme-snap *::after { transition: none !important; }
 
 /* ===== CRT codec overlay (codec mode only) ===== */
 .crt {
@@ -547,7 +558,7 @@ html[data-theme="codec"] .crt { opacity: 1; animation: crtFlicker 7s steps(1) in
   border-radius: var(--radius-sm);
   text-decoration: none;
   cursor: pointer;
-  transition: all .2s ease;
+  transition: color .2s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
 .btn:hover { background: var(--ink-strong); border-color: var(--ink-strong); }
 .btn-outline {
@@ -652,7 +663,7 @@ section { padding: 10rem 6%; position: relative; }
   color: var(--ink);
   font-size: 1.8rem;
   text-decoration: none;
-  transition: all .2s ease;
+  transition: color .2s ease, background-color .2s ease, border-color .2s ease;
 }
 .social-icons a:hover { border-color: var(--ink); color: var(--ink-strong); background: var(--panel-2); }
 
@@ -848,7 +859,7 @@ section { padding: 10rem 6%; position: relative; }
   border: 1px solid var(--border);
   border-radius: 3px;
   padding: .5rem 1rem;
-  transition: all .2s ease;
+  transition: color .2s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
 .chips span:hover { border-color: var(--ink); }
 
@@ -903,7 +914,7 @@ section { padding: 10rem 6%; position: relative; }
   display: inline-flex;
   gap: .6rem;
   align-items: center;
-  transition: all .2s ease;
+  transition: color .2s ease, background-color .2s ease, border-color .2s ease;
 }
 .project-link:hover { border-color: var(--ink); background: var(--panel-2); }
 /* Project thumbnails — dithered placeholder plates.
@@ -1032,7 +1043,7 @@ section { padding: 10rem 6%; position: relative; }
   padding: .6rem .9rem;
   font-size: 1.4rem;
   flex: 0 0 auto;
-  transition: all .2s ease;
+  transition: color .2s ease, background-color .2s ease, border-color .2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1317,7 +1328,10 @@ html[data-theme="starwars"] body::before {
 }
 @media (prefers-reduced-motion: no-preference) {
   html[data-theme="starwars"] body::before {
-    animation: swNebulaDrift 130s ease-in-out infinite alternate;
+    /* steps(390): one ~0.12px hop every 333ms instead of a new sub-pixel
+       transform every vsync — identical to the eye (drift is 0.37px/s), but
+       the compositor stops re-blending the full screen 60x/s forever. */
+    animation: swNebulaDrift 130s steps(390) infinite alternate;
   }
 }
 @keyframes swNebulaDrift {
@@ -1913,6 +1927,13 @@ html[data-theme="starwars"] .soliton-label {
    (varied widths AND heights, setbacks, spires, roof details, uneven gaps)
    so the city never reads as a bar chart. */
 html[data-theme="gotham"] #dither-bg { display: none; }
+/* The gotham sky (.atmo::before, fully opaque 100%x100% base gradient) covers
+   everything below it in the z<0 stack, so the ink grid and the radial wash
+   would paint invisibly — skip rasterizing them at all. Gotham only: in
+   starwars .grain IS the starfield and body::before is the nebula. Revert
+   these two hides if the sky ever gains alpha. */
+html[data-theme="gotham"] .grain { display: none; }
+html[data-theme="gotham"] body::before { content: none; }
 
 html[data-theme="gotham"] .atmo::before {
   content: '';
@@ -1963,7 +1984,10 @@ html[data-theme="gotham"] .atmo::after {
 /* Drifting storm clouds: tile == shift for seamless loops; blobs never touch tile edges */
 html[data-theme="gotham"] .gt-cloud { position: absolute; top: 0; height: 38vh; }
 html[data-theme="gotham"] .gt-cloud-a {
-  left: -900px; right: -900px;
+  /* left: 0, not -900px — the drift only ever moves leftward, so a left-side
+     overhang is never onscreen; the repeat-x tile period equals the shift, so
+     the phase difference is invisible. Keeps ~2000px of layer width unrasterized. */
+  left: 0; right: -900px;
   background-image:
     radial-gradient(ellipse 30% 55% at 30% 30%, rgba(96, 102, 112, .14), transparent 70%),
     radial-gradient(ellipse 22% 42% at 58% 16%, rgba(96, 102, 112, .11), transparent 72%),
@@ -1973,7 +1997,7 @@ html[data-theme="gotham"] .gt-cloud-a {
   background-repeat: repeat-x;
 }
 html[data-theme="gotham"] .gt-cloud-b {
-  left: -1100px; right: -1100px;
+  left: 0; right: -1100px;
   background-image:
     radial-gradient(ellipse 34% 46% at 24% 22%, rgba(72, 77, 86, .10), transparent 72%),
     radial-gradient(ellipse 28% 38% at 62% 34%, rgba(72, 77, 86, .085), transparent 74%),
@@ -2009,14 +2033,22 @@ html[data-theme="gotham"] .gt-beam {
 
 /* Two lit windows with independent blink rhythms (17s / 23s, non-harmonic) */
 html[data-theme="gotham"] .gt-blink { position: absolute; inset: auto 0 0 0; height: 26vh; z-index: 1; }
+/* Dot-sized pseudos (same trick as the starwars glints): each window's
+   infinite opacity animation promotes its own composited layer, so the layer
+   should be the 8x10px dot, not the full 100vw x 26vh strip. Box centers land
+   exactly where the old percentage-inside-gradient positions resolved to. */
 html[data-theme="gotham"] .gt-blink::before,
-html[data-theme="gotham"] .gt-blink::after { content: ''; position: absolute; inset: 0; background-repeat: no-repeat; }
+html[data-theme="gotham"] .gt-blink::after { content: ''; position: absolute; width: 8px; height: 10px; background-repeat: no-repeat; }
 html[data-theme="gotham"] .gt-blink::before {
-  background-image: radial-gradient(2px 3px at 12.2% 46%, rgba(240, 214, 160, .55) 60%, transparent 61%);
+  left: calc(12.2% - 4px);
+  top: calc(46% - 5px);
+  background-image: radial-gradient(2px 3px at 50% 50%, rgba(240, 214, 160, .55) 60%, transparent 61%);
   opacity: .85;   /* reduced-motion static frame: steadily lit */
 }
 html[data-theme="gotham"] .gt-blink::after {
-  background-image: radial-gradient(2px 3px at 61.5% 52%, rgba(240, 214, 160, .5) 60%, transparent 61%);
+  left: calc(61.5% - 4px);
+  top: calc(52% - 5px);
+  background-image: radial-gradient(2px 3px at 50% 50%, rgba(240, 214, 160, .5) 60%, transparent 61%);
   opacity: 0;     /* reduced-motion static frame: dark */
 }
 
@@ -2030,8 +2062,12 @@ html[data-theme="gotham"] .gt-bats {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  html[data-theme="gotham"] .gt-cloud-a { animation: gtCloudA 84s linear infinite; }
-  html[data-theme="gotham"] .gt-cloud-b { animation: gtCloudB 138s linear infinite; }
+  /* 1px integer steps (~11/s and ~8/s) instead of sub-pixel motion every
+     vsync; tile == shift so the stepped wrap stays seamless. gtSweep stays
+     continuous — steps() can't combine with its ease-in-out profile, and its
+     damage is confined to the beam's bounds. */
+  html[data-theme="gotham"] .gt-cloud-a { animation: gtCloudA 84s steps(900) infinite; }
+  html[data-theme="gotham"] .gt-cloud-b { animation: gtCloudB 138s steps(1100) infinite; }
   html[data-theme="gotham"] .gt-beam { animation: gtSweep 26s ease-in-out infinite alternate; }
   html[data-theme="gotham"] .gt-blink::before { animation: gtBlinkA 17s linear infinite; }
   html[data-theme="gotham"] .gt-blink::after { animation: gtBlinkB 23s linear infinite; }
@@ -2085,7 +2121,12 @@ html[data-theme="gotham"] body::after {
   background-position: 0 0, 31px 60px;
 }
 @media (prefers-reduced-motion: no-preference) {
-  html[data-theme="gotham"] body::after { animation: gtRain 3.2s linear infinite; }
+  /* steps(96) = 30 updates/s, ~2.9px per step — imperceptible on 11-14px
+     streaks (and matches radar.js's 30fps cap), but the rain layer is the
+     only full-viewport continuous damage source in gotham, so stepping it
+     stops the compositor re-blending the whole screen every vsync.
+     96 steps land exactly on the 280px tile period: the loop stays seamless. */
+  html[data-theme="gotham"] body::after { animation: gtRain 3.2s steps(96) infinite; }
 }
 @keyframes gtRain { to { transform: translateY(280px); } }
 

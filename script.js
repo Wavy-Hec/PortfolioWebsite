@@ -121,8 +121,19 @@ function currentTheme() {
     return THEMES.includes(t) ? t : 'light';
 }
 
+let themeSnapRaf = null;
 function applyTheme(name) {
     if (!THEMES.includes(name)) name = 'light';
+    // Freeze transitions for the swap (see html.theme-snap in style.css) —
+    // released two frames later so the new theme paints once, instantly.
+    document.documentElement.classList.add('theme-snap');
+    if (themeSnapRaf !== null) cancelAnimationFrame(themeSnapRaf);
+    themeSnapRaf = requestAnimationFrame(() => {
+        themeSnapRaf = requestAnimationFrame(() => {
+            themeSnapRaf = null;
+            document.documentElement.classList.remove('theme-snap');
+        });
+    });
     if (name === 'light') {
         delete document.documentElement.dataset.theme;
     } else {
@@ -809,10 +820,16 @@ if (terminalPanel) {
     const barsEl = document.getElementById('cl-bars');
     const statusEl = document.getElementById('cl-status');
 
-    // Full dial-in plays once per session; repeat navigations get a ~400ms
-    // blip instead of staring at the splash on every page view.
-    let dialedThisSession = false;
-    try { dialedThisSession = sessionStorage.getItem('codec-dialed') === '1'; } catch (e) {}
+    // Full dial-in plays once per BROWSER (localStorage), not once per session:
+    // the branding beat lands on a visitor's first-ever load; every return
+    // visit gets the ~400ms blip instead of re-paying the 1.5s splash.
+    // (Reads the old sessionStorage key too so mid-session visitors on the
+    // previous version aren't shown the full dial twice.)
+    let dialedBefore = false;
+    try {
+        dialedBefore = localStorage.getItem('codec-dialed') === '1'
+                    || sessionStorage.getItem('codec-dialed') === '1';
+    } catch (e) {}
 
     const BARS = 7;
     for (let i = 0; i < BARS; i++) barsEl.appendChild(document.createElement('i'));
@@ -824,7 +841,7 @@ if (terminalPanel) {
         done = true;
         loader.classList.add('done');
         document.body.classList.add('loaded');
-        try { sessionStorage.setItem('codec-dialed', '1'); } catch (e) {}
+        try { localStorage.setItem('codec-dialed', '1'); } catch (e) {}
         setTimeout(() => loader.remove(), 600);
     }
 
@@ -833,12 +850,14 @@ if (terminalPanel) {
         statusEl.textContent = 'connected';
         for (const b of bars) b.classList.add('on');
         window.addEventListener('load', () => setTimeout(finish, 300));
-        setTimeout(finish, dialedThisSession ? 300 : 1500);
+        // Always the short path: with no animation to watch, holding a static
+        // card for 1500ms is pure wait — reduced-motion users get in fast.
+        setTimeout(finish, 300);
         return;
     }
 
     const start = performance.now();
-    const DURATION = dialedThisSession ? 400 : 1500;
+    const DURATION = dialedBefore ? 400 : 1500;
 
     let barI = 0;
     const barTimer = setInterval(() => { if (barI < BARS) bars[barI++].classList.add('on'); }, DURATION / (BARS + 1));
@@ -865,11 +884,31 @@ if (terminalPanel) {
     let pageLoaded = document.readyState !== 'loading';
     if (!pageLoaded) document.addEventListener('DOMContentLoaded', () => { pageLoaded = true; });
     const settle = setInterval(() => {
-        if ((pageLoaded || dialedThisSession) && performance.now() - start >= DURATION + 200) {
+        // The +200ms settle margin only matters while the DOM is still parsing;
+        // once it's ready the dial has visibly finished at 0.82*DURATION, so
+        // don't make a ready page wait the extra beat.
+        if ((pageLoaded || dialedBefore) && performance.now() - start >= DURATION + (pageLoaded ? 0 : 200)) {
             clearInterval(settle); clearInterval(barTimer); finish();
         }
     }, 80);
     setTimeout(() => { clearInterval(settle); clearInterval(barTimer); finish(); }, 4000); // failsafe
+})();
+
+// Pre-warm the other themes' portrait renders at idle: a first switch into
+// codec/holonet/gotham otherwise fetches its hero + codec-call images right
+// as the retheme lands, so they pop in late (GitHub Pages caps caching at
+// ~10 min, making this a recurring cost). ~50KB total, and only after the
+// page is idle. Keep the list in sync with the data-* attrs in index.html.
+(function warmThemedPortraits() {
+    const warm = () => {
+        [
+            'raiden-dither-green.png', 'obiwan-dither.png', 'batman-dither.png',
+            'headshot-dither-green.png', 'headshot-starwars-dither.png', 'headshot-gotham-dither.png',
+            'cc-raiden-green.png', 'cc-quigon-dither.png', 'cc-nightwing-dither.png',
+        ].forEach(src => { const i = new Image(); i.src = src; });
+    };
+    if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 5000 });
+    else setTimeout(warm, 3000);
 })();
 
 // Copy-to-clipboard buttons (contact command block, etc.)

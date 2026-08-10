@@ -124,6 +124,7 @@
   const S1 = 0.34, S2 = 1.1;
 
   function render(t) {
+    if (!data) return;   // never draw before resize() has allocated the buffer
     const t1 = t * DRIFT * TEX_SIZE;
     for (let y = 0; y < bh; y++) {
       const rowB = (y & 7) << 3;
@@ -171,7 +172,7 @@
   const gameOpen = () => document.body.classList.contains('game-open');
 
   function start() {
-    if (raf === null && timer === null && !REDUCED_MOTION && !hiddenByTheme() && !gameOpen()) raf = requestAnimationFrame(loop);
+    if (raf === null && timer === null && texBuilt && !REDUCED_MOTION && !hiddenByTheme() && !gameOpen()) raf = requestAnimationFrame(loop);
   }
   function stop() {
     if (raf !== null) { cancelAnimationFrame(raf); raf = null; }
@@ -184,7 +185,13 @@
   window.addEventListener('resize', () => {
     if (!initialized) return;
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => { resize(); render(performance.now()); }, 150);
+    resizeTimer = setTimeout(() => {
+      if (!texBuilt) return;   // nothing allocated yet; the themechange restore path resizes
+      resize();                // keep buffer dims fresh even while hidden (cheap)
+      // ...but don't run the ~460k-sample noise pass into a display:none canvas
+      // (starwars/gotham hide it, and mobile URL-bar collapse fires resize mid-scroll)
+      if (!hiddenByTheme() && !gameOpen()) render(performance.now());
+    }, 150);
   });
 
   document.addEventListener('visibilitychange', () => {
@@ -200,19 +207,31 @@
     if (!initialized) return;
     syncTheme();
     if (hiddenByTheme()) { stop(); return; }
-    fillInk();
-    render(performance.now());
+    if (!texBuilt) buildOnce();   // first switch out of starwars/gotham builds lazily
+    else fillInk();               // (buildOnce's resize() already inked with the new theme)
+    // Reduced motion gets its single static frame now; otherwise skip the
+    // synchronous render mid theme-switch — start()'s first rAF repaints
+    // within a frame anyway, so the switch task stays short.
+    if (REDUCED_MOTION) render(performance.now());
     start();
   });
 
-  let initialized = false;
+  let initialized = false, texBuilt = false;
+  function buildOnce() {
+    if (texBuilt) return;
+    texBuilt = true;
+    fillTexture();
+    resize();
+  }
   function init() {
     if (initialized) return;
     initialized = true;
-    fillTexture();
     syncTheme();
-    resize();
-    if (hiddenByTheme()) return;   // starwars/gotham paint their own atmosphere
+    // starwars/gotham hide the canvas — skip the texture build and the
+    // full-buffer ink fill entirely instead of paying them for zero pixels;
+    // the themechange path above builds on first switch to a visible theme.
+    if (hiddenByTheme()) return;
+    buildOnce();
     render(0);   // static first frame (also the only frame under reduced motion)
     start();
   }
