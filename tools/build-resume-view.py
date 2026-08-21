@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Regenerate the résumé viewer (resume-page1.png + the link overlay in resume.html).
 
-Run this whenever Hector_Lugo_Resume_Summer.pdf changes, or the on-screen résumé
-and its clickable links will drift out of sync with the PDF.
+Run this whenever the résumé PDF (see PDF below) changes, or the on-screen
+résumé and its clickable links will drift out of sync with the PDF.
 
     pip install pymupdf pillow
     python tools/build-resume-view.py
@@ -21,7 +21,7 @@ import fitz  # pymupdf
 from PIL import Image
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-PDF = ROOT / "Hector_Lugo_Resume_Summer.pdf"
+PDF = ROOT / "Hector_Lugo_Fall_Resume.pdf"
 IMG = ROOT / "resume-page1.png"
 VIEW = ROOT / "resume.html"
 ZOOM = 2.0        # 2x = 144dpi, crisp on hidpi screens
@@ -84,7 +84,7 @@ def main() -> int:
     # 3. swap the overlay inside resume.html, leaving the rest of the page alone
     markup = VIEW.read_text(encoding="utf-8")
     new_markup, count = re.subn(
-        r'(width="\d+" height="\d+" decoding="async">\n).*?(\n    </div>)',
+        r'(width="\d+" height="\d+" decoding="async"[^>]*>\n).*?(\n    </div>)',
         lambda m: m.group(1) + "\n".join(rows) + m.group(2),
         markup,
         flags=re.S,
@@ -94,8 +94,9 @@ def main() -> int:
         return 1
 
     # keep the <img> dimensions honest so the browser reserves the right box
-    new_markup = re.sub(r'width="\d+" height="\d+" decoding="async"',
-                        f'width="{im.width}" height="{im.height}" decoding="async"', new_markup)
+    # ([^>]* preserves attributes after decoding, e.g. fetchpriority="high")
+    new_markup = re.sub(r'width="\d+" height="\d+" (decoding="async"[^>]*)',
+                        lambda m: f'width="{im.width}" height="{im.height}" {m.group(1)}', new_markup)
     VIEW.write_text(new_markup, encoding="utf-8")
     print(f"{VIEW.name}: {len(rows)} link hotspots")
     return 0

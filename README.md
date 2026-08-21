@@ -40,7 +40,7 @@ Vanilla HTML/CSS/JS. No build step, no frameworks, no runtime dependencies.
 | `404.html` | Self-contained themed 404 page |
 | `*-dither.png`, `cc-*.png` | Dithered portrait renders (per-theme hero + codec-call) |
 | `proj-*.png` | Hand-drawn "blueprint plate" project art, four palettes each |
-| `Hector_Lugo_Resume_Summer.pdf` | Résumé (opens in-browser from the site) |
+| `Hector_Lugo_Fall_Resume.pdf` | Résumé (opens in-browser from the site) |
 
 ## Run locally
 
