@@ -15,6 +15,8 @@ percentage-positioned <a> hotspots so hover and clicking still work.
 import html
 import pathlib
 import re
+import shutil
+import subprocess
 import sys
 
 import fitz  # pymupdf
@@ -62,6 +64,10 @@ def main() -> int:
     page.get_pixmap(matrix=fitz.Matrix(ZOOM, ZOOM)).save(IMG)
     im = Image.open(IMG).convert("RGB")
     im.quantize(colors=PALETTE, method=Image.MEDIANCUT, dither=Image.NONE).save(IMG, optimize=True)
+    # lossless squeeze (~7% on top of Pillow's optimize) — skipped if oxipng
+    # isn't installed (winget install Shssoichiro.Oxipng)
+    if oxipng := shutil.which("oxipng"):
+        subprocess.run([oxipng, "-o", "4", "--strip", "safe", str(IMG)], check=False)
     print(f"{IMG.name}: {im.width}x{im.height}, {IMG.stat().st_size:,} bytes")
 
     # 2. rebuild the hotspots from the PDF's link annotations, in % of the page
