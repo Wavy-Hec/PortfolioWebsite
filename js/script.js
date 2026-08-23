@@ -319,7 +319,7 @@ function openGame() {
     if (gameScriptRequested) return;
     gameScriptRequested = true;
     const s = document.createElement('script');
-    s.src = 'game.js?v=11';
+    s.src = 'js/game.js?v=11';
     s.onload = () => { if (window.MGSGame) window.MGSGame.open(); };
     s.onerror = () => {
         gameScriptRequested = false; // allow a retry

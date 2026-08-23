@@ -33,10 +33,10 @@ Vanilla HTML/CSS/JS. No build step, no frameworks, no runtime dependencies.
 | --- | --- |
 | `index.html` | All markup + the inline SVG icon sprite and pre-paint theme scripts |
 | `style.css` | Every component and all four theme scopes |
-| `script.js` | Theme system, picker, Konami/game loader, easter eggs, contact form, nav |
-| `game.js` | Codec Infiltration mini-game (lazy-loaded on first launch) |
-| `radar.js` | Corner widget — per-theme canvas instrument |
-| `dither.js` | Animated dithered noise background (ink/codec) |
+| `js/script.js` | Theme system, picker, Konami/game loader, easter eggs, contact form, nav |
+| `js/game.js` | Codec Infiltration mini-game (lazy-loaded on first launch) |
+| `js/radar.js` | Corner widget — per-theme canvas instrument |
+| `js/dither.js` | Animated dithered noise background (ink/codec) |
 | `404.html` | Self-contained themed 404 page |
 | `img/` | All site images: dithered portrait renders (per-theme hero + codec-call), `proj-*` blueprint project plates (four palettes each), résumé page render |
 | `Hector_Lugo_Fall_Resume.pdf` | Résumé (opens in-browser from the site) |
@@ -51,5 +51,5 @@ python -m http.server 8000
 ## Deploy
 
 GitHub Pages, straight from `main` — no build. Cache-busting is manual: bump the
-`?v=` query on any CSS/JS file you change (`style.css`/`script.js`/`radar.js`/`dither.js`
-are referenced in `index.html`; `game.js` is referenced in `script.js`).
+`?v=` query on any CSS/JS file you change (`style.css` and the `js/` scripts are
+referenced in `index.html`; `js/game.js` is referenced in `js/script.js`).
