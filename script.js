@@ -922,9 +922,9 @@ if (terminalPanel) {
 (function warmThemedPortraits() {
     const warm = () => {
         [
-            'raiden-dither-green.png', 'obiwan-dither.png', 'batman-dither.png',
-            'headshot-dither-green.png', 'headshot-starwars-dither.png', 'headshot-gotham-dither.png',
-            'cc-raiden-green.png', 'cc-quigon-dither.png', 'cc-nightwing-dither.png',
+            'img/raiden-dither-green.png', 'img/obiwan-dither.png', 'img/batman-dither.png',
+            'img/headshot-dither-green.png', 'img/headshot-starwars-dither.png', 'img/headshot-gotham-dither.png',
+            'img/cc-raiden-green.png', 'img/cc-quigon-dither.png', 'img/cc-nightwing-dither.png',
         ].forEach(src => { const i = new Image(); i.src = src; });
     };
     if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 5000 });
@@ -962,7 +962,7 @@ document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
 // The click listener lives here (not radar.js) — style.css re-enables
 // pointer-events on .soliton-radar in gotham only, so this is inert elsewhere.
 const ROBIN_CYCLE = [
-    { name: 'NIGHTWING', img: 'lego-nightwing-dither.png' },
+    { name: 'NIGHTWING', img: 'img/lego-nightwing-dither.png' },
     { name: 'DICK GRAYSON', mod: 'dick',
       svg: '<svg viewBox="0 0 72 72" aria-hidden="true" focusable="false"><circle cx="36" cy="36" r="30" fill="#f6d76a"/><circle cx="36" cy="36" r="30" fill="none" stroke="#0a0a0c" stroke-width="3"/><text x="36" y="48" text-anchor="middle" font-family="\'Share Tech Mono\',monospace" font-size="36" font-weight="700" fill="#0a0a0c">R</text></svg>' },
     { name: 'JASON TODD', mod: 'jason',
@@ -1013,7 +1013,7 @@ document.addEventListener('click', (e) => {
     let seen = false;
     try { seen = sessionStorage.getItem('nightwing-cameo') === '1'; } catch (err) {}
     if (seen) return;
-    if (!nightwingWarm) { nightwingWarm = true; (new Image()).src = 'lego-nightwing-dither.png'; } // pre-warm cache on first click
+    if (!nightwingWarm) { nightwingWarm = true; (new Image()).src = 'img/lego-nightwing-dither.png'; } // pre-warm cache on first click
     gcpdClicks++;
     clearTimeout(gcpdTimer);
     gcpdTimer = setTimeout(() => { gcpdClicks = 0; }, 4000);

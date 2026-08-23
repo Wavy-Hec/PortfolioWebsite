@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate the résumé viewer (resume-page1.png + the link overlay in resume.html).
+"""Regenerate the résumé viewer (img/resume-page1.png + the link overlay in resume.html).
 
 Run this whenever the résumé PDF (see PDF below) changes, or the on-screen
 résumé and its clickable links will drift out of sync with the PDF.
@@ -24,7 +24,7 @@ from PIL import Image
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 PDF = ROOT / "Hector_Lugo_Fall_Resume.pdf"
-IMG = ROOT / "resume-page1.png"
+IMG = ROOT / "img/resume-page1.png"
 VIEW = ROOT / "resume.html"
 ZOOM = 2.0        # 2x = 144dpi, crisp on hidpi screens
 PALETTE = 128     # quantize: text stays sharp, file size roughly halves

@@ -25,7 +25,7 @@
   <script>try{var t=localStorage.getItem('theme');if(t==='codec'||t==='starwars'||t==='gotham'){document.documentElement.dataset.theme=t;
   /* Preload the theme's hero render: the swap script mid-body replaces the hero src,
      so without this the themed LCP image is only discovered a full HTML parse later. */
-  var hero={codec:'raiden-dither-green.png',starwars:'obiwan-dither.png',gotham:'batman-dither.png'}[t];
+  var hero={codec:'img/raiden-dither-green.png',starwars:'img/obiwan-dither.png',gotham:'img/batman-dither.png'}[t];
   if(hero){var l=document.createElement('link');l.rel='preload';l.as='image';l.href=hero;l.fetchPriority='high';document.head.appendChild(l);}}}catch(e){}</script>
   <!-- PNG first so legacy Safari (no SVG favicon support) picks it up; SVG-capable browsers prefer the later entry -->
   <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
@@ -46,7 +46,7 @@
        post-parse. game.js is lazy-loaded by script.js on first launch. -->
   <script src="dither.js?v=18" defer></script>
   <script src="radar.js?v=19" defer></script>
-  <script src="script.js?v=31" defer></script>
+  <script src="script.js?v=32" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -167,7 +167,7 @@
     </div>
     <div class="home-img">
       <figure>
-        <img src="raiden-dither.png" width="460" height="596" fetchpriority="high" decoding="async" data-light="raiden-dither.png" data-codec="raiden-dither-green.png" data-starwars="obiwan-dither.png" data-starwars-alt="LEGO Obi-Wan Kenobi taking a selfie on Mustafar, Anakin fuming in the lava behind — dithered render" data-gotham="batman-dither.png" data-gotham-alt="Batman — dithered render" alt="Raiden — Metal Gear Solid 2, dithered render">
+        <img src="img/raiden-dither.png" width="460" height="596" fetchpriority="high" decoding="async" data-light="img/raiden-dither.png" data-codec="img/raiden-dither-green.png" data-starwars="img/obiwan-dither.png" data-starwars-alt="LEGO Obi-Wan Kenobi taking a selfie on Mustafar, Anakin fuming in the lava behind — dithered render" data-gotham="img/batman-dither.png" data-gotham-alt="Batman — dithered render" alt="Raiden — Metal Gear Solid 2, dithered render">
         <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars){i.dataset.baseAlt=i.alt;i.src=i.dataset.starwars;i.alt=i.dataset.starwarsAlt;}else if(t==='gotham'&&i.dataset.gotham){i.dataset.baseAlt=i.alt;i.src=i.dataset.gotham;i.alt=i.dataset.gothamAlt;}</script>
         <figcaption class="img-caption">codec visual · 140.85 · big shell</figcaption>
       </figure>
@@ -304,15 +304,15 @@
       <h2 class="section-title">Selected <span class="hl">projects</span></h2>
       <!-- Project thumbnails are generated placeholder "dither plates".
            To swap any plate for a real screenshot later: export a 16:9 image (1280x720 works)
-           and save it over the same filename, e.g. `proj-yolo-dither.png` — no HTML or CSS
+           and save it over the same filename, e.g. `img/proj-yolo-dither.png` — no HTML or CSS
            edits needed. Optionally update the `alt` to describe the screenshot. The
            `width/height` attributes just reserve the 16:9 box; any 16:9 file is
            cropped-to-fit by `object-fit: cover`. -->
       <div class="projects-grid">
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="proj-vlm-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="proj-vlm-dither.png" data-codec="proj-vlm-codec.png" data-starwars="proj-vlm-sw.png" data-gotham="proj-vlm-gotham.png"
+            <img src="img/proj-vlm-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-vlm-dither.png" data-codec="img/proj-vlm-codec.png" data-starwars="img/proj-vlm-sw.png" data-gotham="img/proj-vlm-gotham.png"
                  alt="Stylized dither plate: three camera-agent frustums linked by dashed arcs to a central hexagonal orchestrator holding symbolic query glyphs — placeholder art">
           </figure>
           <div class="project-head">
@@ -328,8 +328,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="proj-rl-isaaclab-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="proj-rl-isaaclab-dither.png" data-codec="proj-rl-isaaclab-codec.png" data-starwars="proj-rl-isaaclab-sw.png" data-gotham="proj-rl-isaaclab-gotham.png"
+            <img src="img/proj-rl-isaaclab-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-rl-isaaclab-dither.png" data-codec="img/proj-rl-isaaclab-codec.png" data-starwars="img/proj-rl-isaaclab-sw.png" data-gotham="img/proj-rl-isaaclab-gotham.png"
                  alt="Stylized dither plate: articulated robot-leg linkage walking a tick-marked ground line with foot-swing arcs and a rising reward sparkline — placeholder art">
           </figure>
           <div class="project-head">
@@ -346,8 +346,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="proj-fft-denoise-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="proj-fft-denoise-dither.png" data-codec="proj-fft-denoise-codec.png" data-starwars="proj-fft-denoise-sw.png" data-gotham="proj-fft-denoise-gotham.png"
+            <img src="img/proj-fft-denoise-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-fft-denoise-dither.png" data-codec="img/proj-fft-denoise-codec.png" data-starwars="img/proj-fft-denoise-sw.png" data-gotham="img/proj-fft-denoise-gotham.png"
                  alt="Stylized dither plate: noisy waveform passing through an encoder-decoder hourglass and emerging as a clean sine, FFT bars in the margin — placeholder art">
           </figure>
           <div class="project-head">
@@ -360,8 +360,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="proj-yolo-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="proj-yolo-dither.png" data-codec="proj-yolo-codec.png" data-starwars="proj-yolo-sw.png" data-gotham="proj-yolo-gotham.png"
+            <img src="img/proj-yolo-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-yolo-dither.png" data-codec="img/proj-yolo-codec.png" data-starwars="img/proj-yolo-sw.png" data-gotham="img/proj-yolo-gotham.png"
                  alt="Stylized dither plate: two tracked objects in corner-bracket boxes with ID chips #03 and #07 and confidence tags, ghost boxes at past positions and dashed Kalman trajectory trails — placeholder art">
           </figure>
           <div class="project-head">
@@ -377,8 +377,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="proj-rl-compression-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="proj-rl-compression-dither.png" data-codec="proj-rl-compression-codec.png" data-starwars="proj-rl-compression-sw.png" data-gotham="proj-rl-compression-gotham.png"
+            <img src="img/proj-rl-compression-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-rl-compression-dither.png" data-codec="img/proj-rl-compression-codec.png" data-starwars="img/proj-rl-compression-sw.png" data-gotham="img/proj-rl-compression-gotham.png"
                  alt="Stylized dither plate: dense weight grid funneled down to a sparse grid, with a reward-versus-size curve — placeholder art">
           </figure>
           <div class="project-head">
@@ -394,8 +394,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="proj-railway-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="proj-railway-dither.png" data-codec="proj-railway-codec.png" data-starwars="proj-railway-sw.png" data-gotham="proj-railway-gotham.png"
+            <img src="img/proj-railway-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-railway-dither.png" data-codec="img/proj-railway-codec.png" data-starwars="img/proj-railway-sw.png" data-gotham="img/proj-railway-gotham.png"
                  alt="Stylized dither plate: perspective rail tracks with a turnout, signal mast, and a route graph above the horizon — placeholder art">
           </figure>
           <div class="project-head">
@@ -411,8 +411,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="proj-chemo-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="proj-chemo-dither.png" data-codec="proj-chemo-codec.png" data-starwars="proj-chemo-sw.png" data-gotham="proj-chemo-gotham.png"
+            <img src="img/proj-chemo-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-chemo-dither.png" data-codec="img/proj-chemo-codec.png" data-starwars="img/proj-chemo-sw.png" data-gotham="img/proj-chemo-gotham.png"
                  alt="Stylized dither plate: patient-state sparkline and stacked transformer blocks with attention arcs feeding a rising dose-schedule curve of square dose points — placeholder art">
           </figure>
           <div class="project-head">
@@ -425,8 +425,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="proj-neon-grid-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="proj-neon-grid-dither.png" data-codec="proj-neon-grid-codec.png" data-starwars="proj-neon-grid-sw.png" data-gotham="proj-neon-grid-gotham.png"
+            <img src="img/proj-neon-grid-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-neon-grid-dither.png" data-codec="img/proj-neon-grid-codec.png" data-starwars="img/proj-neon-grid-sw.png" data-gotham="img/proj-neon-grid-gotham.png"
                  alt="Stylized dither plate: first-person perspective down a city street of outlined ASCII towers with glyph windows and a vertical NEON sign — placeholder art">
           </figure>
           <div class="project-head">
@@ -443,8 +443,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="proj-chess-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="proj-chess-dither.png" data-codec="proj-chess-codec.png" data-starwars="proj-chess-sw.png" data-gotham="proj-chess-gotham.png"
+            <img src="img/proj-chess-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-chess-dither.png" data-codec="img/proj-chess-codec.png" data-starwars="img/proj-chess-sw.png" data-gotham="img/proj-chess-gotham.png"
                  alt="Stylized dither plate: 5x5 chessboard with a knight move arrow, an MCTS search tree, and a GPU-vs-CPU steps-per-second curve — placeholder art">
           </figure>
           <div class="project-head">
@@ -460,8 +460,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="proj-poker-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="proj-poker-dither.png" data-codec="proj-poker-codec.png" data-starwars="proj-poker-sw.png" data-gotham="proj-poker-gotham.png"
+            <img src="img/proj-poker-dither.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-poker-dither.png" data-codec="img/proj-poker-codec.png" data-starwars="img/proj-poker-sw.png" data-gotham="img/proj-poker-gotham.png"
                  alt="Stylized dither plate: six-seat poker table with hole cards and pot, a masked action row, and a rising mbb-per-hand curve — placeholder art">
           </figure>
           <div class="project-head">
@@ -611,7 +611,7 @@
       <h2 class="section-title">Get in <span class="hl">touch</span></h2>
       <div class="codec-call">
         <div class="codec-portrait cc-left">
-          <img src="headshot-dither.png" width="200" height="200" loading="lazy" decoding="async" data-light="headshot-dither.png" data-codec="headshot-dither-green.png" data-starwars="headshot-starwars-dither.png" data-gotham="headshot-gotham-dither.png" alt="Hector Lugo">
+          <img src="img/headshot-dither.png" width="200" height="200" loading="lazy" decoding="async" data-light="img/headshot-dither.png" data-codec="img/headshot-dither-green.png" data-starwars="img/headshot-starwars-dither.png" data-gotham="img/headshot-gotham-dither.png" alt="Hector Lugo">
           <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars)i.src=i.dataset.starwars;else if(t==='gotham'&&i.dataset.gotham)i.src=i.dataset.gotham;</script>
           <span class="codec-name">HECTOR</span>
           <span class="codec-mhz">140.85</span>
@@ -622,7 +622,7 @@
           <span class="codec-status">▸ incoming transmission · 140.85</span>
         </div>
         <div class="codec-portrait cc-right">
-          <img src="cc-raiden-dither.png" width="260" height="260" loading="lazy" decoding="async" data-light="cc-raiden-dither.png" data-codec="cc-raiden-green.png" data-starwars="cc-quigon-dither.png" data-starwars-alt="Qui-Gon Jinn — LEGO minifigure, dithered render" data-gotham="cc-nightwing-dither.png" data-gotham-alt="Nightwing" alt="Raiden">
+          <img src="img/cc-raiden-dither.png" width="260" height="260" loading="lazy" decoding="async" data-light="img/cc-raiden-dither.png" data-codec="img/cc-raiden-green.png" data-starwars="img/cc-quigon-dither.png" data-starwars-alt="Qui-Gon Jinn — LEGO minifigure, dithered render" data-gotham="img/cc-nightwing-dither.png" data-gotham-alt="Nightwing" alt="Raiden">
           <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars){i.dataset.baseAlt=i.alt;i.src=i.dataset.starwars;i.alt=i.dataset.starwarsAlt;}else if(t==='gotham'&&i.dataset.gotham){i.dataset.baseAlt=i.alt;i.src=i.dataset.gotham;i.alt=i.dataset.gothamAlt;}</script>
           <span class="codec-name">RAIDEN</span>
           <span class="codec-mhz">140.85</span>

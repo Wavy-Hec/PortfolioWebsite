@@ -38,8 +38,7 @@ Vanilla HTML/CSS/JS. No build step, no frameworks, no runtime dependencies.
 | `radar.js` | Corner widget — per-theme canvas instrument |
 | `dither.js` | Animated dithered noise background (ink/codec) |
 | `404.html` | Self-contained themed 404 page |
-| `*-dither.png`, `cc-*.png` | Dithered portrait renders (per-theme hero + codec-call) |
-| `proj-*.png` | Hand-drawn "blueprint plate" project art, four palettes each |
+| `img/` | All site images: dithered portrait renders (per-theme hero + codec-call), `proj-*` blueprint project plates (four palettes each), résumé page render |
 | `Hector_Lugo_Fall_Resume.pdf` | Résumé (opens in-browser from the site) |
 
 ## Run locally
