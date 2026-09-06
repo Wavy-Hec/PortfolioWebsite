@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#eaf0fb">
+  <meta name="theme-color" content="#e9e7e2">
   <title>Hector Lugo — AI Researcher & Robotics Engineer</title>
   <meta name="description" content="Hector Lugo — MS Computer Science @ UTRGV. RL, computer vision, and VLMs for robotics; multi-camera video research with the Air Force Research Laboratory.">
   <link rel="canonical" href="https://wavy-hec.github.io/PortfolioWebsite/">
@@ -37,7 +37,7 @@
        Icons are an inline SVG sprite at the top of <body> (zero requests; replaced Font Awesome's ~298KB CSS+woff2). -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap"></noscript>
-  <link rel="stylesheet" href="style.css?v=31">
+  <link rel="stylesheet" href="style.css?v=32">
   <!-- Without JS the codec loader can never dismiss itself — hide it outright.
        Must come AFTER style.css so it wins the cascade (equal specificity). -->
   <noscript><style>.codec-loader{display:none!important}body:not(.loaded){overflow-y:auto!important}</style></noscript>
@@ -46,7 +46,7 @@
        post-parse. game.js is lazy-loaded by script.js on first launch. -->
   <script src="js/dither.js?v=18" defer></script>
   <script src="js/radar.js?v=19" defer></script>
-  <script src="js/script.js?v=33" defer></script>
+  <script src="js/script.js?v=34" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -132,7 +132,7 @@
       <a href="#beyond">beyond</a>
       <a href="#contact">contact</a>
       <div class="theme-picker" id="theme-picker" role="radiogroup" aria-label="Site theme">
-        <button type="button" role="radio" aria-checked="true" tabindex="0" data-theme-value="light" aria-label="ink" title="ink — light editorial"><svg class="icon" aria-hidden="true"><use href="#i-pen-nib"/></svg><span class="tp-label">ink</span></button>
+        <button type="button" role="radio" aria-checked="true" tabindex="0" data-theme-value="light" aria-label="ink" title="ink — Shinkawa's MGS2 illustrations on paper"><svg class="icon" aria-hidden="true"><use href="#i-pen-nib"/></svg><span class="tp-label">ink</span></button>
         <button type="button" role="radio" aria-checked="false" tabindex="-1" data-theme-value="codec" aria-label="codec" title="codec — green phosphor"><svg class="icon" aria-hidden="true"><use href="#i-tower-broadcast"/></svg><span class="tp-label">codec</span></button>
         <button type="button" role="radio" aria-checked="false" tabindex="-1" data-theme-value="starwars" aria-label="holonet" title="holonet — imperial amber"><svg class="icon" aria-hidden="true"><use href="#i-satellite-dish"/></svg><span class="tp-label">holonet</span></button>
         <button type="button" role="radio" aria-checked="false" tabindex="-1" data-theme-value="gotham" aria-label="gotham" title="gotham — dark knight"><svg class="icon" aria-hidden="true"><use href="#i-city"/></svg><span class="tp-label">gotham</span></button>
@@ -167,7 +167,7 @@
     </div>
     <div class="home-img">
       <figure>
-        <img src="img/raiden-dither.png" width="460" height="596" fetchpriority="high" decoding="async" data-light="img/raiden-dither.png" data-codec="img/raiden-dither-green.png" data-starwars="img/obiwan-dither.png" data-starwars-alt="LEGO Obi-Wan Kenobi taking a selfie on Mustafar, Anakin fuming in the lava behind — dithered render" data-gotham="img/batman-dither.png" data-gotham-alt="Batman — dithered render" alt="Raiden — Metal Gear Solid 2, dithered render">
+        <img src="img/ink-raiden.png" width="640" height="1016" fetchpriority="high" decoding="async" data-light="img/ink-raiden.png" data-codec="img/raiden-dither-green.png" data-starwars="img/obiwan-dither.png" data-starwars-alt="LEGO Obi-Wan Kenobi taking a selfie on Mustafar, Anakin fuming in the lava behind — dithered render" data-gotham="img/batman-dither.png" data-gotham-alt="Batman — dithered render" alt="Raiden — Metal Gear Solid 2 illustration by Yoji Shinkawa, dithered">
         <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars){i.dataset.baseAlt=i.alt;i.src=i.dataset.starwars;i.alt=i.dataset.starwarsAlt;}else if(t==='gotham'&&i.dataset.gotham){i.dataset.baseAlt=i.alt;i.src=i.dataset.gotham;i.alt=i.dataset.gothamAlt;}</script>
         <figcaption class="img-caption">codec visual · 140.85 · big shell</figcaption>
       </figure>
@@ -311,8 +311,8 @@
       <div class="projects-grid">
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="img/proj-vlm-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="img/proj-vlm-dither.png" data-codec="img/proj-vlm-codec.png" data-starwars="img/proj-vlm-sw.png" data-gotham="img/proj-vlm-gotham.png"
+            <img src="img/proj-vlm-ink.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-vlm-ink.png" data-codec="img/proj-vlm-codec.png" data-starwars="img/proj-vlm-sw.png" data-gotham="img/proj-vlm-gotham.png"
                  alt="Stylized dither plate: three camera-agent frustums linked by dashed arcs to a central hexagonal orchestrator holding symbolic query glyphs — placeholder art">
           </figure>
           <div class="project-head">
@@ -328,8 +328,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="img/proj-rl-isaaclab-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="img/proj-rl-isaaclab-dither.png" data-codec="img/proj-rl-isaaclab-codec.png" data-starwars="img/proj-rl-isaaclab-sw.png" data-gotham="img/proj-rl-isaaclab-gotham.png"
+            <img src="img/proj-rl-isaaclab-ink.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-rl-isaaclab-ink.png" data-codec="img/proj-rl-isaaclab-codec.png" data-starwars="img/proj-rl-isaaclab-sw.png" data-gotham="img/proj-rl-isaaclab-gotham.png"
                  alt="Stylized dither plate: articulated robot-leg linkage walking a tick-marked ground line with foot-swing arcs and a rising reward sparkline — placeholder art">
           </figure>
           <div class="project-head">
@@ -346,8 +346,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="img/proj-fft-denoise-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="img/proj-fft-denoise-dither.png" data-codec="img/proj-fft-denoise-codec.png" data-starwars="img/proj-fft-denoise-sw.png" data-gotham="img/proj-fft-denoise-gotham.png"
+            <img src="img/proj-fft-denoise-ink.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-fft-denoise-ink.png" data-codec="img/proj-fft-denoise-codec.png" data-starwars="img/proj-fft-denoise-sw.png" data-gotham="img/proj-fft-denoise-gotham.png"
                  alt="Stylized dither plate: noisy waveform passing through an encoder-decoder hourglass and emerging as a clean sine, FFT bars in the margin — placeholder art">
           </figure>
           <div class="project-head">
@@ -360,8 +360,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="img/proj-yolo-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="img/proj-yolo-dither.png" data-codec="img/proj-yolo-codec.png" data-starwars="img/proj-yolo-sw.png" data-gotham="img/proj-yolo-gotham.png"
+            <img src="img/proj-yolo-ink.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-yolo-ink.png" data-codec="img/proj-yolo-codec.png" data-starwars="img/proj-yolo-sw.png" data-gotham="img/proj-yolo-gotham.png"
                  alt="Stylized dither plate: two tracked objects in corner-bracket boxes with ID chips #03 and #07 and confidence tags, ghost boxes at past positions and dashed Kalman trajectory trails — placeholder art">
           </figure>
           <div class="project-head">
@@ -377,8 +377,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="img/proj-rl-compression-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="img/proj-rl-compression-dither.png" data-codec="img/proj-rl-compression-codec.png" data-starwars="img/proj-rl-compression-sw.png" data-gotham="img/proj-rl-compression-gotham.png"
+            <img src="img/proj-rl-compression-ink.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-rl-compression-ink.png" data-codec="img/proj-rl-compression-codec.png" data-starwars="img/proj-rl-compression-sw.png" data-gotham="img/proj-rl-compression-gotham.png"
                  alt="Stylized dither plate: dense weight grid funneled down to a sparse grid, with a reward-versus-size curve — placeholder art">
           </figure>
           <div class="project-head">
@@ -394,8 +394,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="img/proj-railway-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="img/proj-railway-dither.png" data-codec="img/proj-railway-codec.png" data-starwars="img/proj-railway-sw.png" data-gotham="img/proj-railway-gotham.png"
+            <img src="img/proj-railway-ink.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-railway-ink.png" data-codec="img/proj-railway-codec.png" data-starwars="img/proj-railway-sw.png" data-gotham="img/proj-railway-gotham.png"
                  alt="Stylized dither plate: perspective rail tracks with a turnout, signal mast, and a route graph above the horizon — placeholder art">
           </figure>
           <div class="project-head">
@@ -411,8 +411,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="img/proj-chemo-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="img/proj-chemo-dither.png" data-codec="img/proj-chemo-codec.png" data-starwars="img/proj-chemo-sw.png" data-gotham="img/proj-chemo-gotham.png"
+            <img src="img/proj-chemo-ink.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-chemo-ink.png" data-codec="img/proj-chemo-codec.png" data-starwars="img/proj-chemo-sw.png" data-gotham="img/proj-chemo-gotham.png"
                  alt="Stylized dither plate: patient-state sparkline and stacked transformer blocks with attention arcs feeding a rising dose-schedule curve of square dose points — placeholder art">
           </figure>
           <div class="project-head">
@@ -425,8 +425,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="img/proj-neon-grid-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="img/proj-neon-grid-dither.png" data-codec="img/proj-neon-grid-codec.png" data-starwars="img/proj-neon-grid-sw.png" data-gotham="img/proj-neon-grid-gotham.png"
+            <img src="img/proj-neon-grid-ink.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-neon-grid-ink.png" data-codec="img/proj-neon-grid-codec.png" data-starwars="img/proj-neon-grid-sw.png" data-gotham="img/proj-neon-grid-gotham.png"
                  alt="Stylized dither plate: first-person perspective down a city street of outlined ASCII towers with glyph windows and a vertical NEON sign — placeholder art">
           </figure>
           <div class="project-head">
@@ -443,8 +443,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="img/proj-chess-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="img/proj-chess-dither.png" data-codec="img/proj-chess-codec.png" data-starwars="img/proj-chess-sw.png" data-gotham="img/proj-chess-gotham.png"
+            <img src="img/proj-chess-ink.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-chess-ink.png" data-codec="img/proj-chess-codec.png" data-starwars="img/proj-chess-sw.png" data-gotham="img/proj-chess-gotham.png"
                  alt="Stylized dither plate: 5x5 chessboard with a knight move arrow, an MCTS search tree, and a GPU-vs-CPU steps-per-second curve — placeholder art">
           </figure>
           <div class="project-head">
@@ -460,8 +460,8 @@
         </article>
         <article class="project-card">
           <figure class="proj-thumb">
-            <img src="img/proj-poker-dither.png" width="640" height="360" loading="lazy" decoding="async"
-                 data-light="img/proj-poker-dither.png" data-codec="img/proj-poker-codec.png" data-starwars="img/proj-poker-sw.png" data-gotham="img/proj-poker-gotham.png"
+            <img src="img/proj-poker-ink.png" width="640" height="360" loading="lazy" decoding="async"
+                 data-light="img/proj-poker-ink.png" data-codec="img/proj-poker-codec.png" data-starwars="img/proj-poker-sw.png" data-gotham="img/proj-poker-gotham.png"
                  alt="Stylized dither plate: six-seat poker table with hole cards and pot, a masked action row, and a rising mbb-per-hand curve — placeholder art">
           </figure>
           <div class="project-head">
@@ -611,7 +611,7 @@
       <h2 class="section-title">Get in <span class="hl">touch</span></h2>
       <div class="codec-call">
         <div class="codec-portrait cc-left">
-          <img src="img/headshot-dither.png" width="200" height="200" loading="lazy" decoding="async" data-light="img/headshot-dither.png" data-codec="img/headshot-dither-green.png" data-starwars="img/headshot-starwars-dither.png" data-gotham="img/headshot-gotham-dither.png" alt="Hector Lugo">
+          <img src="img/headshot-ink.png" width="200" height="200" loading="lazy" decoding="async" data-light="img/headshot-ink.png" data-codec="img/headshot-dither-green.png" data-starwars="img/headshot-starwars-dither.png" data-gotham="img/headshot-gotham-dither.png" alt="Hector Lugo">
           <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars)i.src=i.dataset.starwars;else if(t==='gotham'&&i.dataset.gotham)i.src=i.dataset.gotham;</script>
           <span class="codec-name">HECTOR</span>
           <span class="codec-mhz">140.85</span>
@@ -622,7 +622,7 @@
           <span class="codec-status">▸ incoming transmission · 140.85</span>
         </div>
         <div class="codec-portrait cc-right">
-          <img src="img/cc-raiden-dither.png" width="260" height="260" loading="lazy" decoding="async" data-light="img/cc-raiden-dither.png" data-codec="img/cc-raiden-green.png" data-starwars="img/cc-quigon-dither.png" data-starwars-alt="Qui-Gon Jinn — LEGO minifigure, dithered render" data-gotham="img/cc-nightwing-dither.png" data-gotham-alt="Nightwing" alt="Raiden">
+          <img src="img/cc-raiden-ink.png" width="260" height="260" loading="lazy" decoding="async" data-light="img/cc-raiden-ink.png" data-codec="img/cc-raiden-green.png" data-starwars="img/cc-quigon-dither.png" data-starwars-alt="Qui-Gon Jinn — LEGO minifigure, dithered render" data-gotham="img/cc-nightwing-dither.png" data-gotham-alt="Nightwing" alt="Raiden">
           <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars){i.dataset.baseAlt=i.alt;i.src=i.dataset.starwars;i.alt=i.dataset.starwarsAlt;}else if(t==='gotham'&&i.dataset.gotham){i.dataset.baseAlt=i.alt;i.src=i.dataset.gotham;i.alt=i.dataset.gothamAlt;}</script>
           <span class="codec-name">RAIDEN</span>
           <span class="codec-mhz">140.85</span>
@@ -661,7 +661,7 @@
 
   <footer>
     <div class="container footer-content">
-      <p>© 2026 Hector Lugo · frequency 140.85</p>
+      <p>© 2026 Hector Lugo · frequency 140.85<span class="art-credit"> · illustrations: Yoji Shinkawa</span></p>
       <!-- Touch-reachable launcher for the hidden stealth mini-game (Konami code still works on keyboards) -->
       <button type="button" class="codec-launch" id="codec-launch" data-tip="&#8593; &#8593; &#8595; &#8595; &#8592; &#8594; &#8592; &#8594; B A" aria-label="CODEC 140.85 — launch the codec infiltration mini-game. Keyboard: up, up, down, down, left, right, left, right, B, A.">CODEC 140.85</button>
       <div class="footer-social">

@@ -96,7 +96,7 @@ if (hyperjumpEl) hyperjumpEl.addEventListener('animationend', (e) => {
 // icon/label here must mirror the static picker markup in index.html
 // (icons are sprite symbol ids — see the inline <svg> sprite at body top)
 const THEME_META = {
-    light:    { label: 'ink',     icon: 'i-pen-nib',         color: '#eaf0fb' },
+    light:    { label: 'ink',     icon: 'i-pen-nib',         color: '#e9e7e2' },
     codec:    { label: 'codec',   icon: 'i-tower-broadcast', color: '#081209' },
     starwars: { label: 'holonet', icon: 'i-satellite-dish',  color: '#060a12' }, // color = starwars --bg (style.css)
     gotham:   { label: 'gotham',  icon: 'i-city',            color: '#0b0c0e' }, // color = gotham --bg (style.css)

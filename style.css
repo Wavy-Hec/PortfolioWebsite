@@ -1,6 +1,6 @@
 /* Fonts are loaded from index.html <head> with preconnect (faster first paint). */
 
-/* ===== Hermes-inspired theme — light, pale-blue editorial ===== */
+/* ===== Ink / Big Shell (default) — light, pale-blue editorial with the Big Shell on the horizon ===== */
 :root {
   --bg: #eaf0fb;
   --bg-2: #e2e9f7;
@@ -2410,3 +2410,155 @@ html[data-theme="gotham"] .codec-launch { font-family: var(--gt-deco); letter-sp
   /* Résumé button is duplicated in the hero; reclaim header space on small screens */
   .header-actions .btn { display: none; }
 }
+
+/* ===== Big Shell horizon (default theme) — one dithered render of Shell 1 from
+   the air (img/bigshell-dither.png, same ink-on-white language as the portraits),
+   fixed along the bottom of the viewport as a watermark. Painted once; the
+   mask fades it in from the top so text scrolling over it stays readable. ===== */
+html:not([data-theme]) .atmo::before {
+  content: '';
+  top: auto; bottom: 0;
+  height: 33.34vw;                                   /* image is 3:1 — no distortion */
+  max-height: 60vh;
+  background: url(img/bigshell-dither.png) center bottom / 100% auto no-repeat;
+  opacity: .62;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 45%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 45%);
+}
+
+/* ===== Ink (default theme) — Shinkawa's page ==================================
+   Paper, sumi black, one red. The MGS2 illustrations (Yoji Shinkawa / Konami,
+   fan homage) are processed into the site's dither language: ink on transparent
+   paper, red kept only where the painting has it (the petals). Every art layer
+   is a static PNG painted once; nothing here animates. ============================ */
+html:not([data-theme]) {
+  --bg: #e9e7e2;
+  --bg-2: #dedbd4;
+  --panel: #f6f5f1;
+  --panel-2: #ece9e3;
+  --ink: #141416;
+  --ink-strong: #000000;
+  --text: #2f3236;
+  --text-dim: #55585d;
+  --text-muted: #5c6066;
+  --border: #cfcbc2;
+  --border-strong: #9d988d;
+  --input-border: #6f6a60;
+  --highlight: #c9333a;
+  --shadow-lift: 0 10px 28px rgba(0, 0, 0, .10);
+  --wash: #f3f1ec;
+  --grid-line: rgba(20, 20, 22, .04);
+  --on-accent: #f6f5f1;
+  --accent-tint: rgba(201, 51, 58, .08);
+  --band: rgba(246, 245, 241, .7);
+  --codec-band: rgba(226, 223, 216, .72);   /* the contact band, paper not cyan */
+  --scanline: rgba(20, 20, 22, .05);
+  --scanline-soft: rgba(20, 20, 22, .035);
+  --header-bg: rgba(233, 231, 226, .85);
+  --header-bg-solid: rgba(233, 231, 226, .98);
+  --error: #c9333a;
+  --radius: 2px;
+  --radius-sm: 2px;
+  --red: #c9333a;
+}
+/* paper, not blueprint: no grid, just a whisper of grain from the noise field */
+html:not([data-theme]) .grain { background-image: none; }
+html:not([data-theme]) #dither-bg { opacity: .16; }
+html:not([data-theme]) .scroll-progress { background: var(--red); }
+html:not([data-theme]) .atmo::before { opacity: .15; }           /* the Big Shell aerial, re-inked, kept faint */
+
+/* --- Hero: the headline lives in a black band that crosses behind the figure,
+       the Snake & Raiden key-art device. The painting sits above the band. --- */
+html:not([data-theme]) .home-content h1 {
+  position: relative;
+  z-index: 0;
+  color: #f3f1ea;
+  padding: .12em 0;
+}
+html:not([data-theme]) .home-content h1::before {
+  content: '';
+  position: absolute;
+  top: -.06em; bottom: -.06em;
+  left: -100vw; right: -100vw;
+  background: #0d0d10;
+  z-index: -1;
+}
+html:not([data-theme]) .home-content h1 .hl { color: #e04a52; }
+html:not([data-theme]) .home-img { position: relative; z-index: 1; }
+html:not([data-theme]) .home-img img {
+  width: 460px;
+  max-width: 44vw;
+  max-height: 640px;
+  background: none;
+  border: 0;
+  padding: 0;
+  border-radius: 0;
+}
+html:not([data-theme]) .img-caption { color: var(--text-muted); }
+
+/* --- Section rules: a brush streak from the slash painting --- */
+html:not([data-theme]) .section-title::after {
+  width: 220px;
+  height: 18px;
+  margin-top: 1.4rem;
+  background: url(img/ink-brush-rule.png) left center / auto 100% no-repeat;   /* the sword line from the slash painting */
+  opacity: .95;
+}
+
+/* --- Ink figures behind sections (static, decorative, under the content) --- */
+html:not([data-theme]) .about,
+html:not([data-theme]) .projects,
+html:not([data-theme]) .contact { position: relative; }
+html:not([data-theme]) .about > .container,
+html:not([data-theme]) .projects > .container,
+html:not([data-theme]) .contact > .container { position: relative; z-index: 1; }
+html:not([data-theme]) .about::before,
+html:not([data-theme]) .projects::before,
+html:not([data-theme]) .contact::before {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: contain;
+  z-index: 0;
+}
+html:not([data-theme]) .about::before {                 /* Raiden, Snake sketched behind him */
+  right: 3%; top: 5rem;
+  width: min(36vw, 480px); height: min(50vw, 680px);
+  background-image: url(img/ink-raiden-snake.png);
+  background-position: right top;
+  opacity: .30;
+}
+html:not([data-theme]) .projects::before {              /* the slash, off the left edge */
+  left: -4%; top: 2rem;
+  width: min(34vw, 460px); height: min(48vw, 660px);
+  background-image: url(img/ink-slash.png);
+  background-position: left top;
+  opacity: .16;
+}
+html:not([data-theme]) .contact::before {               /* two figures, one channel */
+  right: 4%; top: 3rem;
+  width: min(30vw, 400px); height: min(42vw, 560px);
+  background-image: url(img/ink-band-figures.png);
+  background-position: right top;
+  opacity: .22;
+}
+@media (max-width: 992px) {
+  html:not([data-theme]) .about::before,
+  html:not([data-theme]) .projects::before,
+  html:not([data-theme]) .contact::before { opacity: .12; }
+}
+
+/* --- Components in ink --- */
+html:not([data-theme]) .btn:hover,
+html:not([data-theme]) .btn:focus-visible { background: var(--red); border-color: var(--red); }
+html:not([data-theme]) .btn-outline:hover { background: transparent; color: var(--ink-strong); border-color: var(--ink-strong); }
+html:not([data-theme]) .timeline-item::before { background: var(--red); }
+html:not([data-theme]) .project-card::before,
+html:not([data-theme]) .project-card::after { border-color: var(--ink); }
+html:not([data-theme]) nav a::after { background: var(--red); }
+html:not([data-theme]) .theme-picker [role="radio"]:hover { color: var(--red); }
+
+/* art credit — shown only where the illustrations are */
+.art-credit { display: none; }
+html:not([data-theme]) .art-credit { display: inline; }
