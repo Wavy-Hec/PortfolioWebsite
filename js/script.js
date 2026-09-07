@@ -172,7 +172,7 @@ function applyTheme(name) {
         heroCaption.textContent =
             name === 'gotham'   ? 'case file no. 27 · gotham archives'    // Detective Comics #27 — Batman's debut
           : name === 'starwars' ? 'holo capture · mustafar · high ground secured'
-          :                       'codec visual · 140.85 · big shell';
+          :                       'raiden · yoji shinkawa · 140.85';
     }
     const cc = CC_TEXT[name];
     const ccRightName = document.querySelector('.cc-right .codec-name');
