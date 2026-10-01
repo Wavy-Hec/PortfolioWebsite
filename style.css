@@ -798,15 +798,6 @@ section { padding: 10rem 6%; position: relative; }
   letter-spacing: 1px;
   color: var(--text-muted);
 }
-.lab-affiliation {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 2rem;
-  margin-top: 2rem;
-}
-.lab-affiliation .lab-label { font-family: 'Share Tech Mono', monospace; color: var(--ink); font-size: 1.35rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: .8rem; }
-.lab-affiliation p { font-size: 1.5rem; color: var(--text-dim); }
 .lab-link { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 .lab-link:hover { color: var(--ink-strong); }
 .about-stats { display: flex; flex-direction: column; gap: 1.4rem; }
