@@ -52,11 +52,11 @@
   const PALE  = a => `rgba(236,224,200,${a})`;  // pale warm searchlight
 
   // --- render mode, selected by theme ---
-  const MODE_LABEL = { soliton: 'SOLITON', targeting: 'TARGETING', signal: 'GCPD SIGNAL' };
+  const MODE_LABEL = { soliton: 'SOLITON', mgs1: 'SOLITON', targeting: 'TARGETING', signal: 'GCPD SIGNAL' };
   let mode = 'soliton';
   function applyMode() {
     const t = document.documentElement.dataset.theme;
-    mode = t === 'starwars' ? 'targeting' : t === 'gotham' ? 'signal' : 'soliton';
+    mode = t === 'starwars' ? 'targeting' : t === 'gotham' ? 'signal' : t === 'codec' ? 'mgs1' : 'soliton';
     label.textContent = MODE_LABEL[mode];
     readInk();
     draw(0); // instant repaint on switch; also the static frame under reduced motion
@@ -259,6 +259,36 @@
       if (!REDUCED) b.a += b.spd * dt * 0.001;
       blipDot(Math.cos(b.a) * b.r * (R - 9), Math.sin(b.a) * b.r * (R - 9));
     }
+  }
+
+  // --- MGS1 Soliton radar (codec): the 1998 rectangular scope — grid, the
+  // room's walls, two patrols with vision cones, you at centre facing the cursor ---
+  const M_W = 118, M_H = 78;
+  const M_WALLS = [[-52, -32, 22, 12], [-14, -32, 30, 10], [26, -32, 22, 12], [-52, -4, 18, 10], [-8, -8, 16, 16], [24, -4, 22, 10], [-52, 16, 22, 12], [-14, 20, 30, 10], [26, 16, 22, 12]];
+  const M_PATROLS = [{ x0: -44, x1: 44, y: -18, t: 0.2, spd: 0.00014, dir: 1 }, { x0: -44, x1: 44, y: 12, t: 0.7, spd: 0.00011, dir: -1 }];
+  function drawMgs1(dt) {
+    const x0 = -M_W / 2, y0 = -M_H / 2;
+    ctx.fillStyle = rgba(0.06); ctx.fillRect(x0, y0, M_W, M_H);
+    ctx.strokeStyle = rgba(0.12); ctx.lineWidth = 1; ctx.beginPath();
+    for (let gx = x0 + 12; gx < x0 + M_W; gx += 12) { ctx.moveTo(gx + .5, y0); ctx.lineTo(gx + .5, y0 + M_H); }
+    for (let gy = y0 + 12; gy < y0 + M_H; gy += 12) { ctx.moveTo(x0, gy + .5); ctx.lineTo(x0 + M_W, gy + .5); }
+    ctx.stroke();
+    ctx.fillStyle = rgba(0.28);
+    for (const w of M_WALLS) ctx.fillRect(w[0], w[1], w[2], w[3]);
+    for (const p of M_PATROLS) {
+      if (!REDUCED) { p.t += dt * p.spd; if (p.t >= 1) { p.t = 0; p.dir *= -1; } }
+      const u = p.dir > 0 ? p.t : 1 - p.t;
+      const px = p.x0 + (p.x1 - p.x0) * u, py = p.y, ang = p.dir > 0 ? 0 : Math.PI;
+      ctx.fillStyle = 'rgba(224,96,109,0.22)';
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.arc(px, py, 26, ang - 0.5, ang + 0.5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(224,96,109,0.9)'; ctx.fillRect(px - 1.5, py - 1.5, 3, 3);
+    }
+    const fa = Math.atan2(my, mx);
+    ctx.strokeStyle = rgba(0.9); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(fa) * 7, Math.sin(fa) * 7); ctx.stroke();
+    ctx.fillStyle = rgba(0.95); ctx.beginPath(); ctx.arc(0, 0, 2.4, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = rgba(0.55); ctx.lineWidth = 1; ctx.strokeRect(x0 + .5, y0 + .5, M_W - 1, M_H - 1);
+    ctx.strokeStyle = rgba(0.18); ctx.lineWidth = 3; ctx.strokeRect(x0 - 2.5, y0 - 2.5, M_W + 5, M_H + 5);
   }
 
   function drawTargeting(dt) {
@@ -467,6 +497,7 @@
     ctx.save();
     ctx.translate(R, R);
     if (mode === 'targeting') drawTargeting(dt);
+    else if (mode === 'mgs1') drawMgs1(dt);
     else if (mode === 'signal') drawSignal(dt);
     else drawSoliton(dt);
     ctx.restore();

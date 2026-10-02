@@ -25,78 +25,117 @@
   var RUN_NOISE_R = 96, KNOCK_R = 150, NOISE_INT = 0.3, KNOCK_CD = 1.1;
   var CQC_R = 24, CQC_REAR = 2.4, CQC_CD = 0.8, PICKUP_R = 15, EXIT_R = 16;
 
-  /* ---- palette (scene stays codec-green; sprites carry color).
-     Tied to the site codec theme: --ink #6fcf83, --ink-strong #a4ecb1,
-     --border-strong #386041, --error #e0606d. ---- */
+  /* ---- palette (scene stays codec mint-on-steel; sprites carry color).
+     MGS1 / Shadow Moses: mint sampled from Snake's 1998 codec portrait —
+     --ink #77d2a6, --ink-strong #b4ecd0, --error #e0606d. ---- */
   var C = {
-    bg: '#07140b', panel: '#0c2114',
-    floorA: '#0a1a0e', floorB: '#0d2012',            // checker pair (~4 steps apart — visible)
-    floorDot: 'rgba(111,207,131,0.06)',              // dither dots
-    grid: 'rgba(111,207,131,0.04)',
-    wallFace: '#1b402a', wallTop: '#2f6a40',         // lit top face
-    wallRim: '#5fae74',                              // 1px top rim highlight
-    wallFront: '#12301d',                            // south "front face" (2.5D height)
-    wallSide: '#0c2013',                             // shaded right edge
-    wallEdge: '#3f7a4f', wallShadow: 'rgba(0,0,0,0.4)',
-    green: '#6fcf83', bright: '#a4ecb1', dim: '#4f8a5e',
+    bg: '#071612', panel: '#0f2220',
+    floorA: '#0b1f19', floorB: '#0e2822',            // checker pair (~4 steps apart — visible)
+    floorDot: 'rgba(119,210,166,0.06)',              // dither dots
+    grid: 'rgba(119,210,166,0.04)',
+    wallFace: '#1b3f34', wallTop: '#2f6e58',         // lit top face
+    wallRim: '#5fbf95',                              // 1px top rim highlight
+    wallFront: '#12302a',                            // south "front face" (2.5D height)
+    wallSide: '#0c211c',                             // shaded right edge
+    wallEdge: '#3f8a6e', wallShadow: 'rgba(0,0,0,0.4)',
+    green: '#77d2a6', bright: '#b4ecd0', dim: '#4f8f7a',
     amber: '#e0c25a', amberHi: '#f0d98c',
     red: '#e0606d', redHi: '#ef8f98'
   };
+  /* per-op floor identity (baked once in buildBg — zero per-frame cost):
+     small hue offsets on the checker pair, everything stays in the mint family */
+  var FLOORS = {
+    heliport: { a: '#10261f', b: '#142e27' },   // snow-dusted concrete — lighter, cooler
+    hangar: { a: '#0b1f19', b: '#0e2822' },     // base slab
+    nuke: { a: '#0a1d1c', b: '#0d2624' }        // composite panels — a touch bluer
+  };
 
-  /* ---- pixel sprites (12x12 grids; '.' transparent). Drawn rotated to face;
-     sprites face UP pre-rotation (existing convention: facing + PI/2). --- */
-  // player — gun muzzle forward (bright W tip reads direction instantly) + bandana tails (T)
+  /* ---- pixel sprites (16x16 grids = one tile tall at SCALE 2; '.' transparent).
+     Drawn rotated to face; sprites face UP pre-rotation (facing + PI/2).
+     Read top-down: weapon forward (row 0 = muzzle, the brightest W pixel, so
+     facing reads instantly), then head, shoulders, torso, legs. Symmetric
+     about the column 7|8 seam except the bandana tails. Letters:
+     K internal edge · S suit · B suit shade · G hair/helmet · g gunmetal ·
+     H skin · W muzzle · N bandana · T bandana tail · V visor. ---- */
+  // Solid Snake — sneaking suit in the mint tones, bandana band across the
+  // crown with two trailing tail pixels per side, pistol held two-handed forward
   var PLAYER = [
-    '.....NN.....',
-    '.....nn.....',
-    '....KGGK....',
-    '...KGHHGK...',
-    '..T.KHHK.T..',
-    '..KSSHHSSK..',
-    '..KSSBBSSK..',
-    '..KSSBBSSK..',
-    '..KSSWWSSK..',
-    '...KSSSSK...',
-    '...KS..SK...',
-    '....K..K....'
+    '.......WW.......',
+    '.......gg.......',
+    '.......gg.......',
+    '......KggK......',
+    '......HggH......',
+    '.....HHHHHH.....',
+    '....SSSHHSSS....',
+    '...SSSKNNKSSS...',
+    '...SSKNNNNKSS...',
+    '...SSKGGGGKSS...',
+    '...SSKGGGGKSS...',
+    '..T.SBKGGKBS.T..',
+    '.T.SSSBKKBSSS.T.',
+    '...SSSBBBBSSS...',
+    '...SBB....BBS...',
+    '....BB....BB....'
   ];
-  // guard — helmet + bright visor band (V, the facing cue), lit red when hostile
+  // Genome soldier — helmet dome with a bright visor band (V, the facing cue),
+  // rifle forward, broad armored shoulders; lit red when hostile
   var GUARD = [
-    '............',
-    '....KGGK....',
-    '...KGGGGK...',
-    '...KVVVVK...',
-    '...KHBBHK...',
-    '..KSSBBSSK..',
-    '..KSSSSSSK..',
-    '..KSSWWSSK..',
-    '..KSSSSSSK..',
-    '...KSSSSK...',
-    '...KS..SK...',
-    '....K..K....'
+    '.......WW.......',
+    '.......gg.......',
+    '.......gg.......',
+    '......KggK......',
+    '.....HHggHH.....',
+    '.....SSggSS.....',
+    '....SSSKKSSS....',
+    '..SSSSKVVKSSSS..',
+    '..SSSKVVVVKSSS..',
+    '..SSSKGGGGKSSS..',
+    '..SSSKGGGGKSSS..',
+    '...SSBKGGKBSS...',
+    '...SSBBKKBBSS...',
+    '...SSSBBBBSSS...',
+    '...SBB....BBS...',
+    '....BB....BB....'
   ];
+  // cardboard box from above: lit top edge, centre lid seam, taped corner
+  // tabs (W), shaded right/bottom (D), a label line + a stamped print mark
   var BOX = [
-    '............',
-    '.KKKKKKKKKK.',
-    '.KWBBBBBBWK.',
-    '.KBBBBBBBBK.',
-    '.KBBBKKBBBK.',
-    '.KBBBKKBBBK.',
-    '.KBBBBBBBBK.',
-    '.KBBBBBBBBK.',
-    '.KWBBBBBBWK.',
-    '.KKKKKKKKKK.',
-    '............',
-    '............'
+    '................',
+    '.KKKKKKKKKKKKKK.',
+    '.KWWWWWWKWWWWWK.',
+    '.KWWBBBBKBBBWWK.',
+    '.KBBBBBBKBBBBDK.',
+    '.KBBDDBBKBBBBDK.',
+    '.KBBBBBBKBBBBDK.',
+    '.KBBBBBBKBBBBDK.',
+    '.KBBBBBBKBBBBDK.',
+    '.KBBBBBBKBDDBDK.',
+    '.KBBBBBBKBDDBDK.',
+    '.KBBBBBBKBBBBDK.',
+    '.KWWBBBBKBBBWWK.',
+    '.KWWDDDDKDDDWWK.',
+    '.KKKKKKKKKKKKKK.',
+    '................'
   ];
-  // frame B of the 2-frame walk cycle (legs passing) — rows 10–11 swapped
-  var WALK_B_ROWS = ['....KSSK....', '.....KK.....'];
-  var PLAYER_B = PLAYER.slice(0, 10).concat(WALK_B_ROWS);
-  var GUARD_B = GUARD.slice(0, 10).concat(WALK_B_ROWS);
-  var PAL_PLAYER = { K: '#06100a', S: '#4f9a64', H: '#cda678', B: '#22351f', G: '#222222', W: '#c2f7cf', N: '#a4ecb1', n: '#4f8a5e', T: '#9fe3b0' };
-  var PAL_GUARD = { K: '#06100a', S: '#7c6a3d', H: '#cda678', B: '#39331e', G: '#222222', W: '#cbb878', V: '#e6d9a0' };
-  var PAL_GUARD_RED = { K: '#160707', S: '#b0463f', H: '#cda678', B: '#5a1d1a', G: '#222222', W: '#e89089', V: '#ffb9b0' };
-  var PAL_BOX = { K: '#3a2a14', B: '#9c7a44', W: '#c8a86a' };
+  // intel keycard (8x6): amber body, lighter top stripe, bright contact notch
+  // (W) and a 1px darker slot — replaces the old rotating square
+  var KEYCARD = [
+    '.AAAAAA.',
+    'ALLLLLWA',
+    'AAAAAAAA',
+    'AAAAAAAA',
+    'ADDAAAAA',
+    '.AAAAAA.'
+  ];
+  // frame B of the 2-frame walk cycle (legs passing) — rows 14–15 swapped
+  var WALK_B_ROWS = ['....KSBKKBSK....', '.....KK..KK.....'];
+  var PLAYER_B = PLAYER.slice(0, 14).concat(WALK_B_ROWS);
+  var GUARD_B = GUARD.slice(0, 14).concat(WALK_B_ROWS);
+  var PAL_PLAYER = { K: '#06100a', S: '#4f9a7c', H: '#cda678', B: '#2c5a46', G: '#1c1f1c', g: '#5f7470', W: '#c2f7e0', N: '#b4ecd0', T: '#9fe3c4' };
+  var PAL_GUARD = { K: '#06100a', S: '#7c6a3d', H: '#cda678', B: '#4d4326', G: '#353a28', g: '#6b6f62', W: '#cbb878', V: '#e6d9a0' };
+  var PAL_GUARD_RED = { K: '#160707', S: '#b0463f', H: '#cda678', B: '#6e2a26', G: '#3e1f1f', g: '#7a4a48', W: '#e89089', V: '#ffb9b0' };
+  var PAL_BOX = { K: '#3a2a14', B: '#9c7a44', W: '#c8a86a', D: '#775b30' };
+  var PAL_KEY = { A: '#e0c25a', L: '#f0d98c', W: '#fff6d0', D: '#8a6f24' };
 
   /* ---- pre-rendered sprite canvases (crisp pixels + 1px outline; built once).
      Player gets a faint bright outline (hero pop); guards a dark one (grounded). ---- */
@@ -119,20 +158,23 @@
     return cv;
   }
   function buildSprites() {
-    var pOut = 'rgba(164,236,177,0.35)', gOut = 'rgba(3,10,6,0.9)';
+    var pOut = 'rgba(180,236,208,0.35)', gOut = 'rgba(3,10,6,0.9)';
     SPR = {
       player: [makeSprite(PLAYER, PAL_PLAYER, pOut), makeSprite(PLAYER_B, PAL_PLAYER, pOut)],
       guard: [makeSprite(GUARD, PAL_GUARD, gOut), makeSprite(GUARD_B, PAL_GUARD, gOut)],
       guardRed: [makeSprite(GUARD, PAL_GUARD_RED, gOut), makeSprite(GUARD_B, PAL_GUARD_RED, gOut)],
-      box: makeSprite(BOX, PAL_BOX, 'rgba(0,0,0,0.5)')
+      box: makeSprite(BOX, PAL_BOX, 'rgba(0,0,0,0.5)'),
+      key: makeSprite(KEYCARD, PAL_KEY, 'rgba(6,16,10,0.8)')
     };
   }
 
-  /* ---- levels: maps 20x12 ('#' wall / '.' floor). Tile coords [col,row]. ---- */
+  /* ---- levels: maps 20x12 ('#' wall / '.' floor). Tile coords [col,row].
+     Shadow Moses ops — floor: buildBg() identity key; freq: codec frequency shown
+     in the briefing caller line. Maps/paths/speeds are the gameplay and stay put. ---- */
   var LEVELS = [
     {
-      name: 'TANKER — DECK', caller: 'COLONEL',
-      brief: 'Grab the intel and reach the EXIT. One guard on patrol. If you are spotted the deck goes to ALERT — break line of sight and lie low to slip away.',
+      name: 'HELIPORT', caller: 'CAMPBELL', freq: '140.85', floor: 'heliport',
+      brief: 'Snow on the heliport. Grab the intel and reach the EXIT. One sentry on patrol. If you are spotted the pad goes to ALERT — break line of sight and lie low to slip away.',
       map: ['####################', '#..................#', '#..####....####....#', '#..####....####....#',
         '#..................#', '#.......####.......#', '#.......####.......#', '#..................#',
         '#..####....####....#', '#..####....####....#', '#..................#', '####################'],
@@ -140,8 +182,8 @@
       guards: [{ path: [[2, 4], [17, 4]], speed: 70, fov: 1.05, range: 150 }], cameras: []
     },
     {
-      name: 'PLANT — STRUTS', caller: 'OTACON',
-      brief: 'Two patrols, opposite directions. Use the struts to break their sightlines. Try running — it is faster but the noise draws them. Hold still in a box if you must.',
+      name: 'TANK HANGAR', caller: 'OTACON', freq: '141.12', floor: 'hangar',
+      brief: 'Two patrols, opposite directions. Use the tank bays to break their sightlines. Try running — it is faster but the noise draws them. Hold still in a box if you must.',
       map: ['####################', '#..................#', '#..##..##..##..##..#', '#..##..##..##..##..#',
         '#..................#', '#..................#', '#..##..##..##..##..#', '#..##..##..##..##..#',
         '#..................#', '#..................#', '#..................#', '####################'],
@@ -150,8 +192,8 @@
         { path: [[17, 8], [2, 8]], speed: 82, fov: 1.13, range: 160, offset: 0.5 }], cameras: []
     },
     {
-      name: 'BIG SHELL — CORE', caller: 'COLONEL',
-      brief: 'Three patrols and a security camera over the door. Knock a wall to lure a guard off his route, or slip behind one for a CQC takedown. Then get the intel and run.',
+      name: 'NUKE BUILDING B1', caller: 'MEI LING', freq: '140.96', floor: 'nuke',
+      brief: 'Three patrols and a camera over the blast door. Knock a wall to lure a guard off his route, or slip behind one for a CQC takedown. Then take the intel and run.',
       map: ['####################', '#..................#', '#..##..####..##....#', '#..##..####..##....#',
         '#..................#', '#....####..####....#', '#....####..####....#', '#..................#',
         '#..##..####..##....#', '#..##..####..##....#', '#..................#', '####################'],
@@ -172,11 +214,11 @@
      inline for starwars/gotham. Alarm/caution reds+ambers stay literal in the
      stylesheet — a red alert reads as a red alert in every theme. ---- */
   var CHROME = {
-    // ink + codec — the existing codec-green chrome, byte-for-byte
+    // ink + codec — Shadow Moses mint-on-steel chrome
     codec: {
-      bg: '#07140b', panel: '#0c2114', line: '#1b402a', edge: '#3f7a4f', border: '#386041',
-      text: '#6fcf83', hi: '#a4ecb1', dim: '#4f8a5e', glow: '111,207,131', hglow: '164,236,177',
-      shade: '4,12,6', pad: '14,29,19', veil: 'rgba(3,8,4,0.92)', toastbg: 'rgba(3,10,5,.82)'
+      bg: '#071612', panel: '#0f2220', line: '#1d3a33', edge: '#3a6b5c', border: '#2e5a4c',
+      text: '#77d2a6', hi: '#b4ecd0', dim: '#5f8f7c', glow: '119,210,166', hglow: '180,236,208',
+      shade: '4,14,11', pad: '15,34,32', veil: 'rgba(3,10,8,0.92)', toastbg: 'rgba(3,12,9,.82)'
     },
     // holonet — hologram blue on dark glass (site --sw-holo #4aa8ff family)
     starwars: {
@@ -274,19 +316,82 @@
     + '.mgsg-stage{aspect-ratio:' + W + '/' + H + ';}'
     + '.mgsg-canvas{position:absolute;inset:0;height:100%;object-fit:contain;}'
     + '}'
+    /* overflow:hidden — a tall codec call can never paint over the HUD/footer
+       (the phone block below turns it into a scroll instead) */
     + '.mgsg-screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;'
-    + 'text-align:center;gap:12px;padding:24px;backdrop-filter:blur(1px);'
+    + 'text-align:center;gap:12px;padding:24px;overflow:hidden;backdrop-filter:blur(1px);'
     + 'opacity:0;visibility:hidden;transform:translateY(6px);'
     + 'transition:opacity .22s ease,transform .22s ease,visibility .22s;'
     + 'background:linear-gradient(rgba(var(--mg-shade),.93),rgba(var(--mg-shade),.86) 30%,rgba(var(--mg-shade),.86) 70%,rgba(var(--mg-shade),.95));}'
-    + '.mgsg-screen.show{opacity:1;visibility:visible;transform:none;}'
+    /* codec wipe: every screen opens from a horizontal beam (clip-path, compositor-only) */
+    + '.mgsg-screen.show{opacity:1;visibility:visible;transform:none;animation:mgsgWipe .25s ease-out 1;}'
+    + '.mgsg-beam{position:absolute;left:0;right:0;top:50%;height:1px;background:var(--mg-hi);opacity:0;pointer-events:none;'
+    + 'box-shadow:0 0 8px rgba(var(--mg-hglow),.8);}'
+    + '.mgsg-screen.show .mgsg-beam{animation:mgsgBeam .3s ease-out 1;}'
     + '.mgsg-screen h2{font-size:clamp(20px,4.4vw,32px);color:var(--mg-hi);letter-spacing:3px;margin:0;'
     + 'text-shadow:0 0 12px rgba(var(--mg-hglow),.45),0 0 2px rgba(var(--mg-hglow),.8);}'
-    /* title logotype — double-rule plate + hard drop shadow */
-    + '.mgsg-screen.title h2{font-size:clamp(30px,7vw,52px);letter-spacing:8px;padding:10px 18px;'
-    + 'border-top:3px double var(--mg-border);border-bottom:3px double var(--mg-border);'
-    + 'text-shadow:3px 3px 0 rgba(var(--mg-shade),.9),0 0 22px rgba(var(--mg-glow),.35),0 0 2px rgba(var(--mg-hglow),.9);}'
-    + '.mgsg-screen .caller{color:' + C.amber + ';font-size:12px;letter-spacing:3px;}'
+    /* logotype — condensed MGS treatment: bold, tall (scaleY), stacked chrome shadow */
+    + '.mgsg-screen.title h2,.mgsg-screen .rank{font-weight:700;letter-spacing:4px;transform:scaleY(1.28);transform-origin:50% 100%;'
+    + 'text-shadow:0 1px 0 rgba(var(--mg-hglow),.9),0 2px 0 rgba(var(--mg-glow),.55),0 3px 0 rgba(var(--mg-shade),.9),'
+    + '3px 4px 0 rgba(var(--mg-shade),.85),0 0 22px rgba(var(--mg-glow),.35);}'
+    /* scaleY from the bottom edge grows the plate upward — reserve that room so
+       the double rule never crosses the kicker above it */
+    + '.mgsg-screen.title h2{font-size:clamp(30px,7vw,52px);padding:8px 18px 12px;margin-top:.55em;'
+    + 'border-top:3px double var(--mg-border);border-bottom:3px double var(--mg-border);}'
+    /* caller line as a small kicker */
+    + '.mgsg-screen .caller{color:' + C.amber + ';font-size:10px;letter-spacing:6px;text-transform:uppercase;}'
+    /* codec call layout (title + briefing): portrait | wave + frequency strip | portrait */
+    + '.mgsg-call{display:none;grid-template-columns:96px minmax(120px,1fr) 96px;align-items:center;gap:14px;width:min(100%,520px);}'
+    + '.mgsg-screen.title .mgsg-call,.mgsg-screen.brief .mgsg-call{display:grid;}'
+    + '.mgsg-port{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;}'
+    + '.mgsg-port .px{position:relative;width:96px;height:96px;border:1px solid var(--mg-edge);background:var(--mg-panel);overflow:hidden;'
+    + 'box-shadow:0 0 0 1px rgba(var(--mg-shade),.8),0 0 14px rgba(var(--mg-glow),.12);}'
+    + '.mgsg-port .px img{display:block;width:100%;height:100%;object-fit:cover;}'
+    + '.mgsg-port .px>span{display:none;}.mgsg-port .px.noimg img{display:none;}'
+    /* inset scanlines over every portrait (pseudo-element, compositor-only) */
+    + '.mgsg-port .px::after{content:"";position:absolute;inset:0;pointer-events:none;'
+    + 'background:repeating-linear-gradient(0deg,rgba(0,0,0,.28) 0 1px,transparent 1px 3px),'
+    + 'linear-gradient(rgba(var(--mg-glow),.06),transparent 40%,rgba(var(--mg-shade),.35));}'
+    /* NO IMAGE — codec static for callers without a portrait */
+    + '.mgsg-port .px.noimg{background:repeating-linear-gradient(90deg,rgba(var(--mg-glow),.10) 0 1px,transparent 1px 3px),'
+    + 'repeating-linear-gradient(0deg,rgba(var(--mg-glow),.16) 0 2px,transparent 2px 5px),'
+    + 'repeating-linear-gradient(37deg,rgba(var(--mg-shade),.6) 0 3px,transparent 3px 9px),var(--mg-panel);'
+    /* the static crawls: background-position steps at ~8 fps (steps(6) over .75s);
+       compositor-cheap, and reduced motion keeps the still frame */
+    + 'animation:mgsgStatic .75s steps(6) infinite;}'
+    + '.mgsg-port .px.noimg span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;'
+    + 'font-size:9px;letter-spacing:2px;color:var(--mg-dim);text-shadow:0 0 6px rgba(var(--mg-shade),1);}'
+    + '.mgsg-port .who{font-size:8px;letter-spacing:2px;color:var(--mg-dim);}'
+    + '.mgsg-cc{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;}'
+    + '.mgsg-fstrip{position:relative;width:100%;height:14px;border-top:1px solid var(--mg-line);border-bottom:1px solid var(--mg-line);'
+    + 'background:repeating-linear-gradient(90deg,rgba(var(--mg-glow),.55) 0 1px,transparent 1px 30px),'
+    + 'repeating-linear-gradient(90deg,rgba(var(--mg-glow),.22) 0 1px,transparent 1px 6px);'
+    + 'background-size:100% 100%,100% 50%;background-position:0 0,0 100%;background-repeat:no-repeat,repeat-x;}'
+    + '.mgsg-fstrip i{position:absolute;top:-2px;bottom:-2px;left:50%;width:2px;margin-left:-1px;background:var(--mg-hi);'
+    + 'box-shadow:0 0 6px rgba(var(--mg-hglow),.8);}'
+    + '.mgsg-fnum{font-size:15px;letter-spacing:3px;color:var(--mg-hi);font-variant-numeric:tabular-nums;text-shadow:0 0 8px rgba(var(--mg-glow),.5);}'
+    /* phone widths: the aspect-locked stage is ~210px tall at 375px, so the call
+       collapses to kicker + logotype + wave + text — portraits and the frequency
+       strip go, gaps/padding tighten, and the screen scrolls from the top
+       (safe center where supported) instead of overflowing the frame */
+    + '@media (max-width:520px){'
+    + '.mgsg-screen{gap:6px;padding:12px;justify-content:flex-start;justify-content:safe center;overflow-y:auto;}'
+    + '.mgsg-call{grid-template-columns:1fr;gap:0;width:auto;}'
+    + '.mgsg-port,.mgsg-fstrip,.mgsg-fnum{display:none;}'
+    + '.mgsg-screen.title h2{margin-top:.3em;padding:4px 12px 6px;font-size:clamp(24px,7vw,52px);}'
+    + '.mgsg-screen p{font-size:12px;line-height:1.45;}.mgsg-screen .go{margin-top:2px;}}'
+    /* phones: the bar row's min-content (title + LCD chip + SND + EXIT) used to
+       exceed 94vw and push the frame past the screen. Smaller title that may
+       ellipsize (min-width:0 lets the flex item shrink), tighter gaps/padding,
+       and the HUD strip wraps — the frame now fits 100vw at 375px */
+    + '@media (max-width:480px){'
+    + '.mgsg-bar{gap:6px;padding:7px 8px;font-size:11px;letter-spacing:1px;}'
+    + '.mgsg-bar .t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
+    + '.mgsg-bar .f{font-size:11px;letter-spacing:1px;padding:3px 6px;flex-shrink:0;white-space:nowrap;}'
+    + '.mgsg-bar .f::before{margin-right:5px;}'
+    + '.mgsg-bar .mgsg-btn{padding:5px 6px;font-size:11px;flex-shrink:0;white-space:nowrap;}'
+    + '.mgsg-hud{gap:6px 10px;padding:6px 8px;font-size:11px;letter-spacing:1px;}'
+    + '.mgsg-foot{gap:8px;padding:6px 8px;}}'
     + '.mgsg-screen p{max-width:46ch;font-size:13px;line-height:1.65;color:var(--mg-text);margin:0;}'
     + '.mgsg-screen .sub{color:var(--mg-dim);font-size:12px;letter-spacing:1px;}'
     + '.mgsg-screen .go{margin-top:6px;color:var(--mg-hi);animation:mgsgBlink 1.1s steps(1) infinite;}'
@@ -296,8 +401,8 @@
     + '.mgsg-screen.fail::before{top:0}.mgsg-screen.fail::after{bottom:0}'
     + '.mgsg-screen .snaaake{font-size:clamp(26px,7vw,56px);color:' + C.red + ';letter-spacing:4px;margin:0;'
     + 'text-shadow:0 0 16px rgba(224,96,109,.6);animation:mgsgFlicker .8s steps(2) 2;}'
-    + '.mgsg-screen .rank{font-size:clamp(40px,10vw,80px);color:var(--mg-hi);letter-spacing:2px;line-height:1;margin:0;'
-    + 'text-shadow:0 0 18px rgba(var(--mg-hglow),.5);animation:mgsgStamp .35s cubic-bezier(.2,1.6,.4,1) 1;}'
+    + '.mgsg-screen .rank{font-size:clamp(40px,10vw,80px);color:var(--mg-hi);line-height:1;margin:0;'
+    + 'animation:mgsgStampTall .35s cubic-bezier(.2,1.6,.4,1) 1;}'
     /* NEW RECORD flourish — stamped chip under the rank on clear/complete screens
        (scoped like .rank so it outranks the .mgsg-screen p color) */
     + '.mgsg-screen .mgsg-rec{margin:0;font-size:13px;letter-spacing:4px;color:var(--mg-hi);'
@@ -325,7 +430,7 @@
     + '.mgsg-touch .mgsg-toast{bottom:72px;}'
     /* CRT roll bar + alarm hazard stripes + power-on sweep (compositor-only) */
     + '.mgsg-roll{position:absolute;left:0;right:0;top:-30%;height:26%;pointer-events:none;z-index:6;'
-    + 'background:linear-gradient(180deg,transparent,rgba(164,236,177,.045) 50%,transparent);'
+    + 'background:linear-gradient(180deg,transparent,rgba(180,236,208,.045) 50%,transparent);'
     + 'animation:mgsgRoll 7s linear infinite;}'
     + '.mgsg-hazard{position:absolute;left:0;width:200%;height:5px;z-index:6;pointer-events:none;display:none;'
     + 'background:repeating-linear-gradient(45deg,rgba(224,96,109,.55) 0 10px,transparent 10px 20px);}'
@@ -372,10 +477,16 @@
     + '.mgsg-screen .snaaake,.mgsg-screen .rank,.mgsg-screen .mgsg-rec{animation:none}'
     + '.mgsg-roll{display:none}.mgsg-stage.alarm .mgsg-hazard{animation:none}.mgsg-canvas.on{animation:none}'
     + '.mgsg-screen.show .mgsg-stats span{animation:none}.mgsg-toast{transition:none}'
-    + '.mgsg-screen{transition:opacity .22s ease;transform:none}}'
+    + '.mgsg-screen{transition:opacity .22s ease;transform:none}'
+    + '.mgsg-screen.show{animation:none;clip-path:none}.mgsg-screen.show .mgsg-beam{animation:none}'
+    + '.mgsg-port .px.noimg{animation:none}}'
+    + '@keyframes mgsgStatic{to{background-position:16px 0,0 26px,-33px 21px}}'
     + '@keyframes mgsgBlink{50%{opacity:.25}}@keyframes mgsgFlash{from{opacity:.5}to{opacity:0}}'
     + '@keyframes mgsgAlarmPulse{50%{opacity:.55}}@keyframes mgsgFlicker{50%{opacity:.4}}'
     + '@keyframes mgsgStamp{from{transform:scale(2.4);opacity:0}to{transform:scale(1);opacity:1}}'
+    + '@keyframes mgsgStampTall{from{transform:scale(2.4) scaleY(1.28);opacity:0}to{transform:scaleY(1.28);opacity:1}}'
+    + '@keyframes mgsgWipe{from{clip-path:inset(50% 0)}to{clip-path:inset(0)}}'
+    + '@keyframes mgsgBeam{0%{opacity:1;transform:scaleX(.15)}55%{opacity:1;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1)}}'
     + '@keyframes mgsgWave{0%,100%{transform:scaleY(.333)}50%{transform:scaleY(1)}}'
     + '@keyframes mgsgRoll{from{transform:translateY(0)}to{transform:translateY(520%)}}'
     + '@keyframes mgsgHzScroll{from{transform:translateX(0)}to{transform:translateX(-28.3px)}}'
@@ -386,8 +497,11 @@
   var built = false, open = false;
   var overlay, frame, stage, canvas, ctx, dpr = 1;
   var stateBadge, lifeFill, hudIntel, hudLevel, hudTime;
+  var lastLifeW = '', lastLifeC = '';   // last DOM life-bar width/color written (skip no-op style writes)
   var screenEl, scrCaller, scrTitle, scrBody, scrSub, scrGo, scrRank, scrStats, scrRec, scrRetry, flashEl, srLive, muteBtn;
-  var toastEl = null, toastTimer = null, typeTimer = null;
+  var scrPortThem, scrWhoThem, scrFnum, scrNeedle, beamEl, freqEl;   // codec-call layout + wipe beam + LCD chip
+  var toastEl = null, toastTimer = null, typeTimer = null, freqTimer = null;
+  var radarMap = null;   // Soliton minimap wall layout (baked in buildBg at radar scale)
   var rafId = null, lastT = 0, muted = false, audioCtx = null, prevFocus = null, alertLoop = null;
   var bgLayer = null;    // pre-rendered floor+walls (rebuilt on loadLevel/sizeCanvas)
   var shakeT = 0;        // screen-shake timer (set on alert, decays in update)
@@ -395,7 +509,7 @@
   var hitBeepCD = 0;     // throttle for the taking-fire beep
   var fxPulses = [];     // transient ring pulses (CQC takedown, intel grab) — presentation only
   // cached gradients — created once (pool/vignette) or per level (exit/intel);
-  // render() never calls createRadialGradient for these (only cones + radar sweep remain per-frame)
+  // render() never calls createRadialGradient for these (only the cones remain per-frame — the radar is gradient-free)
   var poolGrad = null, vigGrad = null, exitGlowGrad = null, intelHaloGrad = null;
 
   /* ---- game state ---- */
@@ -444,9 +558,16 @@
       + '<div class="mgsg-roll" aria-hidden="true"></div>'
       + '<div class="mgsg-hazard hz-t" aria-hidden="true"></div><div class="mgsg-hazard hz-b" aria-hidden="true"></div>'
       + '<div class="mgsg-toast" aria-hidden="true"></div>'
-      + '<div class="mgsg-screen"><span class="caller" data-scr="caller"></span>'
-      + '<span class="mgsg-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>'
+      + '<div class="mgsg-screen"><i class="mgsg-beam" aria-hidden="true"></i><span class="caller" data-scr="caller"></span>'
       + '<h2 data-scr="title">CODEC INFILTRATION</h2>'
+      /* codec call row (title + briefing only): you | wave + frequency strip | caller.
+         Decorative — announce() carries the same information to the aria-live region. */
+      + '<div class="mgsg-call" aria-hidden="true">'
+      + '<div class="mgsg-port"><div class="px"><img src="img/headshot-dither-green.png" alt="" width="96" height="96" loading="lazy"></div><span class="who">YOU</span></div>'
+      + '<div class="mgsg-cc"><span class="mgsg-wave"><i></i><i></i><i></i><i></i><i></i></span>'
+      + '<div class="mgsg-fstrip"><i data-scr="needle"></i></div><span class="mgsg-fnum" data-scr="fnum">140.85</span></div>'
+      + '<div class="mgsg-port"><div class="px noimg" data-scr="them"><img src="img/codec-snake-face.png" alt="" width="96" height="96" loading="lazy"><span>NO IMAGE</span></div><span class="who" data-scr="who"></span></div>'
+      + '</div>'
       + '<p class="rank" data-scr="big" style="display:none"></p>'
       + '<div class="mgsg-stats" data-scr="stats" style="display:none"></div>'
       + '<p class="mgsg-rec" data-scr="rec" style="display:none"></p>'
@@ -481,6 +602,8 @@
     scrRank = $('[data-scr="big"]'); scrBody = $('[data-scr="body"]'); scrSub = $('[data-scr="sub"]'); scrGo = $('[data-scr="go"]');
     flashEl = $('.mgsg-flash'); srLive = $('.mgsg-sr'); muteBtn = $('[data-act="mute"]');
     toastEl = $('.mgsg-toast'); scrStats = $('[data-scr="stats"]'); scrRec = $('[data-scr="rec"]'); scrRetry = $('[data-scr="retry"]');
+    scrPortThem = $('[data-scr="them"]'); scrWhoThem = $('[data-scr="who"]'); scrFnum = $('[data-scr="fnum"]'); scrNeedle = $('[data-scr="needle"]');
+    beamEl = $('.mgsg-beam'); freqEl = $('.mgsg-bar .f');
 
     buildSprites();
     sizeCanvas();
@@ -550,7 +673,7 @@
   // globalAlpha, which scales it for both taking-fire flashes and low-life pulses)
   function buildStaticGrads() {
     poolGrad = ctx.createRadialGradient(0, 0, 6, 0, 0, 130);
-    poolGrad.addColorStop(0, 'rgba(164,236,177,0.10)'); poolGrad.addColorStop(1, 'rgba(164,236,177,0)');
+    poolGrad.addColorStop(0, 'rgba(180,236,208,0.10)'); poolGrad.addColorStop(1, 'rgba(180,236,208,0)');
     vigGrad = ctx.createRadialGradient(W / 2, H / 2, H * 0.32, W / 2, H / 2, H * 0.8);
     vigGrad.addColorStop(0, 'rgba(224,96,109,0)'); vigGrad.addColorStop(1, 'rgba(224,96,109,1)');
   }
@@ -669,7 +792,7 @@
     intelGot = !level.intel;
     // per-level cached glow gradients (exit + intel are static per level)
     exitGlowGrad = ctx.createRadialGradient(exitPt.x, exitPt.y, 3, exitPt.x, exitPt.y, 20);
-    exitGlowGrad.addColorStop(0, 'rgba(164,236,177,1)'); exitGlowGrad.addColorStop(1, 'rgba(164,236,177,0)');
+    exitGlowGrad.addColorStop(0, 'rgba(180,236,208,1)'); exitGlowGrad.addColorStop(1, 'rgba(180,236,208,0)');
     if (intel) {
       intelHaloGrad = ctx.createRadialGradient(intel.x, intel.y, 2, intel.x, intel.y, 18);
       intelHaloGrad.addColorStop(0, 'rgba(224,194,90,1)'); intelHaloGrad.addColorStop(1, 'rgba(224,194,90,0)');
@@ -704,16 +827,144 @@
 
   /* ---- pre-rendered background layer (floor + walls). Static world lives here;
      per-frame canvas work is 1 blit + ~10 entities + a handful of gradients. ---- */
+  // deterministic 0..1 hash for baked scatter (snow, stains) — no Math.random,
+  // so every rebuild (DPR change, retry) bakes the identical floor
+  function hash01(n) { var v = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return v - Math.floor(v); }
+  // per-op floor dressing, drawn under the walls (they fully cover their tiles)
+  function bakeFloorIdentity(b) {
+    var kind = level.floor, i, x, y, cx = W / 2, cy = H / 2;
+    if (kind === 'heliport') {
+      // snow dust — ~140 pale specks + a few shallow drift streaks
+      for (i = 0; i < 140; i++) {
+        x = hash01(i * 3) * W; y = hash01(i * 3 + 1) * H;
+        b.fillStyle = 'rgba(228,246,240,' + (0.10 + hash01(i * 3 + 2) * 0.18).toFixed(2) + ')';
+        b.fillRect(x | 0, y | 0, (i % 5) ? 1 : 2, (i % 7) ? 1 : 2);
+      }
+      b.strokeStyle = 'rgba(228,246,240,0.05)'; b.lineWidth = 2; b.beginPath();
+      for (i = 0; i < 12; i++) {
+        x = hash01(500 + i * 2) * W; y = hash01(501 + i * 2) * H; var len = 60 + hash01(700 + i) * 90;
+        b.moveTo(x, y); b.lineTo(x + len, y + len * 0.18);
+      }
+      b.stroke();
+      // helipad marking: circled H on the open 4x4 pad (cols 7-10, rows 1-4) —
+      // the map centre is a wall block, which would hide the letter
+      var hx = px(8) + TILE / 2, hy = px(2) + TILE / 2;
+      b.strokeStyle = 'rgba(200,236,224,0.16)'; b.lineWidth = 4;
+      b.beginPath(); b.arc(hx, hy, 56, 0, Math.PI * 2); b.stroke();
+      b.strokeStyle = 'rgba(200,236,224,0.10)'; b.lineWidth = 1.5;
+      b.beginPath(); b.arc(hx, hy, 47, 0, Math.PI * 2); b.stroke();
+      b.fillStyle = 'rgba(200,236,224,0.13)';
+      b.fillRect(hx - 24, hy - 23, 8, 46); b.fillRect(hx + 16, hy - 23, 8, 46); b.fillRect(hx - 16, hy - 4, 32, 8);
+      // static floodlight pools (baked radial gradients — never per-frame)
+      var pools = [[px(4), TILE, 100], [px(15), H - TILE, 100], [W - TILE, px(6), 80]];
+      for (i = 0; i < pools.length; i++) {
+        var fl = b.createRadialGradient(pools[i][0], pools[i][1], 4, pools[i][0], pools[i][1], pools[i][2]);
+        fl.addColorStop(0, 'rgba(210,244,230,0.11)'); fl.addColorStop(1, 'rgba(210,244,230,0)');
+        b.fillStyle = fl; b.fillRect(pools[i][0] - pools[i][2], pools[i][1] - pools[i][2], pools[i][2] * 2, pools[i][2] * 2);
+      }
+    } else if (kind === 'hangar') {
+      // concrete slab seams every 2 tiles
+      b.lineWidth = 1; b.beginPath();
+      for (x = TILE * 2; x < W; x += TILE * 2) { b.moveTo(x + .5, 0); b.lineTo(x + .5, H); }
+      for (y = TILE * 2; y < H; y += TILE * 2) { b.moveTo(0, y + .5); b.lineTo(W, y + .5); }
+      b.strokeStyle = 'rgba(0,0,0,0.32)'; b.stroke();
+      b.beginPath();
+      for (x = TILE * 2; x < W; x += TILE * 2) { b.moveTo(x + 1.5, 0); b.lineTo(x + 1.5, H); }
+      for (y = TILE * 2; y < H; y += TILE * 2) { b.moveTo(0, y + 1.5); b.lineTo(W, y + 1.5); }
+      b.strokeStyle = 'rgba(119,210,166,0.05)'; b.stroke();
+      // oil stains
+      for (i = 0; i < 7; i++) {
+        x = TILE + hash01(900 + i * 3) * (W - TILE * 2); y = TILE + hash01(901 + i * 3) * (H - TILE * 2);
+        var rot = hash01(902 + i * 3) * Math.PI, rx = 14 + hash01(950 + i) * 18, ry = 7 + hash01(960 + i) * 8;
+        b.fillStyle = 'rgba(2,8,6,0.34)'; b.beginPath(); b.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); b.fill();
+        b.fillStyle = 'rgba(2,8,6,0.30)'; b.beginPath(); b.ellipse(x + rx * 0.5, y + ry * 0.4, rx * 0.5, ry * 0.55, rot, 0, Math.PI * 2); b.fill();
+      }
+      // hazard-stripe band along the bottom wall row (floor strip just above it)
+      var hy = (ROWS - 1) * TILE - 5;
+      b.save(); b.beginPath(); b.rect(TILE, hy, W - TILE * 2, 5); b.clip();
+      b.fillStyle = 'rgba(0,0,0,0.35)'; b.fillRect(TILE, hy, W - TILE * 2, 5);
+      b.strokeStyle = 'rgba(224,194,90,0.42)'; b.lineWidth = 4; b.beginPath();
+      for (x = TILE - 8; x < W; x += 12) { b.moveTo(x, hy + 6); b.lineTo(x + 6, hy - 1); }
+      b.stroke(); b.restore();
+    } else if (kind === 'nuke') {
+      // catwalk grating: fine cross-hatch
+      b.strokeStyle = 'rgba(119,210,166,0.035)'; b.lineWidth = 1; b.beginPath();
+      for (x = -H; x < W; x += 8) { b.moveTo(x, 0); b.lineTo(x + H, H); b.moveTo(x + H, 0); b.lineTo(x, H); }
+      b.stroke();
+      // composite panel seams every 2 tiles + rivets at the joints
+      b.strokeStyle = 'rgba(0,0,0,0.28)'; b.beginPath();
+      for (x = TILE * 2; x < W; x += TILE * 2) { b.moveTo(x + .5, 0); b.lineTo(x + .5, H); }
+      for (y = TILE * 2; y < H; y += TILE * 2) { b.moveTo(0, y + .5); b.lineTo(W, y + .5); }
+      b.stroke();
+      b.fillStyle = 'rgba(180,236,208,0.12)';
+      for (x = TILE * 2; x < W; x += TILE * 2) for (y = TILE * 2; y < H; y += TILE * 2) b.fillRect(x - 1, y - 1, 3, 3);
+      // amber hazard chevrons on the floor cells of the row in front of the
+      // camera (its own row is wall/corridor) — clipped to floor tiles only
+      var cam = (level.cameras || [])[0];
+      if (cam && cam.t[1] + 1 < ROWS - 1) {
+        var cr = cam.t[1] + 1, c0 = Math.max(1, cam.t[0] - 3), c1 = Math.min(COLS - 2, cam.t[0] + 3), yb = cr * TILE, cc, any = false;
+        b.save(); b.beginPath();
+        for (cc = c0; cc <= c1; cc++) if (!walls[cr][cc]) { b.rect(cc * TILE, yb + 4, TILE, TILE - 8); any = true; }
+        if (any) {
+          b.clip();
+          b.strokeStyle = 'rgba(224,194,90,0.26)'; b.lineWidth = 3; b.beginPath();
+          for (x = c0 * TILE - 6; x < (c1 + 1) * TILE + 6; x += 12) { b.moveTo(x, yb + 4); b.lineTo(x + 7, yb + TILE / 2); b.lineTo(x, yb + TILE - 4); }
+          b.stroke();
+        }
+        b.restore();
+      }
+    }
+  }
+  // lit doorway: cut into the wall tile adjoining the exit (above first, then
+  // below / left / right — whichever side is wall). A recessed dark opening
+  // with a 1px bright jamb on its three closed sides, a lit strip at the far
+  // end, two dim treads, and ONE baked radial light spill onto the exit tile —
+  // the doorway reads as where the op leads. Bakes once per level (zero per-frame cost).
+  function bakeDoorway(b, ec, er) {
+    var dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]], d = null, i;
+    for (i = 0; i < dirs.length; i++) {
+      var nc = ec + dirs[i][0], nr = er + dirs[i][1];
+      if (nc >= 0 && nr >= 0 && nc < COLS && nr < ROWS && walls[nr][nc]) { d = dirs[i]; break; }
+    }
+    if (!d) return;
+    var wx = (ec + d[0]) * TILE, wy = (er + d[1]) * TILE, vert = d[1] !== 0, ox, oy, ow, oh;
+    if (vert) { ox = wx + 8; ow = TILE - 16; oh = TILE - 4; oy = d[1] < 0 ? wy + 4 : wy; }
+    else { oy = wy + 8; oh = TILE - 16; ow = TILE - 4; ox = d[0] < 0 ? wx + 4 : wx; }
+    b.fillStyle = '#03100b'; b.fillRect(ox, oy, ow, oh);   // recessed opening
+    // far-end light strip + two dim treads stepping toward the threshold
+    b.fillStyle = 'rgba(180,236,208,0.55)';
+    if (vert) b.fillRect(ox + 2, d[1] < 0 ? oy : oy + oh - 3, ow - 4, 3);
+    else b.fillRect(d[0] < 0 ? ox : ox + ow - 3, oy + 2, 3, oh - 4);
+    b.fillStyle = 'rgba(180,236,208,0.10)';
+    for (i = 1; i <= 2; i++) {
+      if (vert) b.fillRect(ox + 3, d[1] < 0 ? oy + 3 + i * 8 : oy + oh - 4 - i * 8, ow - 6, 1);
+      else b.fillRect(d[0] < 0 ? ox + 3 + i * 8 : ox + ow - 4 - i * 8, oy + 3, 1, oh - 6);
+    }
+    var x0 = ox + .5, y0 = oy + .5, x1 = ox + ow - .5, y1 = oy + oh - .5;
+    b.strokeStyle = 'rgba(180,236,208,0.7)'; b.lineWidth = 1; b.beginPath();
+    if (vert && d[1] < 0) { b.moveTo(x0, y1 + 1); b.lineTo(x0, y0); b.lineTo(x1, y0); b.lineTo(x1, y1 + 1); }
+    else if (vert) { b.moveTo(x0, y0 - 1); b.lineTo(x0, y1); b.lineTo(x1, y1); b.lineTo(x1, y0 - 1); }
+    else if (d[0] < 0) { b.moveTo(x1 + 1, y0); b.lineTo(x0, y0); b.lineTo(x0, y1); b.lineTo(x1 + 1, y1); }
+    else { b.moveTo(x0 - 1, y0); b.lineTo(x1, y0); b.lineTo(x1, y1); b.lineTo(x0 - 1, y1); }
+    b.stroke();
+    // light spill onto the exit tile from the threshold (the shared edge), clipped to the tile
+    var tx = px(ec) + d[0] * TILE / 2, ty = px(er) + d[1] * TILE / 2, sr = TILE * 1.1;
+    var sp = b.createRadialGradient(tx, ty, 2, tx, ty, sr);
+    sp.addColorStop(0, 'rgba(180,236,208,0.42)'); sp.addColorStop(0.55, 'rgba(180,236,208,0.13)'); sp.addColorStop(1, 'rgba(180,236,208,0)');
+    b.save(); b.beginPath(); b.rect(ec * TILE, er * TILE, TILE, TILE); b.clip();
+    b.fillStyle = sp; b.fillRect(tx - sr, ty - sr, sr * 2, sr * 2);
+    b.restore();
+  }
   function buildBg() {
     bgLayer = document.createElement('canvas');
     bgLayer.width = W * dpr; bgLayer.height = H * dpr;
     var b = bgLayer.getContext('2d');
     b.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var r, c, x0, y0;
+    var r, c, x0, y0, fl = FLOORS[level.floor] || { a: C.floorA, b: C.floorB };
     // floor: checker + 2px dither dots
     for (r = 0; r < ROWS; r++) for (c = 0; c < COLS; c++) {
       x0 = c * TILE; y0 = r * TILE;
-      b.fillStyle = ((r + c) & 1) ? C.floorB : C.floorA;
+      b.fillStyle = ((r + c) & 1) ? fl.b : fl.a;
       b.fillRect(x0, y0, TILE, TILE);
       if (!walls[r][c]) {
         b.fillStyle = C.floorDot;
@@ -722,13 +973,14 @@
             b.fillRect(x0 + dx, y0 + dy, 2, 2);
       }
     }
+    bakeFloorIdentity(b);
     // exit pad, baked (visible from spawn — chevron hatch + frame)
     var ec = level.exit[0], er = level.exit[1], ex0 = ec * TILE, ey0 = er * TILE;
     b.save(); b.beginPath(); b.rect(ex0 + 2, ey0 + 2, TILE - 4, TILE - 4); b.clip();
-    b.strokeStyle = 'rgba(164,236,177,0.14)'; b.lineWidth = 3; b.beginPath();
+    b.strokeStyle = 'rgba(180,236,208,0.14)'; b.lineWidth = 3; b.beginPath();
     for (var sD = -TILE; sD < TILE; sD += 8) { b.moveTo(ex0 + sD, ey0 + TILE); b.lineTo(ex0 + sD + TILE, ey0); }
     b.stroke(); b.restore();
-    b.strokeStyle = 'rgba(164,236,177,0.25)'; b.lineWidth = 1;
+    b.strokeStyle = 'rgba(180,236,208,0.25)'; b.lineWidth = 1;
     b.strokeRect(ex0 + 2.5, ey0 + 2.5, TILE - 5, TILE - 5);
     // faint tile grid
     b.strokeStyle = C.grid; b.lineWidth = 1; b.beginPath();
@@ -768,12 +1020,25 @@
       // drop shadow cast onto the floor below (depth cue)
       if (oS) { b.fillStyle = C.wallShadow; b.fillRect(x0, y0 + TILE, TILE, 5); }
     }
+    bakeDoorway(b, ec, er);
     // baked ambient light: phosphor bloom at center, dark corners (one-time cost)
     var lg = b.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, Math.max(W, H) * 0.62);
-    lg.addColorStop(0, 'rgba(159,227,176,0.05)');
+    lg.addColorStop(0, 'rgba(159,227,196,0.05)');
     lg.addColorStop(0.6, 'rgba(0,0,0,0)');
     lg.addColorStop(1, 'rgba(0,0,0,0.32)');
     b.fillStyle = lg; b.fillRect(0, 0, W, H);
+    // Soliton minimap: the wall layout at radar scale, baked once — drawRadar()
+    // blits it player-centred (one drawImage, no per-frame tile loop)
+    var mw = Math.ceil(W * RADAR_SC), mh = Math.ceil(H * RADAR_SC), ts = TILE * RADAR_SC;
+    radarMap = document.createElement('canvas');
+    radarMap.width = Math.ceil(mw * dpr); radarMap.height = Math.ceil(mh * dpr);
+    var m = radarMap.getContext('2d'); m.setTransform(dpr, 0, 0, dpr, 0, 0);
+    m.fillStyle = 'rgba(8,26,20,0.72)'; m.fillRect(0, 0, mw, mh);
+    for (r = 0; r < ROWS; r++) for (c = 0; c < COLS; c++) {
+      if (!walls[r][c]) continue;
+      m.fillStyle = 'rgba(119,210,166,0.42)'; m.fillRect(c * ts, r * ts, ts + 0.5, ts + 0.5);
+      if (r > 0 && !walls[r - 1][c]) { m.fillStyle = 'rgba(180,236,208,0.7)'; m.fillRect(c * ts, r * ts, ts + 0.5, 1); }
+    }
   }
   function playerTile() { return { c: tcol(player.x), r: trow(player.y) }; }
 
@@ -929,7 +1194,7 @@
       var ang = Math.atan2(player.y - g.y, player.x - g.x);
       if (Math.abs(angDiff(ang, g.facing)) >= CQC_REAR && d < bestd) { bestd = d; best = g; }
     }
-    if (best) { cqcCD = CQC_CD; best.down = true; best.seeing = false; best.spotTimer = 0; addPulse(best.x, best.y, '164,236,177'); sfxCQC(); announce('Guard subdued.'); }
+    if (best) { cqcCD = CQC_CD; best.down = true; best.seeing = false; best.spotTimer = 0; addPulse(best.x, best.y, '180,236,208'); sfxCQC(); announce('Guard subdued.'); }
     else announce('No guard to subdue.');
   }
 
@@ -995,9 +1260,13 @@
     stateBadge.className = 'mgsg-stbadge' + (ph !== 'normal' ? ' ' + ph : '');
     stateBadge.textContent = ph === 'alert' ? '! ALERT' : ph === 'evasion' ? 'EVASION ' + Math.ceil(Math.max(0, evasionTimer))
       : ph === 'caution' ? 'CAUTION ' + Math.ceil(Math.max(0, cautionTimer)) : 'NORMAL';
-    lifeFill.style.width = (life * 100).toFixed(0) + '%';
+    // write the bar width only when the rounded value changes — render() reads
+    // canvas.clientWidth each frame, and a dirty style every frame would force a layout
+    var lwid = (life * 100).toFixed(0) + '%';
+    if (lwid !== lastLifeW) { lastLifeW = lwid; lifeFill.style.width = lwid; }
     // healthy = theme chrome color; warning/critical stay amber/red in every theme
-    lifeFill.style.background = life > 0.5 ? 'var(--mg-text)' : life > 0.25 ? C.amber : C.red;
+    var lcol = life > 0.5 ? 'var(--mg-text)' : life > 0.25 ? C.amber : C.red;
+    if (lcol !== lastLifeC) { lastLifeC = lcol; lifeFill.style.background = lcol; }
     lifeFill.parentNode.classList.toggle('low', life < 0.25);
     hudIntel.textContent = intel ? (intelGot ? '[OK]' : '[ ]') : '[--]';
     var s = Math.floor(elapsed); hudTime.textContent = Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
@@ -1011,12 +1280,17 @@
      canvases (1 drawImage each); per-frame gradient budget ≤9. ===================== */
   function drawShadow(x, y) {
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.beginPath(); ctx.ellipse(x, y + 8, 8, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x, y + 10, 9, 3.5, 0, 0, Math.PI * 2); ctx.fill();   // sized to the one-tile sprites
   }
   // 8-way facing snap keeps rotated pixel art crisp; vision cones keep the
   // smooth unsnapped facing — classic 2D-stealth look, identical gameplay
   var STEP8 = Math.PI / 4;
-  var RADAR_TICKS = [[0, -1], [0, 1], [-1, 0], [1, 0]];  // hoisted — no per-frame array
+  // Soliton minimap geometry: 96x48 bezelled rectangle in the top-left corner —
+  // bezel + label end inside row 1 so it occludes as little corridor as
+  // possible (the screen is translucent for the rest); RADAR_SC keeps a 250px
+  // world span at 34px
+  var RADAR_X = 6, RADAR_Y = 6, RADAR_W = 96, RADAR_H = 48, RADAR_SC = 34 / 250;
+  var DASH_CALM = [4, 3], DASH_NONE = [];  // hoisted — no per-frame arrays
   function drawSpriteImg(img, x, y, angle, bobPhase) {
     ctx.save(); ctx.translate(x, y);
     if (angle !== null) ctx.rotate(Math.round(angle / STEP8) * STEP8);
@@ -1025,24 +1299,41 @@
     ctx.restore();
   }
   function drawCone(d, roomAlert) {
-    var rgb, edgeA;
+    var rgb, edgeA, calm = false;
     if (roomAlert || d.seeing) {
       rgb = '224,96,109';
       // edge strobes while this watcher has live eyes on the player
       edgeA = d.seeing && !reduceMotion ? 0.45 + 0.25 * Math.abs(Math.sin(elapsed * 9)) : 0.55;
     }
     else if ((d.spotTimer || 0) > 0 || alertPhase === 'caution') { rgb = '224,194,90'; edgeA = 0.45; }
-    else { rgb = '111,207,131'; edgeA = 0.30; }
+    else { rgb = '119,210,166'; edgeA = 0.30; calm = true; }
     var half = d.fov * (d.fovMul || 1) / 2, range = d.range * (d.rangeMul || 1), STEPS = 20;
+    // hostile cones fill brighter — the additive red otherwise sinks into the
+    // alarm wash; calm/caution keep the softer stops so the pale heliport floor
+    // never blows out
+    var hot = roomAlert || d.seeing;
     var grad = ctx.createRadialGradient(d.x, d.y, 4, d.x, d.y, range);
-    grad.addColorStop(0, 'rgba(' + rgb + ',0.40)');
-    grad.addColorStop(0.5, 'rgba(' + rgb + ',0.12)');
+    grad.addColorStop(0, 'rgba(' + rgb + (hot ? ',0.48)' : ',0.32)'));
+    grad.addColorStop(0.5, 'rgba(' + rgb + (hot ? ',0.16)' : ',0.10)'));
     grad.addColorStop(1, 'rgba(' + rgb + ',0)');
     ctx.beginPath(); ctx.moveTo(d.x, d.y);
     for (var s = 0; s <= STEPS; s++) { var a = d.facing - half + (half * 2) * (s / STEPS); var h = rayHit(d.x, d.y, a, range); ctx.lineTo(h.x, h.y); }
     ctx.closePath();
+    // the cone is LIGHT: additive fill brightens whatever floor it falls on;
+    // two faint range arcs (50% / 100%) are clipped to the cone. State restored after.
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
     ctx.fillStyle = grad; ctx.fill();
+    ctx.restore();
+    // edge: dashed while the watcher is calm, solid once he is suspicious or hostile
+    ctx.setLineDash(calm ? DASH_CALM : DASH_NONE);
     ctx.strokeStyle = 'rgba(' + rgb + ',' + edgeA + ')'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.setLineDash(DASH_NONE);
+    // range arcs, clipped to the (still current) cone path
+    ctx.save(); ctx.clip();
+    ctx.strokeStyle = 'rgba(' + rgb + ',0.14)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(d.x, d.y, range * 0.5, d.facing - half, d.facing + half); ctx.stroke();
+    ctx.beginPath(); ctx.arc(d.x, d.y, range - 1.5, d.facing - half, d.facing + half); ctx.stroke();
+    ctx.restore();
     // hot center ray — the look direction reads instantly
     var hFar = rayHit(d.x, d.y, d.facing, range);
     ctx.strokeStyle = 'rgba(' + rgb + ',' + (d.seeing ? 0.5 : 0.15) + ')'; ctx.lineWidth = 1;
@@ -1086,17 +1377,18 @@
     ctx.fillStyle = col; ctx.font = '9px "Share Tech Mono",monospace';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('EXIT', x, y);
   }
+  // intel = an amber keycard (pre-rendered SPR.key) bobbing gently over its
+  // cached halo; the bright contact notch is the read, so no '!' glyph is needed
   function drawIntel() {
     if (!intel || intelGot) return;
     var p = reduceMotion ? 0.6 : 0.5 + 0.5 * Math.sin(elapsed * 3);
     ctx.globalAlpha = 0.30 + 0.25 * p;  // cached gradient, alpha does the pulsing
     ctx.fillStyle = intelHaloGrad; ctx.fillRect(intel.x - 18, intel.y - 18, 36, 36);
     ctx.globalAlpha = 1;
-    ctx.save(); ctx.translate(intel.x, intel.y); ctx.rotate(reduceMotion ? Math.PI / 4 : elapsed * 1.5);
-    ctx.fillStyle = C.amber; ctx.fillRect(-6, -6, 12, 12);
-    ctx.strokeStyle = C.amberHi; ctx.lineWidth = 1; ctx.strokeRect(-6.5, -6.5, 13, 13);
-    ctx.restore();
-    ctx.fillStyle = C.bg; ctx.font = 'bold 11px "Share Tech Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('!', intel.x, intel.y + 0.5);
+    var bob = reduceMotion ? 0 : Math.round(Math.sin(elapsed * 2.6) * 1.5);
+    // soft contact shadow under the card sells the hover
+    ctx.fillStyle = 'rgba(0,0,0,0.30)'; ctx.fillRect(intel.x - 7, intel.y + 5, 14, 3);
+    ctx.drawImage(SPR.key, intel.x - SPR.key.width / 2, intel.y - SPR.key.height / 2 + bob);
   }
   function drawCamera(c) {
     ctx.save(); ctx.translate(c.x, c.y);
@@ -1104,7 +1396,7 @@
     ctx.fillStyle = C.wallEdge; ctx.fillRect(-3, -13, 6, 2);           // mount plate
     ctx.rotate(c.facing);
     // hooded housing with a lens slit
-    ctx.fillStyle = '#132b1b'; ctx.strokeStyle = c.seeing ? C.red : C.wallEdge; ctx.lineWidth = 1;
+    ctx.fillStyle = C.wallFront; ctx.strokeStyle = c.seeing ? C.red : C.wallEdge; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(-7, -4); ctx.lineTo(5, -4); ctx.lineTo(8, -2);
     ctx.lineTo(8, 2); ctx.lineTo(5, 4); ctx.lineTo(-7, 4); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.fillStyle = c.seeing ? C.redHi : C.bright; ctx.fillRect(6, -1.5, 2, 3);  // lens slit
@@ -1130,89 +1422,180 @@
     drawSpriteImg(SPR[(g.seeing || roomAlert) ? 'guardRed' : 'guard'][g.moving ? (Math.floor(g.walk / Math.PI) % 2) : 0],
       g.x, g.y, g.facing + Math.PI / 2, g.moving ? g.walk : null);
     // MGS awareness gauge — arc fills amber→red with spotTimer before the alarm trips
+    // (gauge + plate sit above the 36px sprite: half-height 18 + a 2–6px gap)
     if (!roomAlert && g.spotTimer > 0.05 && g.spotTimer < SPOT_FULL) {
       var t = g.spotTimer / SPOT_FULL;
-      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(4,12,6,0.65)';
-      ctx.beginPath(); ctx.arc(g.x, g.y - 17, 7, 0, Math.PI * 2); ctx.stroke();
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(4,14,11,0.65)';
+      ctx.beginPath(); ctx.arc(g.x, g.y - 24, 7, 0, Math.PI * 2); ctx.stroke();
       ctx.strokeStyle = t < 0.7 ? C.amber : C.red;
-      ctx.beginPath(); ctx.arc(g.x, g.y - 17, 7, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * t); ctx.stroke();
+      ctx.beginPath(); ctx.arc(g.x, g.y - 24, 7, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * t); ctx.stroke();
     }
     var mark = null, col = C.red;
     if (roomAlert) { mark = '!'; col = C.red; }
     else if (g.behavior === 'investigate' && !g.seeing) { mark = '?'; col = C.amber; }
     if (mark !== g.lastMark) { g.markSince = elapsed; g.lastMark = mark; }
-    if (mark) {
-      var age = elapsed - (g.markSince || 0);
-      var pop = reduceMotion ? 1 : Math.min(1, age / 0.18);
-      var sc = 1 + (1 - pop) * 1.2, rise = (1 - pop) * 6;
-      ctx.fillStyle = col;
-      ctx.font = 'bold ' + Math.round(13 * sc) + 'px "Share Tech Mono",monospace';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-      ctx.fillText(mark, g.x, g.y - 13 - rise);
-    }
+    if (mark) drawAlertPlate(g.x, g.y - 20, mark, col, elapsed - (g.markSince || 0));
   }
-  function drawRadar() {
-    var R = 46, cx = 58, cy = 58, span = 250, sc = R / span, i;
+  // MGS alert plate: filled panel + 2px stroke + bold glyph. Pops in from 2.6x
+  // (ease-out over 0.14s), holds large ~0.5s, then eases down to a small
+  // persistent plate. reduceMotion shows the small plate immediately.
+  function drawAlertPlate(x, yBottom, mark, col, age) {
+    var s, t;
+    if (reduceMotion) s = 0.62;
+    else if (age < 0.14) { t = 1 - age / 0.14; s = 1 + 1.6 * t * t * t; }
+    else if (age < 0.64) s = 1;
+    else if (age < 0.84) { t = 1 - (age - 0.64) / 0.2; s = 0.62 + 0.38 * t * t; }
+    else s = 0.62;
+    var w = 14 * s, h = 18 * s, x0 = x - w / 2, y0 = yBottom - h;
+    ctx.fillStyle = C.bg; ctx.fillRect(x0, y0, w, h);
+    ctx.lineWidth = s < 0.8 ? 1.5 : 2; ctx.strokeStyle = col; ctx.strokeRect(x0, y0, w, h);
+    ctx.font = 'bold ' + Math.round(14 * s) + 'px "Share Tech Mono",monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (mark === '?') { ctx.lineWidth = 1; ctx.strokeStyle = C.amberHi; ctx.strokeText(mark, x, y0 + h / 2 + 1); }
+    ctx.fillStyle = col; ctx.fillText(mark, x, y0 + h / 2 + 1);
+  }
+  // Soliton radar — the MGS1 rectangular minimap: the level's wall layout (baked
+  // radarMap, one drawImage) player-centred, guards as red squares with their
+  // cone wedges, cameras amber, exit bearing once the intel is in hand.
+  // JAMMED (alert/evasion, or forceJam on the game-over freeze) = deterministic
+  // static stripes. No gradients here — the old sweep gradient is gone.
+  function drawRadar(forceJam) {
+    var x = RADAR_X, y = RADAR_Y, w = RADAR_W, h = RADAR_H, cx = x + w / 2, cy = y + h / 2, sc = RADAR_SC, i;
+    var jam = forceJam || alertPhase === 'alert' || alertPhase === 'evasion';
     ctx.save();
-    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.closePath();
-    ctx.fillStyle = 'rgba(4,14,8,0.82)'; ctx.fill();
-    ctx.save(); ctx.clip();
-    ctx.strokeStyle = 'rgba(111,207,131,0.18)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(cx, cy, R * 0.5, 0, Math.PI * 2); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
-    if (alertPhase === 'alert' || alertPhase === 'evasion') {
-      ctx.fillStyle = 'rgba(224,96,109,0.12)'; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
-      ctx.fillStyle = C.red; ctx.font = '8px "Share Tech Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('JAMMED', cx, cy);
-    } else {
-      if (!reduceMotion) {
-        var sw = (elapsed * 2.2) % (Math.PI * 2);
-        var grd = ctx.createLinearGradient(cx, cy, cx + Math.cos(sw) * R, cy + Math.sin(sw) * R);
-        grd.addColorStop(0, 'rgba(111,207,131,0.4)'); grd.addColorStop(1, 'rgba(111,207,131,0)');
-        ctx.strokeStyle = grd; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(sw) * R, cy + Math.sin(sw) * R); ctx.stroke();
+    // bezel + screen — translucent, so a sprite walking under the corner stays visible
+    ctx.fillStyle = 'rgba(4,14,11,0.6)'; ctx.fillRect(x - 4, y - 4, w + 8, h + 8);
+    ctx.strokeStyle = 'rgba(119,210,166,0.18)'; ctx.lineWidth = 3; ctx.strokeRect(x - 3.5, y - 3.5, w + 7, h + 7);
+    ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    if (jam) {
+      // static: 2px bands whose brightness hashes off (row, frame) — no allocation
+      var fr = reduceMotion ? 0 : Math.floor(elapsed * 16);
+      for (i = 0; i < h; i += 2) {
+        var v = Math.sin((i + fr * 7) * 12.9898) * 43758.5453; v -= Math.floor(v);
+        ctx.fillStyle = 'rgba(224,96,109,' + (0.05 + v * 0.22).toFixed(2) + ')';
+        ctx.fillRect(x, y + i, w, 2);
       }
+      ctx.fillStyle = 'rgba(4,14,11,0.7)'; ctx.fillRect(cx - 22, cy - 6, 44, 12);
+      ctx.fillStyle = C.red; ctx.font = 'bold 8px "Share Tech Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('JAMMED', cx, cy + 0.5);
+    } else {
+      if (radarMap) ctx.drawImage(radarMap, cx - player.x * sc, cy - player.y * sc, W * sc, H * sc);
       for (i = 0; i < guards.length; i++) {
         var g = guards[i]; if (g.down) continue;
         var rx = cx + (g.x - player.x) * sc, ry = cy + (g.y - player.y) * sc;
-        if (Math.hypot(rx - cx, ry - cy) > R - 2) continue;
+        if (rx < x - 40 || rx > x + w + 40 || ry < y - 40 || ry > y + h + 40) continue;
         var hf = g.fov * (g.fovMul || 1) / 2;
-        ctx.fillStyle = 'rgba(224,96,109,0.22)'; ctx.beginPath(); ctx.moveTo(rx, ry);
+        ctx.fillStyle = g.seeing ? 'rgba(224,96,109,0.32)' : 'rgba(224,96,109,0.20)'; ctx.beginPath(); ctx.moveTo(rx, ry);
         ctx.arc(rx, ry, g.range * (g.rangeMul || 1) * sc, g.facing - hf, g.facing + hf); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = g.seeing ? C.red : '#cc7a80'; ctx.fillRect(rx - 1.5, ry - 1.5, 3, 3);
+        ctx.fillStyle = g.seeing ? C.redHi : C.red; ctx.fillRect(rx - 1.5, ry - 1.5, 3, 3);
       }
       for (i = 0; i < cameras.length; i++) {
         var cm = cameras[i], rx2 = cx + (cm.x - player.x) * sc, ry2 = cy + (cm.y - player.y) * sc;
-        if (Math.hypot(rx2 - cx, ry2 - cy) > R - 2) continue;
+        var hf2 = cm.fov / 2;
+        ctx.fillStyle = 'rgba(224,194,90,0.16)'; ctx.beginPath(); ctx.moveTo(rx2, ry2);
+        ctx.arc(rx2, ry2, cm.range * sc, cm.facing - hf2, cm.facing + hf2); ctx.closePath(); ctx.fill();
         ctx.fillStyle = C.amber; ctx.fillRect(rx2 - 1.5, ry2 - 1.5, 3, 3);
       }
-      // exit waypoint once the intel is in hand — clamps to the rim as a bearing marker
+      // exit waypoint once the intel is in hand — clamps to the frame as a bearing marker
       if (intelGot) {
-        var rex = cx + (exitPt.x - player.x) * sc, rey = cy + (exitPt.y - player.y) * sc;
-        var rd = Math.hypot(rex - cx, rey - cy);
-        if (rd > R - 6) { rex = cx + (rex - cx) * (R - 6) / rd; rey = cy + (rey - cy) * (R - 6) / rd; }
+        var dx = (exitPt.x - player.x) * sc, dy = (exitPt.y - player.y) * sc, lx = w / 2 - 6, ly = h / 2 - 6, k = 1;
+        if (Math.abs(dx) > lx) k = Math.min(k, lx / Math.abs(dx));
+        if (Math.abs(dy) > ly) k = Math.min(k, ly / Math.abs(dy));
+        var rex = cx + dx * k, rey = cy + dy * k;
         if (reduceMotion || Math.sin(elapsed * 6) > -0.3) {
           ctx.fillStyle = C.bright; ctx.fillRect(rex - 1.5, rey - 1.5, 3, 3);
-          ctx.strokeStyle = 'rgba(164,236,177,0.55)'; ctx.lineWidth = 1; ctx.strokeRect(rex - 3.5, rey - 3.5, 7, 7);
+          ctx.strokeStyle = 'rgba(180,236,208,0.55)'; ctx.lineWidth = 1; ctx.strokeRect(rex - 3.5, rey - 3.5, 7, 7);
         }
       }
-      ctx.fillStyle = C.bright; ctx.beginPath(); ctx.arc(cx, cy, 2.2, 0, Math.PI * 2); ctx.fill();
-      // player facing tick — bearing reads off the radar at a glance
+      // player dot + facing tick — bearing reads off the radar at a glance
+      ctx.fillStyle = C.bright; ctx.fillRect(cx - 1.5, cy - 1.5, 3, 3);
       var pfa = Math.atan2(player.fy, player.fx);
       ctx.strokeStyle = C.bright; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(cx + Math.cos(pfa) * 3.5, cy + Math.sin(pfa) * 3.5);
-      ctx.lineTo(cx + Math.cos(pfa) * 7.5, cy + Math.sin(pfa) * 7.5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + Math.cos(pfa) * 3, cy + Math.sin(pfa) * 3);
+      ctx.lineTo(cx + Math.cos(pfa) * 7, cy + Math.sin(pfa) * 7); ctx.stroke();
     }
     ctx.restore();
-    ctx.strokeStyle = 'rgba(111,207,131,0.5)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
-    // instrument bezel + compass ticks
-    ctx.strokeStyle = 'rgba(111,207,131,0.18)'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(cx, cy, R + 3, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = 'rgba(111,207,131,0.5)'; ctx.lineWidth = 1;
-    for (i = 0; i < RADAR_TICKS.length; i++) {
-      var tk = RADAR_TICKS[i];
-      ctx.beginPath(); ctx.moveTo(cx + tk[0] * (R + 1), cy + tk[1] * (R + 1));
-      ctx.lineTo(cx + tk[0] * (R + 5), cy + tk[1] * (R + 5)); ctx.stroke();
+    // frame + corner ticks
+    ctx.strokeStyle = jam ? 'rgba(224,96,109,0.6)' : 'rgba(119,210,166,0.5)'; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, w - 1, h - 1);
+    ctx.strokeStyle = 'rgba(180,236,208,0.55)'; ctx.beginPath();
+    ctx.moveTo(x - 4, y + 4); ctx.lineTo(x - 4, y - 4); ctx.lineTo(x + 4, y - 4);
+    ctx.moveTo(x + w - 4, y - 4); ctx.lineTo(x + w + 4, y - 4); ctx.lineTo(x + w + 4, y + 4);
+    ctx.moveTo(x + w + 4, y + h - 4); ctx.lineTo(x + w + 4, y + h + 4); ctx.lineTo(x + w - 4, y + h + 4);
+    ctx.moveTo(x + 4, y + h + 4); ctx.lineTo(x - 4, y + h + 4); ctx.lineTo(x - 4, y + h - 4);
+    ctx.stroke();
+    ctx.fillStyle = C.dim; ctx.font = '8px "Share Tech Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText('SOLITON', cx, y + h + 7);
+  }
+  /* ---- in-canvas MGS HUD windows — visual duplicates of the DOM strip (which
+     stays the accessible source of truth). Drawn after the radar, only when the
+     canvas is at least 520 CSS px wide (below that the DOM strip alone serves).
+     Every window sits inside the outer wall ring so no floor is covered:
+       LIFE gauge   top row, right of the radar   x 118–330, y 7–25
+       ALERT timer  top row                        x 340–470, y 7–25 (nothing when NORMAL)
+       WEAPON/ACTION window  bottom-left            x 8–104,  y 353–381
+       ITEM window  bottom-right                    x 536–632, y 353–381
+     fillRect / strokeRect / fillText / arc only — no gradients, so the per-frame
+     gradient budget is untouched. reduceMotion: no blinking, values only. ---- */
+  var HUD_FONT = '8px "Share Tech Mono",monospace', HUD_PANEL = 'rgba(4,14,11,0.62)', HUD_EDGE = 'rgba(119,210,166,0.35)';
+  function hudPanel(x, y, w, h, edge) {
+    ctx.fillStyle = HUD_PANEL; ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = edge || HUD_EDGE; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, w - 1, h - 1);
+  }
+  // cooldown ring: dim track; amber arc grows as the timer recharges; full green ring when ready
+  function hudRing(x, y, cd, max) {
+    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(119,210,166,0.22)';
+    ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.stroke();
+    if (cd > 0) {
+      ctx.strokeStyle = C.amber;
+      ctx.beginPath(); ctx.arc(x, y, 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - cd / max)); ctx.stroke();
+    } else {
+      ctx.strokeStyle = C.green;
+      ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = C.green; ctx.fillRect(x - 1.5, y - 1.5, 3, 3);
     }
-    ctx.restore();
-    ctx.fillStyle = C.dim; ctx.font = '8px "Share Tech Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText('SOLITON 140.85', cx, cy + R + 8);
+  }
+  function drawHudWindows() {
+    var blinkOn = reduceMotion || Math.sin(elapsed * 10) > 0, i;
+    ctx.font = HUD_FONT; ctx.textBaseline = 'middle';
+    // (a) LIFE gauge — same thresholds as updateHud()
+    hudPanel(118, 7, 212, 18);
+    ctx.textAlign = 'left'; ctx.fillStyle = C.dim; ctx.fillText('LIFE', 124, 16.5);
+    ctx.fillStyle = 'rgba(0,0,0,0.38)'; ctx.fillRect(150, 11, 176, 10);
+    ctx.strokeStyle = 'rgba(119,210,166,0.55)'; ctx.lineWidth = 1; ctx.strokeRect(150.5, 11.5, 175, 9);
+    var lw = Math.round(174 * Math.max(0, Math.min(1, life)));
+    if (lw > 0 && (life >= 0.25 || blinkOn)) {
+      ctx.fillStyle = life > 0.5 ? C.green : life > 0.25 ? C.amber : C.red;
+      ctx.fillRect(151, 12, lw, 8);
+    }
+    ctx.fillStyle = 'rgba(4,14,11,0.75)';
+    for (i = 158; i < 325; i += 8) ctx.fillRect(i, 12, 1, 8);   // segment ticks every 8px
+    // (d) alert-phase countdown — digits left-aligned at a fixed x so they never jitter
+    if (alertPhase !== 'normal') {
+      var ph = alertPhase, pc = ph === 'caution' ? C.amber : C.red;
+      var pe = ph === 'caution' ? 'rgba(224,194,90,0.45)' : 'rgba(224,96,109,0.5)';
+      hudPanel(340, 7, 130, 18, pe);
+      ctx.textAlign = 'left'; ctx.fillStyle = pc;
+      if (ph === 'alert') { ctx.fillText('ALERT', 358, 16.5); if (blinkOn) ctx.fillText('!', 346, 16.5); }   // word stays, the ! blinks
+      else {
+        ctx.fillText(ph === 'evasion' ? 'EVASION' : 'CAUTION', 346, 16.5);
+        ctx.fillStyle = ph === 'caution' ? C.amberHi : C.redHi;
+        ctx.fillText(Math.max(0, ph === 'evasion' ? evasionTimer : cautionTimer).toFixed(2), 404, 16.5);
+      }
+    }
+    if (coarsePointer) return;   // the touch d-pad / action buttons overlay both bottom corners
+    // (c) WEAPON / ACTION window — CQC + KNOCK with their cooldown rings
+    hudPanel(8, 353, 96, 28);
+    hudRing(21, 367, cqcCD, CQC_CD); hudRing(63, 367, knockCD, KNOCK_CD);
+    ctx.textAlign = 'left'; ctx.font = HUD_FONT;
+    ctx.fillStyle = cqcCD > 0 ? C.dim : C.green; ctx.fillText('CQC', 31, 367.5);
+    ctx.fillStyle = knockCD > 0 ? C.dim : C.green; ctx.fillText('KNOCK', 73, 367.5);
+    // (b) ITEM window — the box (mini SPR.box) when worn, an empty slot otherwise
+    hudPanel(536, 353, 96, 28);
+    ctx.fillStyle = C.dim; ctx.fillText('ITEM', 541, 367.5);
+    ctx.fillStyle = 'rgba(0,0,0,0.38)'; ctx.fillRect(570, 356, 22, 22);
+    ctx.strokeStyle = boxed ? 'rgba(180,236,208,0.6)' : 'rgba(119,210,166,0.3)'; ctx.lineWidth = 1; ctx.strokeRect(570.5, 356.5, 21, 21);
+    if (boxed) {
+      ctx.drawImage(SPR.box, 572, 358, 18, 18);   // exact 1:2 of the 2x sprite at an integer origin (no ragged rows)
+      ctx.fillStyle = C.bright; ctx.fillText('BOX', 598, 367.5);
+    } else { ctx.fillStyle = C.dim; ctx.fillText('NONE', 598, 367.5); }
   }
   function render() {
     var roomAlert = alertPhase === 'alert' || alertPhase === 'evasion', i;
@@ -1230,9 +1613,9 @@
     drawExit(); drawIntel();
     for (i = 0; i < noisePings.length; i++) {
       var pg = noisePings[i], t = pg.t / 0.6;
-      ctx.strokeStyle = 'rgba(159,227,176,' + (0.5 * (1 - t)) + ')'; ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(159,227,196,' + (0.5 * (1 - t)) + ')'; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.arc(pg.x, pg.y, pg.r * t, 0, Math.PI * 2); ctx.stroke();
-      ctx.strokeStyle = 'rgba(159,227,176,' + (0.3 * (1 - t)) + ')'; ctx.lineWidth = 1;   // trailing ring
+      ctx.strokeStyle = 'rgba(159,227,196,' + (0.3 * (1 - t)) + ')'; ctx.lineWidth = 1;   // trailing ring
       ctx.beginPath(); ctx.arc(pg.x, pg.y, pg.r * t * 0.65, 0, Math.PI * 2); ctx.stroke();
     }
     // event pulses: green ring on a CQC takedown, amber ring on the intel grab
@@ -1261,6 +1644,18 @@
         ctx.fillStyle = 'rgba(240,217,140,0.95)'; ctx.fillRect(tg.x - 2, tg.y - 2, 4, 4);  // muzzle flash
       }
     }
+    // heliport snow: ≤40 drifting specks on deterministic sin paths — visual only,
+    // no Math.random, no per-frame allocation; skipped entirely under reduceMotion
+    if (level.floor === 'heliport' && !reduceMotion) {
+      ctx.fillStyle = 'rgba(228,246,240,0.55)';
+      for (i = 0; i < 40; i++) {
+        var sx = (i * 97.3 + elapsed * (14 + (i % 5) * 5) + Math.sin(elapsed * 0.9 + i) * 12) % W;
+        var sy = (i * 53.7 + elapsed * (30 + (i % 7) * 6)) % H;
+        if (sx < 0) sx += W;
+        var sz = (i % 3) ? 1 : 2;
+        ctx.fillRect(sx | 0, sy | 0, sz, sz);
+      }
+    }
     ctx.restore();
     // red vignette (screen space — must not shake): scales with taking-fire flash,
     // and pulses slowly while life is critical so danger reads without the HUD bar
@@ -1268,6 +1663,10 @@
     if (life > 0 && life < 0.3 && state === 'playing') vigA = Math.max(vigA, reduceMotion ? 0.14 : 0.10 + 0.08 * Math.sin(elapsed * 5));
     if (vigA > 0) { ctx.globalAlpha = vigA; ctx.fillStyle = vigGrad; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
     drawRadar();
+    // MGS HUD windows on wide canvases only (one clientWidth read per frame);
+    // narrow/phone layouts rely on the DOM strip alone
+    // gate on the RENDERED width: a height-capped frame letterboxes the canvas (object-fit: contain)
+    if (Math.min(canvas.clientWidth, canvas.clientHeight * W / H) >= 520) drawHudWindows();
   }
 
   /* ===================== screens / transitions ===================== */
@@ -1302,9 +1701,27 @@
   function showScreen(o) {
     hideToast();  // a live gameplay toast (z above the screen) must not float over a menu
     screenEl.className = 'mgsg-screen show' + (o.cls ? ' ' + o.cls : '');
+    // restart the codec wipe + beam on every screen change (the 'show' class may
+    // already be present, e.g. title -> briefing); inline animation:none + reflow
+    // restarts the keyframes without touching the opacity transition
+    if (!reduceMotion) {
+      screenEl.style.animation = 'none'; beamEl.style.animation = 'none';
+      void screenEl.offsetWidth;
+      screenEl.style.animation = ''; beamEl.style.animation = '';
+    }
     scrCaller.textContent = o.caller || ''; scrCaller.style.display = o.caller ? '' : 'none';
     scrTitle.textContent = o.title || ''; scrSub.textContent = o.sub || ''; scrGo.textContent = goText(o.go) || '';
-    if (o.cls === 'brief') typeText(scrBody, o.body || '');
+    // codec-call layout (title + briefing): caller portrait, name, frequency needle
+    var call = o.cls === 'title' || o.cls === 'brief';
+    if (call) {
+      scrPortThem.classList.toggle('noimg', !o.portrait);
+      scrWhoThem.textContent = o.who || '';
+      var fq = o.freq || '140.85';
+      scrFnum.textContent = fq;
+      // needle: 140.00 .. 142.00 across the strip
+      scrNeedle.style.left = Math.max(4, Math.min(96, (parseFloat(fq) - 140) / 2 * 100)).toFixed(1) + '%';
+    }
+    if (call) typeText(scrBody, o.body || '');
     else { if (typeTimer) { clearInterval(typeTimer); typeTimer = null; } scrBody.textContent = o.body || ''; }
     if (o.big) { scrRank.textContent = o.big; scrRank.className = o.bigCls || 'rank'; scrRank.style.display = ''; } else scrRank.style.display = 'none';
     scrStats.innerHTML = '';
@@ -1348,11 +1765,14 @@
     return true;
   }
 
-  function startTitle() { state = 'title'; loadLevel(0); render(); showScreen({ cls: 'title', caller: 'CODEC INFILTRATION · 140.85', title: 'METAL GEAR', body: 'A stealth drill on an encrypted burst channel. Get the intel, reach the exit, stay unseen.', sub: 'WASD move · Shift run · B box · K knock · F CQC', go: 'PRESS ENTER' }); }
+  // title: the call comes from Shadow Moses on 140.85 — Snake's codec portrait
+  // (img/codec-snake-face.png) on the caller side; briefings show the op's
+  // caller as a NO IMAGE static box on that op's frequency
+  function startTitle() { state = 'title'; loadLevel(0); render(); showScreen({ cls: 'title', caller: 'SHADOW MOSES · 140.85', title: 'METAL GEAR', portrait: true, who: 'SNAKE', freq: '140.85', body: 'A stealth drill on an encrypted burst channel. Get the intel, reach the exit, stay unseen.', sub: 'WASD move · Shift run · B box · K knock · F CQC', go: 'PRESS ENTER' }); }
   function startBriefing() {
     state = 'briefing'; loadLevel(levelIdx); render();
     var pb = bestFor('op' + (levelIdx + 1));   // personal best line — omitted until an op is cleared once
-    showScreen({ cls: 'brief', caller: '▸ ' + level.caller + ' · 140.85', title: 'OP ' + (levelIdx + 1) + ' — ' + level.name, stats: pb !== null ? [['PERSONAL BEST', fmt(pb)]] : null, body: level.brief, sub: 'incoming codec · transmission secure', go: 'PRESS ENTER TO INFILTRATE' });
+    showScreen({ cls: 'brief', caller: '▸ ' + level.caller + ' · ' + level.freq, title: 'OP ' + (levelIdx + 1) + ' — ' + level.name, who: level.caller, freq: level.freq, stats: pb !== null ? [['PERSONAL BEST', fmt(pb)]] : null, body: level.brief, sub: 'incoming codec · transmission secure', go: 'PRESS ENTER TO INFILTRATE' });
   }
   function startPlay() {
     hideScreen(); keys = Object.create(null); touchDir = { up: 0, down: 0, left: 0, right: 0 }; running = false;
@@ -1396,6 +1816,13 @@
     updateHud();  // the death frame returns before update()'s HUD refresh — show the real (empty) life bar
     if (!reduceMotion) { flashEl.classList.remove('on'); void flashEl.offsetWidth; flashEl.classList.add('on'); }
     render();
+    // freeze frame: grade the field red-monochrome (two flat fills, no gradient)
+    // and show the radar jammed — the frame stays under the GAME OVER screen
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = 'rgba(224,96,109,0.55)'; ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(80,0,10,0.25)'; ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+    drawRadar(true);
     showScreen({ cls: 'fail', title: 'GAME OVER', big: 'SNAAAKE!', bigCls: 'snaaake', body: 'You were taken down on OP ' + (levelIdx + 1) + '.', stats: [['OP', String(levelIdx + 1)], ['STATUS', 'K.I.A.']], go: 'PRESS ENTER / R TO RETRY' });
   }
   function advance() {
@@ -1483,6 +1910,15 @@
     window.addEventListener('resize', onResize);
     window.addEventListener('themechange', applyChrome);   // live reskin while open
     requestAnimationFrame(function () { overlay.classList.add('in'); });
+    // LCD chip dials in: 140.00 -> 140.85 in 8 steps over 0.4s (cleared on close)
+    if (freqTimer) { clearInterval(freqTimer); freqTimer = null; }
+    if (!reduceMotion) {
+      var fstep = 0; freqEl.textContent = '140.00';
+      freqTimer = setInterval(function () {
+        fstep++; freqEl.textContent = (140 + 0.85 * Math.min(1, fstep / 8)).toFixed(2);
+        if (fstep >= 8) { clearInterval(freqTimer); freqTimer = null; }
+      }, 50);
+    } else freqEl.textContent = '140.85';
     frame.focus();
     startTitle();
     lastT = 0; rafId = requestAnimationFrame(frameStep);
@@ -1501,6 +1937,8 @@
     window.removeEventListener('themechange', applyChrome);
     overlay.classList.remove('in'); document.body.style.overflow = '';
     hideToast(); if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
+    if (freqTimer) { clearInterval(freqTimer); freqTimer = null; }
+    freqEl.textContent = '140.85';
     resetInput(); boxed = false;  // resetInput also clears touchDir — no stuck d-pad on reopen
     try { if (prevFocus && prevFocus.focus) prevFocus.focus(); } catch (e) {}
     prevFocus = null;

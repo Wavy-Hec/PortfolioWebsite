@@ -26,7 +26,7 @@
   <script>try{var t=localStorage.getItem('theme');if(t==='codec'||t==='starwars'||t==='gotham'){document.documentElement.dataset.theme=t;
   /* Preload the theme's hero render: the swap script mid-body replaces the hero src,
      so without this the themed LCP image is only discovered a full HTML parse later. */
-  var hero={codec:'img/raiden-dither-green.png',starwars:'img/obiwan-dither.png',gotham:'img/batman-dither.png'}[t];
+  var hero={codec:'img/codec-lab.webp',starwars:'img/obiwan-dither.png',gotham:'img/batman-dither.png'}[t];
   if(hero){var l=document.createElement('link');l.rel='preload';l.as='image';l.href=hero;l.fetchPriority='high';document.head.appendChild(l);}}}catch(e){}</script>
   <!-- PNG first so legacy Safari (no SVG favicon support) picks it up; SVG-capable browsers prefer the later entry -->
   <link rel="icon" href="favicon-32.png?v=2" type="image/png" sizes="32x32">
@@ -38,7 +38,7 @@
        Icons are an inline SVG sprite at the top of <body> (zero requests; replaced Font Awesome's ~298KB CSS+woff2). -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap"></noscript>
-  <link rel="stylesheet" href="style.css?v=32">
+  <link rel="stylesheet" href="style.css?v=36">
   <!-- Without JS the codec loader can never dismiss itself — hide it outright.
        Must come AFTER style.css so it wins the cascade (equal specificity). -->
   <noscript><style>.codec-loader{display:none!important}body:not(.loaded){overflow-y:auto!important}</style></noscript>
@@ -46,8 +46,8 @@
        order (script.js dispatches 'themechange'; dither/radar listen) and runs
        post-parse. game.js is lazy-loaded by script.js on first launch. -->
   <script src="js/dither.js?v=18" defer></script>
-  <script src="js/radar.js?v=19" defer></script>
-  <script src="js/script.js?v=34" defer></script>
+  <script src="js/radar.js?v=21" defer></script>
+  <script src="js/script.js?v=37" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -168,8 +168,8 @@
     </div>
     <div class="home-img">
       <figure>
-        <img src="img/ink-raiden.png" width="640" height="1016" fetchpriority="high" decoding="async" data-light="img/ink-raiden.png" data-codec="img/raiden-dither-green.png" data-starwars="img/obiwan-dither.png" data-starwars-alt="LEGO Obi-Wan Kenobi taking a selfie on Mustafar, Anakin fuming in the lava behind — dithered render" data-gotham="img/batman-dither.png" data-gotham-alt="Batman — dithered render" alt="Raiden — Metal Gear Solid 2 illustration by Yoji Shinkawa, dithered">
-        <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars){i.dataset.baseAlt=i.alt;i.src=i.dataset.starwars;i.alt=i.dataset.starwarsAlt;}else if(t==='gotham'&&i.dataset.gotham){i.dataset.baseAlt=i.alt;i.src=i.dataset.gotham;i.alt=i.dataset.gothamAlt;}</script>
+        <img src="img/ink-raiden.png" width="640" height="1016" fetchpriority="high" decoding="async" data-light="img/ink-raiden.png" data-codec="img/codec-lab.webp" data-codec-still="img/codec-lab.png" data-codec-alt="Solid Snake faces Gray Fox while Otacon hides in a locker — Metal Gear Solid (1998), Shadow Moses" data-starwars="img/obiwan-dither.png" data-starwars-alt="LEGO Obi-Wan Kenobi taking a selfie on Mustafar, Anakin fuming in the lava behind — dithered render" data-gotham="img/batman-dither.png" data-gotham-alt="Batman — dithered render" alt="Raiden — Metal Gear Solid 2 illustration by Yoji Shinkawa, dithered">
+        <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec'){i.dataset.baseAlt=i.alt;i.src=(matchMedia('(prefers-reduced-motion: reduce)').matches&&i.dataset.codecStill)?i.dataset.codecStill:i.dataset.codec;if(i.dataset.codecAlt)i.alt=i.dataset.codecAlt;}else if(t&&i.dataset[t]){i.dataset.baseAlt=i.alt;i.src=i.dataset[t];i.alt=i.dataset[t+'Alt']||i.alt;}</script>
         <figcaption class="img-caption">raiden · yoji shinkawa · 140.85</figcaption>
       </figure>
     </div>
@@ -178,7 +178,7 @@
   <!-- What I do -->
   <section class="work" id="work">
     <div class="container">
-      <p class="kicker">// what i do</p>
+      <p class="kicker" data-codec="▸ CAMPBELL · 140.85">// what i do</p>
       <h2 class="section-title">Research <span class="hl">focus</span></h2>
       <div class="work-grid">
         <div class="work-card">
@@ -208,7 +208,7 @@
   <!-- About -->
   <section class="about" id="about">
     <div class="container">
-      <p class="kicker">// about</p>
+      <p class="kicker" data-codec="▸ NAOMI · 140.85">// about</p>
       <h2 class="section-title">About <span class="hl">me</span></h2>
       <div class="about-content">
         <div class="about-text">
@@ -232,7 +232,7 @@
   <!-- Experience -->
   <section class="experience" id="experience">
     <div class="container">
-      <p class="kicker">// experience</p>
+      <p class="kicker" data-codec="▸ MEI LING · 140.96">// experience</p>
       <h2 class="section-title">Professional <span class="hl">experience</span></h2>
       <div class="timeline">
         <div class="timeline-item">
@@ -297,7 +297,7 @@
   <!-- Projects -->
   <section class="projects" id="projects">
     <div class="container">
-      <p class="kicker">// projects</p>
+      <p class="kicker" data-codec="▸ OTACON · 141.12">// projects</p>
       <h2 class="section-title">Selected <span class="hl">projects</span></h2>
       <!-- Project thumbnails are generated placeholder "dither plates".
            To swap any plate for a real screenshot later: export a 16:9 image (1280x720 works)
@@ -479,7 +479,7 @@
   <!-- Skills -->
   <section class="skills" id="skills">
     <div class="container">
-      <p class="kicker">// skills</p>
+      <p class="kicker" data-codec="▸ NASTASHA · 141.52">// skills</p>
       <h2 class="section-title">Technical <span class="hl">expertise</span></h2>
       <div class="skills-grid">
         <div class="skill-category">
@@ -513,7 +513,7 @@
   <!-- Résumé -->
   <section class="resume" id="resume">
     <div class="container">
-      <p class="kicker">// résumé</p>
+      <p class="kicker" data-codec="▸ CAMPBELL · 140.85">// résumé</p>
       <h2 class="section-title">Résumé <span class="hl">/ cv</span></h2>
       <div class="resume-actions">
         <a href="resume.html" target="_blank" rel="noopener" class="btn"><svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg> View PDF</a>
@@ -561,7 +561,7 @@
   <!-- Beyond the Code -->
   <section class="beyond" id="beyond">
     <div class="container">
-      <p class="kicker">// beyond the code</p>
+      <p class="kicker" data-codec="▸ MASTER MILLER · 141.80">// beyond the code</p>
       <h2 class="section-title">Beyond the <span class="hl">code</span></h2>
       <div class="beyond-grid">
         <article class="beyond-card">
@@ -609,7 +609,7 @@
       <div class="codec-call">
         <div class="codec-portrait cc-left">
           <img src="img/headshot-ink.png" width="200" height="200" loading="lazy" decoding="async" data-light="img/headshot-ink.png" data-codec="img/headshot-dither-green.png" data-starwars="img/headshot-starwars-dither.png" data-gotham="img/headshot-gotham-dither.png" alt="Hector Lugo">
-          <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars)i.src=i.dataset.starwars;else if(t==='gotham'&&i.dataset.gotham)i.src=i.dataset.gotham;</script>
+          <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t&&i.dataset[t])i.src=i.dataset[t];</script>
           <span class="codec-name">HECTOR</span>
           <span class="codec-mhz">140.85</span>
         </div>
@@ -617,10 +617,11 @@
           <span class="codec-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
           <p class="codec-line">"Kept you waiting, huh?"</p>
           <span class="codec-status">▸ incoming transmission · 140.85</span>
+          <button type="button" class="codec-answer" id="codec-answer" aria-label="Answer the codec call — opens the Codec Infiltration mini-game">▸ ANSWER</button>
         </div>
         <div class="codec-portrait cc-right">
-          <img src="img/cc-raiden-ink.png" width="260" height="260" loading="lazy" decoding="async" data-light="img/cc-raiden-ink.png" data-codec="img/cc-raiden-green.png" data-starwars="img/cc-quigon-dither.png" data-starwars-alt="Qui-Gon Jinn — LEGO minifigure, dithered render" data-gotham="img/cc-nightwing-dither.png" data-gotham-alt="Nightwing" alt="Raiden">
-          <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec')i.src=i.dataset.codec;else if(t==='starwars'&&i.dataset.starwars){i.dataset.baseAlt=i.alt;i.src=i.dataset.starwars;i.alt=i.dataset.starwarsAlt;}else if(t==='gotham'&&i.dataset.gotham){i.dataset.baseAlt=i.alt;i.src=i.dataset.gotham;i.alt=i.dataset.gothamAlt;}</script>
+          <img src="img/cc-raiden-ink.png" width="260" height="260" loading="lazy" decoding="async" data-light="img/cc-raiden-ink.png" data-codec="img/codec-snake-face.webp" data-codec-still="img/codec-snake-face.png" data-codec-alt="Solid Snake on the codec — Metal Gear Solid (1998)" data-starwars="img/cc-quigon-dither.png" data-starwars-alt="Qui-Gon Jinn — LEGO minifigure, dithered render" data-gotham="img/cc-nightwing-dither.png" data-gotham-alt="Nightwing" alt="Raiden">
+          <script>var t=document.documentElement.dataset.theme,i=document.currentScript.previousElementSibling;if(t==='codec'){i.dataset.baseAlt=i.alt;i.src=(matchMedia('(prefers-reduced-motion: reduce)').matches&&i.dataset.codecStill)?i.dataset.codecStill:i.dataset.codec;if(i.dataset.codecAlt)i.alt=i.dataset.codecAlt;}else if(t&&i.dataset[t]){i.dataset.baseAlt=i.alt;i.src=i.dataset[t];i.alt=i.dataset[t+'Alt']||i.alt;}</script>
           <span class="codec-name">RAIDEN</span>
           <span class="codec-mhz">140.85</span>
         </div>

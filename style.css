@@ -35,30 +35,31 @@
 /* ===== Codec mode — MGS2 codec-screen green phosphor on near-black ===== */
 html[data-theme="codec"] {
   color-scheme: dark;
-  --bg: #081209;
-  --bg-2: #0a1810;
-  --panel: #0e1d13;
-  --panel-2: #132619;
-  --ink: #6fcf83;
-  --ink-strong: #a4ecb1;
-  --text: #a9cbae;
-  --text-dim: #84ab8b;
-  --text-muted: #6f9a78;   /* 5.0:1 on --panel-2 (placeholders) */
-  --border: #1e3526;
-  --border-strong: #386041;
-  --input-border: #4e8a5e; /* ≥3:1 vs panel (WCAG 1.4.11) */
-  --highlight: #6fcf83;
+  /* Shadow Moses mint — sampled from Snake's 1998 codec portrait (hue ~150) */
+  --bg: #071612;
+  --bg-2: #0b1f19;
+  --panel: #0f2220;
+  --panel-2: #14302a;
+  --ink: #77d2a6;
+  --ink-strong: #b4ecd0;
+  --text: #cfdcd3;
+  --text-dim: #9dbcae;
+  --text-muted: #86a698;   /* ≥5:1 on --panel-2 (placeholders) */
+  --border: #1d3a33;
+  --border-strong: #3a6b5c;
+  --input-border: #4f8f7a; /* ≥3:1 vs panel (WCAG 1.4.11) */
+  --highlight: #77d2a6;
   --shadow-lift: 0 10px 28px rgba(0, 0, 0, .55);
-  --wash: #0d2012;
-  --grid-line: rgba(111, 207, 131, .05);
-  --on-accent: #07140b;
-  --accent-tint: rgba(111, 207, 131, .08);
-  --band: rgba(14, 29, 19, .6);
-  --codec-band: rgba(13, 31, 18, .7);
-  --scanline: rgba(111, 207, 131, .07);
-  --scanline-soft: rgba(111, 207, 131, .05);
-  --header-bg: rgba(8, 18, 9, .85);
-  --header-bg-solid: rgba(8, 18, 9, .98);
+  --wash: #0c1f1a;
+  --grid-line: rgba(119, 210, 166, .05);
+  --on-accent: #06110d;
+  --accent-tint: rgba(119, 210, 166, .08);
+  --band: rgba(15, 34, 32, .6);
+  --codec-band: rgba(13, 31, 27, .7);
+  --scanline: rgba(119, 210, 166, .07);
+  --scanline-soft: rgba(119, 210, 166, .05);
+  --header-bg: rgba(7, 22, 18, .85);
+  --header-bg-solid: rgba(7, 22, 18, .98);
   --error: #e0606d;
 }
 
@@ -2553,3 +2554,286 @@ html:not([data-theme]) .theme-picker [role="radio"]:hover { color: var(--red); }
 /* art credit — shown only where the illustrations are */
 .art-credit { display: none; }
 html:not([data-theme]) .art-credit { display: inline; }
+
+/* =====================================================================
+   Codec — Shadow Moses (Metal Gear Solid, 1998). Mint phosphor on dark
+   steel, sampled from Solid Snake's codec portrait. The hero IS the codec
+   call: your frame left, the locker scene right (Snake, Gray Fox, Otacon),
+   140.85 on the tuning scale between them, the intro as the transmission.
+   CSS on the existing hero markup: ::before is the left frame, ::after the
+   dial, .home-img the caller, .home-content the transmission window.
+   Ink is paper, serif, still; codec is steel, mono, alive (snow, band).
+   ===================================================================== */
+html[data-theme="codec"] .home {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 260px;
+  grid-template-areas: "left dial right" "text text text";
+  align-items: end;
+  align-content: center;
+  gap: 2.6rem 3.2rem;
+}
+html[data-theme="codec"] .home::before {                 /* left frame: you */
+  content: 'HECTOR';
+  grid-area: left;
+  display: block;
+  width: 260px;
+  padding-top: calc(260px + .7rem);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.25rem;
+  letter-spacing: 2px;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--ink);
+  background:
+    url(img/headshot-dither-green.png) top center / 260px 260px no-repeat,
+    linear-gradient(var(--border-strong), var(--border-strong)) top center / 260px 1px no-repeat,
+    linear-gradient(var(--border-strong), var(--border-strong)) center top 259px / 260px 1px no-repeat,
+    linear-gradient(var(--border-strong), var(--border-strong)) left top / 1px 260px no-repeat,
+    linear-gradient(var(--border-strong), var(--border-strong)) right top / 1px 260px no-repeat;
+}
+html[data-theme="codec"] .home::after {                  /* the dial */
+  content: '140.85';
+  grid-area: dial;
+  display: block;
+  padding-bottom: 5.4rem;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(4.4rem, 6vw, 7.2rem);
+  line-height: 1;
+  letter-spacing: .04em;
+  text-align: center;
+  color: var(--ink-strong);
+  text-shadow: 0 0 16px rgba(119, 210, 166, .35);
+  background:
+    linear-gradient(var(--ink-strong), var(--ink-strong)) center bottom 1.9rem / 2px 30px no-repeat,          /* cursor */
+    repeating-linear-gradient(90deg, var(--border-strong) 0 1px, transparent 1px 48px) left bottom 2.2rem / 100% 20px no-repeat,
+    repeating-linear-gradient(90deg, var(--border-strong) 0 1px, transparent 1px 8px) left bottom 2.2rem / 100% 10px no-repeat,
+    linear-gradient(var(--border-strong), var(--border-strong)) left bottom 2.2rem / 100% 1px no-repeat;      /* baseline */
+}
+html[data-theme="codec"] .home-img { grid-area: right; }
+html[data-theme="codec"] .home-img img {                 /* right frame: the locker scene */
+  width: 260px;
+  height: 260px;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 0;
+  background: #071612;
+}
+html[data-theme="codec"] .img-caption {
+  margin-top: .7rem;
+  font-size: 1.25rem;
+  letter-spacing: 2px;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+html[data-theme="codec"] .home-content {                 /* the transmission window */
+  grid-area: text;
+  position: relative;
+  padding: 3.6rem 3.2rem 3rem;
+  border: 1px solid var(--border-strong);
+  background: rgba(7, 22, 18, .66);
+  box-shadow: inset 0 0 0 1px rgba(4, 14, 11, .85), 0 0 28px rgba(119, 210, 166, .06);
+}
+html[data-theme="codec"] .home-content::before {         /* speaker tab */
+  content: '\25B8  HECTOR \00B7  140.85';   /* double spaces: a CSS escape eats the space after it */
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  padding: .45em 1em;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.15rem;
+  letter-spacing: 2px;
+  line-height: 1;
+  background: var(--ink);
+  color: var(--on-accent);
+}
+html[data-theme="codec"] .home-content .lead { max-width: 72ch; }
+
+/* --- Type: codec subtitles are mono caps; body copy stays the readable serif --- */
+html[data-theme="codec"] .kicker {
+  font-family: 'Share Tech Mono', monospace;
+  font-weight: 400;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+html[data-theme="codec"] .home-content h1 {
+  font-family: 'Share Tech Mono', monospace;
+  font-weight: 400;
+  font-size: 4.6rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin-bottom: 1.2rem;
+}
+html[data-theme="codec"] .section-title {
+  font-family: 'Share Tech Mono', monospace;
+  font-weight: 400;
+  font-size: 3rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* --- Snow over Shadow Moses: three dot layers on the fixed backdrop, one
+   transform loop (tile sizes divide 640px so the wrap is seamless) --- */
+html[data-theme="codec"] .atmo::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -640px;
+  bottom: 0;
+  background-image:
+    radial-gradient(circle, rgba(214, 247, 232, .85) 0 1px, transparent 1.6px),
+    radial-gradient(circle, rgba(214, 247, 232, .6) 0 1.4px, transparent 2px),
+    radial-gradient(circle, rgba(214, 247, 232, .4) 0 1px, transparent 1.5px);
+  background-size: 160px 160px, 320px 320px, 640px 640px;
+  background-position: 13px 27px, 90px 140px, 300px 420px;
+  opacity: .5;
+  animation: codecSnow 24s linear infinite;
+  will-change: transform;
+}
+@keyframes codecSnow { from { transform: translateY(0); } to { transform: translateY(640px); } }
+
+/* --- Art through the sections: Snake's pistol sketch behind About, Gray Fox behind Projects --- */
+html[data-theme="codec"] .about,
+html[data-theme="codec"] .projects { position: relative; }
+html[data-theme="codec"] .about > .container,
+html[data-theme="codec"] .projects > .container { position: relative; z-index: 1; }
+html[data-theme="codec"] .about::before,
+html[data-theme="codec"] .projects::before {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: contain;
+  z-index: 0;
+}
+html[data-theme="codec"] .about::before {                 /* Snake, pistol drawn — Shinkawa sketch in phosphor strokes */
+  right: 2%; top: 3rem;
+  width: min(38vw, 520px); height: min(38vw, 520px);
+  background-image: url(img/codec-snake.png);
+  background-position: right top;
+  opacity: .24;
+}
+html[data-theme="codec"] .projects::before {              /* Gray Fox, the blade — Shinkawa painting in the mint ramp */
+  left: -2%; top: 2rem;
+  width: min(34vw, 520px); height: min(42.5vw, 650px);
+  background-image: url(img/codec-grayfox-full.png);
+  background-position: left top;
+  opacity: .14;
+  -webkit-mask-image: linear-gradient(to bottom, #000 65%, transparent);
+  mask-image: linear-gradient(to bottom, #000 65%, transparent);
+}
+
+/* --- Project plates as PS1 objects: a one-shot vertex jitter on hover, never the text --- */
+@keyframes psxJitter {
+  0% { transform: translate(0, 0); }
+  33% { transform: translate(1px, -1px) skewX(.4deg); }
+  66% { transform: translate(-1px, 1px) skewX(-.4deg); }
+  100% { transform: translate(0, 0); }
+}
+html[data-theme="codec"] .project-card:hover img,
+html[data-theme="codec"] .project-card:focus-within img { animation: psxJitter .4s steps(3) 1; }
+
+/* --- Contact call: Snake on the line (animated portrait scales smoothly, not pixelated) --- */
+html[data-theme="codec"] .cc-right img { image-rendering: auto; }
+
+/* --- Psycho Mantis: the "HIDEO" blackout (script.js adds/removes the element) --- */
+.mantis-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: #000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .12s steps(1);
+}
+.mantis-veil.on { opacity: 1; }
+.mantis-veil::after {
+  content: 'HIDEO';
+  position: absolute;
+  top: 1.6rem;
+  right: 2rem;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.6rem;
+  letter-spacing: 4px;
+  color: #77d2a6;
+}
+
+/* ANSWER — the contact codec call is the front door to Codec Infiltration
+   (the Konami code and the footer link stay). All themes; codec rings. */
+.codec-answer {
+  display: block;
+  margin: 1.6rem auto 0;
+  padding: .9rem 2rem;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.3rem;
+  letter-spacing: 2.5px;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.codec-answer:hover,
+.codec-answer:focus-visible { background: var(--ink); color: var(--on-accent); outline: none; }
+.codec-answer:focus-visible { box-shadow: 0 0 0 3px var(--accent-tint), 0 0 0 4px var(--ink); }
+html[data-theme="codec"] .codec-answer { animation: ccRing 2.2s ease-out infinite; }
+@keyframes ccRing {
+  0%   { box-shadow: 0 0 0 0 rgba(119, 210, 166, .55); }
+  70%  { box-shadow: 0 0 0 14px rgba(119, 210, 166, 0); }
+  100% { box-shadow: 0 0 0 14px rgba(119, 210, 166, 0); }
+}
+html[data-theme="starwars"] .codec-answer { color: var(--sw-holo); border-color: var(--sw-holo); text-shadow: 0 0 8px var(--sw-holo-glow); }
+html[data-theme="starwars"] .codec-answer:hover,
+html[data-theme="starwars"] .codec-answer:focus-visible { background: var(--sw-holo); color: #06101c; text-shadow: none; }
+
+@media (max-width: 1100px) {
+  html[data-theme="codec"] .home { grid-template-columns: 220px minmax(0, 1fr) 220px; }
+  html[data-theme="codec"] .home::before { width: 220px; padding-top: calc(220px + .7rem); background-size: 220px 220px, 220px 1px, 220px 1px, 1px 220px, 1px 220px; background-position: top center, top center, center top 219px, left top, right top; }
+  html[data-theme="codec"] .home-img img { width: 220px; height: 220px; }
+}
+@media (max-width: 992px) {
+  html[data-theme="codec"] .home {
+    grid-template-columns: 1fr auto 1fr;
+    gap: 2.2rem 1.6rem;
+    text-align: center;
+  }
+  html[data-theme="codec"] .home::before { justify-self: end; }
+  html[data-theme="codec"] .home-img { justify-self: start; }
+  html[data-theme="codec"] .home::after { font-size: clamp(3rem, 7vw, 5.4rem); padding-bottom: 4.6rem; }
+  html[data-theme="codec"] .home-content { padding: 3.4rem 2.2rem 2.6rem; }
+  html[data-theme="codec"] .home-content h1 { font-size: 3.8rem; }
+  html[data-theme="codec"] .section-title { font-size: 2.6rem; }
+  html[data-theme="codec"] .about::before,
+  html[data-theme="codec"] .projects::before { opacity: .1; }
+}
+@media (max-width: 700px) {
+  html[data-theme="codec"] .home {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "left right" "dial dial" "text text";
+    gap: 1.6rem 1.4rem;
+  }
+  html[data-theme="codec"] .home::before,
+  html[data-theme="codec"] .home-img img { width: min(40vw, 200px); }
+  html[data-theme="codec"] .home::before {
+    padding-top: calc(min(40vw, 200px) + .7rem);
+    background-size: min(40vw, 200px) min(40vw, 200px), min(40vw, 200px) 1px, min(40vw, 200px) 1px, 1px min(40vw, 200px), 1px min(40vw, 200px);
+    background-position: top center, top center, center top calc(min(40vw, 200px) - 1px), left top, right top;
+  }
+  html[data-theme="codec"] .home-img img { height: min(40vw, 200px); }
+  html[data-theme="codec"] .home::after { font-size: clamp(3.2rem, 11vw, 4.8rem); padding-bottom: 4.2rem; }
+  html[data-theme="codec"] .home-content { padding: 3.2rem 1.6rem 2.4rem; }
+  html[data-theme="codec"] .home-content h1 { font-size: 3rem; }
+  html[data-theme="codec"] .home-content::before { font-size: 1.05rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="codec"] .codec-answer { animation: none; box-shadow: 0 0 0 3px rgba(119, 210, 166, .18); }
+  html[data-theme="codec"] .atmo::before { animation: none; opacity: .3; }
+  html[data-theme="codec"] .project-card:hover img,
+  html[data-theme="codec"] .project-card:focus-within img { animation: none; }
+  .mantis-veil { display: none; }
+}

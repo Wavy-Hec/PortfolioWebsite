@@ -97,7 +97,7 @@ if (hyperjumpEl) hyperjumpEl.addEventListener('animationend', (e) => {
 // (icons are sprite symbol ids — see the inline <svg> sprite at body top)
 const THEME_META = {
     light:    { label: 'ink',     icon: 'i-pen-nib',         color: '#e9e7e2' },
-    codec:    { label: 'codec',   icon: 'i-tower-broadcast', color: '#081209' },
+    codec:    { label: 'codec',   icon: 'i-tower-broadcast', color: '#071612' }, // color = codec --bg (Shadow Moses mint)
     starwars: { label: 'holonet', icon: 'i-satellite-dish',  color: '#060a12' }, // color = starwars --bg (style.css)
     gotham:   { label: 'gotham',  icon: 'i-city',            color: '#0b0c0e' }, // color = gotham --bg (style.css)
 };
@@ -107,13 +107,25 @@ const THEME_META = {
 // 1138 — Lucas's THX-1138 easter egg (ANH cell block 1138). 38.40 — Detective
 // Comics #38 (1940), Dick Grayson's debut. Starwars quote matches the pictured
 // caller (Qui-Gon, TPM); gotham carries Batman's comics vow (Batman: Year One)
-// over NIGHTWING's encrypted channel.
-const MGS_CC = { callsign: 'RAIDEN', quote: '"Kept you waiting, huh?"', status: '▸ incoming transmission · 140.85', kicker: '// codec · 140.85', mhz: '140.85' };
+// over NIGHTWING's encrypted channel. answer/answerLabel = the ANSWER button's
+// visible text + aria-label (the visible text stays inside the accessible
+// name, WCAG 2.5.3).
+const ANSWER_LABEL = 'Answer the codec call — opens the Codec Infiltration mini-game';
+const MGS_CC = { callsign: 'RAIDEN', quote: '"Kept you waiting, huh?"', status: '▸ incoming transmission · 140.85', kicker: '// codec · 140.85', mhz: '140.85', answer: '▸ ANSWER', answerLabel: ANSWER_LABEL };
 const CC_TEXT = {
     light: MGS_CC,
-    codec: MGS_CC,
-    starwars: { callsign: 'QUI-GON',   quote: '"Your focus determines your reality."', status: '▸ incoming transmission · channel 1138', kicker: '// holonet · 1138',        mhz: '1138' },
-    gotham:   { callsign: 'NIGHTWING', quote: '"I shall become a bat."',               status: '▸ encrypted call · 38.40',               kicker: '// oracle uplink · 38.40', mhz: '38.40' },
+    codec: { callsign: 'SNAKE', quote: '"Kept you waiting, huh?"', status: '▸ incoming · 140.85 · shadow moses', kicker: '▸ MERYL · 140.15', mhz: '140.85', answer: '▸ ANSWER', answerLabel: ANSWER_LABEL },
+    starwars: { callsign: 'QUI-GON',   quote: '"Your focus determines your reality."', status: '▸ incoming transmission · channel 1138', kicker: '// holonet · 1138',        mhz: '1138',  answer: '▸ ANSWER', answerLabel: ANSWER_LABEL },
+    gotham:   { callsign: 'NIGHTWING', quote: '"I shall become a bat."',               status: '▸ encrypted call · 38.40',               kicker: '// oracle uplink · 38.40', mhz: '38.40', answer: '▸ ANSWER', answerLabel: ANSWER_LABEL },
+};
+// Hero figcaption per theme (light/codec read as a codec transmission label:
+// 140.85 — codec freq; Big Shell — MGS2 setting). gotham: Detective Comics
+// #27 — Batman's debut.
+const HERO_CAPTION = {
+    light:    'raiden · yoji shinkawa · 140.85',
+    codec:    'shadow moses · 140.85',
+    starwars: 'holo capture · mustafar · high ground secured',
+    gotham:   'case file no. 27 · gotham archives',
 };
 
 function currentTheme() {
@@ -145,35 +157,34 @@ function applyTheme(name) {
         btn.setAttribute('aria-checked', on ? 'true' : 'false');
         btn.tabIndex = on ? 0 : -1;   // roving tabindex — Tab lands on the checked radio
     });
-    // Portraits: codec has dedicated green renders; starwars/gotham each ship a
-    // dedicated render for every themed portrait (hero → obi-wan/batman,
-    // codec-call left → amber/blue-white headshots, right → qui-gon/nightwing).
-    // data-light stays the ink fallback; no CSS recolor filters remain.
+    // Portraits: codec has dedicated green renders (+ a still for reduced
+    // motion); every other theme ships a dedicated render per themed portrait
+    // as data-<theme> / data-<theme>-alt (hero → obi-wan/batman/pixel
+    // headshot, codec-call left → re-toned headshots, right →
+    // qui-gon/nightwing/merchant). data-light stays the ink fallback for a
+    // theme with no render; no CSS recolor filters remain.
     themedPortraits.forEach(img => {
         if (name === 'codec') {
-            img.src = img.dataset.codec;
-            img.alt = img.dataset.baseAlt;
-        } else if (name === 'gotham' && img.dataset.gotham) {
-            img.src = img.dataset.gotham;
-            img.alt = img.dataset.gothamAlt || img.dataset.baseAlt;
-        } else if (name === 'starwars' && img.dataset.starwars) {
-            img.src = img.dataset.starwars;
-            img.alt = img.dataset.starwarsAlt || img.dataset.baseAlt;
+            // animated portraits ship a still for reduced-motion visitors
+            img.src = (prefersReducedMotion && img.dataset.codecStill) ? img.dataset.codecStill : img.dataset.codec;
+            img.alt = img.dataset.codecAlt || img.dataset.baseAlt;
+        } else if (name !== 'light' && img.dataset[name]) {
+            img.src = img.dataset[name];
+            img.alt = img.dataset[name + 'Alt'] || img.dataset.baseAlt;
         } else {
             img.src = img.dataset.light;
             img.alt = img.dataset.baseAlt;
         }
     });
     // Hero figcaption + codec-call callsign/quote/status/kicker follow the theme.
-    // Starwars/gotham captions read in-universe; ink/codec reads as a codec
-    // transmission label (140.85 — codec freq; Big Shell — MGS2 setting).
     const heroCaption = document.querySelector('.img-caption');
-    if (heroCaption) {
-        heroCaption.textContent =
-            name === 'gotham'   ? 'case file no. 27 · gotham archives'    // Detective Comics #27 — Batman's debut
-          : name === 'starwars' ? 'holo capture · mustafar · high ground secured'
-          :                       'raiden · yoji shinkawa · 140.85';
-    }
+    if (heroCaption) heroCaption.textContent = HERO_CAPTION[name] || HERO_CAPTION.light;
+    // Section kickers carry per-theme text as data-<theme> (codec: callsigns on
+    // real MGS1 frequencies); the base text otherwise.
+    document.querySelectorAll('.kicker[data-codec]').forEach(k => {
+        if (!k.dataset.base) k.dataset.base = k.textContent;
+        k.textContent = (name !== 'light' && k.dataset[name]) || k.dataset.base;
+    });
     const cc = CC_TEXT[name];
     const ccRightName = document.querySelector('.cc-right .codec-name');
     if (ccRightName) ccRightName.textContent = cc.callsign;
@@ -184,6 +195,11 @@ function applyTheme(name) {
     const ccKicker = document.querySelector('.contact .kicker');
     if (ccKicker) ccKicker.textContent = cc.kicker;
     document.querySelectorAll('.codec-mhz').forEach(el => { el.textContent = cc.mhz; });
+    const ccAnswer = document.getElementById('codec-answer');
+    if (ccAnswer) {
+        ccAnswer.textContent = cc.answer || MGS_CC.answer;
+        ccAnswer.setAttribute('aria-label', cc.answerLabel || MGS_CC.answerLabel);
+    }
     // Radar HUD label — radar.js re-labels itself on themechange; these strings
     // mirror radar.js's MODE_LABEL exactly so the two writers never disagree.
     // (Label may not exist ≤600px.)
@@ -198,7 +214,10 @@ function applyTheme(name) {
     lastAppliedTheme = name;
     // User-driven switch INTO codec (prev !== null excludes the initial load
     // sync, which is handled by the 20s path next to maybeShowKonamiHint)
-    if (name === 'codec' && prevTheme !== null && prevTheme !== 'codec') maybeShowKonamiHint(2500);
+    if (name === 'codec' && prevTheme !== null && prevTheme !== 'codec') {
+        const mantis = mantisMoment(prevTheme);   // once per session; returns true when it fired
+        maybeShowKonamiHint(mantis ? 9500 : 2500);
+    }
     // Hyperspace burst — same prevTheme pattern as the konami hint above:
     // prevTheme !== null excludes the initial load/reload sync, so a stored
     // starwars theme never bursts on page load.
@@ -319,7 +338,7 @@ function openGame() {
     if (gameScriptRequested) return;
     gameScriptRequested = true;
     const s = document.createElement('script');
-    s.src = 'js/game.js?v=11';
+    s.src = 'js/game.js?v=13';
     s.onload = () => { if (window.MGSGame) window.MGSGame.open(); };
     s.onerror = () => {
         gameScriptRequested = false; // allow a retry
@@ -364,6 +383,8 @@ document.addEventListener('keydown', (e) => {
 // Touch-accessible trigger (mobile visitors can't type the Konami code)
 const codecLaunchBtn = document.getElementById('codec-launch');
 if (codecLaunchBtn) codecLaunchBtn.addEventListener('click', launchGame);
+const codecAnswerBtn = document.getElementById('codec-answer');
+if (codecAnswerBtn) codecAnswerBtn.addEventListener('click', launchGame);
 
 // ===== Konami hint — one gentle nudge per session, codec theme only =====
 // (lastAppliedTheme / konamiHintedMem are declared next to THEMES above)
@@ -375,6 +396,31 @@ function markKonamiHinted() {
     konamiHintedMem = true;
     try { sessionStorage.setItem('konami-hinted', '1'); } catch (e) {}
 }
+// ===== Psycho Mantis — one moment per session when you switch INTO codec =====
+// The HIDEO blackout, the codec ring, then Mantis reads the "memory card":
+// only what this site itself stored (your previous theme, a game best time).
+function mantisMoment(prevTheme) {
+    try { if (sessionStorage.getItem('mantis-done') === '1') return false; } catch (e) { return false; }
+    try { sessionStorage.setItem('mantis-done', '1'); } catch (e) {}
+    playCodecRing();
+    if (!prefersReducedMotion) {
+        const veil = document.createElement('div');
+        veil.className = 'mantis-veil';
+        veil.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(veil);
+        requestAnimationFrame(() => veil.classList.add('on'));
+        setTimeout(() => { veil.classList.remove('on'); setTimeout(() => veil.remove(), 200); }, 450);
+    }
+    const prevLabel = (THEME_META[prevTheme] || THEME_META.light).label;
+    let best = null;
+    try { const b = JSON.parse(localStorage.getItem('mgs-best')); if (b && typeof b.op1 === 'number' && b.op1 > 0) best = b.op1; } catch (e) {}
+    const lines = ['You like the ' + prevLabel + ' theme, don\'t you?'];
+    if (best !== null) lines.push('You cleared the heliport in ' + Math.round(best) + ' seconds. You are a careful person.');
+    lines.push('I can read your mind.');
+    setTimeout(() => showNotification('PSYCHO MANTIS — ' + lines.join(' '), 'info', undefined, 7000), 700);
+    return true;
+}
+
 function maybeShowKonamiHint(delayMs) {
     if (konamiHinted() || !finePointer) return; // touch-only users have the footer button instead
     setTimeout(() => {
@@ -640,7 +686,7 @@ const observer = new IntersectionObserver((entries) => {
 // Add animation class to elements and observe them
 document.addEventListener('DOMContentLoaded', () => {
     const animatedElements = document.querySelectorAll('.work, .about, .skills, .projects, .experience, .resume, .beyond, .contact');
-    
+
     animatedElements.forEach(el => {
         el.classList.add('fade-in');
         observer.observe(el);
