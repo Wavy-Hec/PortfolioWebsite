@@ -39,10 +39,14 @@ def friendly(uri: str) -> str:
     for needle, name in [
         ("linkedin", "LinkedIn profile"),
         ("github.com/Wavy-Hec/MultiCam", "MultiCam repo on GitHub"),
+        ("github.com/Wavy-Hec/VLM", "VLM navigation repo on GitHub"),
+        ("github.com/Wavy-Hec/poker-rl", "Poker RL repo on GitHub"),
         ("github.com/Wavy-Hec/ObjectDetection", "Object detection repo on GitHub"),
+        ("github.com/Wavy-Hec/railway-accident-clustering", "Railway accident clustering repo on GitHub"),
         ("github.com/Wavy-Hec", "GitHub profile"),
         ("springer", "Read the paper (Springer)"),
         ("nsf.gov", "Read the paper (NSF PAR)"),
+        ("scholarworks", "Read the paper (UTRGV ScholarWorks)"),
         ("asme", "Read the paper (ASME)"),
     ]:
         if needle in uri:
