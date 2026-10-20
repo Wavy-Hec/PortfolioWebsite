@@ -1,6 +1,7 @@
-/* SUMI v2 — one page: paper, ink, one red.  Faces: Shippori Mincho (display + body), Share Tech Mono (labels, ASCII).
-   Paint order (root stacking context): html paper -> hero figure (z -2) -> petal canvas (z -1) -> in-flow content (the sumi bands cover the petals)
-   -> frame rules (5) -> radar (40) -> grain (50). body is transparent so the petals show through the paper. */
+/* SUMI v3 — one page: paper, ink, one red.  Faces: Shippori Mincho (display + body), Share Tech Mono (labels, ASCII).
+   Paint order (root stacking context): html paper -> hero figure (z -2) -> petal canvas (z -1) -> in-flow content (the sumi bands cover
+   the petals; the wash edges let them through their holes) -> frame rules (5) -> radar (40) -> the opening brush (45) -> grain (50).
+   body is transparent so the petals show through the paper. */
 :root {
   --paper: #e9e7e2; --sumi: #141416; --red: #c9333a;
   --ink: #141416;                       /* read by js/radar.js */
@@ -14,6 +15,7 @@
   --gutter: clamp(16px, 6.7vw, 96px);
   --frame: clamp(10px, 3.2vw, 46px);
   --nav: 60px;
+  --railx: calc(var(--gutter) + 28px);   /* the centre of the chapter marks: the guiding line runs here */
 }
 * { box-sizing: border-box }
 html { font-size: 100%; -webkit-text-size-adjust: 100%; background: var(--paper) }
@@ -33,7 +35,12 @@ img { display: block; max-width: 100% }
 body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 50; opacity: .05; mix-blend-mode: multiply; background-size: 240px 240px;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>") }
 
-/* ---------- band 0: skip link, frame, petals, nav ---------- */
+/* ---------- the ink wash: every paper -> sumi edge dissolves through this Bayer tile (img/wash-edge.png, tools/make-wash.py) ---------- */
+.band::before, .band::after, .foot::before { content: ""; position: absolute; left: 0; right: 0; height: 220px; z-index: 0; pointer-events: none; background: url(../img/wash-edge.png) center bottom / 1800px 220px repeat-x }
+.band::before, .foot::before { top: -200px }
+.band::after { bottom: -200px; transform: scaleY(-1) }
+
+/* ---------- band 0: skip link, frame, petals, nav, the opening brush ---------- */
 .skip { position: fixed; top: -100%; left: 16px; z-index: 2000; background: var(--sumi); color: var(--paper); padding: 14px 22px; font: 14px var(--mono) }
 .skip:focus { top: 16px }
 .frame { position: fixed; inset: 0; pointer-events: none; z-index: 5 }
@@ -41,38 +48,61 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 .frame::before { left: var(--frame) } .frame::after { right: var(--frame) }
 .petals { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; display: block }
 .nav { height: var(--nav); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--gutter); border-bottom: 1px solid var(--rule) }
-.wordmark { display: inline-flex; align-items: center; gap: 14px; font-weight: 500; font-size: 13px; letter-spacing: .2em; text-transform: uppercase }
+.wordmark { display: inline-flex; align-items: center; gap: 14px; font-weight: 400; font-size: 13px; letter-spacing: .2em; text-transform: uppercase }
 .nav ul { display: flex; gap: 32px }
 .nav ul a { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim) }
 .nav ul a:hover, .nav ul a:focus-visible { text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 1px }
 
-/* ---------- band 1: hero — splash composition, text rail left, the figure right and off the page ---------- */
-.hero { position: relative; min-height: calc(100vh - var(--nav)); min-height: calc(100svh - var(--nav)); padding: 0 var(--gutter); display: flex; align-items: center; overflow: hidden }
-/* the copy: no width cap (each line is a nowrap unit at >= 720, see below); past 1440 it slides right with the viewport so
-   line one keeps running onto his fist instead of stopping short of a figure that sits ever further away */
-.hero .copy { position: relative; padding: 26vh 0 4vh; margin-left: max(0px, (100vw - 1440px) * .4) }   /* the extra top pushes line one onto his fist and coat, under the face */
-.hero h1 { font-weight: 400; font-size: clamp(42px, 6.15vw, 84px); line-height: 1.04; letter-spacing: -.012em;
+/* the brush that opens the page (html.opening is set inline in <head>: first load this session, no #hash, motion allowed).
+   A fixed sumi layer wearing a hand-drawn brush-stroke mask (a body, dry hairs trailing on the left, three flicks ahead of the leading
+   edge) sweeps left -> right in .62 s; the hero fades in under its body. */
+.brush-open { display: none; position: fixed; inset: 0; z-index: 45; pointer-events: none; background: var(--sumi);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 500' preserveAspectRatio='none'><path d='M34 0 C 60 70 20 110 52 170 C 80 220 10 260 44 320 C 70 380 30 430 60 500 L 880 500 C 930 470 905 430 950 410 C 985 395 1000 300 960 250 C 930 210 985 140 950 100 C 915 60 960 20 905 0 Z M 0 40 C 30 80 10 120 28 150 L 12 150 C 0 110 18 70 0 40 Z M 6 360 C 30 400 16 440 30 480 L 14 480 C 4 440 24 400 6 360 Z'/><path d='M 940 300 C 985 306 1000 312 1000 318 C 990 320 975 322 950 322 Z M 930 130 C 970 118 990 112 995 116 C 985 128 968 138 940 142 Z M 890 470 C 940 474 975 482 980 490 C 960 494 930 494 895 492 Z'/></svg>") 0 50% / 118vw 140vh no-repeat;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 500' preserveAspectRatio='none'><path d='M34 0 C 60 70 20 110 52 170 C 80 220 10 260 44 320 C 70 380 30 430 60 500 L 880 500 C 930 470 905 430 950 410 C 985 395 1000 300 960 250 C 930 210 985 140 950 100 C 915 60 960 20 905 0 Z M 0 40 C 30 80 10 120 28 150 L 12 150 C 0 110 18 70 0 40 Z M 6 360 C 30 400 16 440 30 480 L 14 480 C 4 440 24 400 6 360 Z'/><path d='M 940 300 C 985 306 1000 312 1000 318 C 990 320 975 322 950 322 Z M 930 130 C 970 118 990 112 995 116 C 985 128 968 138 940 142 Z M 890 470 C 940 474 975 482 980 490 C 960 494 930 494 895 492 Z'/></svg>") 0 50% / 118vw 140vh no-repeat }
+.opening .brush-open { display: block; animation: sweep .62s cubic-bezier(.55, .05, .35, 1) both }
+@keyframes sweep { from { -webkit-mask-position: -120vw 50%; mask-position: -120vw 50% } to { -webkit-mask-position: 102vw 50%; mask-position: 102vw 50% } }
+/* the hero fades in under the stroke's body: same clock and easing; held at 0 until 55 % (the stroke's tail is then ~13 vw in and the
+   body covers the rest of the viewport), then up to 1 as the tail crosses the page. One fade on the hero, not a clip per child. */
+.opening .hero { animation: reveal .62s cubic-bezier(.55, .05, .35, 1) both }
+@keyframes reveal { from, 55% { opacity: 0 } to { opacity: 1 } }
+
+/* ---------- band 1: hero — splash composition, text rail left, the figure right and off the page ----------
+   isolation: the hero is its own stacking context, so the figure (z -2) paints and hit-tests above the hero's own box (hover reaches
+   Raiden) and under the copy; the petals (root z -1) pass behind him. */
+.hero { position: relative; isolation: isolate; min-height: calc(100vh - var(--nav)); min-height: calc(100svh - var(--nav)); padding: 0 var(--gutter); display: flex; align-items: center; overflow: hidden }
+/* the copy: each line is a nowrap unit at >= 720 (exactly two lines, 1280-1920 verified); past 1440 it slides right with the viewport
+   so line one keeps running onto his fist instead of stopping short of a figure that sits ever further away */
+.hero .copy { position: relative; padding: 26vh 0 4vh; margin-left: max(0px, (100vw - 1440px) * .4); pointer-events: none }
+.hero .copy > * { pointer-events: auto }
+.hero h1 { font-weight: 400; font-size: clamp(42px, 5.85vw, 82px); line-height: 1.04; letter-spacing: -.012em; pointer-events: none;
   /* the soft paper fade where the letters cross ink — invisible on paper, a tight halo over the coat */
   text-shadow: 0 0 1px var(--paper), 0 0 6px var(--paper), 0 0 16px var(--paper) }
-.hero h1 .l { display: block }   /* one unit per line: exactly two lines at >= 720 */
+.hero h1 .l { display: block; width: fit-content; pointer-events: auto }   /* one unit per line, no wider than its words: the figure behind stays hoverable */
 @media (min-width: 720px) { .hero h1 .l { white-space: nowrap } }
 .hero h1 .sm { display: none }   /* phones: "Teaching robots / to move, / and to see." */
 .hero .sub { max-width: 520px; margin-top: 34px; color: var(--dim); text-shadow: 0 0 2px var(--paper), 0 0 10px var(--paper) }
 .hero .cta { display: inline-block; margin-top: 30px; background: var(--paper); padding: 2px 0 }
-.hero .figure { position: absolute; z-index: -2; top: -2vh; right: -3.5vw; height: calc(100% + 150px + max(0px, (100vw - 1440px) * .35)); margin: 0; pointer-events: none }   /* grows a little past 1440 so the fist stays under line one */
+.hero .figure:focus-visible { outline: none } .hero .figure:focus-visible figcaption { text-decoration: underline; text-underline-offset: 4px }
+.hero .figure { position: absolute; z-index: -2; top: -2vh; right: -3.5vw; height: calc(100% + 150px + max(0px, (100vw - 1440px) * .35)); margin: 0; outline-offset: -2px }   /* grows a little past 1440 so the fist stays under line one */
 .hero .figure img { height: 100%; width: auto; max-width: none;
   -webkit-mask-image: linear-gradient(#000 74%, transparent 100%), linear-gradient(90deg, transparent, #000 24%);
   -webkit-mask-composite: source-in; mask-image: linear-gradient(#000 74%, transparent 100%), linear-gradient(90deg, transparent, #000 24%); mask-composite: intersect }
-.hero figcaption { position: absolute; left: 0; bottom: 160px; transform: rotate(180deg); writing-mode: vertical-rl; font-family: var(--mono); font-size: 10px; letter-spacing: .22em; color: var(--dim) }
+.hero figcaption { position: absolute; left: 0; bottom: calc(160px + max(0px, (100vw - 1440px) * .35)); transform: rotate(180deg); writing-mode: vertical-rl; font-family: var(--mono); font-size: 10px; letter-spacing: .22em; color: var(--dim) }
+/* the "!" over his head: the MGS alert plate (same face as .mgs-alert), popped by hover / focus on the figure, once per hover. A child of the hero,
+   not of the figure (that is a z -2 context and paints under the page); js/sumi.js sets its left / top from the image's box */
+.hero .alert { position: absolute; z-index: 3; left: 80%; top: 2%; transform: translateX(-50%); font: 700 4.4rem/1 var(--mono); color: var(--red); background: var(--sumi); border: 3px solid currentColor; padding: .08em .3em; opacity: 0; pointer-events: none }
+.hero .alert.on { animation: alertPop .15s ease-out both, alertFade .4s ease-in 1.1s forwards }
 
-/* ---------- chapters (一 二): left rail, asymmetric ---------- */
+/* ---------- chapters (一 二 三): left rail, asymmetric; boundaries are a hairline and air, never a box ---------- */
 .chapter { position: relative; padding: 128px var(--gutter) 96px }
+.chapter + .chapter { margin-top: 32px }
+.chapter + .chapter::before { content: ""; position: absolute; top: 0; left: var(--gutter); right: var(--gutter); height: 1px; background: var(--rule) }
 .chapter .in { max-width: 1040px }
-.mark { position: absolute; left: var(--gutter); top: 128px; display: flex; flex-direction: column; align-items: center; gap: 14px; width: 56px }
-.mark .num { font: 400 34px/1 var(--serif); color: var(--sumi) }
+.mark { position: absolute; z-index: 1; left: var(--gutter); top: 128px; display: flex; flex-direction: column; align-items: center; gap: 14px; width: 56px }
+.mark .num { font: 400 34px/1 var(--serif); color: var(--sumi); background: var(--paper); padding: 6px 0 }
 .mark .line { width: 1px; height: 72px; background: var(--rule) }
-.mark .word { writing-mode: vertical-rl; text-orientation: mixed; font: 11px var(--mono); letter-spacing: .3em; text-transform: uppercase; color: var(--dim) }
-.chapter h2, .card h2 { font-weight: 400; font-size: 44px; line-height: 1.1 }
+.mark .word { writing-mode: vertical-rl; text-orientation: mixed; font: 11px var(--mono); letter-spacing: .3em; text-transform: uppercase; color: var(--dim); background: var(--paper); padding: 8px 0 }
+.chapter h2 { font-weight: 400; font-size: 44px; line-height: 1.1 }
 .chapter h2 em { font-style: italic }
 .chapter .intro { color: var(--dim); max-width: 560px; margin-top: 16px }
 .chapter .lede { max-width: 640px; margin-top: 24px }
@@ -81,6 +111,33 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 .links { display: flex; gap: 28px; flex-wrap: wrap }
 .seal-end { display: flex; justify-content: flex-end; margin-top: 44px }   /* the chapter's stamp: the one red on this screen */
 .seal-end .seal { width: 44px; height: 44px }
+
+/* the guiding wind: a 1 px sumi line down the rail (translate + scaleY, set by js/sumi.js) with a brushed head easing toward the reader */
+main { position: relative }
+.rail { position: absolute; inset: 0; pointer-events: none }   /* first in <main>: the chapter marks paint over it */
+.rail-ink { position: absolute; left: var(--railx); top: 0; width: 1px; height: 1px; background: var(--sumi); transform-origin: 0 0; transform: scaleY(0); opacity: .55 }
+.rail-head { position: absolute; left: var(--railx); top: 0; width: 9px; height: 34px; margin: -34px 0 0 -4.5px; transform-origin: 50% 100%; transition: opacity .3s; opacity: .9 }
+.rail-head svg { display: block; width: 100%; height: 100%; fill: var(--sumi) }
+.rail.moving .rail-head { opacity: 1 }
+@media (max-width: 720px) { .rail { display: none } }
+
+/* the title cards: a quiet band across the chapter top; the numeral brushes in top -> bottom (.4 s), the caption follows, 1.1 s,
+   then the card goes and the heading is there. Decorative, aria-hidden, nothing to focus. Motion only when motion is allowed. */
+.tcard { position: absolute; left: 0; right: 0; top: 0; height: 380px; display: grid; align-content: center; justify-items: center; gap: 22px; pointer-events: none; opacity: 0 }
+.tcard .num { font: 400 56px/1 var(--serif); color: var(--sumi) }
+.tcard .cap { display: inline-grid; grid-template-columns: 40px auto 40px; align-items: center; gap: 16px; font-family: var(--mono); font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: var(--dim) }
+.tcard .cap::before, .tcard .cap::after { content: ""; height: 1px; background: var(--rule) }
+.foot .tcard .num { color: var(--paper) } .foot .tcard .cap { color: var(--paper-55) } .foot .tcard .cap::before, .foot .tcard .cap::after { background: var(--rule-on-sumi) }
+.pending > .in, .pending > .mark, .pending > .harakiri, .pending > .cols, .pending > .rule, .pending > .legal { opacity: 0 }
+.shown > .in, .shown > .mark, .shown > .harakiri, .shown > .cols, .shown > .rule, .shown > .legal { transition: opacity .55s ease .1s }
+.carding .tcard { opacity: 1; animation: cardOut .35s ease-in 1.15s forwards }
+.carding .tcard .num { -webkit-mask-image: linear-gradient(#000 40%, transparent 60%); mask-image: linear-gradient(#000 40%, transparent 60%); -webkit-mask-size: 100% 250%; mask-size: 100% 250%;
+  animation: wipe .42s cubic-bezier(.4, 0, .25, 1) both }
+.carding .tcard .cap { animation: capIn .3s ease-out .3s both }
+@keyframes wipe { from { -webkit-mask-position: 0 100%; mask-position: 0 100% } to { -webkit-mask-position: 0 0; mask-position: 0 0 } }
+@keyframes capIn { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: none } }
+@keyframes cardOut { to { opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { .tcard { display: none } }
 
 /* featured rows — the plate redraws itself left to right on hover / focus (mask sweep, no JS) */
 .featured { margin-top: 72px }
@@ -95,7 +152,7 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
   .feat:hover img, .feat:focus-within img { animation: redraw 1.1s cubic-bezier(.3, .1, .2, 1) both }
 }
 .feat .kicker { color: var(--dim); margin-bottom: 14px }
-.feat h3 { font-weight: 500; font-size: 24px; line-height: 1.2 }
+.feat h3 { font-weight: 400; font-size: 24px; line-height: 1.2 }
 .feat p { margin-top: 14px; max-width: 560px }
 .feat .links { margin-top: 22px }
 
@@ -112,35 +169,45 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 .pubs .idx a { text-decoration: underline; text-underline-offset: 3px }
 .after { margin-top: 32px }
 
-/* ---------- 三 about: title card · ASCII band (canvas) · paragraph ---------- */
-.card { text-align: center; padding: 128px var(--gutter) 64px }
-.card .num { display: block; font: 400 56px/1 var(--serif); margin-bottom: 20px }
-.card .t { display: inline-grid; grid-template-columns: 48px auto 48px; align-items: center; gap: 16px; font-family: var(--mono); font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: var(--dim) }
-.card .t::before, .card .t::after { content: ""; height: 1px; background: var(--rule) }
-.card h2 { margin-top: 16px }
-.band { background: var(--sumi); color: var(--paper); min-height: clamp(640px, 80vh, 900px); display: flex; align-items: center; justify-content: center; padding: 64px var(--gutter); overflow-x: hidden }
-.band .ascii-wrap { border: 1px solid var(--rule-on-sumi); padding: 24px; touch-action: pan-y }
-.ascii { display: block }
-.about-text { padding: 96px var(--gutter); max-width: calc(620px + 2 * var(--gutter)); margin: 0 auto; text-align: center }
+/* ---------- 三 about: heading and a first line on paper, then the courtyard (the live ASCII scene on sumi), then the rest ---------- */
+.about { padding-bottom: 220px }   /* room for the footer's wash to climb */
+.about .lede { max-width: 620px }
+.band { position: relative; background: var(--sumi); color: var(--paper); margin: 190px calc(-1 * var(--gutter)) 0 calc(-1 * (var(--gutter) + 96px));
+  padding: 64px var(--gutter) 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; min-height: clamp(560px, 76vh, 860px) }
+.band .ascii-wrap { position: relative; z-index: 1; border: 1px solid var(--rule-on-sumi); padding: 24px; max-width: 100%; cursor: crosshair; touch-action: pan-y }
+.band-cap { position: relative; z-index: 1 }
+.ascii { display: block; max-width: 100% }
+.band-cap { font-family: var(--mono); font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--paper-55) }
+.band-cap a { color: var(--paper) }
+.band-cap .sm { display: none }
+.band-cap a:hover, .band-cap a:focus-visible { text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 1px }
+.about-text { padding-top: 200px; max-width: 620px }
 .about-text p + p { margin-top: 22px }
-.about-text blockquote { margin: 36px auto; padding: 0 24px; border-left: 1px solid var(--red); border-right: 1px solid var(--red); font-style: italic }
+.about-text blockquote { margin: 36px 0; padding: 0 24px; border-left: 1px solid var(--red); border-right: 1px solid var(--red); font-style: italic }
 .about-text blockquote p { margin: 0 }
 .about-text cite { display: block; margin-top: 14px; font-style: normal; color: var(--dim) }
 .about-text .link { display: inline-block; margin-top: 32px }
 
-/* ---------- Soliton radar (js/radar.js): an ink instrument on a paper disc, bottom-right ---------- */
+/* ---------- Soliton radar (js/radar.js): an ink instrument on a paper disc, bottom-right; its blips are the four chapters ---------- */
 .soliton-radar { position: fixed; right: 28px; bottom: 28px; width: 132px; height: 132px; z-index: 40; pointer-events: none; opacity: .8 }
 .soliton-radar::before { content: ""; position: absolute; inset: -6px; border-radius: 50%; background: var(--paper); border: 1px solid var(--rule) }
 .soliton-radar canvas { position: relative; display: block; width: 132px; height: 132px }
 .soliton-label { position: absolute; left: 50%; bottom: -24px; transform: translateX(-50%); font-family: var(--mono); font-size: 10px; letter-spacing: .3em; color: var(--dim); background: var(--paper); padding: 1px 8px; white-space: nowrap }
+.radar-ch { position: absolute; inset: 0 }
+.radar-ch i { position: absolute; width: 6px; height: 6px; margin: -3px 0 0 -3px; background: var(--sumi); opacity: .38; transition: opacity .35s, transform .35s }   /* square: the four chapters, not radar.js's round blips */
+.radar-ch i::after { content: attr(data-n); position: absolute; left: 9px; top: -3px; font: 400 10px/1 var(--serif); color: var(--sumi); opacity: .45; transition: opacity .35s }
+.radar-ch i.on { opacity: 1; transform: scale(1.3) } .radar-ch i.on::after { opacity: .9 }
+.radar-ch i.ping { opacity: .85 } .radar-ch i.on.ping { box-shadow: 0 0 0 3px rgba(20,20,22,.14) }
 @media (max-width: 600px) { .soliton-radar { display: none } }
 
 /* ---------- 四 contact = footer ---------- */
 .dev { font-family: var(--mono); font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--dim); padding: 48px var(--gutter) 12px; border-top: 1px solid var(--rule) }
-.dev b { font-weight: 500; color: var(--sumi) }
+.dev b { font-weight: 400; color: var(--sumi) }
 [hidden] { display: none !important }
-.foot { background: var(--sumi); color: var(--paper); position: relative; overflow: hidden; min-height: 960px; padding: 0 var(--gutter) 440px }
+.foot { background: var(--sumi); color: var(--paper); position: relative; min-height: 960px; padding: 0 var(--gutter) 440px }
 .foot > * { position: relative; z-index: 2 }
+.foot .tcard { z-index: 3; height: 420px }
+.foot .clip { position: absolute; inset: 0; overflow: hidden; z-index: 1 }   /* the art is clipped here, not on the footer (the wash climbs above it) */
 .harakiri { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 88px 0 }
 .harakiri h2 { font-weight: 400; font-size: 44px; line-height: 1.05; letter-spacing: .01em }
 .harakiri small { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--paper-55); margin-top: 12px }
@@ -155,19 +222,33 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 .foot .rule { height: 1px; background: var(--rule-on-sumi); margin-top: 66px }
 .legal { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; padding-top: 36px; font-family: var(--mono); font-size: 12px; letter-spacing: .12em; color: var(--paper-55) }
 .legal-l { display: inline-flex; align-items: center; gap: 18px }
+.legal-l > span { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px }   /* three items and two separators; on phones the separators go and the three stack */
 .legal .seal { width: 56px; height: 56px }
-.freq { font: inherit; letter-spacing: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: default }
-.freq.dialed { color: var(--red) }
-.art { position: absolute; left: 0; right: 0; bottom: 0; height: 420px; z-index: 1; -webkit-mask-image: linear-gradient(transparent, #000 35%); mask-image: linear-gradient(transparent, #000 35%) }
-/* A — grass: the 1-bit plate as a mask, paper blades on sumi */
-.art-grass { position: absolute; inset: 0; background: var(--paper);
-  -webkit-mask: url(../img/grass-sweep.png) center bottom / 1800px auto no-repeat; mask: url(../img/grass-sweep.png) center bottom / 1800px auto no-repeat }
+/* the tuning strip: 120 px of ticks, a needle that drifts +-2 ticks until hovered / focused, when it snaps to 140.85 */
+.freq { font: inherit; letter-spacing: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; vertical-align: middle }
+.tune { position: relative; display: inline-block; width: 120px; height: 14px;
+  background: repeating-linear-gradient(90deg, var(--paper-55) 0 1px, transparent 1px 30px) 0 0 / 120px 14px no-repeat,
+              repeating-linear-gradient(90deg, rgba(233,231,226,.35) 0 1px, transparent 1px 6px) 0 8px / 120px 6px no-repeat }
+.needle { position: absolute; left: 60px; top: -3px; width: 1px; height: 20px; background: var(--paper); animation: drift 9s ease-in-out infinite }
+.needle::after { content: ""; position: absolute; left: -2px; top: -4px; width: 5px; height: 4px; background: var(--paper); clip-path: polygon(0 0, 100% 0, 50% 100%) }
+@keyframes drift { 0% { transform: translateX(-9px) } 28% { transform: translateX(11px) } 52% { transform: translateX(-12px) } 78% { transform: translateX(7px) } 100% { transform: translateX(-9px) } }
+.hz { transition: color .25s }
+.freq:hover .needle, .freq:focus-visible .needle { animation: none; transform: none; transition: transform .25s }
+.freq:hover .hz, .freq:focus-visible .hz, .freq.dialed .hz { color: var(--paper) }
+.freq.dialed .hz { color: var(--red) }
+.art { position: absolute; left: 0; right: 0; bottom: 0; height: 420px; -webkit-mask-image: linear-gradient(transparent, #000 35%); mask-image: linear-gradient(transparent, #000 35%) }
+/* A — grass: the 1-bit plate as a mask, paper blades on sumi. Two layers: the roots (bottom), and the tips (top 60 %), which shear in the wind */
+.art-grass, .art-grass-sway { position: absolute; inset: 0; background: var(--paper);
+  -webkit-mask: url(../img/grass-sweep.png) center bottom / 1800px auto no-repeat, linear-gradient(transparent 55%, #000 55%); -webkit-mask-composite: source-in;
+  mask: url(../img/grass-sweep.png) center bottom / 1800px auto no-repeat, linear-gradient(transparent 55%, #000 55%); mask-composite: intersect }
+.art-grass-sway { -webkit-mask: url(../img/grass-sweep.png) center bottom / 1800px auto no-repeat, linear-gradient(#000 55%, transparent 55%); -webkit-mask-composite: source-in;
+  mask: url(../img/grass-sweep.png) center bottom / 1800px auto no-repeat, linear-gradient(#000 55%, transparent 55%); mask-composite: intersect; transform-origin: 50% 55%; will-change: transform }
 .seed { position: absolute; left: 52%; bottom: 190px; width: 5px; height: 5px; background: var(--red) }
-@supports not (mask-image: url(x)) { .art-grass { background: url(../img/grass-sweep.png) center bottom / 1800px auto no-repeat; filter: invert(1) } }
+@supports not (mask-image: url(x)) { .art-grass { background: url(../img/grass-sweep.png) center bottom / 1800px auto no-repeat; filter: invert(1) } .art-grass-sway { display: none } }
 /* B — Shinkawa: the slash plate inverted, legs off the page */
 [data-art="shinkawa"] .art { height: 520px }
 .art-plate { position: absolute; left: 50%; bottom: -300px; width: 640px; height: auto; max-width: none; transform: translateX(-50%); opacity: .92; pointer-events: none; background: transparent }
-[data-art="grass"] .art-plate, [data-art="shinkawa"] .art-grass, [data-art="shinkawa"] .seed { display: none }
+[data-art="grass"] .art-plate, [data-art="shinkawa"] .art-grass, [data-art="shinkawa"] .art-grass-sway, [data-art="shinkawa"] .seed { display: none }
 
 /* the "!" alert — the only thing on the page that is not paper, ink, or one red lives behind this */
 .mgs-alert { position: fixed; top: 16vh; left: 50%; transform: translateX(-50%); z-index: 3000; font: 700 8rem/1 var(--mono); color: var(--red); background: var(--sumi); border: 3px solid currentColor; border-radius: 0; padding: .1em .35em; pointer-events: none;
@@ -177,7 +258,8 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 
 /* ---------- responsive ---------- */
 @media (min-width: 720px) { .chapter { padding-left: calc(var(--gutter) + 96px) } }
-@media (min-width: 1101px) and (max-width: 1500px) { .hero .figure { right: -5.5vw } }   /* 1280-1440: a nudge right so line one ends on the fist, not the jaw */
+@media (min-width: 1101px) and (max-width: 1500px) { .hero .figure { right: -5.5vw } }   /* 1380-1440: a nudge right so line one ends on the fist, not the jaw */
+@media (min-width: 1101px) and (max-width: 1379px) { .hero .figure { right: -9.5vw } .hero h1 { font-size: clamp(42px, 5.4vw, 82px) } }   /* 1280-1366: further right, the line a touch shorter: it ends on the fist */
 @media (max-width: 1100px) { .hero .figure { right: -14vw } }
 @media (max-width: 960px) {
   .feat { grid-template-columns: 1fr; gap: 32px }
@@ -199,38 +281,48 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
     -webkit-mask-image: linear-gradient(transparent, #000 12%, #000 48%, transparent 70%), linear-gradient(90deg, transparent, #000 26%);
     mask-image: linear-gradient(transparent, #000 12%, #000 48%, transparent 70%), linear-gradient(90deg, transparent, #000 26%) }
   .hero figcaption { bottom: 140px }
+  .hero .alert { font-size: 3rem }
   .chapter { padding: 96px var(--gutter) 64px }
   .mark { position: static; flex-direction: row; align-items: center; width: auto; gap: 12px; margin-bottom: 20px }
   .mark .num { font-size: 28px } .mark .line { width: 24px; height: 1px } .mark .word { writing-mode: horizontal-tb }
-  .chapter h2, .card h2, .harakiri h2 { font-size: 32px }
+  .tcard { height: 300px } .tcard .num { font-size: 44px }
+  .chapter h2, .harakiri h2 { font-size: 32px }
   body, .chapter .intro, .rows .t { font-size: 16px }
   .feat h3 { font-size: 22px }
-  .mono, .link, .rows .idx, .pubs .venue, .cols h3 { font-size: 10px }
+  .mono, .link, .rows .idx, .pubs .venue, .cols h3, .band-cap { font-size: 10px }
   .rows li { grid-template-columns: 1fr; gap: 6px }
   .rows .idx { display: inline; margin-right: 10px }
   .rows .links { justify-content: flex-start }
   .seal-end { margin-top: 32px } .seal-end .seal { width: 36px; height: 36px }
-  .card { padding: 96px var(--gutter) 48px } .card .num { font-size: 44px }
-  .band { min-height: clamp(480px, 70vh, 720px); padding: 48px 16px }
+  .about { padding-bottom: 200px }
+  .band { margin: 170px calc(-1 * var(--gutter)) 0; min-height: clamp(440px, 64vh, 640px); padding: 48px 16px 40px }
   .band .ascii-wrap { padding: 16px }
-  .about-text { padding: 64px var(--gutter) }
+  .band-cap { text-align: center; padding: 0 16px }
+  .about-text { padding-top: 190px }
   .about-text blockquote { padding: 0 16px }
   .foot { min-height: 0; padding-bottom: 360px }
+  .foot .tcard { height: 340px }
   .harakiri { padding: 64px 0 } .jp { font-size: 18px; margin: -64px 0; padding: 64px 0 64px 12px }
   .harakiri small { font-size: 10px }
   .cols { grid-template-columns: 1fr 1fr; gap: 24px 16px } .cols .brand { grid-column: 1 / -1 }
   .cols li { line-height: 36px; font-size: 15px }
   .foot .rule { margin-top: 40px } .legal { padding-top: 24px }
-  .legal .seal { width: 40px; height: 40px } .legal-l { gap: 12px }
+  .legal .seal { width: 40px; height: 40px } .legal-l { gap: 14px; align-items: flex-start }
+  .legal-l > span { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; line-height: 1.9 }
+  .legal .sep { display: none }
+  .band-cap .lg { display: none } .band-cap .sm { display: inline }
+  .tune { width: 84px } .needle { left: 42px }
   .art { height: 340px }
-  .art-grass { -webkit-mask-size: 1200px auto; mask-size: 1200px auto }
+  .art-grass, .art-grass-sway { -webkit-mask-size: 1200px auto, auto; mask-size: 1200px auto, auto }
   .seed { bottom: 150px }
   [data-art="shinkawa"] .art { height: 340px }
   .art-plate { width: 320px; height: auto; bottom: -120px }
   .mgs-alert { font-size: 5rem }
 }
 @media (prefers-reduced-motion: reduce) {
-  .petals { display: none }
+  .petals, .rail, .brush-open { display: none }
   .mgs-alert { animation: none; transform: translateX(-50%) }
+  .hero .alert.on { opacity: 1 }
+  .needle { transform: none }
   * { transition: none !important; animation: none !important }
 }

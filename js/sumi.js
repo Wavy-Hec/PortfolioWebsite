@@ -1,4 +1,8 @@
-/* SUMI v2 — the petal wind, the ASCII Raiden that reacts, the footer A/B switch, and the secret (140.85 → codec call → Shadow Moses). */
+/* SUMI v3 — one wind, one loop. The wind model (gust + scroll) drives the petals, the ink stroke down the chapter rail, the grass in the
+   footer, the lean of the ASCII scene (js/sumi-city.js) and the radar's chapter blips; the chapter title cards, the brush that opens the
+   page, the "!" over Raiden, the tuning strip, and the secret (140.85 / Konami / the strip -> codec call -> Shadow Moses) live here too.
+   The loop: one requestAnimationFrame chain paced to ~30 fps by a timer; asleep when the tab is hidden, while the game is open, and
+   under reduced motion (nothing moves at all; the scene is one still frame; the headings are simply present). */
 (() => {
   'use strict';
   const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -7,6 +11,7 @@
   addEventListener('unhandledrejection', e => { document.title = 'WF-ERR ' + (e.reason && e.reason.message || e.reason); });
   const q = new URLSearchParams(location.search);
   const gameOpen = () => document.body.classList.contains('game-open');
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 
   /* ---------- footer variant: ?footer=a (grass, default) | ?footer=b (shinkawa) | ?footer=both (stacked, captions on) ----------
      The markup ships with B and the captions hidden, so a URL without the switch (or without JS) has exactly one footer landmark. */
@@ -21,25 +26,50 @@
     }
   }
 
-  /* ---------- motion 1: the petal wind. Raiden's red petals, blown down-right across the whole page, behind the ink. ----------
-     One fixed canvas, <= 24 petals, three hand-drawn petal paths, a sin-based gust (no Math.random per frame), a tumble, and the
-     scroll velocity as a gust of its own. 30 fps, timer-paced; sleeps when the tab is hidden, while the game is open, and under
-     reduced motion (nothing is drawn at all). */
+  /* ---------- the wind and the loop ----------
+     gust(t): two slow sines, 0.25..1.25. Scroll adds a burst (|px/s|, decaying in ~1/3 s) so a fast scroll is a gust that settles.
+     strength = gust + burst feeds the petals; lean (0..1) is the same wind normalised for everything that tilts. */
+  const wind = { gust: 0.75, strength: 0.75, lean: 0, v: 0 };
+  const subs = [];
+  let raf = 0, timer = 0, prev = 0, scrollV = 0, lastY = scrollY;
+  const FRAME_MS = 1000 / 30;
+  const S = window.SUMI = { REDUCED, wind, add(fn) { subs.push(fn); start(); } };
+  addEventListener('scroll', () => { const y = scrollY; scrollV += (y - lastY); lastY = y; }, { passive: true });
+  function tickWind(dt, now) {
+    scrollV *= Math.exp(-dt * 3);
+    wind.v = scrollV;
+    wind.gust = 0.75 + 0.35 * Math.sin(now / 5200) + 0.15 * Math.sin(now / 1700 + 1.3);
+    wind.strength = wind.gust + Math.min(2.2, Math.abs(scrollV) * 0.004);
+    wind.lean = clamp((wind.strength - 0.3) / 1.6, 0, 1);
+  }
+  function loop(now) {
+    raf = 0;
+    const dt = Math.min(0.05, (now - prev) / 1000 || 0.016); prev = now;
+    tickWind(dt, now);
+    for (const fn of subs) fn(dt, now);
+    timer = setTimeout(() => { timer = 0; raf = requestAnimationFrame(loop); }, Math.max(0, FRAME_MS - (performance.now() - now)));
+  }
+  function start() { if (REDUCED || raf || timer || document.hidden || gameOpen()) return; prev = performance.now(); raf = requestAnimationFrame(loop); }
+  function stop() { cancelAnimationFrame(raf); clearTimeout(timer); raf = 0; timer = 0; }
+  document.addEventListener('visibilitychange', () => { document.hidden ? stop() : start(); });
+  addEventListener('gameopen', stop);
+  addEventListener('gameclose', start);
+
+  /* ---------- the petals: Raiden's red petals, blown down-right across the page, behind the ink ----------
+     One fixed canvas, <= 24 petals, three hand-drawn petal paths, a tumble; the wind above moves them. */
   (() => {
     const canvas = document.querySelector('canvas.petals');
     if (!canvas || REDUCED) return;
     const ctx = canvas.getContext('2d');
-    const RED = '#c9333a', DPR = Math.min(2, devicePixelRatio || 1), FRAME_MS = 1000 / 30;
-    // three petals, unit-sized (about 1 x 1), tip at the top: a cherry petal with its notch, a narrow leaf, a teardrop
+    const RED = '#c9333a', DPR = Math.min(2, devicePixelRatio || 1);
     const SHAPES = [
       new Path2D('M0 -.5C.34 -.46 .52 -.14 .44 .22 .38 .44 .14 .52 0 .4-.14 .52-.38 .44-.44 .22-.52-.14-.34-.46 0-.5Z'),
       new Path2D('M0 -.5C.26 -.3 .28 .3 0 .5-.28 .3-.26-.3 0-.5Z'),
       new Path2D('M0 -.5C.42 -.22 .36 .34 0 .5-.2 .3-.3-.22 0-.5Z'),
     ];
-    let W = 0, H = 0, petals = [], raf = 0, timer = 0, prev = 0, seed = 7;
+    let W = 0, H = 0, petals = [], seed = 7;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // seeded, used only at spawn
     const count = () => Math.min(24, Math.max(8, Math.round(W * H / 72000)));
-
     function resize() {
       W = innerWidth; H = innerHeight;
       canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
@@ -49,38 +79,26 @@
       petals.length = n;
     }
     function spawn(p, fresh) {
-      p.size = 10 + rnd() * 9;                      // px, the long axis
-      p.shape = SHAPES[Math.floor(rnd() * SHAPES.length)];
-      p.vx = 55 + rnd() * 60;                       // px/s at wind 1: down-right, mostly right
-      p.vy = 22 + rnd() * 34;
-      p.rot = rnd() * Math.PI * 2;
-      p.spin = (rnd() - 0.5) * 2.6;                 // rad/s tumble
-      p.phase = rnd() * Math.PI * 2;
-      p.sway = 10 + rnd() * 16;                     // px of side-to-side lift
-      p.alpha = 0.6 + rnd() * 0.35;
+      p.size = 10 + rnd() * 9; p.shape = SHAPES[Math.floor(rnd() * SHAPES.length)];
+      p.vx = 55 + rnd() * 60; p.vy = 22 + rnd() * 34;
+      p.rot = rnd() * Math.PI * 2; p.spin = (rnd() - 0.5) * 2.6; p.phase = rnd() * Math.PI * 2;
+      p.sway = 10 + rnd() * 16; p.alpha = 0.6 + rnd() * 0.35;
       if (fresh) { p.x = rnd() * W; p.y = rnd() * H; }
-      else if (rnd() < 0.6) { p.x = rnd() * W * 0.45 - 20; p.y = -20; }   // enter at the top-left...
-      else { p.x = -20; p.y = rnd() * H * 0.6; }                           // ...or the left edge
+      else if (rnd() < 0.6) { p.x = rnd() * W * 0.45 - 20; p.y = -20; }
+      else { p.x = -20; p.y = rnd() * H * 0.6; }
       return p;
     }
-    // scroll = wind: the scroll velocity (px/s, smoothed) adds to the gust for a moment
-    let lastY = scrollY, scrollV = 0;
-    addEventListener('scroll', () => { const y = scrollY; scrollV += (y - lastY); lastY = y; }, { passive: true });
-
     function draw(dt, now) {
       ctx.clearRect(0, 0, W, H);
-      scrollV *= Math.exp(-dt * 3);                                   // decays in ~1/3 s
-      const gust = 0.75 + 0.35 * Math.sin(now / 5200) + 0.15 * Math.sin(now / 1700 + 1.3);
-      const wind = gust + Math.min(2.2, Math.abs(scrollV) * 0.004);
-      const lift = Math.sign(scrollV) * Math.min(1, Math.abs(scrollV) * 0.003); // scrolling down pushes them up the screen a touch, like a draught
+      const w = wind.strength, lift = Math.sign(wind.v) * Math.min(1, Math.abs(wind.v) * 0.003);
       ctx.fillStyle = RED;
       for (const p of petals) {
-        p.x += p.vx * wind * dt;
-        p.y += (p.vy * wind - lift * 40) * dt + Math.cos(now / 900 + p.phase) * p.sway * dt;
-        p.rot += p.spin * dt * (0.6 + 0.4 * wind);
+        p.x += p.vx * w * dt;
+        p.y += (p.vy * w - lift * 40) * dt + Math.cos(now / 900 + p.phase) * p.sway * dt;
+        p.rot += p.spin * dt * (0.6 + 0.4 * w);
         if (p.x > W + 24 || p.y > H + 24 || p.y < -80) spawn(p, false);
-        const s = p.size * (0.85 + 0.15 * Math.sin(now / 400 + p.phase));   // a little tilt toward / away from the eye
-        ctx.setTransform(DPR * s * 0.62, 0, 0, DPR * s, 0, 0);               // 0.62: petals are narrower than long
+        const s = p.size * (0.85 + 0.15 * Math.sin(now / 400 + p.phase));
+        ctx.setTransform(DPR * s * 0.62, 0, 0, DPR * s, 0, 0);
         ctx.translate(p.x / (s * 0.62), p.y / s);
         ctx.rotate(p.rot);
         ctx.globalAlpha = p.alpha;
@@ -89,195 +107,153 @@
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
       ctx.globalAlpha = 1;
     }
-    function loop(now) {
-      raf = 0;
-      const dt = Math.min(0.05, (now - prev) / 1000 || 0.016); prev = now;
-      draw(dt, now);
-      timer = setTimeout(() => { timer = 0; raf = requestAnimationFrame(loop); }, Math.max(0, FRAME_MS - (performance.now() - now)));
-    }
-    function start() { if (raf || timer || document.hidden || gameOpen()) return; prev = performance.now(); raf = requestAnimationFrame(loop); }
-    function stop() { cancelAnimationFrame(raf); clearTimeout(timer); raf = 0; timer = 0; }
-
     resize();
-    document.addEventListener('visibilitychange', () => { document.hidden ? stop() : start(); });
-    addEventListener('gameopen', stop);
-    addEventListener('gameclose', start);
     let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 150); }, { passive: true });
-    start();
+    S.add(draw);
   })();
 
-  /* ---------- motion 2: the ASCII Raiden on a canvas. Resolves from noise once (~1.2 s), then reacts to the pointer. ----------
-     The grid comes from tools/ascii-face.py (inlined as <script type="text/plain" class="ascii-grid">). Each cell is a ramp index
-     ('@' = 0 densest .. ' ' = 9). The settled image is painted once. Under the pointer a lens (~90 px) steps the glyphs up the
-     ramp (3.5 steps at the centre) and brightens them; moving (or a tap) sends one crest outward — a narrow gaussian ring at
-     d = 170 px/s * age, fading over ~1 s — that only ever adds ink. Empty cells wake too (to ':' / '-', never denser), so the
-     ring and the lens read on the bare sumi, not just on the figure. Each frame repaints just the cells the lens and the rings touch. */
+  /* ---------- the chapters: where the reader is (for the cards, the rail, the radar) ---------- */
+  const chapters = [...document.querySelectorAll('[data-chapter]')];   // work, research, about, contact — in page order
+  let activeIdx = -1;
+  function findActive() {
+    const mid = innerHeight * 0.5;
+    let idx = -1;
+    for (let i = 0; i < chapters.length; i++) { const r = chapters[i].getBoundingClientRect(); if (r.top <= mid) idx = i; }
+    return idx;
+  }
+
+  /* ---------- the title cards: a chapter's numeral brushes in once, the first time the chapter is reached; then the heading.
+     A chapter the reader jumped past (an anchor, a #hash landing: its top is above the viewport, or it lies above the active chapter)
+     gets no card: it is simply there, so scrolling back up never meets blank paper. ---------- */
   (() => {
-    const RAMP = '@#%*+=-:. ', RESOLVE_MS = 1200, RIPPLE_MS = 1000, REACH = 170, NEAR = 90;
-    const canvas = document.querySelector('canvas.ascii');
-    const band = document.querySelector('.band');
-    if (!canvas || !band) return;
-    const grids = {};
-    document.querySelectorAll('script.ascii-grid').forEach(s => { grids[s.dataset.cols] = s.textContent.replace(/^\n|\n$/g, '').split('\n'); });
-    const ctx = canvas.getContext('2d');
-    const PAPER = '#e9e7e2', DPR = Math.min(2, devicePixelRatio || 1);
-    const FREEZE = q.has('t') ? parseFloat(q.get('t')) * 1000 : null;   // ?t=0.5 freezes the resolve mid-way (screenshots)
-    let cols = 0, rows = 0, idx = null, cw = 0, ch = 0, fs = 0, W = 0, H = 0;
-    let resolveT0 = 0, resolved = REDUCED, fired = false;
-    const ripples = [];                                                  // rings: {x, y, t0}, newest last
-    const lens = { x: 0, y: 0, on: false, left: -1e9 };                  // the pointer; after it leaves, the lens fades over ~300 ms
-    let dirty = null;                                                    // [x0, y0, x1, y1] in cells, the area the last frame touched
-
-    function layout() {
-      const narrow = innerWidth <= 720;
-      const g = grids[narrow ? '60' : '96'] || grids['96'];
-      if (!g) return false;
-      const rowsText = g; cols = rowsText[0].length; rows = rowsText.length;
-      idx = new Uint8Array(cols * rows);
-      for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) { const k = RAMP.indexOf(rowsText[y][x] || ' '); idx[y * cols + x] = k < 0 ? 9 : k; }
-      const avail = Math.max(120, band.clientWidth - (narrow ? 66 : 2 * 24 + 2) - 2 * parseFloat(getComputedStyle(band).paddingLeft));
-      fs = Math.min(narrow ? 6.2 : 7, avail / cols) / 0.54;               // Share Tech Mono: advance ~0.54 em; the grid was sampled at that aspect
-      fs = Math.min(fs, (narrow ? 560 : 800) / rows);                      // ...and the figure is tall (74 rows): never past ~800 px
-      ctx.font = fs + 'px "Share Tech Mono", ui-monospace, Menlo, Consolas, monospace';
-      cw = ctx.measureText('M').width; ch = fs;                           // the cell is exactly one advance wide and one em tall
-      W = Math.round(cw * cols); H = Math.round(ch * rows);
-      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-      canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      ctx.font = '10px sans-serif';                                        // resizing resets the context; the throwaway value forces a fresh
-      ctx.font = fs + 'px "Share Tech Mono", ui-monospace, Menlo, Consolas, monospace';   // resolution (a same-string set can keep a cached fallback face)
-      ctx.textBaseline = 'alphabetic'; ctx.fillStyle = PAPER;
-      return true;
+    if (REDUCED || !chapters.length) return;
+    const pending = new Set(chapters.filter(c => c.querySelector('.tcard')));
+    pending.forEach(c => c.classList.add('pending'));
+    const carding = new Map();                                       // chapter -> its two timers, while the card plays
+    function settle(c) { c.classList.remove('pending', 'carding'); c.classList.add('shown'); }
+    function skip(c) { pending.delete(c); const t = carding.get(c); if (t) { t.forEach(clearTimeout); carding.delete(c); } settle(c); }
+    function show(c) {
+      pending.delete(c);
+      c.classList.add('carding');
+      carding.set(c, [setTimeout(() => { c.classList.remove('pending'); c.classList.add('shown'); }, 1150),
+                      setTimeout(() => { c.classList.remove('carding'); carding.delete(c); }, 1700)]);
     }
-    const hash = (i, f) => ((Math.imul(i + 1, 2654435761) ^ Math.imul(f + 1, 40503)) >>> 0) % 7;   // cheap per-cell, per-frame noise
-
-    // paints the cells in [x0,x1) x [y0,y1) for time t; the resolve and the ripples both pass through here
-    function paint(x0, y0, x1, y1, now) {
-      ctx.clearRect(x0 * cw, y0 * ch, (x1 - x0) * cw, (y1 - y0) * ch);
-      const rt = resolved ? Infinity : now - resolveT0;
-      const f = Math.floor(now / 33);
-      const live = ripples.filter(r => now - r.t0 < RIPPLE_MS);
-      const lensA = lens.on ? 1 : Math.max(0, Math.exp(-(now - lens.left) / 300) - 0.02);
-      // baseline at 0.76 em: every ramp glyph's ink then stays inside its own cell, so a partial repaint's clearRect never
-      // chips the neighbours (with textBaseline 'top' the lower dot of ':' hung into the row below and got erased)
-      for (let y = y0; y < y1; y++) {
-        const py = y * ch, cy = py + ch / 2, by = py + ch * 0.76;
-        for (let x = x0; x < x1; x++) {
-          const i = y * cols + x;
-          let k = idx[i];
-          let a = 0.94;
-          if (rt < RESOLVE_MS) {                                           // settle: top rows first, each cell at its own moment, noise +-2 steps before
-            const settle = (0.25 * (y / rows) + 0.75 * (hash(i, 0) / 6)) * RESOLVE_MS;
-            if (rt < settle) { k = Math.min(9, Math.max(0, k + (hash(i, f) % 5) - 2)); a = 0.7; }
-          }
-          if (live.length || lensA > 0) {
-            const cx = x * cw + cw / 2;
-            let shift = 0, glow = 0;
-            if (lensA > 0) {
-              const dx = cx - lens.x, dy = cy - lens.y, d = Math.sqrt(dx * dx + dy * dy);
-              if (d < NEAR) { const n = 1 - d / NEAR, sm = n * n * (3 - 2 * n); shift += sm * 3.5 * lensA; glow += sm * lensA; }
-            }
-            for (const r of live) {
-              const dx = cx - r.x, dy = cy - r.y, d = Math.sqrt(dx * dx + dy * dy);
-              if (d > REACH) continue;
-              const age = now - r.t0, u = (d - age * 0.17) / 13;                           // one crest, 13 px wide, rolling outward at 170 px/s
-              shift += Math.exp(-u * u) * Math.exp(-age / 600) * (1 - 0.5 * d / REACH) * 5.5;   // fades with age (and a little with distance): the ring outgrows the lens, then thins
-            }
-            if (shift > 0.35) {
-              if (k === 9) { k = Math.max(6, Math.round(9 - shift * 0.85)); }   // empty cells wake only as far as '-'
-              else { k = Math.max(0, Math.round(k - shift)); }
-              a = Math.min(1, 0.94 + glow * 0.06 + shift * 0.02);
-            }
-          }
-          if (k >= 9) continue;
-          ctx.globalAlpha = a;
-          ctx.fillText(RAMP[k], x * cw, by);
-        }
+    // a #hash landing: the target chapter (and all before it) is shown at once
+    const target = location.hash && document.getElementById(location.hash.slice(1));
+    const landed = target && target.closest('[data-chapter]');
+    if (landed) for (const c of chapters) { if (pending.has(c)) skip(c); if (c === landed) break; }
+    S.add(() => {
+      if (!pending.size && !carding.size) return;
+      const active = findActive();
+      for (const c of pending) {
+        const r = c.getBoundingClientRect();
+        if (r.top < 0 || chapters.indexOf(c) < active) skip(c);
+        else if (r.top < innerHeight * 0.72 && r.bottom > innerHeight * 0.25) show(c);
       }
-      ctx.globalAlpha = 1;
-    }
-    function paintAll(now) { paint(0, 0, cols, rows, now); dirty = null; }
-    function activeBounds(now) {                                         // the cells the lens and the live rings can touch, or null
-      const live = ripples.filter(r => now - r.t0 < RIPPLE_MS);
-      const lensA = lens.on || now - lens.left < 1200;
-      if (!live.length && !lensA) return null;
-      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-      const add = (x, y, r) => { x0 = Math.min(x0, x - r); y0 = Math.min(y0, y - r); x1 = Math.max(x1, x + r); y1 = Math.max(y1, y + r); };
-      for (const r of live) add(r.x, r.y, REACH);
-      if (lensA) add(lens.x, lens.y, NEAR);
-      return [Math.max(0, Math.floor(x0 / cw)), Math.max(0, Math.floor(y0 / ch)), Math.min(cols, Math.ceil(x1 / cw) + 1), Math.min(rows, Math.ceil(y1 / ch) + 1)];
-    }
-    // 30 fps on a plain timer (no rAF): a text canvas repainted every 33 ms is indistinguishable from a frame-locked one, the
-    // renderer idles between paints, and the loop keeps running where rAF is starved (headless capture, some embedded views).
-    let timer = 0;
-    function tick() {
-      timer = 0;
-      const now = performance.now();
-      if (!resolved) {
-        if (now - resolveT0 >= RESOLVE_MS) resolved = true;
-        paintAll(now);
-      } else {
-        const b = activeBounds(now);
-        if (dirty) paint(dirty[0], dirty[1], dirty[2], dirty[3], now);    // repaint what the last frame touched (settles it back)
-        if (b) paint(b[0], b[1], b[2], b[3], now);
-        dirty = b;
-        if (!b) { ripples.length = 0; return; }                            // quiet: stop the loop until the next pointer event
-        if (!ripples.some(r => now - r.t0 < RIPPLE_MS) && lens.on && !lens.moved) return;   // the pointer rests: the lens is painted, sleep until it moves
-        lens.moved = false;
+      for (const c of carding.keys()) {                              // a card still playing while the reader has already passed it: cut it
+        if (c.getBoundingClientRect().top < -120 || chapters.indexOf(c) < active) skip(c);
       }
-      timer = setTimeout(tick, Math.max(0, 33 - (performance.now() - now)));
-    }
-    const run = () => { if (!timer && !document.hidden) timer = setTimeout(tick, 0); };
-    function play() {
-      if (fired) return; fired = true;
-      layout();                                                            // re-resolve the face right before the first paint
-      if (REDUCED) { paintAll(performance.now()); return; }
-      resolveT0 = performance.now();
-      if (FREEZE !== null) { resolved = false; resolveT0 = performance.now() - FREEZE; paintAll(performance.now()); resolved = true; return; }
-      run();
-    }
-    function pointer(e) {
-      if (REDUCED || !resolved) return;
-      const r = canvas.getBoundingClientRect(), now = performance.now();
-      const x = (e.clientX - r.left) * (W / r.width), y = (e.clientY - r.top) * (H / r.height);
-      if (e.type === 'pointerleave') { lens.on = false; lens.left = now; run(); return; }
-      lens.x = x; lens.y = y; lens.on = true; lens.moved = true;
-      const last = ripples[ripples.length - 1];
-      if (e.type === 'pointerdown' || !last || now - last.t0 > 160) {      // a ring every 160 ms while moving, one per tap
-        ripples.push({ x, y, t0: now });
-        if (ripples.length > 6) ripples.shift();
-      }
-      run();
-    }
-
-    if (!layout()) return;
-    const init = () => {
-      layout();
-      // the font stylesheet is async: when Share Tech Mono lands (or already has), lay out and paint again in the right face
-      // (a canvas keeps whatever face it resolved at paint time; the static reduced-motion paint needs this as much as the live one)
-      if (document.fonts) {
-        const refont = () => { layout(); if (fired) paintAll(performance.now()); };
-        document.fonts.ready.then(refont);
-        document.fonts.addEventListener('loadingdone', refont);
-      }
-      if (REDUCED) { play(); return; }
-      new IntersectionObserver((es, io) => { if (es.some(e => e.isIntersecting)) { io.disconnect(); play(); } }, { threshold: 0.3 }).observe(band);
-      // belt and braces: an IO notification can lag a jump-scroll (anchor links, restored scroll positions); a cheap rect check on scroll covers it
-      const inView = () => { if (fired) return; const r = band.getBoundingClientRect(); if (r.bottom > innerHeight * 0.3 && r.top < innerHeight * 0.7) play(); };
-      addEventListener('scroll', inView, { passive: true }); inView();
-      const poll = setInterval(() => { inView(); if (fired) clearInterval(poll); }, 400);   // ...and a slow poll for views that starve scroll/IO events
-      canvas.addEventListener('pointermove', pointer, { passive: true });
-      canvas.addEventListener('pointerdown', pointer, { passive: true });
-      canvas.addEventListener('pointerleave', pointer, { passive: true });
-      document.addEventListener('visibilitychange', () => { if (!document.hidden && fired) run(); });
-      let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { layout(); if (fired) paintAll(performance.now()); }, 150); }, { passive: true });
-    };
-    // the glyphs must be Share Tech Mono: wait for it (the stylesheet loads async), but never more than 1.5 s
-    let started = false; const go = () => { if (!started) { started = true; init(); } };
-    if (document.fonts && document.fonts.load) { document.fonts.load('12px "Share Tech Mono"').then(go, go); setTimeout(go, 1500); } else go();
+    });
   })();
 
-  /* ---------- the secret: 140.85 · Konami · the frequency button → codec call → Shadow Moses ---------- */
+  /* ---------- the guiding wind: a 1 px ink line down the chapter rail, its brushed head easing toward where the reader is ---------- */
+  (() => {
+    const rail = document.querySelector('.rail'), main = document.querySelector('main'), ink = rail && rail.querySelector('.rail-ink'), head = rail && rail.querySelector('.rail-head');
+    if (!rail || !ink || !head || REDUCED) return;
+    let y0 = 0, y1 = 0, top = 0, pos = -1, lastLean = -1;
+    function measure() {
+      const mark = document.querySelector('#work .mark'), band = document.querySelector('.band');
+      if (!mark || !band) return;
+      const mr = main.getBoundingClientRect();
+      top = mr.top + scrollY;
+      y0 = mark.getBoundingClientRect().top + scrollY - top + 44;   // just under the numeral
+      y1 = band.getBoundingClientRect().top + scrollY - top + 10;   // into the ink of the About band
+    }
+    measure();
+    let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(measure, 160); }, { passive: true });
+    addEventListener('load', measure);
+    S.add((dt) => {
+      if (innerWidth <= 720) return;
+      const target = clamp(scrollY + innerHeight * 0.55 - top, y0, y1);
+      if (pos < 0) pos = target;
+      const d = target - pos;
+      if (Math.abs(d) < 0.3 && Math.abs(wind.lean - lastLean) < 0.01) return;
+      lastLean = wind.lean;
+      pos += d * (1 - Math.exp(-dt * 2.6));
+      const len = Math.max(0, pos - y0);
+      ink.style.transform = `translateY(${y0}px) scaleY(${len})`;
+      head.style.transform = `translate(${wind.lean * 4 - 1}px, ${pos}px) rotate(${-2 + wind.lean * 12 + clamp(d * 0.02, -10, 10)}deg)`;   // the head leans with the wind (right, like the petals and the grass) and toward where it is going
+      rail.classList.toggle('moving', Math.abs(d) > 40);
+    });
+  })();
+
+  /* ---------- the grass (footer A): the blade tips, a masked duplicate layer, shear with the gust (<= 2 deg) ---------- */
+  (() => {
+    const sway = document.querySelector('.art-grass-sway'), foot = sway && sway.closest('.foot');
+    if (!sway || REDUCED) return;
+    let vis = false;
+    new IntersectionObserver(es => { vis = es.some(e => e.isIntersecting); }, { threshold: 0 }).observe(foot);
+    S.add(() => { if (vis) sway.style.transform = `skewX(${(-0.4 - wind.lean * 1.6).toFixed(2)}deg)`; });
+  })();
+
+  /* ---------- the radar's blips are the four chapters: a CSS overlay on js/radar.js's wrapper (that file is shared and untouched).
+     The one whose chapter is in view sits bright; each pings as the sweep passes (the sweep angle is reconstructed: radar.js turns
+     0.0023 rad per drawn ms from the moment it starts, which is this DOMContentLoaded). ---------- */
+  document.addEventListener('DOMContentLoaded', () => {
+    const wrap = document.querySelector('.soliton-radar');
+    if (!wrap || !chapters.length) return;
+    const ov = document.createElement('div'); ov.className = 'radar-ch';
+    const ANG = [-1.85, -0.35, 1.05, 2.45], R = 0.62, NUM = '一二三四';
+    const dots = ANG.map((a, i) => {
+      const d = document.createElement('i');
+      d.style.left = (50 + Math.cos(a) * R * 43) + '%'; d.style.top = (50 + Math.sin(a) * R * 43) + '%';
+      d.dataset.n = NUM[i]; ov.appendChild(d); return d;
+    });
+    wrap.appendChild(ov);
+    const t0 = performance.now(); let hiddenAt = 0, hiddenMs = 0;
+    document.addEventListener('visibilitychange', () => { if (document.hidden) hiddenAt = performance.now(); else if (hiddenAt) { hiddenMs += performance.now() - hiddenAt; hiddenAt = 0; } });
+    const setActive = () => { const i = findActive(); if (i !== activeIdx) { activeIdx = i; dots.forEach((d, k) => d.classList.toggle('on', k === i)); } };
+    setActive();
+    if (REDUCED) { addEventListener('scroll', setActive, { passive: true }); return; }
+    S.add((dt, now) => {
+      setActive();
+      const sweep = ((now - t0 - hiddenMs) * 0.0023) % (Math.PI * 2);
+      dots.forEach((d, k) => { let a = sweep - ANG[k]; a = Math.abs(((a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI); d.classList.toggle('ping', a < 0.45); });
+    });
+  });
+
+  /* ---------- the "!" over Raiden: hover or focus on the figure pops the alert plate above his head, once per hover ---------- */
+  (() => {
+    const fig = document.querySelector('.hero .figure'), hero = document.querySelector('.hero'), plate = hero && hero.querySelector('.alert'), img = fig && fig.querySelector('img');
+    if (!fig || !plate || !img) return;
+    let armed = true, t = 0;
+    const touch = matchMedia('(hover: none)').matches;
+    function pop(e) {
+      if (!armed) return; armed = false;
+      const r = img.getBoundingClientRect(), h = hero.getBoundingClientRect();   // over his head: 56 % across the plate, just under its top edge
+      plate.style.left = Math.min(h.width - 60, r.left - h.left + r.width * 0.56) + 'px';
+      plate.style.top = Math.max(8, r.top - h.top + r.height * 0.03) + 'px';
+      plate.classList.remove('on'); void plate.offsetWidth; plate.classList.add('on');
+      clearTimeout(t); t = setTimeout(() => plate.classList.remove('on'), 1500);
+      if (!touch && !(e && e.pointerType === 'touch')) playCodecRing();
+    }
+    fig.addEventListener('pointerenter', pop);
+    fig.addEventListener('pointerleave', () => { armed = true; });
+    fig.addEventListener('focus', pop);
+    fig.addEventListener('blur', () => { armed = true; });
+  })();
+
+  /* ---------- the brush that opens the page: the class is set inline in <head> (first load of the session, no hash, no reduced
+     motion); here we only tidy up after the sweep and remember it for the session ---------- */
+  (() => {
+    const html = document.documentElement, brush = document.querySelector('.brush-open');
+    if (!html.classList.contains('opening')) return;
+    const done = () => { html.classList.remove('opening'); try { sessionStorage.setItem('sumi-opened', '1'); } catch (e) {} };
+    if (brush) brush.addEventListener('animationend', done, { once: true });
+    setTimeout(done, 1400);                                           // belt and braces
+  })();
+
+  /* ---------- the secret: 140.85 · Konami · the tuning strip → codec call → Shadow Moses ---------- */
   // Ported from js/script.js (openGame / launchGame / playCodecRing / Konami / dial) by copy, not by loading it.
   let gameScriptRequested = false;
   function status(msg) { const el = document.getElementById('live-status'); if (el) el.textContent = msg; }
@@ -342,4 +318,6 @@
     }
   });
   document.querySelectorAll('.freq').forEach(btn => btn.addEventListener('click', launchGame));
+
+  start();
 })();
