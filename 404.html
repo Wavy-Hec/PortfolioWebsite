@@ -7,32 +7,34 @@
   <title>404 — Hector Lugo</title>
   <script>try{var t=localStorage.getItem('theme');if(t==='codec'||t==='starwars'||t==='gotham')document.documentElement.dataset.theme=t}catch(e){}</script>
   <!-- PNG first so legacy Safari (no SVG favicon support) picks it up -->
-  <link rel="icon" href="https://wavy-hec.github.io/PortfolioWebsite/favicon-32.png?v=2" type="image/png" sizes="32x32">
-  <link rel="icon" href="https://wavy-hec.github.io/PortfolioWebsite/favicon.svg?v=2" type="image/svg+xml">
+  <link rel="icon" href="https://wavy-hec.github.io/PortfolioWebsite/favicon-32.png?v=3" type="image/png" sizes="32x32">
+  <link rel="icon" href="https://wavy-hec.github.io/PortfolioWebsite/favicon.svg?v=3" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Fonts load async (media swap) — don't block first paint on a cross-origin CSS fetch -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@700;800&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@700;800&family=Share+Tech+Mono&display=swap"></noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@700;800&family=Shippori+Mincho:wght@400&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@700;800&family=Shippori+Mincho:wght@400&family=Share+Tech+Mono&display=swap"></noscript>
   <!-- Self-contained on purpose: GitHub Pages serves 404.html at any missing path,
        so relative asset URLs would break. Theme values are copied from style.css
        and applied pre-paint from the saved localStorage 'theme'. -->
   <style>
+    /* no theme saved = the night palette of the site (index.html, css/sumi.css): sumi ground, paper text, one red */
     :root {
-      --bg: #eaf0fb;
-      --panel: #ffffff;
-      --panel-2: #f4f7fd;
-      --border: #ccd8f1;
-      --ink: #2f54cc;
-      --ink-strong: #2746b4;
-      --text: #46568c;
-      --dim: #5d6a8c;
-      --muted: #5f6987;
-      --error: #cc2f3f;
-      --on-accent: #ffffff;
-      --wash: #f5f8fe;
-      --scan: rgba(31, 80, 120, .04);
-      --shadow: 0 10px 28px rgba(39, 70, 180, .10);
+      --bg: #141416;
+      --panel: #0b0b0d;
+      --panel-2: #141416;
+      --border: rgba(233, 231, 226, .18);
+      --ink: #e9e7e2;
+      --ink-strong: #e9e7e2;
+      --text: #e9e7e2;
+      --dim: #bab8b3;
+      --muted: #bab8b3;
+      --error: #c9333a;
+      --on-accent: #141416;
+      --wash: transparent;
+      --scan: rgba(233, 231, 226, 0);
+      --shadow: 12px 12px 0 #0b0b0d;
+      color-scheme: dark;
     }
     html[data-theme="codec"] {
       color-scheme: dark;
@@ -96,7 +98,7 @@
       background-image:
         repeating-linear-gradient(0deg, var(--scan) 0 1px, transparent 1px 4px),
         radial-gradient(ellipse 90% 55% at 50% 0%, var(--wash), transparent 60%);
-      font-family: 'Spectral', Georgia, serif;
+      font-family: 'Shippori Mincho', 'Spectral', Georgia, serif;
       color: var(--text);
     }
     .terminal {
@@ -165,6 +167,11 @@
        invert anywhere: starwars/gotham show it as-is (it IS their holo blue);
        codec swings the blue ~-82deg to phosphor green. */
     html[data-theme="codec"] .egg img { filter: hue-rotate(278deg) brightness(1.1); }
+    /* the night default: the hologram as paper, no colour */
+    html:not([data-theme]) .egg img { filter: grayscale(1) brightness(1.3); }
+    html:not([data-theme]) .terminal { border-radius: 0; }
+    html:not([data-theme]) .home-btn { border-radius: 0; font-family: 'Share Tech Mono', monospace; font-weight: 400; letter-spacing: .12em; text-transform: uppercase; font-size: 12px; }
+    html[data-theme] body { font-family: 'Spectral', Georgia, serif; }
   </style>
 </head>
 <body>

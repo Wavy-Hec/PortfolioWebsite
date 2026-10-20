@@ -16,7 +16,9 @@
   // stops while the CSS breakpoint hides it — no drawing into a hidden canvas.
   const smallScreen = window.matchMedia('(max-width: 600px)');
 
-  const SIZE = 132;
+  // the night page (css/sumi.css) sets --radar-size and runs one frame loop (window.SUMI): the instrument draws at that size inside it
+  const SIZE = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--radar-size'), 10) || 132;
+  const SHARED = !!(window.SUMI && window.SUMI.add);
   const R = SIZE / 2;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
@@ -521,6 +523,7 @@
   // (game.js toggles the class and dispatches gameopen/gameclose).
   const gameOpen = () => document.body.classList.contains('game-open');
   function start() {
+    if (SHARED) return;   // the page's loop draws it (below)
     if (raf === null && timer === null && !REDUCED && !document.hidden && !smallScreen.matches && !gameOpen()) {
       prev = performance.now();
       raf = requestAnimationFrame(loop);
@@ -541,5 +544,6 @@
   else if (smallScreen.addListener) smallScreen.addListener(onBreakpoint); // older Safari
 
   applyMode(); // mode + label from the current theme; its draw(0) is the static first frame
+  if (SHARED && !REDUCED) window.SUMI.add(dt => { if (!smallScreen.matches) draw(dt * 1000); });   // one loop for the page: it sleeps when the tab is hidden or the game is open
   start();
 })();

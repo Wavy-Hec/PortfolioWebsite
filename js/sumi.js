@@ -1,8 +1,8 @@
-/* SUMI v4 — one wind, one loop. The wind model (gust + scroll + the pointer's gusts) drives the petals, the ASCII field in the hero
-   (js/sumi-field.js), the ink stroke down the chapter rail, the grass in the footer, the lean of the ASCII scene (js/sumi-city.js), the
-   wind bed (sound, opt-in) and the radar's chapter blips; the hero's parallax, the chapter title cards, the opening (the dial, the brush,
-   the title card), the "!" over Raiden, the stamping seals, the tuning strip, and the secret (140.85 / Konami / the strip -> codec call ->
-   Shadow Moses) live here too.
+/* SUMI v5 — one wind, one loop. The wind model (gust + scroll + the pointer's gusts) drives the petals, the ASCII fields in the hero and the
+   footer (js/sumi-field.js), the ink stroke down the chapter rail, the fog around the quadruped (js/sumi-xray.js), the wind bed (sound,
+   opt-in) and the radar's chapter blips; the hero's parallax and the drift of the structure on its horizon, the chapter numerals, the
+   research stack's first explosion, the opening (the dial, the brush, the title card), the "!" over Raiden, the stamping seals, the tuning
+   strip, and the secret (140.85 / Konami / the strip -> codec call -> Shadow Moses) live here too.
    The loop: one requestAnimationFrame chain paced to ~30 fps by a timer; asleep when the tab is hidden, while the game is open, and
    under reduced motion (nothing moves at all; the scenes are one still frame; the headings are simply present). */
 (() => {
@@ -160,22 +160,22 @@
     return idx;
   }
 
-  /* ---------- the title cards: a chapter's numeral brushes in once, the first time the chapter is reached; then the heading.
-     A chapter the reader jumped past (an anchor, a #hash landing: its top is above the viewport, or it lies above the active chapter)
-     gets no card: it is simply there, so scrolling back up never meets blank paper. ---------- */
+  /* ---------- the chapter numerals: a chapter's numeral brushes in large once, the first time the chapter is reached, and shrinks into the
+     rail; then the heading (css .carding / .shown). A chapter the reader jumped past (an anchor, a #hash landing: its top is above the
+     viewport, or it lies above the active chapter) gets no move: it is simply there, so scrolling back up never meets blank paper. ---------- */
   (() => {
     if (REDUCED || !chapters.length) return;
-    const pending = new Set(chapters.filter(c => c.querySelector('.tcard')));
+    const pending = new Set(chapters.filter(c => c.querySelector('.mark, .harakiri')));
     pending.forEach(c => c.classList.add('pending'));
-    const carding = new Map();                                       // chapter -> its two timers, while the card plays
+    const carding = new Map();                                       // chapter -> its two timers, while the numeral moves
     function settle(c) { c.classList.remove('pending', 'carding'); c.classList.add('shown'); }
     function skip(c) { pending.delete(c); const t = carding.get(c); if (t) { t.forEach(clearTimeout); carding.delete(c); } settle(c); }
     function show(c) {
       pending.delete(c);
-      if (S.sound) S.sound.tick();                                        // a soft tick as the card appears (only with the sound on)
-      c.classList.add('carding');
-      carding.set(c, [setTimeout(() => { c.classList.remove('pending'); c.classList.add('shown'); }, 1150),
-                      setTimeout(() => { c.classList.remove('carding'); carding.delete(c); }, 1700)]);
+      if (S.sound) S.sound.tick();                                        // a soft tick as the numeral lands (only with the sound on)
+      c.classList.add('carding');                                        // the numeral: wipe to .45 s, hold to 1 s, land by 1.6 s (css); the content comes in as it lands
+      carding.set(c, [setTimeout(() => { c.classList.remove('pending'); c.classList.add('shown'); }, 1000),
+                      setTimeout(() => { c.classList.remove('carding'); carding.delete(c); }, 1800)]);
     }
     // a #hash landing: the target chapter (and all before it) is shown at once
     const target = location.hash && document.getElementById(location.hash.slice(1));
@@ -189,10 +189,27 @@
         if (r.top < 0 || chapters.indexOf(c) < active) skip(c);
         else if (r.top < innerHeight * 0.72 && r.bottom > innerHeight * 0.25) show(c);
       }
-      for (const c of carding.keys()) {                              // a card still playing while the reader has already passed it: cut it
+      for (const c of carding.keys()) {                              // a numeral still moving while the reader has already passed it: cut it
         if (c.getBoundingClientRect().top < -120 || chapters.indexOf(c) < active) skip(c);
       }
     });
+  })();
+
+  /* ---------- the research stack explodes the first time it is seen (css .exploded slides the plates apart over .9 s), once its chapter has
+     settled (never while the chapter's content is still at 0 under the numeral card); under reduced motion it is already apart. The plates are
+     buttons: Enter / Space holds the lift and the line (css .lit, aria-pressed). ---------- */
+  (() => {
+    const st = document.querySelector('.stack');
+    if (!st) return;
+    st.querySelectorAll('.pl').forEach(p => {
+      p.setAttribute('aria-pressed', 'false');
+      p.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); p.setAttribute('aria-pressed', p.classList.toggle('lit') ? 'true' : 'false'); } });
+    });
+    if (REDUCED || !('IntersectionObserver' in window)) { st.classList.add('exploded'); return; }
+    const ch = st.closest('[data-chapter]');
+    const go = () => { if (ch && ch.classList.contains('pending')) { setTimeout(go, 120); return; } setTimeout(() => st.classList.add('exploded'), 250); };
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); go(); } }, { threshold: 0.4 });
+    io.observe(st);
   })();
 
   /* ---------- the guiding wind: a 1 px ink line down the chapter rail, its brushed head easing toward where the reader is ---------- */
@@ -226,18 +243,9 @@
     });
   })();
 
-  /* ---------- the grass (footer A): the blade tips, a masked duplicate layer, shear with the gust (<= 2 deg) ---------- */
-  (() => {
-    const sway = document.querySelector('.art-grass-sway'), foot = sway && sway.closest('.foot');
-    if (!sway || REDUCED) return;
-    let vis = false;
-    new IntersectionObserver(es => { vis = es.some(e => e.isIntersecting); }, { threshold: 0 }).observe(foot);
-    S.add(() => { if (vis) sway.style.transform = `skewX(${(-0.4 - wind.lean * 1.6).toFixed(2)}deg)`; });
-  })();
-
-  /* ---------- the radar's blips are the four chapters: a CSS overlay on js/radar.js's wrapper (that file is shared and untouched).
-     The one whose chapter is in view sits bright; each pings as the sweep passes (the sweep angle is reconstructed: radar.js turns
-     0.0023 rad per drawn ms from the moment it starts, which is this DOMContentLoaded). ---------- */
+  /* ---------- the radar's blips are the four chapters: a CSS overlay on js/radar.js's wrapper (that file is shared with legacy.html; on this
+     page it draws at --radar-size inside this loop). The one whose chapter is in view sits bright; each pings as the sweep passes (the sweep
+     angle is reconstructed: radar.js turns 0.0023 rad per drawn ms from the moment it starts, which is this DOMContentLoaded). ---------- */
   document.addEventListener('DOMContentLoaded', () => {
     const wrap = document.querySelector('.soliton-radar');
     if (!wrap || !chapters.length) return;
@@ -299,6 +307,21 @@
     });
   })();
 
+  /* ---------- the structure on the horizon drifts across the fog over a visit: .6 px/s, its own layer under the sky's parallax; it wraps
+     when it has crossed the hero's width (a far thing, moving so slowly the eye only catches it on return) ---------- */
+  (() => {
+    const hero = document.querySelector('.hero'), items = hero ? [...hero.querySelectorAll('.sky .monument, .sky .moon')] : [];
+    if (!items.length || REDUCED) return;
+    let x = 0, acc = 0;
+    S.add(dt => {
+      if (scrollY > hero.offsetHeight) return;
+      x += dt * 0.6; acc += dt;
+      if (acc < 0.5) return; acc = 0;                                    // a step every half second: a pixel at a time, no per-frame style writes
+      if (x > hero.clientWidth * 0.5) x = -hero.clientWidth * 0.4;
+      for (const m of items) m.style.transform = `translate3d(${x.toFixed(0)}px,0,0)`;
+    });
+  })();
+
   /* ---------- the chapter monuments: each lags the page by .2x of its chapter's travel across the viewport (a far thing moves slower), from the loop ---------- */
   (() => {
     const items = [...document.querySelectorAll('.chapter .monument')].map(m => ({ m, c: m.closest('.chapter'), last: null }));
@@ -317,8 +340,8 @@
   })();
 
   /* ---------- the opening: html.opening is set inline in <head> (first load of the session, no hash, no reduced motion). Black screen; the
-     dial climbs 140.00 -> 140.85 over 1.6 s (the needle settles, "connected"), at 2 s the screen goes and the paper brush sweeps the scene in
-     (css), the title card lands at 2.45 s and fades from 3.6 s; done at 4.2 s. Any key, click or tap jumps to the finished state: the class
+     dial climbs 140.00 -> 140.85 over 1.3 s (the needle settles, "connected"), at 1.6 s the screen goes and the paper brush sweeps the scene in
+     (css), the title card lands at 2.05 s and fades 3.05 -> 3.35 s, the copy rises from 3.35 s; done at 3.8 s. Any key, click or tap jumps to the finished state: the class
      comes off and every opening animation with it. Remembered for the session. ---------- */
   (() => {
     const html = document.documentElement;
@@ -333,13 +356,13 @@
     };
     function step(dt, now) {
       const t = (now - t0) / 1000;
-      if (t < 1.6) { const e = 1 - Math.pow(1 - t / 1.6, 3); if (hz) hz.textContent = (140 + 0.85 * e).toFixed(2); }
+      if (t < 1.3) { const e = 1 - Math.pow(1 - t / 1.3, 3); if (hz) hz.textContent = (140 + 0.85 * e).toFixed(2); }
       else if (!settled) { settled = true; if (hz) hz.textContent = '140.85'; if (dial) dial.classList.add('settled'); if (st) st.textContent = 'connected'; if (S.sound) S.sound.ring(); }
-      if (t >= 4.2) finish();
+      if (t >= 3.8) finish();
     }
     S.add(step);
     addEventListener('keydown', finish); addEventListener('pointerdown', finish);
-    setTimeout(finish, 5000);                                           // belt and braces: the loop may be asleep (hidden tab)
+    setTimeout(finish, 4400);                                           // belt and braces: the loop may be asleep (hidden tab)
   })();
 
   /* ---------- the hanko stamps itself on click: scale 1.15 -> 1 with a 6 deg settle (css .stamp) and a paper ring that expands and fades;
@@ -431,7 +454,7 @@
     if (gameScriptRequested) return;
     gameScriptRequested = true;
     const s = document.createElement('script');
-    s.src = 'js/game.js?v=13';
+    s.src = 'js/game.js?v=13';                                        // lazy: the game (126 KB) loads on the first call only
     s.onload = () => { if (window.MGSGame) window.MGSGame.open(); };
     s.onerror = () => { gameScriptRequested = false; status('codec link failed — try again'); };
     document.body.appendChild(s);

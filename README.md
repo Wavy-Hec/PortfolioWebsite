@@ -8,6 +8,16 @@ and vision-language models for robotics.
 
 Vanilla HTML/CSS/JS. No build step, no frameworks, no runtime dependencies.
 
+## The night page (v5)
+
+`index.html` is the night page: sumi ground, paper type (Shippori Mincho + Share Tech Mono), one red. It is built from
+`css/sumi.css`, `js/sumi.js` (the wind, the loop, the opening, the chapter numerals, the secret), `js/sumi-field.js` (the live
+ASCII pampas field in the hero and the footer), `js/sumi-xray.js` (the Unitree Go2 kinematic sketch in About) and `js/radar.js` (the Soliton radar, drawn at 108 px inside the page's
+one frame loop; `legacy.html` runs it on its own). The mark is a round red seal with the H+L cut as paper strokes: the `#seal` symbol in
+`index.html` / `resume.html`, the inline favicon, `favicon.svg`, `favicon-32.png` and `apple-touch-icon.png` are the same drawing.
+`resume.html` and `404.html` wear the same palette. The previous four-theme site is kept whole as `legacy.html` (with
+`style.css`, `js/script.js`, `js/dither.js`), linked from the footer. `sumi.html` only redirects to `./`.
+
 ## Features
 
 - **Four switchable themes** (picker in the header, persisted per visitor):
