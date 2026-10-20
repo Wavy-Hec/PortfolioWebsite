@@ -90,10 +90,13 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       min-height: 100vh;
+      min-height: 100svh;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-end;
       padding: 24px;
+      padding-top: min(46vw, 420px, 36vh);   /* capped by the height too: on a 1440x900 laptop the terminal and its one button stay above the fold (the torii is lifted to match, .torii top) */
       background: var(--bg);
       background-image:
         repeating-linear-gradient(0deg, var(--scan) 0 1px, transparent 1px 4px),
@@ -101,7 +104,16 @@
       font-family: 'Shippori Mincho', 'Spectral', Georgia, serif;
       color: var(--text);
     }
+    /* the torii (night only): ascii-magic's sea-torii-sunset in mono paper dots, the sun the one bright shape, the gate a silhouette in the dots (contrast 100, dot-size 45: the shadows lose their dots and the sky keeps only specks; the sun's dots are the big ones);
+       sized to the viewport's width (an inline script sets the piece's font size: 192 columns x size x .602 px = 100vw), fixed to the top, its sea
+       fading into the sumi under the terminal. Decorative: aria-hidden. Holds its first frame under reduced motion (the engine does that itself). */
+    .torii { position: fixed; left: 0; top: -10vw; width: 100vw; z-index: 0; pointer-events: none; color: #e9e7e2; opacity: .9;
+      -webkit-mask-image: linear-gradient(transparent 20%, #000 33%, #000 62%, transparent 96%); mask-image: linear-gradient(transparent 20%, #000 33%, #000 62%, transparent 96%) }   /* lifted a tenth of its width so the sun (row 51 of 108) sits above the terminal on a 900-tall viewport; the sky above the lintel fades to sumi (the fade starts at the viewport's top edge), the sun, the pillars' edges and the sea glints keep their dots */
+    .torii ascii-art { display: block; width: 100%; color: inherit }
+    .torii ascii-art canvas { display: block }
+    html[data-theme] .torii, html.no-torii .torii { display: none }
     .terminal {
+      position: relative; z-index: 1;
       width: 100%;
       max-width: 640px;
       background: var(--panel);
@@ -167,14 +179,35 @@
        invert anywhere: starwars/gotham show it as-is (it IS their holo blue);
        codec swings the blue ~-82deg to phosphor green. */
     html[data-theme="codec"] .egg img { filter: hue-rotate(278deg) brightness(1.1); }
-    /* the night default: the hologram as paper, no colour */
+    /* the night default: the hologram as paper, no colour; the terminal squared off, the button in mono */
     html:not([data-theme]) .egg img { filter: grayscale(1) brightness(1.3); }
     html:not([data-theme]) .terminal { border-radius: 0; }
     html:not([data-theme]) .home-btn { border-radius: 0; font-family: 'Share Tech Mono', monospace; font-weight: 400; letter-spacing: .12em; text-transform: uppercase; font-size: 12px; }
-    html[data-theme] body { font-family: 'Spectral', Georgia, serif; }
+    html[data-theme] body { font-family: 'Spectral', Georgia, serif; justify-content: center; padding-top: 24px; }
+    .credit { position: relative; z-index: 1; margin-top: 14px; font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--dim); opacity: .8 }
+    .credit a { color: inherit; text-decoration: none }
+    .credit a:hover, .credit a:focus-visible { text-decoration: underline; text-underline-offset: 4px }
+    html[data-theme] .credit { display: none }
   </style>
 </head>
 <body>
+  <!-- the torii: a self-hosted ascii-magic piece (js/ascii/pieces/sea-torii-sunset.js) drawn by the self-hosted engine (js/ascii/ascii.js).
+       The engine's URL must be absolute: this page is served at any missing path. On the live site the repo lives under /PortfolioWebsite/
+       (https://wavy-hec.github.io/PortfolioWebsite/); served locally from the repo root it lives under /. The script below picks the order from
+       where it runs (a github.io host or a /PortfolioWebsite/ path -> the repo path first) and falls back to the other on a failed import, so
+       both work; if neither loads, html.no-torii hides the empty slot. The piece's font size is set to 100vw / (192 cols x .602) on load and resize. -->
+  <div class="torii" aria-hidden="true"><ascii-art piece="sea-torii-sunset" look="dots" mono contrast="100" density="85" dot-size="45" aria-hidden="true"></ascii-art></div>
+  <script>
+    (function () {
+      var el = document.querySelector('.torii ascii-art');
+      if (!el || document.documentElement.dataset.theme) return;
+      var fit = function () { el.setAttribute('size', (innerWidth / (192 * 0.602)).toFixed(2)); };
+      fit(); var rt; addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(fit, 200); }, { passive: true });
+      var repo = /github\.io$/.test(location.hostname) || location.pathname.indexOf('/PortfolioWebsite/') === 0;
+      var paths = repo ? ['/PortfolioWebsite/js/ascii/ascii.js', '/js/ascii/ascii.js'] : ['/js/ascii/ascii.js', '/PortfolioWebsite/js/ascii/ascii.js'];
+      import(paths[0]).catch(function () { return import(paths[1]); }).catch(function () { document.documentElement.classList.add('no-torii'); });
+    })();
+  </script>
   <main class="terminal">
     <h1 class="bar">hector@big-shell: ~ — 404</h1>
     <div class="snaaake" aria-hidden="true"><p class="go-title">GAME OVER</p><p class="go-line">Snake? Snake?! SNAAAKE!</p></div>
@@ -194,5 +227,6 @@
       <p><span class="prompt">$</span> <span class="cursor"></span></p>
     </div>
   </main>
+  <p class="credit">the torii: sea-torii-sunset · halftone engine: <a href="https://www.ascii-magic.com/" rel="noopener">ascii-magic.com</a></p>
 </body>
 </html>

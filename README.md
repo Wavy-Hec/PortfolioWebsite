@@ -18,6 +18,18 @@ one frame loop; `legacy.html` runs it on its own). The mark is a round red seal 
 `resume.html` and `404.html` wear the same palette. The previous four-theme site is kept whole as `legacy.html` (with
 `style.css`, `js/script.js`, `js/dither.js`), linked from the footer. `sumi.html` only redirects to `./`.
 
+### The halftone pass (v6)
+
+`js/ascii/` is a self-hosted copy of the [ascii-magic](https://www.ascii-magic.com/) runtime (MIT; `js/ascii/README.md`), which draws the
+page's `<ascii-art>` pieces as mono paper dots: the Big Shell on the hero's horizon (`pieces/big-shell-sea.js`), the Shadow Moses heliport
+behind Work (`pieces/heliport-snow.js`), the Go2 trotting behind About (`pieces/go2-trot.js`) and `wind-grass-paper` (ascii-magic's
+`wind-grass` redrawn as paper brightness, one dot per cell) with a `low-moon` in the footer; `404.html` wears its `sea-torii-sunset` in mono (the engine loaded by an absolute URL, probing both the live
+`/PortfolioWebsite/` path and the repo root). The first three are original pieces in the ascii-magic piece format, under 8 KB each, that
+also read in `look="ascii"`. The research stack is `js/sumi-stack.js`: four isometric plates as a cursor-lit dot grid with sparks, each plate
+a button. `js/sumi.js` sizes every piece to its CSS box (`data-cols`) and carries the dev hooks for headless screenshots (`?at=all`,
+`?stack=`, `?focus=`, `?xray=`; they answer only on localhost / 127.0.0.1). Nothing is fetched from ascii-magic.com at runtime; the
+engine's `start()` is coalesced locally (one player per element, `js/ascii/README.md`).
+
 ## Features
 
 - **Four switchable themes** (picker in the header, persisted per visitor):

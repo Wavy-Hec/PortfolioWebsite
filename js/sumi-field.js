@@ -1,6 +1,6 @@
-/* SUMI v5 — the field: pampas grass drawn live as ASCII halftone. Two instances of one renderer: the hero's field (canvas.field in .hero) and
-   the footer's (canvas.field-foot in .foot .art, denser, with the low moon drawn into it as a disc of lighter glyphs and a haze along its
-   row); the page opens and closes on the same field.
+/* SUMI v6 — the field: pampas grass drawn live as ASCII halftone, the hero's ground (canvas.field in .hero). The renderer still takes a second
+   instance with a moon (the v5 footer: canvas.field-foot, denser, the moon drawn into it); since v6 the footer's field is ascii-magic's
+   wind-grass piece instead (js/ascii, index.html), so that instance only runs when a .field-foot canvas is present.
    The picture is a height field, not rows of bars: three depth layers (near, mid, far), each a skyline of TUFTS along a world x — narrow
    bells of hashed height and width, taller than the air between them, so the top edge is a ragged line of sheaves — and a per-column
    density. A cell is grass when it lies under its layer's skyline; whether it is DRAWN is a halftone test (hash < coverage x density), and

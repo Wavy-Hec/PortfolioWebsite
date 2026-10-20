@@ -32,6 +32,28 @@
   // ?horizon=moon: the fallback horizon, a low moon instead of the structure (css .hero.horizon-moon)
   if (q.get('horizon') === 'moon') { const h = document.querySelector('.hero'); if (h) h.classList.add('horizon-moon'); }
 
+  /* dev: ?at=<scrollY> jumps there once the page has loaded (for headless screenshots of a chapter: a #hash landing mis-paints there and the page's
+     loop sleeps inside an iframe), with ?stack=e,x,y[,a] (the research stack's explosion and light), ?focus=<selector> (keyboard focus) and
+     ?xray=<seconds> (the quadruped's resolve clock) to set a scene. The head script skips the opening when ?at= is present. */
+  {
+    const DEV = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);   // the hooks answer only on a local host: the public page has no query-string scene controls
+    const at = DEV ? q.get('at') : null;
+    if (at !== null) addEventListener('load', () => setTimeout(() => {
+      if (at === 'all') {                                                   // a tall window: the hero held at one viewport (?vh=, 840), every chapter shown, the canvases laid out again
+        const h = document.querySelector('.hero'), vh = +q.get('vh') || 840;
+        if (h) { h.style.minHeight = vh + 'px'; h.style.height = vh + 'px'; }
+        if (S.devShowAll) S.devShowAll();
+        dispatchEvent(new Event('resize'));
+      } else { try { scrollTo({ top: +at || 0, behavior: 'instant' }); } catch (e) { scrollTo(0, +at || 0); } }
+      setTimeout(() => {
+        if (q.has('stack') || q.has('focus') || q.has('xray')) document.documentElement.classList.add('dev-still');   // a set scene: no transitions (css), so a capture shows the state itself
+        const st = q.get('stack'); if (st && S.stack) S.stack.at(...st.split(',').map(Number));
+        const xr = q.get('xray'); if (xr && S.xray) S.xray.at(+xr);
+        const fo = q.get('focus'); if (fo) { const el = document.querySelector(fo); if (el) el.focus(); }
+      }, 500);
+    }, 300));
+  }
+
   /* ---------- the wind and the loop ----------
      gust(t): two slow sines, 0.25..1.25. Scroll adds a burst (|px/s|, decaying in ~1/3 s) so a fast scroll is a gust that settles.
      strength = gust + burst feeds the petals; lean (0..1) is the same wind normalised for everything that tilts. */
@@ -181,6 +203,7 @@
     const target = location.hash && document.getElementById(location.hash.slice(1));
     const landed = target && target.closest('[data-chapter]');
     if (landed) for (const c of chapters) { if (pending.has(c)) skip(c); if (c === landed) break; }
+    S.devShowAll = () => { for (const c of [...pending]) skip(c); };          // dev (?at=all, local hosts only): everything shown at once
     S.add(() => {
       if (!pending.size && !carding.size) return;
       const active = findActive();
@@ -195,21 +218,24 @@
     });
   })();
 
-  /* ---------- the research stack explodes the first time it is seen (css .exploded slides the plates apart over .9 s), once its chapter has
-     settled (never while the chapter's content is still at 0 under the numeral card); under reduced motion it is already apart. The plates are
-     buttons: Enter / Space holds the lift and the line (css .lit, aria-pressed). ---------- */
+  /* ---------- the research stack lives in js/sumi-stack.js (v6: a canvas of cursor-lit dots; it explodes on first view the same way) ---------- */
+
+  /* ---------- the halftone pieces (<ascii-art>, js/ascii): each is sized to its CSS box. The engine draws a piece at a font size (its canvas is
+     cols x size x .602 px wide), so every piece with data-cols gets size = width / (cols x .602) here, at start and after a resize; a changed size
+     restarts that player at the new scale (one attribute write; the engine debounces nothing, so this is debounced). ---------- */
   (() => {
-    const st = document.querySelector('.stack');
-    if (!st) return;
-    st.querySelectorAll('.pl').forEach(p => {
-      p.setAttribute('aria-pressed', 'false');
-      p.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); p.setAttribute('aria-pressed', p.classList.toggle('lit') ? 'true' : 'false'); } });
-    });
-    if (REDUCED || !('IntersectionObserver' in window)) { st.classList.add('exploded'); return; }
-    const ch = st.closest('[data-chapter]');
-    const go = () => { if (ch && ch.classList.contains('pending')) { setTimeout(go, 120); return; } setTimeout(() => st.classList.add('exploded'), 250); };
-    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); go(); } }, { threshold: 0.4 });
-    io.observe(st);
+    const pieces = [...document.querySelectorAll('ascii-art[data-cols]')];
+    if (!pieces.length) return;
+    function fit() {
+      for (const el of pieces) {
+        const w = el.clientWidth, cols = parseFloat(el.dataset.cols) || 96;
+        if (!w) continue;
+        const size = (w / (cols * 0.602)).toFixed(2);
+        if (el.getAttribute('size') !== size) el.setAttribute('size', size);
+      }
+    }
+    fit();
+    let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(fit, 200); }, { passive: true });
   })();
 
   /* ---------- the guiding wind: a 1 px ink line down the chapter rail, its brushed head easing toward where the reader is ---------- */
