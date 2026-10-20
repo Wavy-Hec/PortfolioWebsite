@@ -1,49 +1,60 @@
-"""ASCII face for the About chapter — Pillow port of the sumi-ascii-grass-wind lens sampler.
+"""ASCII Raiden for the About band — a Shinkawa piece as a glyph grid.
 
-Positive portrait, paper glyphs on sumi: skin highlights carry '@', shadows thin out to '.',
-and the backdrop (flood-filled from the frame's top corners) is clamped to the space glyph so
-the face floats in the courtyard instead of sitting between two walls. The frame is cropped
-tight to the head (head ≈ 75 % of the frame height), the ramp is spread over the 2–98 %
-luminance percentiles of the subject only, and the image is pre-blurred to undo the Bayer
-dither of the 200 px stand-in headshot.
+Subject (default): Yoji Shinkawa's Raiden sword-slash piece (image-1788677438300.png, black ink
+on white, 700x1000, the whole figure: head, the sword, the kick). Mode "ink": glyph density =
+ink density (255 - brightness), paper -> space, so the figure floats on the sumi band exactly
+as it floats on the page. A cell blends its mean and its max ink (MAXMIX) so a thin stroke
+still lands a glyph. 96 columns -> 74 rows; 60 -> 46.
 
-  python tools/ascii-face.py                      -> img/ascii-face.txt (84 cols) + img/ascii-face-60.txt
-  python tools/ascii-face.py --src photo.jpg      -> same from the real photo (>= 1200 px short side)
-  python tools/ascii-face.py --crop 26,0,172,160  -> crop box (left,top,right,bottom) in source px; default fits headshot-ink.png
-  python tools/ascii-face.py --cols 84 --out x.txt
-  python tools/ascii-face.py --inline             -> also rewrites the two <pre class="face"> blocks in sumi.html
+The portrait (9c5dedbaee3c1bd03f70ab37db93a21e.jpg, head + hair + fist) was tried first and
+is still available: --src <portrait> --crop 220,70,980,830 --mode tex --lo .2 --hi .8
+--maxmix .5 --blur .35 --gamma .7. It reads worse at 96 columns: the pale face is brushwork at
+mean ~0.4 while the scan's flat grey wash sits at 0.55-0.65, so tone alone cannot separate
+the two; "tex" draws a cell only where there is brushwork (TEX: local high-pass energy over
+TEXR px) and shades it by brightness, which gives the hair mass, the face and the fist but
+not a face you would name. The slash piece has a silhouette; the portrait has a texture.
+Other modes, kept for experiments: pos (plain brightness), local (brightness relative to the
+local mean), edge (|local contrast|), texlocal (local, masked by brushwork).
 
-When the real photo lands: run with --src and a --crop that keeps head + shoulders at ~60–70 % of
-the frame; --bg 0 turns the backdrop clamp off if the photo already has a dark backdrop.
+  python tools/ascii-face.py                         -> img/ascii-raiden-96.txt + img/ascii-raiden-60.txt
+  python tools/ascii-face.py --src other.jpg --crop l,t,r,b --mode tex
+  python tools/ascii-face.py --cols 96 --out x.txt
+  python tools/ascii-face.py --lo .2 --hi .9 --maxmix .4 --blur .3 --gamma .8
+  python tools/ascii-face.py --inline                -> also rewrites the two <script type="text/plain" data-cols> blocks in sumi.html
+  python tools/ascii-face.py --preview out.png       -> renders the first grid to a PNG for a look (paper on sumi)
+
+js/sumi.js reads the inlined grids (one char per cell, rows joined by 
+) and draws them on a
+<canvas> in Share Tech Mono; the ramp order here must match RAMP there ('@#%*+=-:. ').
 """
 import re, sys, pathlib
-from PIL import Image, ImageFilter, ImageDraw, ImageChops
+from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageChops
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 RAMP = "@#%*+=-:. "        # ramp[0] densest (brightest on sumi), ramp[-1] = space
 CHAR_ASPECT = 0.54         # Share Tech Mono advance / line-height 1 (measured in Chrome: 84 cols at 11.9px = 540px)
-GAMMA = 0.85               # < 1 lifts the mid-tones of the face into the dense half of the ramp
-BG_EDGE = 3.0              # backdrop flood: gain on the edge map (the fill stops at the hair / jaw contour)
-BG_DARK = 125              # ...and at anything darker than this (hair, suit, face shadows)
-BG_DARK_SIDE = 90          # a second, looser pass confined to the outer SIDE columns of the upper frame absorbs a vignetted corner
-SIDE = 0.24                # ...without ever reaching the head, which sits in the central band
-BG_TOL = 60                # flood-fill tolerance on that synthetic map
-LO_PCT, HI_PCT = 0.10, 0.90   # the ramp spans these luminance percentiles of the subject: the shirt saturates, the face gets the range
-SUBJECT_FLOOR = 0.12       # subject pixels under this (post-normalise) also drop to space: the suit vanishes, the collar stays
 
 args = sys.argv[1:]
 def opt(name, default):
     return args[args.index(name) + 1] if name in args else default
-SRC = ROOT / opt("--src", "img/headshot-ink.png")
-CROP = tuple(int(v) for v in opt("--crop", "26,0,172,160").split(","))
-BG = int(opt("--bg", "1"))
+SRC = pathlib.Path(opt("--src", r"C:/Users/hlugo/Downloads/MGS/image-1788677438300.png"))
+CROP = tuple(int(v) for v in opt("--crop", "0,0,700,1000").split(","))   # the whole slash piece (it is 700x1000); the portrait: --src .../9c5dedbaee3c1bd03f70ab37db93a21e.jpg --crop 220,70,980,830 --mode tex
 ONLY = opt("--cols", None)
-GAMMA = float(opt("--gamma", GAMMA)); LO_PCT = float(opt("--lo", LO_PCT)); HI_PCT = float(opt("--hi", HI_PCT))
+GAMMA = float(opt("--gamma", 0.8))     # < 1 pushes a highlight's mid-greys toward the dense end
+LO = float(opt("--lo", 0.2))           # brightness (0 black .. 1 white) under this -> space; the wash is 0.55-0.65, a strand >= 0.75
+HI = float(opt("--hi", 0.9))           # ...and from LO to HI the ramp runs sparse -> dense
+MAXMIX = float(opt("--maxmix", 0.4))    # 0 = cell mean, 1 = cell max
+MODE = opt("--mode", "ink")           # local: brightness relative to the local mean (RADIUS px) | edge: |local contrast| | pos: plain brightness
+RADIUS = float(opt("--radius", 28))
+TEX = float(opt("--tex", 14))           # tex mode: cells whose brushwork (local |high-pass|, 0..255) stays under this are flat -> space
+TEXR = float(opt("--texr", 10))
+BLUR = float(opt("--blur", 0.3))       # pre-sample blur, in cells         # ...measured over this radius
 OUT = opt("--out", None)
+PREVIEW = opt("--preview", None)
 
 
 def prepare(img):
-    """composite on paper, grey, crop, blur (radius scales with the source so the dither averages out)"""
+    """composite on paper, grey, crop; the red petals go grey with everything else (they are ink here)"""
     im = img.convert("RGBA")
     paper = Image.new("RGBA", im.size, (233, 231, 226, 255))
     im = Image.alpha_composite(paper, im).convert("L")
@@ -52,61 +63,67 @@ def prepare(img):
     return im
 
 
-def backdrop_mask(im, cols):
-    """255 where the backdrop is. Flood-fill from the frame's top corners over a synthetic map that is
-    high (a wall) wherever the blurred image has a strong edge or is darker than BG_DARK, and low
-    elsewhere, so the hair / jaw contour stops the fill. A second, looser pass (BG_DARK_SIDE) runs only
-    in the outer SIDE columns and the top strip, where a vignetted corner can be darker than the face
-    but the head never is; the two are unioned and dilated by the blur radius so the mask meets the contour."""
-    blur = im.filter(ImageFilter.GaussianBlur(max(2.0, im.width / cols * 0.9)))
-    edges = blur.filter(ImageFilter.FIND_EDGES).point(lambda p: min(250, int(p * BG_EDGE)))
-    w, h = edges.size
-    d = ImageDraw.Draw(edges)                     # FIND_EDGES fires along the frame border; open the top and sides (not the bottom: the collar sits there)
-    d.rectangle([0, 0, w - 1, 6], fill=0); d.rectangle([0, 0, 2, h - 1], fill=0); d.rectangle([w - 3, 0, w - 1, h - 1], fill=0)
+def pixels(im):
+    return list(im.get_flattened_data()) if hasattr(im, "get_flattened_data") else list(im.getdata())
 
-    def fill(dark_level, strips_only):
-        dark = blur.point(lambda p: 255 if p < dark_level else 0)
-        m = Image.composite(dark, edges, dark)    # dark pixels -> 255 (wall); others -> scaled edge magnitude
-        if strips_only:                           # wall off the head's band (below the top strip) and the lower frame
-            d2 = ImageDraw.Draw(m)
-            d2.rectangle([int(w * SIDE), int(h * 0.05), int(w * (1 - SIDE)), h - 1], fill=255)
-            d2.rectangle([0, int(h * 0.6), w - 1, h - 1], fill=255)
-        for seed in ((1, 1), (w - 2, 1), (1, h // 3), (w - 2, h // 3)):
-            if m.getpixel(seed) < 200:
-                ImageDraw.floodfill(m, seed, 254, thresh=BG_TOL)
-        return m.point(lambda p: 255 if p == 254 else 0)
 
-    m = ImageChops.lighter(fill(BG_DARK, False), fill(BG_DARK_SIDE, True))
-    return m.filter(ImageFilter.MaxFilter(7))
+def signal_local(im):
+    base = im.filter(ImageFilter.GaussianBlur(RADIUS))
+    out = Image.new("L", im.size)
+    out.putdata([max(0, min(255, 128 + (x - y))) for x, y in zip(pixels(im), pixels(base))])
+    return out
+
+
+def signal(im):
+    """the map the glyphs sample: 0..255"""
+    if MODE in ("pos", "tex"):
+        return im
+    if MODE == "ink":                                   # black ink on white paper: density = ink
+        return im.point(lambda v: 255 - v)
+    if MODE == "texlocal":
+        return signal_local(im)
+    base = im.filter(ImageFilter.GaussianBlur(RADIUS))
+    a, b = pixels(im), pixels(base)
+    out = Image.new("L", im.size)
+    if MODE == "edge":
+        out.putdata([min(255, abs(x - y) * 2) for x, y in zip(a, b)])
+    else:
+        out.putdata([max(0, min(255, 128 + (x - y))) for x, y in zip(a, b)])
+    return out
+
+
+def texture(im):
+    """how much brushwork a neighbourhood holds: |im - blur 3| blurred over TEXR (flat slab / flat wash ~ 3, a stroke ~ 40)"""
+    return ImageChops.difference(im, im.filter(ImageFilter.GaussianBlur(3))).filter(ImageFilter.GaussianBlur(TEXR))
 
 
 def sample(img, cols):
-    im = prepare(img)
+    src = prepare(img)
+    im = signal(src)
     rows = round(cols * (im.height / im.width) * CHAR_ASPECT)
-    mask = backdrop_mask(im, cols) if BG else Image.new("L", im.size, 0)
-    soft = im.filter(ImageFilter.GaussianBlur(max(1.2, im.width / cols * 0.6)))
-    # two-step downsample as the lens did (3x, then exact)
-    soft = soft.resize((cols * 3, rows * 3), Image.LANCZOS).resize((cols, rows), Image.BOX)
-    mask = mask.resize((cols * 3, rows * 3), Image.LANCZOS).resize((cols, rows), Image.BOX)
-    px, mk = list(soft.get_flattened_data()) if hasattr(soft, "get_flattened_data") else list(soft.getdata()), list(mask.get_flattened_data()) if hasattr(mask, "get_flattened_data") else list(mask.getdata())
-    subject = sorted(p for p, m in zip(px, mk) if m < 128)
-    if not subject:
-        subject = sorted(px)
-    lo, hi = subject[int(len(subject) * LO_PCT)] / 255, subject[int(len(subject) * HI_PCT) - 1] / 255
-    span = max(1e-3, hi - lo)
+    cell = im.width / cols
+    flat = None
+    if MODE in ("tex", "texlocal"):
+        t = texture(src).resize((cols, rows), Image.BOX)
+        flat = [v < TEX for v in pixels(t)]
+    soft = im.filter(ImageFilter.GaussianBlur(max(0.6, cell * BLUR)))
+    mean = soft.resize((cols * 3, rows * 3), Image.LANCZOS).resize((cols, rows), Image.BOX)
+    k = max(3, int(cell * 0.8) | 1)
+    peak = soft.filter(ImageFilter.MaxFilter(k)).resize((cols, rows), Image.BOX)
     lum = []
-    for p, m in zip(px, mk):
-        v = min(1.0, max(0.0, (p / 255 - lo) / span))
-        if m >= 128 or v < SUBJECT_FLOOR:
-            v = -1.0                       # backdrop / deep shadow -> space
-        lum.append(v)
+    for i, (m, p) in enumerate(zip(pixels(mean), pixels(peak))):
+        b = ((1 - MAXMIX) * m + MAXMIX * p) / 255
+        if b < LO or (flat and flat[i]):
+            lum.append(-1.0)
+            continue
+        lum.append(min(1.0, (b - LO) / (HI - LO)))
     return cols, rows, lum
 
 
 def glyph(v):
     if v < 0:
         return " "
-    t = v ** GAMMA                         # bright -> dense
+    t = v ** GAMMA
     i = min(len(RAMP) - 1, max(0, round((1 - t) * (len(RAMP) - 1))))
     return RAMP[i]
 
@@ -117,19 +134,37 @@ def render(img, cols):
     return "\n".join(lines)
 
 
+def preview(txt, path, cell=(7, 13)):
+    lines = txt.split("\n")
+    w, h = len(lines[0]) * cell[0], len(lines) * cell[1]
+    im = Image.new("RGB", (w, h), (20, 20, 22))
+    d = ImageDraw.Draw(im)
+    try:
+        font = ImageFont.truetype("consola.ttf", 12)
+    except OSError:
+        font = ImageFont.load_default()
+    for y, line in enumerate(lines):
+        for x, ch in enumerate(line):
+            if ch != " ":
+                d.text((x * cell[0], y * cell[1]), ch, fill=(233, 231, 226), font=font)
+    im.save(path)
+
+
 if __name__ == "__main__":
     img = Image.open(SRC)
-    jobs = [(int(ONLY), OUT or f"img/ascii-face-{ONLY}.txt")] if ONLY else [(84, "img/ascii-face.txt"), (60, "img/ascii-face-60.txt")]
+    jobs = [(int(ONLY), OUT or f"img/ascii-raiden-{ONLY}.txt")] if ONLY else [(96, "img/ascii-raiden-96.txt"), (60, "img/ascii-raiden-60.txt")]
     for cols, out in jobs:
         txt = render(img, cols)
         p = ROOT / out
         p.write_text(txt, encoding="utf-8", newline="\n")
-        print(f"{out}: {cols}x{txt.count(chr(10)) + 1}, {len(txt)} chars, src {SRC.name} {img.size} crop {CROP}")
+        print(f"{out}: {cols}x{txt.count(chr(10)) + 1}, {len(txt)} chars, src {SRC.name} {img.size} crop {CROP} lo {LO} hi {HI} maxmix {MAXMIX}")
+        if PREVIEW and cols == jobs[0][0]:
+            preview(txt, PREVIEW)
         if "--inline" in args:
             page = ROOT / "sumi.html"
             html = page.read_text(encoding="utf-8")
-            pat = re.compile(r'(<pre class="face" aria-hidden="true" data-cols="%d">)(.*?)(</pre>)' % cols, re.S)
-            assert pat.search(html), f"no <pre data-cols={cols}> in sumi.html"
-            html = pat.sub(lambda m: m.group(1) + txt + m.group(3), html)
+            pat = re.compile(r'(<script type="text/plain" class="ascii-grid" data-cols="%d">\n)(.*?)(</script>)' % cols, re.S)
+            assert pat.search(html), f"no ascii-grid block for {cols} cols in sumi.html"
+            html = pat.sub(lambda m: m.group(1) + txt + "\n" + m.group(3), html)
             page.write_text(html, encoding="utf-8", newline="\n")
             print(f"  inlined into sumi.html")
