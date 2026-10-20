@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e9e7e2">
+  <meta name="robots" content="noindex">
+  <title>Hector Lugo</title>
+  <meta name="description" content="Hector Lugo — MS Computer Science at UTRGV. Reinforcement learning, computer vision, and vision-language models for robotics.">
+  <meta property="og:title" content="Hector Lugo">
+  <meta property="og:description" content="Reinforcement learning, computer vision, and vision-language models for robotics.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://wavy-hec.github.io/PortfolioWebsite/img/og-card-ink.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Hector Lugo — AI researcher and robotics engineer. Raiden, illustrated by Yoji Shinkawa, in ink on paper.">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="favicon-32.png?v=2" type="image/png" sizes="32x32">
+  <link rel="icon" href="favicon.svg?v=2" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Latin faces load async (display=swap accepts FOUT). The numerals request subsets Shippori Mincho to 一二三四第章 (~1.8 KB) and is not deferred: the marks must not flash. -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500&family=Share+Tech+Mono&display=swap"></noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&text=%E4%B8%80%E4%BA%8C%E4%B8%89%E5%9B%9B%E7%AC%AC%E7%AB%A0&display=swap">
+  <link rel="stylesheet" href="css/sumi.css">
+  <script src="js/sumi.js" defer></script>
+</head>
+<body id="top">
+  <a class="skip" href="#work">Skip to content</a>
+  <div class="frame" aria-hidden="true"></div>
+
+  <header class="nav">
+    <a class="wordmark" href="#top">Hector Lugo</a>
+    <nav aria-label="Site">
+      <ul>
+        <li><a href="#work">Work</a></li>
+        <li class="hide-sm"><a href="#research">Research</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="resume.html">Résumé</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 0 · hero -->
+    <section class="hero" aria-labelledby="h1">
+      <canvas class="wind" aria-hidden="true"></canvas>
+      <h1 id="h1"><span class="l">Teaching robots<br class="sm"> to move,</span> <span class="l">and to see.</span></h1>
+      <p class="sub">Hector Lugo — MS Computer Science at UTRGV. Reinforcement learning, computer vision, and vision-language models for robotics.</p>
+      <nav class="strip" aria-label="Chapters">
+        <a href="#work"><span class="n" lang="ja">一</span><span class="mono">Work</span></a>
+        <a href="#research"><span class="n" lang="ja">二</span><span class="mono">Research</span></a>
+        <a href="#about"><span class="n" lang="ja">三</span><span class="mono">About</span></a>
+        <a class="cta" href="mailto:hlugo576@gmail.com"><span class="mono">Get in touch →</span></a>
+      </nav>
+      <figure>
+        <!-- 1-bit plate: a 1x display narrower than 672 px downsamples it and the Bayer lattice can moiré; DPR 2-3 phones draw it near 1:1. Accepted for the prototype. -->
+        <img src="img/ink-raiden.png" width="640" height="1016" loading="eager" fetchpriority="high" decoding="async" alt="Raiden, ink illustration by Yoji Shinkawa, petals blowing to the right">
+        <figcaption>raiden · yoji shinkawa</figcaption>
+      </figure>
+    </section>
+
+    <!-- 一 · work -->
+    <section class="chapter" id="work" aria-labelledby="h-work">
+      <div class="mark" aria-hidden="true"><span class="num" lang="ja">一</span><span class="line"></span><span class="word">Work</span><span class="notch"></span></div>
+      <div class="in">
+        <h2 id="h-work">Selected <em>work</em></h2>
+        <p class="intro">Three projects, then the rest in a list.</p>
+
+        <ol class="featured">
+          <li class="feat">
+            <img src="img/proj-vlm-ink.png" width="640" height="360" alt="Multi-agent video search — ink plate">
+            <div>
+              <p class="kicker mono">In progress · temporal logic · VLMs</p>
+              <h3>Multi-Agent Neuro-Symbolic Video Search</h3>
+              <p>A multi-agent system that searches asynchronous video streams: per-stream agents evaluate temporal-logic queries and a central orchestrator fuses their results against a global neuro-symbolic spec.</p>
+              <p class="links"><a class="link" href="https://github.com/Wavy-Hec/VLM" rel="noopener">GitHub ↗</a></p>
+            </div>
+          </li>
+          <li class="feat">
+            <img src="img/proj-yolo-ink.png" width="640" height="360" loading="lazy" alt="Real-time detection and tracking — ink plate">
+            <div>
+              <p class="kicker mono">YOLOv8 · SORT · OpenCV</p>
+              <h3>Real-Time Detection &amp; Tracking</h3>
+              <p>YOLOv8 detections feed a SORT tracker — Kalman-filter motion models matched by the Hungarian algorithm — holding unique per-object IDs across all 80 COCO classes, with FP16 GPU inference.</p>
+              <p class="links"><a class="link" href="https://github.com/Wavy-Hec/ObjectDetection" rel="noopener">GitHub ↗</a></p>
+            </div>
+          </li>
+          <li class="feat">
+            <img src="img/proj-chemo-ink.png" width="640" height="360" loading="lazy" alt="Personalized chemotherapy dosing — ink plate">
+            <div>
+              <p class="kicker mono">Decision Transformer · offline RL · ICICT 2025</p>
+              <h3>Personalized Chemotherapy Dosing</h3>
+              <p>A Decision Transformer learns personalized dosing from offline patient data — treatment planning framed as offline RL, conditioning each dose on the patient's evolving state. Published at ICICT 2025.</p>
+            </div>
+          </li>
+        </ol>
+
+        <ol class="rows" start="4">
+          <li><span class="idx">04</span><div><p class="t">RL Isaac Lab Framework</p><p class="d">A reinforcement-learning framework built on Isaac Lab for robotic simulation and training.</p></div><p class="links"><a class="link" href="https://github.com/Wavy-Hec/RL_IsaacLab" rel="noopener">GitHub ↗</a><a class="link" href="https://miutrgv.github.io/" rel="noopener">Lab ↗</a></p></li>
+          <li><span class="idx">05</span><div><p class="t">Signal Denoising — Idaho National Lab</p><p class="d">A ResNet autoencoder denoises smart-grid sensor signals for anomaly detection, cutting training time by over 93% (30 days to 1–2 days).</p></div><p class="links"></p></li>
+          <li><span class="idx">06</span><div><p class="t">Senior AE Project — RL Compression</p><p class="d">Reinforcement learning for neural-network compression in resource-constrained environments.</p></div><p class="links"><a class="link" href="https://github.com/Wavy-Hec/Senior_AEproject" rel="noopener">GitHub ↗</a></p></li>
+          <li><span class="idx">07</span><div><p class="t">Summer REU — Railway Systems</p><p class="d">Spectral clustering on U.S. railway accident data at UC Riverside, identifying critical spatial safety zones.</p></div><p class="links"><a class="link" href="https://github.com/Wavy-Hec/summer-REU-project" rel="noopener">GitHub ↗</a></p></li>
+          <li><span class="idx">08</span><div><p class="t">Neon Grid</p><p class="d">A walkable ASCII cyberpunk city in a single HTML file — a first-person raycaster with no engine, no libraries, no assets.</p></div><p class="links"><a class="link" href="https://wavy-hec.github.io/neon-grid/" rel="noopener">Play ↗</a><a class="link" href="https://github.com/Wavy-Hec/neon-grid" rel="noopener">GitHub ↗</a></p></li>
+          <li><span class="idx">09</span><div><p class="t">Chess-AlphaGO</p><p class="d">AlphaZero-style self-play for Gardner chess (5×5) built on Pgx, with JIT-compiled rollouts on GPU in JAX.</p></div><p class="links"><a class="link" href="https://github.com/Wavy-Hec/Chess-AlphaGO" rel="noopener">GitHub ↗</a></p></li>
+          <li><span class="idx">10</span><div><p class="t">Poker RL</p><p class="d">A 6-max No-Limit Hold'em agent trained with PPO self-play against a pool of frozen snapshots.</p></div><p class="links"><a class="link" href="https://github.com/Wavy-Hec/poker-rl" rel="noopener">GitHub ↗</a></p></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- 二 · research -->
+    <section class="chapter" id="research" aria-labelledby="h-research">
+      <div class="mark" aria-hidden="true"><span class="num" lang="ja">二</span><span class="line"></span><span class="word">Research</span><span class="notch"></span></div>
+      <div class="in">
+        <h2 id="h-research">Research &amp; <em>publications</em></h2>
+        <p class="lede">Research assistant at the Machine Intelligence Lab, UTRGV, January 2023 to August 2026: hierarchical control for legged robots, with a VLM navigator commanding RL locomotion policies (Unitree Go2, G1 humanoid); Isaac Sim and MuJoCo environments and PPO locomotion and navigation policies for the Unitree Go2, including state autoencoders that cut compute cost and sped up training. Summer 2026 at the Air Force Research Laboratory: an open-sourced evaluation harness for multi-camera video QA — 650K+ scored answers across 3 benchmarks and 2 vision-language models (Qwen2.5-VL, InternVL3) on a multi-GPU SLURM cluster — with a manuscript in preparation.</p>
+
+        <ol class="rows pubs">
+          <li><span class="venue">IEEE ICMLA 2026</span><p class="t">Vision-Language Guided Quadruped Navigation with RL Control <span class="idx">· accepted</span></p></li>
+          <li><span class="venue">ICICT 2025</span><p class="t"><a href="https://link.springer.com/chapter/10.1007/978-981-96-6429-0_39" rel="noopener">Personalized Chemotherapy Dosing Through Offline Reinforcement Learning</a></p></li>
+          <li><span class="venue">ICICT 2025</span><p class="t"><a href="https://par.nsf.gov/servlets/purl/10673002" rel="noopener">Offline Reinforcement Learning Approaches for Safe and Effective Smart Grid Control</a></p></li>
+          <li><span class="venue">ASME JRC 2024</span><p class="t"><a href="https://scholarworks.utrgv.edu/me_fac/354/" rel="noopener">Spectral Clustering in Railway Crossing Accidents Analysis</a></p></li>
+        </ol>
+        <p class="after"><a class="link" href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&amp;hl=en" rel="noopener">Full list on Google Scholar ↗</a></p>
+      </div>
+    </section>
+
+    <!-- 三 · about -->
+    <section id="about" aria-labelledby="h-about">
+      <div class="card">
+        <span class="num" lang="ja" aria-hidden="true">三</span>
+        <span class="t" aria-hidden="true">Chapter three</span>
+        <h2 id="h-about">About</h2>
+      </div>
+      <div class="band">
+        <div class="face-wrap">
+<pre class="face" aria-hidden="true" data-cols="84">                                                                                    
+                                                                                    
+                                           :-:                                      
+                         --:::                            :==+                      
+                       :                                    --                      
+                                                                                    
+                                                                                    
+                                                                                    
+                                                                    :               
+                                          ::::                       :-             
+                              ::        -++==-:----:                   :-           
+                            ::-::    :--=%##%++*%%%+=:                              
+                            ::-=+==-::-=+#@@@@@@@@#%*+:                             
+                            :-=***%%*%%#@@@@@@@@@@@#%*+-:                           
+                           :-+%####@@@@@@@@@@@@@@@##%*+=-::                         
+                         :-===+*+++*%#@@@@@@@@@@#+=-=-:::::                         
+                        -+**=::------=+%@@@@@@%+===---===-:::                       
+                       -*%%++++*****++=+#@@@@#%++*##@##%*=:                         
+                      :-++=+*%%%#@@@@#%*+*##%++*%@@@@@#%*=-:                        
+                      :-=::+##%%%#@@@##%=-+%+-=%##%%*+===--::::                     
+                       -++=+*+=:::-=+*%*=-%@@*+%#*+=-:: ::-: :::                    
+                      :+%%%%#*+=-=++*%%%++%@@%+%##%%**++++=-:::::                   
+                     ::=%#%#@#%%%%#@###%+*#@#%**%#@@@@@@#*++--::::                  
+                      -+%#%%#####@@@@%***%#@@@%*+*#@@@@@@#*+=-::                    
+                      =+*###%%##@@@@#%*%##@@@@#*+*#@@@@@#%%*=:::                    
+                      ==+*##%%####@@@%*+++%#@%+==+%@@@@@@@#*-:                      
+                      **+*%%%##@@@@@@*-::::---:::-+%###@@%*+-:                      
+                       =++**%%#@@@@@#%++-:::----=+*%%***++=--: :                    
+                        +**++*%%%%%%%%*+++*%##*====+**+===--=-                      
+                         **+=*%#%+=+******%%%*+++++++======++-                      
+                         **++*%%*+=---=====+========+*%*****+-                      
+                         +*****%*%**++=-=+*%*%%%+=+*%%#%**%*+-                      
+                          =++++**%%##%*+++******+*%##%*++**+-                       
+                          :-=++++**%*%%%*++====*%%%%*=--==-:                        
+                          -:--=+++++*%####*+=+*%%##%+=---::                         
+                          -  :-----=*%#####*++%##%%+-::::                           
+                          -:::--:: -+***%#%%*+*%%+=-   ::                           
+                              :::   :-===+++++===-:        :                        
+                           ::::::       :::--:::          :-*                       
+                           --:::::                       ::-                        
+                          @%+--:  ::                  :::::=                        
+                      :*@@@@@%+=-:  ::              ::----=*                        
+                      -*@@@@@@@@*+-:::            ::--==+*%#*-:-                    
+         :            -+#@@@@@@@@@%+-::      : :::--=+%#@@@#+:                      
+                     :-*@@@@@@@@@@@@%=--::::-:---+%##@@@@@@#+:                      
+                     :+@@@@@@@@@@@@@@@#*+=---=+*%@@@@@@@@@@*=:        ::            
+                   : -%@@@@@@@@@@@@@@@@#%%%*+%@@@@@@@@@@@@#%+-                      
+                     :*@@@@@@@@@@@%**+=-=+**+++%@@@@@@@@@@@#*-:               :-    
+                     :%@@@@@@@@%=--:-===-=+***=-=*@@@@@@@@@@%-                      
+                  :: -%@@@@@@*=--==----=-::-=+=-::=%@@@@@@@@#=                      </pre>
+<pre class="face" aria-hidden="true" data-cols="60">                                                            
+                              :                             
+                  =-::                   :=+                
+                -                          ::               
+               :                                            
+                                                            
+                                :                :          
+                     ::     :++=----:             :-        
+                    :---: :-=#@@####%+-                     
+                    :=******#@@@@@@@@#*-:                   
+                   :=%##@@@@@@@@@@@@#%*=-:                  
+                 :=+=====+*@@@@@@@%+-----::                 
+                :*#*++****++%@@@@%+%#@##*=::                
+                -+++###@@@@#**#%+*#@@@@%*=:                 
+                -+=+#*++**%#*=#@**@%+=-:--::::              
+                =####*+=+%##%*@@#%@@#%**++=-:::             
+               -=###@@@@@@@#%%@@@%%#@@@@@%+=::-             
+                +%@@#@@@@@@%#@@@@#*%@@@@@#*=::              
+                +*#@#@@@@@@*++%#%+=+#@@@@@*-                
+                **%%#@@@@@@+-::----+%#%#%*+-                
+                 *%**######%*+%##*++*%*++===:               
+                  %**%@%++****%%*+++++*****+                
+                  ***%#%*++==+%%%%*+*###%%%+                
+                   +***%###%*******%##%***+-                
+                   -=+***%####*++%###*===-:                 
+                   ::-===+%@@@#**#@#%=--:                   
+                   :::-: -+*%##%*%%+-  :                    
+                   :::::   :--==--:                         
+                     ::::               ::                  
+                       :::            :---+                 
+               :         :::       ::-=+*%#*                
+               :           ::::::::-+*#@@@@+                
+:                            =--=+*@@@@@@@#=                
+              :              %%*%@@@@@@@@@#+:               
+                             +*%**#@@@@@@@@*:           :   
+             ::         =--==--++=-=#@@@@@@%:               </pre>
+          <p class="sr-only">ASCII portrait of Hector Lugo.</p>
+        </div>
+      </div>
+      <div class="about-text">
+        <p>I'm Hector, a CS master's student at UTRGV. I work on getting robots to move and to understand what they're looking at: reinforcement learning for legged locomotion, computer vision, and vision-language models for navigation. Back at school I build RL pipelines in LocoMuJoCo and NVIDIA Isaac Sim and train locomotion policies meant to survive contact with real hardware. When I'm not training agents, I train myself: Taekwondo and hiking, slowly working up to summiting a real mountain.</p>
+        <a class="link" href="resume.html">Résumé ↗</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- 四 · contact = the footer. One footer per URL: ?footer=a (grass, default) or ?footer=b (Shinkawa); ?footer=both stacks the two with captions for a side-by-side look. -->
+  <p class="dev" hidden>prototype · footer <b>variant A</b> — grass field in the wind (paper blades on sumi, one red seed)</p>
+  <footer class="foot" id="contact" data-art="grass">
+    <div class="harakiri">
+      <div><h2>Hector Lugo</h2><small>MS CS · UTRGV · robotics &amp; reinforcement learning</small></div>
+      <div class="jp" lang="ja" aria-hidden="true">第<span class="red">四</span>章</div>
+    </div>
+    <div class="cols">
+      <p class="brand">Open to research collaborations and robotics work. The fastest way is email.</p>
+      <div><h3>Work</h3><ul><li><a href="#work">Projects</a></li><li><a href="#research">Research</a></li><li><a href="resume.html">Résumé</a></li></ul></div>
+      <div><h3>Contact</h3><ul><li><a href="mailto:hlugo576@gmail.com">Email</a></li><li><a href="https://linkedin.com/in/hector-lugo-3rd" rel="noopener">LinkedIn</a></li><li><a href="https://github.com/Wavy-Hec" rel="noopener">GitHub</a></li></ul></div>
+      <div><h3>Elsewhere</h3><ul><li><a href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&amp;hl=en" rel="noopener">Google Scholar</a></li><li><a href="https://miutrgv.github.io/" rel="noopener">Lab</a></li></ul></div>
+    </div>
+    <div class="rule"></div>
+    <div class="legal">
+      <span>© 2026 Hector Lugo · <button type="button" id="codec-launch" class="freq" aria-label="Dial 140.85 — opens the codec call">140.85</button> · illustrations: Yoji Shinkawa</span>
+      <span>hand-set in Shippori Mincho</span>
+    </div>
+    <div class="art" aria-hidden="true"><div class="art-grass"></div><span class="seed"></span></div>
+  </footer>
+
+  <p class="dev" hidden>prototype · footer <b>variant B</b> — a Shinkawa piece (ink-slash, inverted, legs off the page, no red)</p>
+  <footer class="foot" data-art="shinkawa" aria-label="Footer, variant B" hidden>
+    <div class="harakiri">
+      <div><h2>Hector Lugo</h2><small>MS CS · UTRGV · robotics &amp; reinforcement learning</small></div>
+      <div class="jp" lang="ja" aria-hidden="true">第<span class="red">四</span>章</div>
+    </div>
+    <div class="cols">
+      <p class="brand">Open to research collaborations and robotics work. The fastest way is email.</p>
+      <div><h3>Work</h3><ul><li><a href="#work">Projects</a></li><li><a href="#research">Research</a></li><li><a href="resume.html">Résumé</a></li></ul></div>
+      <div><h3>Contact</h3><ul><li><a href="mailto:hlugo576@gmail.com">Email</a></li><li><a href="https://linkedin.com/in/hector-lugo-3rd" rel="noopener">LinkedIn</a></li><li><a href="https://github.com/Wavy-Hec" rel="noopener">GitHub</a></li></ul></div>
+      <div><h3>Elsewhere</h3><ul><li><a href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&amp;hl=en" rel="noopener">Google Scholar</a></li><li><a href="https://miutrgv.github.io/" rel="noopener">Lab</a></li></ul></div>
+    </div>
+    <div class="rule"></div>
+    <div class="legal">
+      <span>© 2026 Hector Lugo · <button type="button" class="freq" aria-label="Dial 140.85 — opens the codec call">140.85</button> · illustrations: Yoji Shinkawa</span>
+      <span>hand-set in Shippori Mincho</span>
+    </div>
+    <div class="art" aria-hidden="true"><img class="art-plate" src="img/ink-slash-paper.png" width="640" height="914" loading="lazy" alt=""></div>
+  </footer>
+
+  <div id="live-status" class="sr-only" role="status" aria-live="polite"></div>
+</body>
+</html>
