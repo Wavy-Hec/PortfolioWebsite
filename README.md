@@ -3,8 +3,8 @@
 **Live site → [wavy-hec.github.io/PortfolioWebsite](https://wavy-hec.github.io/PortfolioWebsite/)**
 
 Personal portfolio of **Hector Lugo** — M.S. Computer Science student @ UTRGV (expected Dec 2026); AI/ML research
-intern at the Air Force Research Laboratory (summer 2026). Reinforcement learning,
-computer vision, and vision-language models for robotics.
+intern at the Air Force Research Laboratory (summer 2026). Reinforcement-learning and
+vision systems: legged robots, multi-camera video, smart-grid signals.
 
 Vanilla HTML/CSS/JS. No build step, no frameworks, no runtime dependencies.
 

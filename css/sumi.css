@@ -57,7 +57,7 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
    bends the grass in gusts that roll left to right and drifts the fog the same way, each layer at its own speed. First load: the scene fades
    up over 1 s (Raiden with it), the words 0.3 s later; nothing else arrives. Under reduced motion: one still frame, mid-gust.
    The composition is set in custom properties so the moon, the figure and the headline move together:
-   --F the fold's height; --fs the headline's size; --hr where the headline's longer line ends (Shippori's "to move, and to see." is 8.955 em
+   --F the fold's height; --fs the headline's size; --hr where the headline's longer line ends (Shippori's "to see, and to decide." is 9.36 em
    wide); --gap the air between the headline and his nearest ink (his flying hair, 5 % into the plate); --fh / --fw his plate (640 x 1016, never
    upscaled past 1.7x, 1727 px tall: past that his halftone goes soft beside the type; 2560 x 1440 is just inside it) and
    --fl / --fb its left and its bottom (his ink runs from 5.9 % to 78.7 % of the plate's height: the bottom puts his feet at the floor, in the
@@ -65,7 +65,7 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
    its centre as fractions of his plate (behind his head on the lit side, his face and hair crossing it, clear of the ink block behind his
    back, the limb 50+ px under the nav's rule). tools/make-night.py holds the same three numbers: it keeps his shadow off that disc. */
 .hero { --F: calc(100vh - var(--nav)); --fs: clamp(44px, min(5.6vw, 13.5vh), 200px);
-  --hr: calc(var(--gutter) + 8.955 * var(--fs)); --gap: calc(2.4vw + 36px);
+  --hr: calc(var(--gutter) + 9.36 * var(--fs)); --gap: calc(2.4vw + 36px);
   --fh: min(calc(var(--F) * 1.22), calc((100vw - var(--hr) - var(--gap)) * 1.9), 1727px); --fw: calc(var(--fh) * .63);
   --fl: calc(var(--hr) + var(--gap) - var(--fw) * .05); --fb: calc(var(--F) * .015 - var(--fh) * .213);
   --md: calc(var(--fh) * .315); --mx: .345; --my: .19; --gh: 34%;
@@ -106,7 +106,7 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 .hero h1 { font-weight: 400; font-size: var(--fs); line-height: 1.04; letter-spacing: -.018em; pointer-events: none;
   text-shadow: 0 0 1px var(--sumi), 0 0 8px var(--sumi), 0 0 22px var(--sumi), 0 2px 34px rgba(20,20,22,.9) }
 .hero h1 .l { display: block; width: fit-content; white-space: nowrap; pointer-events: auto }
-.hero .sub { max-width: 44ch; margin-top: calc(var(--fs) * .34); font-size: clamp(16px, calc(var(--fs) * .18), 28px); line-height: 1.6; color: var(--dim); text-shadow: 0 0 2px var(--sumi), 0 0 12px var(--sumi) }
+.hero .sub { max-width: 54ch; margin-top: calc(var(--fs) * .34); font-size: clamp(16px, calc(var(--fs) * .18), 28px); line-height: 1.6; color: var(--dim); text-shadow: 0 0 2px var(--sumi), 0 0 12px var(--sumi) }
 .hero .sub .who { color: var(--paper) }   /* his name, in paper: on a phone the nav shows only the seal, so this is where his name is above the fold */
 .hero .cta { display: inline-block; margin-top: 14px; padding: 14px 0; font-size: clamp(11px, calc(var(--fs) * .1), 14px); letter-spacing: .24em; text-shadow: 0 0 2px var(--sumi), 0 0 12px var(--sumi) }   /* the one call to action keeps its scale under a 129 px headline */
 @keyframes fadeUp { from { opacity: 0 } to { opacity: 1 } }
@@ -385,6 +385,7 @@ body.game-open ascii-art { display: none }   /* under the codec call / the game:
   .hero .copy { padding: 36px 0 0 }
   .hero h1 { font-size: clamp(28px, 8.8vw, 40px); letter-spacing: -.012em; line-height: 1.1 }
   .hero .sub { font-size: 15px; line-height: 1.55; margin-top: 18px; max-width: 34ch }
+  .hero .sub .more { display: none }   /* phones: the sentence ends at "vision systems."; the three places (UTRGV, AFRL, INL) are in Experience a scroll below */
   .hero .cta { margin-top: 18px }
   .hero .alert { font-size: 2.6rem }
   .chapter { padding: 64px var(--gutter) 56px }
