@@ -33,11 +33,11 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&family=Share+Tech+Mono&display=swap"></noscript>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&text=%E4%B8%80%E4%BA%8C%E4%B8%89%E5%9B%9B&display=swap">
-  <link rel="stylesheet" href="css/sumi.css?v=7">
-  <script src="js/sumi.js?v=7" defer></script>
-  <script src="js/sumi-xray.js?v=7" defer></script>
+  <link rel="stylesheet" href="css/sumi.css?v=9">
+  <script src="js/sumi.js?v=8" defer></script>
+  <script src="js/sumi-xray.js?v=9" defer></script>
   <script src="js/sumi-stack.js?v=7" defer></script>
-  <!-- the halftone engine (a self-hosted copy of ascii-magic, js/ascii/README.md) draws the one <ascii-art> piece on the page: the paper wind-grass in the footer. Nothing loads from ascii-magic.com. -->
+  <!-- the halftone engine (a self-hosted copy of ascii-magic, js/ascii/README.md) draws the two <ascii-art> pieces on the page: the autumn pagoda after About and the paper wind-grass in the footer. Nothing loads from ascii-magic.com. -->
   <script type="module" src="js/ascii/ascii.js?v=7"></script>
   <script type="application/ld+json">
   {
@@ -272,6 +272,12 @@
         </div>
       </div>
     </section>
+
+    <!-- the pagoda: a breath before the footer, nothing over it. autumn-pagoda-maples (js/ascii/pieces, from ascii-magic.com) in mono paper dots, full-bleed, rising out of
+         the sumi and sinking into the footer's deep sumi (css .scene). contrast 25: the dusk sky a ramp from dim to bright, not a white slab. It has no piece attribute yet:
+         js/sumi.js names the piece (data-piece) when the band comes within ~800 px of the screen, so its module never loads with the first view, and sizes it (data-cols:
+         one dot per cell, density 100). -->
+    <div class="scene" aria-hidden="true"><div class="frame"><ascii-art class="pagoda" data-piece="autumn-pagoda-maples" look="dots" mono contrast="25" density="100" dot-size="48" data-cols="192" aria-hidden="true"></ascii-art></div></div>
   </main>
 
   <!-- contact = the footer: the name band, two link columns, the field (wind-grass-paper in paper dots, js/ascii), the legal row -->

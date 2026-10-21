@@ -6,7 +6,7 @@ The runtime that draws the `<ascii-art>` elements on the night page and the 404:
 upstream one so the "pieces sit next to this file" resolution in `ascii.js` works: pieces live in `pieces/`, the kit in `lib/`.
 
 Copied on 2026-10-20 from `https://www.ascii-magic.com/ascii/` (`ascii.js`, `player.js`, `glyphs.js`, `canvas.js`,
-`lib/kit.js`, `pieces/sea-torii-sunset.js`; the other upstream pieces were copied and later removed). Nothing is loaded from
+`lib/kit.js`, `pieces/sea-torii-sunset.js`, `pieces/autumn-pagoda-maples.js`; the other upstream pieces were copied and later removed). Nothing is loaded from
 ascii-magic.com at runtime: every request the page makes for the engine is same-origin.
 
 One local change, in `ascii.js` only (marked in the file): `start()` is coalesced. On a custom-element upgrade the browser fires
@@ -24,6 +24,12 @@ this goes to GitHub Pages. MIT, in short: the copyright notice and the permissio
 substantial portions of the software; the software is provided "as is", without warranty of any kind.
 
 ## Our pieces
+
+`pieces/autumn-pagoda-maples.js` (upstream, unchanged byte for byte, 13,474 bytes; ascii-magic.com, MIT as above, copied 2026-10-20; its
+import of `../lib/kit.js` already matches this layout) is the night page's second scene (v7.2): the band between About and the footer, drawn in
+`look="dots" mono` so its red maples, lanterns and sun come out as paper brightness only. The page names its piece only when the band is within
+~800 px of the screen (js/sumi.js, `data-piece`), so the module is not part of the first view. Note: the `LICENSE` fetched from the site
+alongside these copies is ascii-magic.com's 404 page, not a licence text; the MIT terms still rest on the owner's brief (see License above); confirm them on ascii-magic.com before publishing.
 
 `pieces/wind-grass-paper.js` is a derived work: ascii-magic's `wind-grass` (its gust field and blade model) redrawn at 192 x 72
 square cells with every cell a paper brightness, so the dots look halftones the blades themselves. It is the footer's field on the

@@ -39,18 +39,21 @@
 
   function layout() {
     narrow = innerWidth <= 720;
-    W = wrap.clientWidth; H = narrow ? Math.round(W * 0.74) : Math.round(clamp(W * 0.62, 380, 560));
+    W = wrap.clientWidth; H = narrow ? Math.round(W * 0.84) : Math.round(clamp(W * 0.62, 380, 560));   // a phone's canvas is taller than its figure needs: room under the feet for the ground line and its shadow
     canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
     canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     s = Math.min((narrow ? W * 0.92 : W * 0.6) / 0.76, H * (narrow ? 1 : 0.66) / 0.43);   // px per metre: the figure is ~0.76 m long, 0.43 m from the head's top to the ground
-    cx = W / 2; cy = H * (narrow ? 0.44 : 0.3);
+    cx = W / 2; cy = H * (narrow ? 0.4 : 0.3);
     if (!narrow) {
       tagEls.forEach((el, i) => {
         const T = TAGS[i]; if (!T) return;
         const w = el.offsetWidth, left = T.side === 'l', maxX = W - 8 - w;
         const lx = clamp(cx + T.l[0] * s - (left ? w : 0), 8, maxX);
-        el.style.left = lx + 'px'; el.style.top = (cy + T.l[1] * s) + 'px'; el.classList.toggle('l', left);
+        // a left tag pushed right by the band's edge (721-1023) would put its square inside the front foot's swing (to 0.293 m left of the
+        // centre): it drops to the joints tag's row under the ground line instead, its leader rising to its part; at 1024 and up nothing changes
+        const drop = innerWidth < 1024 && left && T.l[1] > 0 && T.l[1] < TAGS[0].l[1] && lx + w > cx - 0.293 * s - 14;   // a tag at the legs' height only; 0.293 m: the front foot's leftmost reach in the trot, 14 px its circle and some air
+        el.style.left = lx + 'px'; el.style.top = (cy + (drop ? TAGS[0].l[1] : T.l[1]) * s) + 'px'; el.classList.toggle('l', left);
       });
     } else tagEls.forEach(el => { el.style.left = ''; el.style.top = ''; el.classList.remove('l'); });
     laidOut = true;

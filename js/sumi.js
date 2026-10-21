@@ -45,8 +45,9 @@
     }, 300));
   }
 
-  /* ---------- the halftone piece (<ascii-art>, js/ascii): sized to its CSS box. The engine draws a piece at a font size (its canvas is
-     cols x size x .602 px wide), so a piece with data-cols gets size = width / (cols x .602), at start and after a resize. ---------- */
+  /* ---------- the halftone pieces (<ascii-art>, js/ascii): sized to their CSS box. The engine draws a piece at a font size (its canvas is
+     cols x size x .602 px wide), so a piece with data-cols gets size = width / (cols x .602), at start and after a resize. data-piece: the piece
+     is named only when its box comes within ~800 px of the screen, so its module is never part of the first view. ---------- */
   (() => {
     const pieces = [...document.querySelectorAll('ascii-art[data-cols]')];
     if (!pieces.length) return;
@@ -60,6 +61,14 @@
     }
     fit();
     let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(fit, 200); }, { passive: true });
+    const lazy = new Map(pieces.filter(el => el.dataset.piece && !el.hasAttribute('piece')).map(el => [el.parentElement, el]));
+    const name = el => el.setAttribute('piece', el.dataset.piece);
+    if (!lazy.size) return;
+    if (!('IntersectionObserver' in window)) { lazy.forEach(name); return; }
+    const io = new IntersectionObserver(es => {
+      for (const e of es) if (e.isIntersecting) { io.unobserve(e.target); name(lazy.get(e.target)); }
+    }, { rootMargin: '800px 0px' });
+    lazy.forEach((el, box) => io.observe(box));
   })();
 
   /* ---------- the "!" over Raiden: hover or focus on the figure pops the paper plate above his head for 1.2 s, once per hover; silent ---------- */

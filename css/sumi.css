@@ -194,6 +194,31 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 .about-text { padding-top: 88px; max-width: 66ch }
 .about-text p + p { margin-top: 22px }
 
+/* ---------- the pagoda: a breath between 四 About and the footer; nothing over it. autumn-pagoda-maples (js/ascii/pieces) in mono paper dots at
+   contrast 25 (index.html: the dusk sky a ramp, dim at the top and bright at the horizon, so the scene rises out of the dark), full-bleed, one dot per
+   cell (density 100). The art is 192 x 108 square cells, --aw wide: the viewport above 960 (7.5 px dots at 1440, 10 at 1920; held at 1920 beyond,
+   its sides then fading on straight lines), 1152 up to 960 (6 px), 864 on phones (4.5 px), wider than the screen and centred on cell --cx.
+   The band (.frame) shows rows --r0 to --r1 (the spire's foot to the bridge's reflection: the arch and its mirror close into a moon bridge),
+   translated, never cropped from its top tier; a short screen caps it (--hmax), trimming both ends evenly. Its top rises out of the sumi over
+   --ft rows; its bottom sinks into the footer's deep sumi: .scene's own floor (--floor) darkens to --deep under the pond, so the band and the
+   footer meet with no hairline and no step. js/sumi.js sizes it (data-cols) and names its piece only when it is near the screen. ---------- */
+.scene { --floor: clamp(64px, 8vh, 100px); position: relative; margin-top: 16px; padding-bottom: var(--floor); container-type: inline-size; pointer-events: none;
+  background: linear-gradient(transparent calc(100% - var(--floor) * 2.2), var(--deep) 100%) }
+main:has(> .scene:last-child) + .foot { border-top: 0 }   /* the band dissolves into the footer: no line at that boundary */
+.scene .frame { --aw: 100cqw; --cx: 96; --r0: 6; --r1: 101; --hmax: 82vh; --ftr: 16; --fbr: 9;
+  --cell: calc(var(--aw) / 192); --h: min(calc(var(--cell) * (var(--r1) - var(--r0))), var(--hmax)); --cy: calc((var(--r0) + var(--r1)) / 2);
+  --ft: calc(var(--cell) * var(--ftr)); --fb: calc(var(--cell) * var(--fbr));
+  --fade: linear-gradient(transparent, rgba(0,0,0,.06) calc(var(--ft) * .22), rgba(0,0,0,.24) calc(var(--ft) * .44), rgba(0,0,0,.58) calc(var(--ft) * .7), #000 var(--ft),
+    #000 calc(100% - var(--fb)), rgba(0,0,0,.58) calc(100% - var(--fb) * .7), rgba(0,0,0,.24) calc(100% - var(--fb) * .44), rgba(0,0,0,.06) calc(100% - var(--fb) * .22), transparent);
+  --side: linear-gradient(#000, #000);
+  position: relative; height: var(--h); overflow: hidden;
+  -webkit-mask-image: var(--fade), var(--side); -webkit-mask-composite: source-in; mask-image: var(--fade), var(--side); mask-composite: intersect }
+.scene .pagoda { position: absolute; left: calc(50% - var(--cell) * var(--cx)); top: calc(var(--h) / 2 - var(--cell) * var(--cy)); width: var(--aw); max-width: none }
+@media (min-width: 1921px) { .scene .frame { --aw: 1920px; --side: linear-gradient(90deg, transparent, #000 calc(50% - 760px), #000 calc(50% + 760px), transparent) } }
+@media (max-width: 960px) { .scene .frame { --aw: 1152px; --cx: 92 } }
+@media (max-width: 720px) { .scene .frame { --aw: 864px; --cx: 112; --ftr: 14 } .scene { --floor: 56px } }   /* the pagoda whole with air at its right eave, the bridge's right half and a lantern at the left */
+body.game-open ascii-art { display: none }   /* under the codec call / the game: no box, so each player's own observer sleeps it */
+
 /* ---------- contact = the footer (deep sumi): the name band, two link columns, the field, the legal row ---------- */
 .foot { position: relative; background: var(--deep); color: var(--paper); border-top: 1px solid var(--rule); padding: 0 var(--gutter) 40px }
 .harakiri { padding: 88px 0 0 }
@@ -281,6 +306,7 @@ ascii-art canvas { display: block }
   .stack-wrap { margin-top: 40px } .pl .name { font-size: 13px; letter-spacing: .08em } .pl .name .lg, .pl .cap { display: none }   /* the short names only; the aria-labels carry the lines */
   .print { margin-top: 40px } .mat { padding: 14px }
   .band { width: auto; margin: 72px calc(-1 * var(--gutter)) 0; padding: 32px 16px 32px; row-gap: 24px }
+  .band .xray canvas { -webkit-mask-image: linear-gradient(#000 95%, rgba(0,0,0,.5) 100%); mask-image: linear-gradient(#000 95%, rgba(0,0,0,.5) 100%) }   /* the ground line sits at ~93 %: keep it whole */
   .tags { position: static; display: grid; grid-template-columns: 1fr; gap: 10px 16px; margin-top: 12px }
   .tag { position: static; opacity: 1; white-space: normal; line-height: 1.5; align-items: flex-start } .tag::before { margin-top: 4px }
   .tag .sep { display: inline } .tag .l2 { display: inline }
