@@ -52,7 +52,9 @@
      cols x size x .602 px wide), so a piece with data-cols gets size = width / (cols x .602), at start and after a resize. data-piece: the engine
      (js/ascii/ascii.js, a module, imported here) and the piece are loaded only when its box comes within ~800 px of the screen, so none of it is
      part of the first view. On a phone or a touch screen the piece is drawn once and holds (still: a full-width halftone redraw costs ~26 ms on a
-     mid-range phone); a piece marked data-still (the pagoda: a fine print) is drawn once everywhere; any other plays at its data-fps, only while on screen. ---------- */
+     mid-range phone); a piece marked data-still (the pagoda: a fine print) is drawn once everywhere; any other plays at its data-fps, only while on screen.
+     The one draw is a 40-110 ms task: it is named in an idle slot, and the observer reaches 1600 px ahead, so that slot comes before the
+     band is in view and never inside a scroll frame. ---------- */
   (() => {
     const pieces = [...document.querySelectorAll('ascii-art[data-cols]')];
     if (!pieces.length) return;
@@ -66,23 +68,25 @@
     }
     let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(fit, 200); }, { passive: true });
     const lazy = new Map(pieces.filter(el => el.dataset.piece && !el.hasAttribute('piece')).map(el => [el.parentElement, el]));
-    const STILL = matchMedia('(max-width: 720px), (pointer: coarse)').matches, PHONE = matchMedia('(max-width: 720px)').matches;
+    const STILL = matchMedia('(max-width: 720px), (pointer: coarse)').matches;
     let engine = null;
     const name = el => {
       engine = engine || import('./ascii/ascii.js?v=10');
       engine.then(() => {
-        fit();                                                          // sized here, not at parse: reading its width then would pull the page's first layout into this script
-        if (STILL || 'still' in el.dataset) el.setAttribute('still', '');   // data-still: a print, drawn once on every screen
-        if (PHONE && el.dataset.phoneDensity) { el.setAttribute('density', el.dataset.phoneDensity); el.setAttribute('dot-size', el.dataset.phoneDotSize || '48'); }   // a phone's cells are ~3 px: one dot per cell, not sub-pixel dust
-        else if (el.dataset.fps) el.setAttribute('fps', el.dataset.fps);
-        el.setAttribute('piece', el.dataset.piece);
+        const go = () => {
+          fit();                                                        // sized here, not at parse: reading its width then would pull the page's first layout into this script
+          if (STILL || 'still' in el.dataset) el.setAttribute('still', '');   // data-still: a print, drawn once on every screen
+          else if (el.dataset.fps) el.setAttribute('fps', el.dataset.fps);
+          el.setAttribute('piece', el.dataset.piece);
+        };
+        ('requestIdleCallback' in window) ? requestIdleCallback(go, { timeout: 1200 }) : setTimeout(go, 200);
       }).catch(() => {});
     };
     if (!lazy.size) return;
     if (!('IntersectionObserver' in window)) { lazy.forEach(name); return; }
     const io = new IntersectionObserver(es => {
       for (const e of es) if (e.isIntersecting) { io.unobserve(e.target); name(lazy.get(e.target)); }
-    }, { rootMargin: '800px 0px' });
+    }, { rootMargin: '1600px 0px' });
     lazy.forEach((el, box) => io.observe(box));
   })();
 
@@ -92,7 +96,7 @@
      go once both are in ---------- */
   (() => {
     const load = src => { const s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s); };
-    const pending = [['.stack', 'js/sumi-stack.js?v=10'], ['.xray', 'js/sumi-xray.js?v=12']].map(([sel, src]) => [document.querySelector(sel), src]).filter(([el]) => el);
+    const pending = [['.stack', 'js/sumi-stack.js?v=11'], ['.xray', 'js/sumi-xray.js?v=12']].map(([sel, src]) => [document.querySelector(sel), src]).filter(([el]) => el);
     let queued = false;
     function check(all) {
       queued = false;
@@ -136,9 +140,9 @@
     if (gameScriptRequested) return;
     gameScriptRequested = true;
     const s = document.createElement('script');
-    s.src = 'js/game.js?v=18';                                        // lazy: the game (142 KB) loads on the first call only
+    s.src = 'js/game.js?v=19';                                        // lazy: the game (142 KB) loads on the first call only
     s.onload = () => { if (window.MGSGame) window.MGSGame.open(); };
-    s.onerror = () => { gameScriptRequested = false; status('codec link failed — try again'); };
+    s.onerror = () => { gameScriptRequested = false; status('Codec link failed. Try again.'); };
     document.body.appendChild(s);
   }
   function playCodecRing() {
@@ -161,7 +165,7 @@
     alertMark.setAttribute('aria-hidden', 'true');
     document.body.appendChild(alertMark);
     setTimeout(() => alertMark.remove(), 1600);
-    status('Incoming codec call — opening the game');
+    status('Incoming codec call. Opening the game.');
     playCodecRing();
     setTimeout(openGame, 650);                          // the beat covers the fetch
   }

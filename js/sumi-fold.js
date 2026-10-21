@@ -278,8 +278,25 @@
   /* ---------- frame, sizing, the loop ---------- */
   const STILL_T = 1.9;                                         // a gust's crest a little left of centre, mid-field
   const perf = DEV && q.has('perf') ? [] : null;
+  /* the backstop for a software rasteriser the renderer string does not name: the loop asks for ~33 ms ticks; if, after a warm-up, 30 ticks
+     come at a mean over 45 ms, the grass is what the main thread cannot keep up with: go light, once, and never switch back */
+  let tickAt = 0, tickSum = 0, tickCount = 0;
+  function watch() {
+    if (slow || tickCount < 0) return;
+    const now = performance.now();
+    if (tickAt && now - tickAt < 500) {                        // a longer gap is the loop waking (scrolled back, tab shown), not a slow frame
+      if (++tickCount > 15) tickSum += now - tickAt;              // the first 15 ticks are warm-up (fonts, images, the chapters' scripts)
+      if (tickCount === 45) {
+        if (tickSum / 30 > 45) { slow = true; build(); drawGrass(windT); }
+        tickCount = -1;                                           // measured once
+        if (DEV) document.documentElement.dataset.foldSlow = slow ? '1' : '0';
+      }
+    }
+    tickAt = now;
+  }
   function frame(dt) {
     const t0 = perf ? performance.now() : 0;
+    watch();
     windT += dt;
     push *= Math.exp(-dt / .9);
     sampleWind(windT);
@@ -304,26 +321,44 @@
     sampleWind(windT);
     placeFog(0);
     drawGrass(windT);
-    if (!probed && !REDUCED) {                                 // once: time a 1 px readback of the near grass, which waits for its raster. Without a GPU
-      probed = true;                                           // (a software rasteriser) that is several ms, and the grass then costs ~250 ms/s of main thread
-      const t0 = performance.now(); cvs[1].getContext('2d').getImageData(0, 0, 1, 1);
-      if (performance.now() - t0 > 4) { slow = true; build(); drawGrass(windT); }
-      if (DEV) document.documentElement.dataset.foldSlow = slow ? '1' : '0';
-    }
+    if (!probed && !REDUCED) { probed = true; idle(probe); }   // once, after the first frame is up: no readback, no long task at load
   }
-  // the first frame's work is split: the scene in the next animation frame, each fog tile in an idle slot (the scene fades in over 1 s, so
+  /* no GPU: the grass then costs ~250 ms/s of main thread at full quality. Read the WebGL renderer's name once (a throwaway context, lost at
+     once): a software rasteriser (SwiftShader, Microsoft Basic Render Driver, llvmpipe, softpipe) or no WebGL at all means the light mode:
+     the grass at .6 scale, the near grass at 15 fps, the far grass still. (v11 timed a pixel readback instead: on a real GPU that readback
+     is a 100+ ms stall, so it put every GPU machine in the light mode and left the software ones out.) */
+  function probe() {
+    let r = '';
+    try {
+      const gl = document.createElement('canvas').getContext('webgl');
+      const ext = gl && gl.getExtension('WEBGL_debug_renderer_info');
+      r = gl ? String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)) : 'none';
+      const lose = gl && gl.getExtension('WEBGL_lose_context');
+      if (lose) lose.loseContext();
+    } catch (e) { r = 'none'; }
+    if (!slow && (r === 'none' || /SwiftShader|Basic Render|llvmpipe|softpipe|Software/i.test(r))) { slow = true; if (build()) drawGrass(windT); }
+    if (DEV) { document.documentElement.dataset.foldSlow = slow ? '1' : '0'; document.documentElement.dataset.foldGpu = r; }
+  }
+  // the first frame's work is split: the scene in an animation frame, each fog tile in an idle slot (the scene fades in over 1 s, so
   // nothing visible changes), never one long task at load
   const idle = cb => ('requestIdleCallback' in window ? requestIdleCallback(cb, { timeout: 300 }) : setTimeout(cb, 50));
   fogs.forEach(f => idle(() => drawFog(f)));
-  requestAnimationFrame(() => {
+  // a resize re-lays the scene; setup records the size it laid out, and the observer ignores any call at that size, so it runs once on load
+  let rt = 0, lastW = -1, lastH = -1;                          // (not read here: a layout read at parse would force the page's first layout)
+  const first = () => {
+    clearTimeout(rt); rt = 0;
+    lastW = scene.clientWidth; lastH = scene.clientHeight;
     setup();
     if (DEV && q.has('wind')) { windT = +q.get('wind'); sampleWind(windT); placeFog(0); drawGrass(windT); }   // dev: a composed instant (?wind=<seconds>)
-  });
-  // a resize re-lays the scene; the observer's first call (on observe) and any call at an unchanged size do nothing, so setup runs once on load
-  let rt = 0, lastW = -1, lastH = -1;                          // (not read here: a layout read at parse would force the page's first layout)
+  };
+  // the stacked layout (<= 960) sizes Raiden to the scene, whose height follows the words above it: wait for the web fonts (at most 0.8 s,
+  // inside the 1 s fade) so the moon and the field are built once, not once per font swap
+  if (matchMedia('(max-width: 960px)').matches && document.fonts && document.fonts.status !== 'loaded') {
+    Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 800))]).then(() => requestAnimationFrame(first));
+  } else requestAnimationFrame(first);
   new ResizeObserver(() => {
+    if (lastW < 0) return;                                     // not laid out yet: first() reads the size it lays out
     const w = scene.clientWidth, h = scene.clientHeight;
-    if (lastW < 0) { lastW = w; lastH = h; return; }
     if (w === lastW && h === lastH) return;
     lastW = w; lastH = h; clearTimeout(rt); rt = setTimeout(setup, 120);
   }).observe(scene);

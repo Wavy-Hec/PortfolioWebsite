@@ -16,7 +16,7 @@
   const ctx = canvas.getContext('2d');
   const PAPER = '#e9e7e2', DPR = Math.min(2, devicePixelRatio || 1), FRAME = 1000 / 30;
   const N = 22, GAP = 64, SIGMA = 50, BUCKETS = 16, R0 = 0.55, DR = 0.26;   // dots per plate side, the exploded spacing (design px at 600 wide), the light's sigma (a spot, not a plate-wide brighten), the radius buckets
-  let W = 0, H = 0, k = 1, cx = 0, hw = 0, hh = 0, yBase = 0, laidOut = false, inView = false, acc = 0, lastCost = 0;
+  let W = 0, H = 0, k = 1, gap = GAP, cx = 0, hw = 0, hh = 0, yBase = 0, laidOut = false, inView = false, acc = 0, lastCost = 0;
   let exp = S.REDUCED ? 1 : 0, expT0 = null, exploded = S.REDUCED, hot = -1, pointerIn = false, focused = -1;
   const light = { x: 0, y: 0, a: 0, tx: 0, ty: 0, ta: 0 };
   const held = [false, false, false, false];
@@ -24,17 +24,20 @@
   { let seed = 4321; for (let i = 0; i < grain.length; i++) { seed = (seed * 16807) % 2147483647; grain[i] = seed / 2147483647; } }
   const sparks = []; let seed2 = 99; const rnd = () => (seed2 = (seed2 * 16807) % 2147483647) / 2147483647;
   const ease = v => v < 0 ? 0 : v > 1 ? 1 : v * v * (3 - 2 * v);
-  const plateY = (i, e) => yBase - i * (GAP * k * e + 6 * k * (1 - e));   // the centre y of plate i at explosion e (0 = a stack, 1 = apart)
+  const plateY = (i, e) => yBase - i * (gap * k * e + 6 * k * (1 - e));   // the centre y of plate i at explosion e (0 = a stack, 1 = apart)
 
   function layout() {
-    W = Math.max(120, wrap.clientWidth); k = W / 600; H = Math.round(372 * k);   // never a zero width: k steps the beam's loop
+    W = Math.max(120, wrap.clientWidth); k = W / 600;                    // never a zero width: k steps the beam's loop
+    gap = Math.max(GAP, 42 / k);                                         // a narrow stack spreads its plates: every plate's band is 42 px or more, a finger's width
+    const extra = 3 * (gap - GAP) * k;                                   // ... and the drawing grows by what that adds, so the top plate keeps its air
+    H = Math.round(372 * k + extra);
     canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
     canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    cx = 170 * k; hw = 120 * k; hh = 40 * k; yBase = 302 * k;
-    btns.forEach((b, i) => {                                              // the button spans its plate and the label's run to the right of it
-      const cy = plateY(i, 1);
-      const bh = Math.min(hh * 2 + 12, GAP * k - 2);                     // never taller than the plates' spacing: no two buttons' hit areas overlap
+    cx = 170 * k; hw = 120 * k; hh = 40 * k; yBase = 302 * k + extra;
+    btns.forEach(b => {                                                   // the button spans its plate and the label's run to the right of it
+      const i = +b.dataset.k, cy = plateY(i, 1);                           // data-k: the plate's index from the bottom (the buttons are listed top to bottom, in reading order)
+      const bh = Math.min(hh * 2 + 12, gap * k - 2);                     // never taller than the plates' spacing: no two buttons' hit areas overlap
       b.style.left = (cx - hw) + 'px'; b.style.top = Math.round(cy - bh / 2) + 'px'; b.style.width = Math.round(W - (cx - hw)) + 'px'; b.style.height = Math.round(bh) + 'px';
       b.style.paddingLeft = Math.round(hw * 2 + (W < 400 ? 12 : 22)) + 'px';             // a 360 phone: the label column starts 12 px past the plate, so VISION-LANGUAGE MODEL fits
       const nm = b.querySelector('.name'), lh = nm ? parseFloat(getComputedStyle(nm).lineHeight) || 16 : 16;
@@ -96,7 +99,8 @@
   const rect = () => canvas.getBoundingClientRect();
   wrap.addEventListener('pointermove', e => { const r = rect(); light.tx = e.clientX - r.left; light.ty = e.clientY - r.top; light.ta = 1; pointerIn = true; }, { passive: true });
   wrap.addEventListener('pointerleave', () => { pointerIn = false; if (focused < 0) light.ta = 0; });
-  btns.forEach((b, i) => {
+  btns.forEach(b => {
+    const i = +b.dataset.k;
     const on = () => { hot = i; if (S.REDUCED) draw(); }, off = () => { if (hot === i) hot = -1; if (S.REDUCED) draw(); };
     b.addEventListener('pointerenter', on); b.addEventListener('pointerleave', off);
     b.addEventListener('focus', () => { focused = i; on(); light.tx = cx; light.ty = plateY(i, 1); light.ta = 1; if (!exploded) { expT0 = performance.now() - 900; exp = 1; exploded = true; wrap.classList.add('exploded'); inView = true; draw(); } });   // keyboard focus before the stack has exploded: apart at once, so the control is never invisible

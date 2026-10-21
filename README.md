@@ -2,7 +2,7 @@
 
 **Live site → [wavy-hec.github.io/PortfolioWebsite](https://wavy-hec.github.io/PortfolioWebsite/)**
 
-Personal portfolio of **Hector Lugo** — M.S. Computer Science @ UTRGV; AI/ML research
+Personal portfolio of **Hector Lugo** — M.S. Computer Science student @ UTRGV (Dec 2026); AI/ML research
 intern at the Air Force Research Laboratory (summer 2026). Reinforcement learning,
 computer vision, and vision-language models for robotics.
 
@@ -26,7 +26,7 @@ chapters on a left rail (一 Work, 二 Experience, 三 Research, 四 About) and 
 | `js/ascii/` | A self-hosted copy of the [ascii-magic](https://www.ascii-magic.com/) halftone runtime (MIT, `js/ascii/README.md`, four marked local changes): draws the autumn pagoda band between About and the footer (`pieces/autumn-pagoda-maples.js`, imported and named only when the band nears the screen; a fine screen drawn once and held, never animated) and the 404's torii (`pieces/sea-torii-sunset.js`) |
 | `js/game.js` | The hidden mini-game (three ops on the Big Shell, in moonlit steel blue on navy), loaded only when the footer's `140.85` is dialed (or the Konami code, or `140.85` typed) |
 | `img/` | `raiden-night.png` + `raiden-shade.png` (the fold: his paper plate and, under it, his ink as a sumi silhouette, its back torn into dry brush, so the moon never shows through him, `tools/make-night.py`), `ink-raiden-snake.png` (About), `proj-*-ink.png` + `-2x` (the plates: 640 and 1280, 1-bit ink on paper), `resume-page1.png`, `og-card.png`. No portrait files: the game's codec call masks `raiden-night.png` in steel blue for Raiden and draws the Colonel in code |
-| `papers/lugo-icmla-2026.pdf` | The ICMLA 2026 paper (IEEE's reuse notice sits under its entry in the publications list). Note: the file carries the proceedings footer (page 640, the IEEE copyright line, the DOI), i.e. the publisher's version; IEEE's policy lets authors post the accepted manuscript, so swap in that version before publishing |
+| `papers/lugo-icmla-2026.pdf` | The ICMLA 2026 paper (its entry carries the DOI and "© 2026 IEEE" on one line; IEEE's full reuse notice belongs on the first page of the posted manuscript). Note: the file carries the proceedings footer (page 640, the IEEE copyright line, the DOI), i.e. the publisher's version; IEEE's policy lets authors post the accepted manuscript, so swap in that version before publishing |
 | `resume.html` | The résumé page: the PDF's first page as an image with its links re-created as hotspots (`tools/build-resume-view.py`) |
 | `404.html` | Self-contained night 404 with the torii |
 | `Hector_Lugo_Fall_Resume.pdf` | Résumé (downloads from `resume.html`) |

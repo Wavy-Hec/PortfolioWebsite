@@ -27,17 +27,20 @@
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='256' height='256'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .914  0 0 0 0 .906  0 0 0 0 .886  2.2 0 0 0 -.6'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>") }
     a { color: inherit; text-decoration: none }
     :focus-visible { outline: 2px solid var(--paper); outline-offset: 3px }
-    /* the torii: ascii-magic's sea-torii-sunset in mono paper dots at contrast 20 (dot size 60), so the dusk sky keeps its dots and the gate (its top beam, its tie
-       beam, both pillars) stands out of them as a sumi silhouette, the sun between the pillars. Sized to the viewport's width (an inline script sets the
+    /* the torii: ascii-magic's sea-torii-sunset in mono paper dots at contrast 20, in the front page's fine screen (density 170, dot size 30: a
+       print, not a dot-matrix sign), so the dusk sky keeps its dots and the gate (its top beam, its tie beam, both pillars) stands out of them as a
+       sumi silhouette, the sun between the pillars. Drawn once and held (still) on every screen, so it costs nothing per frame. Sized to the viewport's width (an inline script sets the
        piece's font size: 192 columns x size x .602 px = 100vw); the frame shows the piece from the sky over the gate to the sea under the sun
        (.62 of its height; the piece is .563 x its width tall), its top and foot fading into the sumi. On a phone (<= 720) the piece is set at 96
        columns = 100vw, twice the width, centred, so the gate fills the width in 4 px cells. Decorative: aria-hidden. Holds its first frame under
        reduced motion (the engine does that itself). */
     /* the frame is capped by the screen's height (less the words' ~330 px), so the way back is always on the first screen; the art hangs from
        the frame's top, so a capped frame just shows less of the sea */
-    .torii { position: relative; width: 100%; height: calc(100vw * .563 * .62); height: min(calc(100vw * .563 * .62), max(160px, calc(100vh - 330px)));
+    .torii { --tf: linear-gradient(transparent 8%, #000 25%, #000 70%, transparent); --sf: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);   /* the top fade starts where the art does (6 rows down), so no hard first row */
+      position: relative; width: 100%; height: calc(100vw * .563 * .62); height: min(calc(100vw * .563 * .62), max(160px, calc(100vh - 330px)));
       height: min(calc(100vw * .563 * .62), max(160px, calc(100svh - 330px))); overflow: hidden; pointer-events: none; color: var(--paper); opacity: .9;
-      -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 70%, transparent); mask-image: linear-gradient(transparent, #000 14%, #000 70%, transparent) }
+      -webkit-mask-image: var(--tf), var(--sf); -webkit-mask-composite: source-in;
+      mask-image: var(--tf), var(--sf); mask-composite: intersect }   /* its top, foot and both sides fade into the sumi */
     .torii ascii-art { position: absolute; left: 0; top: calc(100vw / 192 * 6); display: block; width: 100vw; max-width: none; color: inherit }   /* 6 rows of sky over the gate: the kasagi's upturned ends clear the top fade */
     .torii ascii-art canvas { display: block }
     html.no-torii .torii { display: none }
@@ -50,8 +53,10 @@
     .back:hover, .back:focus-visible { text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 1px }
     @media (max-width: 720px) {
       .torii { height: calc(200vw * .563 * .62); height: min(calc(200vw * .563 * .62), max(160px, calc(100vh - 360px))); height: min(calc(200vw * .563 * .62), max(160px, calc(100svh - 360px))) }
+      .torii { --sf: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent) }   /* the gate spans the phone: a narrow side fade keeps the kasagi's ends */
       .torii ascii-art { width: 200vw; max-width: none; left: -50vw; top: calc(200vw / 192 * 6) }
       h1 { font-size: 32px }
+      body { justify-content: flex-start; padding-top: 32px }   /* the art starts near the top: a phone's first view never opens on bare sumi */
     }
   </style>
 </head>
@@ -60,19 +65,17 @@
        The engine's URL must be absolute: this page is served at any missing path. On the live site the repo lives under /PortfolioWebsite/
        (https://wavy-hec.github.io/PortfolioWebsite/); served locally from the repo root it lives under /. The script below picks the order from
        where it runs and falls back to the other on a failed import, so both work; if neither loads, html.no-torii hides the empty slot. -->
-  <div class="torii" aria-hidden="true"><ascii-art piece="sea-torii-sunset" look="dots" mono contrast="20" density="85" dot-size="60" aria-hidden="true"></ascii-art></div>
+  <div class="torii" aria-hidden="true"><ascii-art piece="sea-torii-sunset" look="dots" mono contrast="20" density="170" dot-size="30" still aria-hidden="true"></ascii-art></div>
   <script>
     (function () {
       var el = document.querySelector('.torii ascii-art');
       if (!el) return;
       var fit = function () { var phone = innerWidth <= 720; el.setAttribute('size', (innerWidth / ((phone ? 96 : 192) * 0.602)).toFixed(2)); };
       fit();
-      // the main page's rules (js/sumi.js): 8 fps, and drawn once on a phone or a touch screen
-      el.setAttribute('fps', '8');
-      if (matchMedia('(max-width: 720px), (pointer: coarse)').matches) el.setAttribute('still', '');
+      // a print, as the front page's pagoda is: drawn once (the still attribute above) on every screen
       var rt; addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(fit, 200); }, { passive: true });
       var repo = /github\.io$/.test(location.hostname) || location.pathname.indexOf('/PortfolioWebsite/') === 0;
-      var paths = repo ? ['/PortfolioWebsite/js/ascii/ascii.js', '/js/ascii/ascii.js'] : ['/js/ascii/ascii.js', '/PortfolioWebsite/js/ascii/ascii.js'];
+      var paths = repo ? ['/PortfolioWebsite/js/ascii/ascii.js?v=10', '/js/ascii/ascii.js?v=10'] : ['/js/ascii/ascii.js?v=10', '/PortfolioWebsite/js/ascii/ascii.js?v=10'];   // the same key as js/sumi.js: bump both together
       import(paths[0]).catch(function () { return import(paths[1]); }).catch(function () { document.documentElement.classList.add('no-torii'); });
     })();
   </script>

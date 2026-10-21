@@ -386,8 +386,8 @@
        his head and hair in moonlit steel; a 2 px dither grid over it reads as a codec CRT */
     + '.mgsg-port .px.raiden{--s:1;}'
     + '.mgsg-port .px.raiden i{position:absolute;inset:0;background:var(--mg-text);'
-    + '-webkit-mask:url(img/raiden-night.png?v=11) no-repeat calc(-100px * var(--s)) calc(-75px * var(--s))/calc(300px * var(--s)) auto;'
-    + 'mask:url(img/raiden-night.png?v=11) no-repeat calc(-100px * var(--s)) calc(-75px * var(--s))/calc(300px * var(--s)) auto;}'
+    + '-webkit-mask:url(img/raiden-night.png?v=12) no-repeat calc(-100px * var(--s)) calc(-75px * var(--s))/calc(300px * var(--s)) auto;'
+    + 'mask:url(img/raiden-night.png?v=12) no-repeat calc(-100px * var(--s)) calc(-75px * var(--s))/calc(300px * var(--s)) auto;}'
     + '.mgsg-port .px.raiden b{position:absolute;inset:0;background:radial-gradient(circle,transparent 0 .7px,rgba(var(--mg-shade),.55) .8px) 0 0/2px 2px;}'
     /* COLONEL: a canvas (48 px, pixelated), drawn in buildColonel(), its signal breaking up in glitchColonel() */
     + '.mgsg-port .px canvas{display:block;width:100%;height:100%;image-rendering:pixelated;}'
@@ -644,10 +644,10 @@
       + '<button data-act2="run" tabindex="-1">RUN</button>'
       + '<button data-act2="box" tabindex="-1">BOX</button>'
       + '<button data-act2="knock" tabindex="-1">KNOCK</button>'
-      + '<button data-act2="cqc" tabindex="-1">CQC</button></div>'
+      + '<button data-act2="cqc" tabindex="-1">CHOKE</button></div>'
       + '</div>'
       + '<div class="mgsg-foot"><span><kbd>WASD</kbd> move</span><span><kbd>Shift</kbd> run</span>'
-      + '<span><kbd>B</kbd> box</span><span><kbd>K</kbd> knock</span><span><kbd>F</kbd> CQC</span>'
+      + '<span><kbd>B</kbd> box</span><span><kbd>K</kbd> knock</span><span><kbd>F</kbd> choke</span>'
       + '<span><kbd>R</kbd> retry</span><span><kbd>Esc</kbd> pause/exit</span></div>'
       + '<div class="mgsg-sr" aria-live="assertive"></div>'
       + '</div>';
@@ -1822,7 +1822,7 @@
     hudPanel(8, 353, 96, 28);
     hudRing(21, 367, cqcCD, CQC_CD); hudRing(63, 367, knockCD, KNOCK_CD);
     ctx.textAlign = 'left'; ctx.font = HUD_FONT;
-    ctx.fillStyle = cqcCD > 0 ? C.dim : C.line; ctx.fillText('CQC', 31, 367.5);
+    ctx.fillStyle = cqcCD > 0 ? C.dim : C.line; ctx.fillText('CHOKE', 31, 367.5);
     ctx.fillStyle = knockCD > 0 ? C.dim : C.line; ctx.fillText('KNOCK', 73, 367.5);
     // (b) ITEM window — the box (mini SPR.box) when worn, an empty slot otherwise
     hudPanel(536, 353, 96, 28);
