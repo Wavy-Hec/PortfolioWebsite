@@ -45,7 +45,8 @@
     .torii ascii-art canvas { display: block }
     html.no-torii .torii { display: none }
     /* the words: straight on sumi under the art, on the gutter like a chapter of the front page, one hairline above */
-    .msg { margin: 8px var(--gutter) 0; padding-top: 32px; border-top: 1px solid var(--rule); max-width: 960px }
+    .msg { margin: 8px var(--gutter) 0; padding-top: 32px; border-top: 1px solid var(--rule) }   /* the rule runs gutter to gutter under the full-bleed gate; the words keep their measure */
+    .msg > * { max-width: 46ch }
     .kicker { font-family: var(--mono); font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--dim) }
     h1 { font-weight: 400; font-size: 40px; line-height: 1.1; margin-top: 14px }
     p { color: var(--dim); margin-top: 16px; max-width: 46ch }
@@ -59,7 +60,7 @@
       body { justify-content: flex-start; padding-top: 32px }   /* the art starts near the top: a phone's first view never opens on bare sumi */
     }
     @media (min-width: 721px) and (max-width: 1024px) and (orientation: portrait) { body { justify-content: flex-start; padding-top: 48px } }   /* a portrait tablet: the same, not 250 px of bare sumi over the gate */
-    @media (min-width: 1600px) { .msg { margin-left: calc(50% - 576px); margin-right: calc(50% - 576px); max-width: none } }   /* the front page's large-screen measure: the words and their rule span the footer's 1152 px, centred */
+    @media (min-width: 1600px) { .msg { margin-left: calc(50% - 576px); margin-right: calc(50% - 576px) } }   /* the front page's large-screen measure: the rule spans the footer's 1152 px, centred */
   </style>
 </head>
 <body>
@@ -77,7 +78,7 @@
       // a print, as the front page's pagoda is: drawn once (the still attribute above) on every screen
       var rt; addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(fit, 200); }, { passive: true });
       var repo = /github\.io$/.test(location.hostname) || location.pathname.indexOf('/PortfolioWebsite/') === 0;
-      var paths = repo ? ['/PortfolioWebsite/js/ascii/ascii.js?v=11', '/js/ascii/ascii.js?v=11'] : ['/js/ascii/ascii.js?v=11', '/PortfolioWebsite/js/ascii/ascii.js?v=11'];   // the same key as js/sumi.js: bump both together
+      var paths = repo ? ['/PortfolioWebsite/js/ascii/ascii.js?v=13', '/js/ascii/ascii.js?v=13'] : ['/js/ascii/ascii.js?v=13', '/PortfolioWebsite/js/ascii/ascii.js?v=13'];   // the same key as js/sumi.js: bump both together
       import(paths[0]).catch(function () { return import(paths[1]); }).catch(function () { document.documentElement.classList.add('no-torii'); });
     })();
   </script>

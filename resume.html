@@ -20,7 +20,7 @@
        Regenerate both when the PDF changes (tools/build-resume-view.py).
        The night palette (the same tokens as css/sumi.css, inlined: this page is one screen and should not wait on the site's sheet): sumi
        ground, the silver grain, paper text, mono labels; the page image is toned to the site's paper (#e9e7e2, multiplied: no pure white on the
-       site) and framed as a lit print on sumi. On a phone the sheet keeps a readable width (760 px) and scrolls sideways. No red anywhere. -->
+       site) and framed as a lit print on sumi. On a phone the sheet keeps a readable width (760 px), opens centred on its header and scrolls sideways. No red anywhere. -->
   <style>
     :root { --paper: #e9e7e2; --sumi: #141416; --deep: #0b0b0d; --dim: #bab8b3; --rule: rgba(233,231,226,.18); --rule-strong: rgba(233,231,226,.3);
       --serif: 'Shippori Mincho', 'Noto Serif JP', 'Yu Mincho', Georgia, serif; --mono: 'Share Tech Mono', ui-monospace, Menlo, Consolas, monospace; --gutter: clamp(16px, 6.7vw, 96px) }
@@ -88,7 +88,7 @@
     <div class="scroll">
     <div class="sheet">
       <img src="img/resume-page1.png?v=2"
-           alt="Hector Lugo’s one-page résumé: education, experience, projects, publications and skills (the PDF linked above has the same text)"
+           alt="Hector Lugo’s one-page résumé: education, experience, projects, publications, and skills (the PDF linked above has the same text)"
            width="1224" height="1584" decoding="async" fetchpriority="high">
       <a class="lk" href="tel:+19569992401" title="Call +1 (956) 999-2401" aria-label="Call +1 (956) 999-2401" style="left:8.336%;top:6.305%;width:15.610%;height:1.667%"></a>
       <a class="lk" href="mailto:hlugo576@gmail.com" title="Email hlugo576@gmail.com" aria-label="Email hlugo576@gmail.com" style="left:26.243%;top:6.305%;width:17.328%;height:1.667%"></a>
@@ -110,8 +110,12 @@
     <p class="hint"><span class="desk">links in the résumé are clickable</span><span class="ph">swipe to read · or <a href="Hector_Lugo_Fall_Resume.pdf?v=2">open the PDF</a></span><span class="tab">pinch to zoom · or <a href="Hector_Lugo_Fall_Resume.pdf?v=2">open the PDF</a></span></p>
   </main>
   <script>
-    // a phone: the sheet opens at its left edge, where every line begins (the hint above it says to swipe)
-    if (matchMedia('(max-width: 720px)').matches) { var s = document.querySelector('.scroll'); if (s) s.scrollLeft = 0; }
+    // a phone: the sheet opens centred on its header, so the first thing seen is his whole name and contact row, not a cropped name; the
+    // hint above it says to swipe, both ways
+    if (matchMedia('(max-width: 720px)').matches) {
+      var s = document.querySelector('.scroll'), sh = s && s.querySelector('.sheet');
+      if (s && sh) { var a = s.getBoundingClientRect(), b = sh.getBoundingClientRect(); s.scrollLeft = Math.max(0, b.left - a.left + s.scrollLeft + b.width / 2 - s.clientWidth / 2); }
+    }
   </script>
 </body>
 </html>

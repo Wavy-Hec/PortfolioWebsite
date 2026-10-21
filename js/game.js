@@ -9,7 +9,7 @@
    guard AI, a stealth toolkit (walk/run noise, cardboard box, wall-knock lure,
    CQC subdue), a rectangular radar minimap, security cameras, codec presentation.
    Palette: moonlit steel blue. A deep navy ground (#0b1220 / #0e1726), steel-blue
-   linework and type (#8fa6c0 / #b8c6d6, dim #7189a6), cool greys for secondary
+   linework and type (#8fa6c0 / #b8c6d6, dim #7d93ae), cool greys for secondary
    things, and paper (#e9e7e2) for the brightest highlights: alerts, the player's
    crown, hostile cones. NO red, amber or mint anywhere (alerts, damage and game
    over included).
@@ -77,7 +77,7 @@
     wallFront: '#121b29',                            // south "front face" (2.5D height)
     wallSide: '#0a101b',                             // shaded right edge
     wallEdge: '#4b5e79', wallShadow: 'rgba(0,0,0,0.42)',
-    line: '#8fa6c0', bright: '#b8c6d6', dim: '#7189a6',
+    line: '#8fa6c0', bright: '#b8c6d6', dim: '#7d93ae',
     paper: '#e9e7e2', paperDim: '#c3cbd5', steel: '#7c8a9c', ink: '#141416'
   };
   /* per-op floor identity (baked once in buildBg — zero per-frame cost) */
@@ -318,7 +318,7 @@
     + '.mgsg-btn:hover{background:rgba(var(--mg-glow),.1);color:var(--mg-hi);}'
     /* the DOM strip: slim (the canvas carries the MGS2 windows); it stays the accessible source of truth */
     + '.mgsg-hud{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 12px;border-bottom:1px solid var(--mg-line);'
-    + 'font-size:10.5px;line-height:16px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mg-dim);flex-shrink:0;}'
+    + 'font-size:11px;line-height:16px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mg-dim);flex-shrink:0;}'
     + '.mgsg-hud b{color:var(--mg-text);font-weight:400;text-shadow:0 0 5px rgba(var(--mg-glow),.35);}'
     + '.mgsg-stbadge{padding:0 7px;border:1px solid currentColor;border-radius:2px;letter-spacing:2px;color:var(--mg-text);background:rgba(var(--mg-glow),.08);}'
     + '.mgsg-stbadge.alert,.mgsg-stbadge.evasion{color:var(--mg-paper);}.mgsg-stbadge.caution{color:var(--mg-pdim);background:rgba(195,203,213,.08);}'
@@ -375,7 +375,7 @@
     + '.mgsg-screen.title h2{font-size:clamp(30px,7vw,52px);padding:8px 18px 12px;margin-top:.55em;'
     + 'border-top:3px double var(--mg-border);border-bottom:3px double var(--mg-border);}'
     /* caller line as a small kicker */
-    + '.mgsg-screen .caller{color:var(--mg-dim);font-size:10px;letter-spacing:6px;text-transform:uppercase;}'
+    + '.mgsg-screen .caller{color:var(--mg-dim);font-size:11px;letter-spacing:6px;text-transform:uppercase;}'
     /* codec call layout (title + briefing): portrait | wave + frequency strip | portrait */
     + '.mgsg-call{display:none;grid-template-columns:96px minmax(120px,1fr) 96px;align-items:center;gap:14px;width:min(100%,520px);}'
     + '.mgsg-screen.title .mgsg-call,.mgsg-screen.brief .mgsg-call{display:grid;}'
@@ -395,7 +395,7 @@
     + '.mgsg-port .px::after{content:"";position:absolute;inset:0;pointer-events:none;'
     + 'background:repeating-linear-gradient(0deg,rgba(0,0,0,.28) 0 1px,transparent 1px 3px),'
     + 'linear-gradient(rgba(var(--mg-glow),.06),transparent 40%,rgba(var(--mg-shade),.35));}'
-    + '.mgsg-port .who{font-size:8px;letter-spacing:2px;color:var(--mg-dim);}'
+    + '.mgsg-port .who{font-size:11px;letter-spacing:2px;color:var(--mg-dim);}'
     + '.mgsg-cc{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;}'
     + '.mgsg-fstrip{position:relative;width:100%;height:14px;margin-bottom:10px;border-top:1px solid var(--mg-line);border-bottom:1px solid var(--mg-line);'
     + 'background:repeating-linear-gradient(90deg,rgba(var(--mg-glow),.55) 0 1px,transparent 1px 30px),'
@@ -403,7 +403,7 @@
     + 'background-size:100% 100%,100% 50%;background-position:0 0,0 100%;background-repeat:no-repeat,repeat-x;}'
     + '.mgsg-fstrip i{position:absolute;top:-2px;bottom:-2px;left:50%;width:2px;margin-left:-1px;background:var(--mg-hi);'
     + 'box-shadow:0 0 6px rgba(var(--mg-hglow),.8);transition:left .45s cubic-bezier(.2,.8,.3,1);}'
-    + '.mgsg-fstrip b{position:absolute;top:100%;margin-top:3px;font-weight:400;font-size:7px;letter-spacing:1px;color:var(--mg-dim);transform:translateX(-50%);}'
+    + '.mgsg-fstrip b{position:absolute;top:100%;margin-top:3px;font-weight:400;font-size:11px;letter-spacing:1px;color:var(--mg-dim);transform:translateX(-50%);}'
     + '.mgsg-fnum{font-size:15px;letter-spacing:3px;color:var(--mg-hi);font-variant-numeric:tabular-nums;text-shadow:0 0 8px rgba(var(--mg-glow),.5);}'
     /* phone widths: the aspect-locked stage is ~210px tall at 375px. On a touch
        phone (portrait) a menu screen also covers the control deck below the stage
@@ -414,7 +414,7 @@
     + '.mgsg-screen{gap:6px;padding:12px;justify-content:flex-start;justify-content:safe center;overflow-y:auto;}'
     + '.mgsg-call{grid-template-columns:56px minmax(0,1fr) 56px;gap:10px;width:100%;}'
     + '.mgsg-port .px{width:56px;height:56px;}.mgsg-port .px.raiden{--s:.5833;}'
-    + '.mgsg-cc{gap:4px;}.mgsg-fstrip{height:10px;margin-bottom:8px;}.mgsg-fnum{font-size:12px;letter-spacing:2px;}'
+    + '.mgsg-cc{gap:4px;}.mgsg-fstrip{height:10px;margin-bottom:8px;}.mgsg-fstrip b{display:none;}.mgsg-fnum{font-size:12px;letter-spacing:2px;}'
     /* a narrow window WITHOUT the touch deck has only the ~210 px stage for the call: the portraits and strip step out */
     + '.mgsg-overlay:not(.mgsg-touch) .mgsg-call{grid-template-columns:1fr;gap:0;width:auto;}'
     + '.mgsg-overlay:not(.mgsg-touch) .mgsg-port,.mgsg-overlay:not(.mgsg-touch) .mgsg-fstrip,.mgsg-overlay:not(.mgsg-touch) .mgsg-fnum,'
@@ -438,7 +438,7 @@
     + '.mgsg-stbadge{letter-spacing:1px;padding:0 4px;}.mgsg-life{gap:4px;}'
     + '.mgsg-foot{gap:8px;padding:6px 8px;}}'
     /* the narrowest phones (360): the strip stays one line even with EVASION/CAUTION in the badge */
-    + '@media (max-width:380px){.mgsg-hud{gap:4px 6px;font-size:10px;letter-spacing:0;}.mgsg-lifebar{width:32px;}}'
+    + '@media (max-width:380px){.mgsg-hud{gap:4px 6px;font-size:11px;letter-spacing:0;}.mgsg-lifebar{width:32px;}}'   /* 11 px, the page's mono floor: the strip wraps to a second row (flex-wrap) rather than shrinking the type */
     + '.mgsg-screen p{max-width:46ch;font-size:13px;line-height:1.65;color:var(--mg-text);margin:0;}'
     + '.mgsg-screen .sub{color:var(--mg-dim);font-size:12px;letter-spacing:1px;}'
     + '.mgsg-screen .go{margin-top:6px;color:var(--mg-hi);animation:mgsgGoBlink 1.1s steps(1) infinite;}'
@@ -479,8 +479,8 @@
     + '.mgsg-toast.show{opacity:1;transform:translateX(-50%);}'
     /* touch (the deck covers the stage foot) and narrow stages: a slim line on the TOP wall row,
        between the radar and the exit, clear of every floor tile */
-    + '.mgsg-touch .mgsg-toast{top:1px;bottom:auto;max-width:62%;padding:0 8px;font-size:9.5px;line-height:12px;letter-spacing:.5px;}'
-    + '@media (max-width:520px){.mgsg-toast{top:1px;bottom:auto;max-width:62%;padding:0 8px;font-size:9.5px;line-height:12px;letter-spacing:.5px;}}'
+    + '.mgsg-touch .mgsg-toast{top:1px;bottom:auto;max-width:62%;padding:0 8px;font-size:11px;line-height:14px;letter-spacing:.5px;}'
+    + '@media (max-width:520px){.mgsg-toast{top:1px;bottom:auto;max-width:62%;padding:0 8px;font-size:11px;line-height:14px;letter-spacing:.5px;}}'
     /* CRT roll bar + alarm hazard stripes + power-on sweep (compositor-only) */
     + '.mgsg-roll{position:absolute;left:0;right:0;top:-30%;height:26%;pointer-events:none;z-index:6;'
     + 'background:linear-gradient(180deg,transparent,rgba(184,198,214,.045) 50%,transparent);'
@@ -504,7 +504,7 @@
     + 'border-radius:8px;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;-webkit-user-select:none;user-select:none;}'
     + '.mgsg-pad button:active,.mgsg-acts button:active{background:rgba(var(--mg-glow),.2);}'
     + '.mgsg-pad .u{grid-area:1/2}.mgsg-pad .l{grid-area:2/1}.mgsg-pad .r{grid-area:2/3}.mgsg-pad .d{grid-area:3/2}'
-    + '.mgsg-pad .p{grid-area:2/2;font-size:10px;letter-spacing:1px;color:var(--mg-dim);}'
+    + '.mgsg-pad .p{grid-area:2/2;font-size:11px;letter-spacing:1px;color:var(--mg-dim);}'
     + '.mgsg-touch .mgsg-pad,.mgsg-touch .mgsg-acts{display:grid;}'
     + '.mgsg-touch .mgsg-foot{display:none;}'
     /* SND/EXIT are the only affordances in touch mode — give them touch-size targets */
@@ -526,6 +526,9 @@
     + '.mgsg-touch .mgsg-screen{bottom:-172px;justify-content:center;justify-content:safe center;overflow-y:auto;}'
     + '}'
     + '.mgsg-touch.mgsg-scr .mgsg-pad,.mgsg-touch.mgsg-scr .mgsg-acts{visibility:hidden;}'
+    /* a touch phone: the frame takes the width (6 px each side) and is centred in the screen's height, as on a tablet (margin:auto: a frame
+       taller than the screen still scrolls, never clips off the top); the stage grows with it (aspect-locked), and the pad sits lower, nearer the thumb */
+    + '@media (max-width:520px){.mgsg-overlay.mgsg-touch{padding:6px;}.mgsg-touch .mgsg-frame{width:calc(100vw - 12px);margin:auto;}}'
     + '@media (prefers-reduced-motion:reduce){.mgsg-screen .go{animation:none}.mgsg-overlay{transition:none}.mgsg-stage{transition:none}'
     + '.mgsg-stage.alarm::before,.mgsg-bar .f::before,.mgsg-stbadge.alert,.mgsg-lifebar.low i,.mgsg-wave i,'
     + '.mgsg-screen .lost,.mgsg-screen .rank,.mgsg-screen .mgsg-rec{animation:none}'
@@ -598,7 +601,7 @@
     overlay.className = 'mgsg-overlay';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
-    overlay.setAttribute('aria-label', 'Big Shell — a hidden stealth mini-game');
+    overlay.setAttribute('aria-label', 'Big Shell: a hidden stealth mini-game');
     if (coarsePointer) overlay.classList.add('mgsg-touch');
 
     overlay.innerHTML =
@@ -646,7 +649,7 @@
       + '<button data-act2="knock" tabindex="-1">KNOCK</button>'
       + '<button data-act2="cqc" tabindex="-1">CHOKE</button></div>'
       + '</div>'
-      + '<div class="mgsg-foot"><span><kbd>WASD</kbd> move</span><span><kbd>Shift</kbd> run</span>'
+      + '<div class="mgsg-foot"><span><kbd>WASD</kbd> / <kbd>↑↓←→</kbd> move</span><span><kbd>Shift</kbd> run</span>'
       + '<span><kbd>B</kbd> box</span><span><kbd>K</kbd> knock</span><span><kbd>F</kbd> choke</span>'
       + '<span><kbd>R</kbd> retry</span><span><kbd>Esc</kbd> pause/exit</span></div>'
       + '<div class="mgsg-sr" aria-live="assertive"></div>'
@@ -1405,8 +1408,8 @@
   function doBox() { boxed = !boxed; beep(boxed ? 150 : 210, 0.05, 'square', 0.05); announce(boxed ? 'In the box.' : 'Out of the box.'); }
   function doKnock() {
     if (knockCD > 0) return;
-    if (alertPhase === 'alert' || alertPhase === 'evasion') { announce('No use — already alerted.'); return; }
-    knockCD = KNOCK_CD; emitNoise(player.x, player.y, KNOCK_R); sfxKnock(); announce('Knock — luring a guard.');
+    if (alertPhase === 'alert' || alertPhase === 'evasion') { announce('No use: already alerted.'); return; }
+    knockCD = KNOCK_CD; emitNoise(player.x, player.y, KNOCK_R); sfxKnock(); announce('Knocking to lure a guard.');
   }
   function doCQC() {
     // CQC works in every alert phase — the only skill check is the rear-arc
@@ -2051,7 +2054,7 @@
   function startBriefing() {
     state = 'briefing'; loadLevel(levelIdx); render();
     var pb = bestFor('op' + (levelIdx + 1));   // personal best line — omitted until an op is cleared once
-    showScreen({ cls: 'brief', caller: '▸ ' + level.caller, title: 'OP ' + (levelIdx + 1) + ' — ' + level.name, who: level.caller, freq: level.freq, stats: pb !== null ? [['PERSONAL BEST', fmt(pb)]] : null, body: level.brief, sub: '', go: 'PRESS ENTER TO INFILTRATE' });
+    showScreen({ cls: 'brief', caller: '▸ ' + level.caller, title: 'OP ' + (levelIdx + 1) + ' · ' + level.name, who: level.caller, freq: level.freq, stats: pb !== null ? [['PERSONAL BEST', fmt(pb)]] : null, body: level.brief, sub: '', go: 'PRESS ENTER TO INFILTRATE' });
   }
   function startPlay() {
     hideScreen(); keys = Object.create(null); touchDir = { up: 0, down: 0, left: 0, right: 0 }; running = false;
@@ -2080,7 +2083,7 @@
       var rank = rankFor(alertsThisLevel, elapsed);
       var stats = [['TIME', fmt(elapsed)], ['ALERTS', String(alertsThisLevel)]];
       if (!opRec && opPrev !== null) stats.push(['BEST', fmt(opPrev)]);
-      state = 'clear'; render(); showScreen({ title: 'OP ' + (levelIdx + 1) + ' CLEAR', big: rank, rec: opRec ? 'NEW RECORD' : '', body: alertsThisLevel ? ('Extracted — ' + plural(alertsThisLevel, 'alert') + ' raised.') : 'Clean extraction. No alerts.', stats: stats, go: 'PRESS ENTER TO CONTINUE' });
+      state = 'clear'; render(); showScreen({ title: 'OP ' + (levelIdx + 1) + ' CLEAR', big: rank, rec: opRec ? 'NEW RECORD' : '', body: alertsThisLevel ? ('Extracted, with ' + plural(alertsThisLevel, 'alert') + ' raised.') : 'Clean extraction. No alerts.', stats: stats, go: 'PRESS ENTER TO CONTINUE' });
     } else {
       // mission rank counts every op: total alerts + total time
       var mRank = rankFor(totalAlerts, totalTime, 165);
@@ -2088,7 +2091,7 @@
       var totRec = noteBest('total', totalTime);
       var mStats = [['TOTAL TIME', fmt(totalTime)], ['TOTAL ALERTS', String(totalAlerts)]];
       if (!totRec && totPrev !== null) mStats.push(['BEST', fmt(totPrev)]);
-      state = 'complete'; render(); showScreen({ title: 'MISSION COMPLETE', big: mRank, rec: totRec ? 'NEW RECORD' : '', body: (totalAlerts ? 'All three areas clear — ' + plural(totalAlerts, 'alert') + ' across the mission.' : 'All three areas clear, and not one alert.') + ' Good work, Raiden. Colonel out.', stats: mStats, go: 'PRESS ENTER TO REPLAY' });
+      state = 'complete'; render(); showScreen({ title: 'MISSION COMPLETE', big: mRank, rec: totRec ? 'NEW RECORD' : '', body: (totalAlerts ? 'All three areas clear, with ' + plural(totalAlerts, 'alert') + ' across the mission.' : 'All three areas clear, and not one alert.') + ' Good work, Raiden. Colonel out.', stats: mStats, go: 'PRESS ENTER TO REPLAY' });
     }
   }
   // screens: the DOM state badge stops showing (or blinking) a stale phase, and the alarm

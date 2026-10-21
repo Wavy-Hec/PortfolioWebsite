@@ -164,14 +164,20 @@ function paintTone(ctx, frame, palette, opts) {
   // Contrast (gamma 0.35 = 0%, up to 1.15 = 100%) steepens the tone curve: at 100% the shadows
   // lose their dots and only the light keeps them. 0% leaves the curve exactly as it was.
   const lo = tone.lo ?? 0.04, hi = tone.hi ?? 0.985, g = (tone.curve ?? 1.1) * Math.max(1, (opts.gamma ?? 0.35) / 0.35), sat = tone.sat ?? 0.85;
-  const T = (typeof frame === "string" ? frame : frame.text).split("\n").map((r) => [...r]);
+  // local change 7 (js/ascii/README.md): a sliced still passes its slice record as opts.cache; the frame-wide pass below (every source
+  // cell's brightness and the tone curve's two percentiles) runs on the first slice only and is kept there for the slices after it
+  const tc = opts.cache && opts.cache.tone && opts.cache.tone.frame === frame && opts.cache.tone.cw === cw && opts.cache.tone.ch === ch ? opts.cache.tone : null;
+  let T, rows, cols, vals, keys, text, a, b;
+  if (tc) ({ T, rows, cols, vals, keys, text, a, b } = tc);
+  else {
+  T = (typeof frame === "string" ? frame : frame.text).split("\n").map((r) => [...r]);
   const C = typeof frame === "string" || !frame.color ? null : frame.color.split("\n").map((r) => [...r]);
-  const rows = T.length, cols = T[0] ? T[0].length : 0;
+  rows = T.length; cols = T[0] ? T[0].length : 0;
   const lum = new Map();
   const L = (h) => { if (!h) return 0.88; let v = lum.get(h); if (v === undefined) { const [r, gg, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255); v = 0.2126 * r + 0.7152 * gg + 0.0722 * b; lum.set(h, v); } return v; };
   // brightness of every source cell (glyph ink x colour light); text and line
   // work in non-picture pieces stay as characters unless "all"
-  const vals = new Float32Array(rows * cols), keys = new Array(rows * cols), text = [];
+  vals = new Float32Array(rows * cols); keys = new Array(rows * cols); text = [];
   const pictureLike = opts.all || cw === ch, shade = pictureLike ? null : shadeTester(T);
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
     const gch = T[r][c], k = C && C[r][c], hx = k && k !== " " && palette ? palette[k] : null, i = r * cols + c;
@@ -184,7 +190,9 @@ function paintTone(ctx, frame, palette, opts) {
   const HB = 512, hist = new Uint32Array(HB);
   for (let i = 0; i < vals.length; i++) if (vals[i] >= 0) { hist[Math.min(HB - 1, Math.floor((vals[i] / (vmax || 1)) * HB))]++; n++; }
   const P = (q) => { let acc = 0; const want = q * n; for (let k = 0; k < HB; k++) { acc += hist[k]; if (acc >= want) return ((k + 0.5) / HB) * vmax; } return vmax; };
-  const a = P(lo), b = Math.max(P(hi), a + 1e-4);
+  a = P(lo); b = Math.max(P(hi), a + 1e-4);
+  if (opts.cache) opts.cache.tone = { frame, cw, ch, T, rows, cols, vals, keys, text, a, b };
+  }
   const SIZES = tone.sizes || [0.2, 0.5, 0.85, 1.32];
   const B4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
   // the dot grid: square spacing set by density, sampled from the source cells
@@ -195,7 +203,12 @@ function paintTone(ctx, frame, palette, opts) {
   const stamp = maxRadDev <= 6 && typeof ImageData !== "undefined" && !opts.noStamp; // small dots: write pixels directly
   const dots = stamp ? SIZES.map(() => []) : null;
   // local change 4 (js/ascii/README.md): each grid cell's dot (level, colour), so the next frame re-stamps only the cells that changed
-  const cellLvl = stamp && !opts.over ? new Int8Array(gx * gy).fill(-1) : null, cellFill = cellLvl ? new Array(gx * gy) : null;
+  // local change 6 (js/ascii/README.md): opts.r0 / opts.r1 (source rows) paint one horizontal slice of the frame, so a still piece's one
+  // render can be split across several tasks (js/ascii/player.js). The tone curve still reads the whole frame, so the slices join seamlessly.
+  const sliced = opts.r0 !== undefined || opts.r1 !== undefined;
+  const r0 = Math.max(0, opts.r0 ?? 0), r1 = Math.min(rows, opts.r1 ?? rows);
+  const jA = sliced ? Math.round((gy * r0) / (rows || 1)) : 0, jB = sliced ? Math.round((gy * r1) / (rows || 1)) : gy;
+  const cellLvl = stamp && !opts.over && !sliced ? new Int8Array(gx * gy).fill(-1) : null, cellFill = cellLvl ? new Array(gx * gy) : null;
   const pix = opts.dither ? [] : null; // dither: grid cells switched on by an 8x8 Bayer threshold
   const sample = (fx, fy) => { // bilinear brightness, nearest colour
     const c0 = Math.min(cols - 1, Math.max(0, Math.floor(fx))), r0 = Math.min(rows - 1, Math.max(0, Math.floor(fy)));
@@ -205,7 +218,7 @@ function paintTone(ctx, frame, palette, opts) {
     const ni = Math.min(rows - 1, Math.round(fy)) * cols + Math.min(cols - 1, Math.round(fx));
     return [val, keys[ni] || keys[r0 * cols + c0], vals[ni] < 0 && vals[r0 * cols + c0] < 0];
   };
-  for (let j = 0; j < gy; j++) for (let i = 0; i < gx; i++) {
+  for (let j = jA; j < jB; j++) for (let i = 0; i < gx; i++) {
     const px = (i + 0.5) * sx, py = (j + 0.5) * sy;
     const [v, hx, empty] = density === 1 && cw === ch ? [vals[j * cols + i], keys[j * cols + i], vals[j * cols + i] < 0] : sample(px / cw - 0.5, py / ch - 0.5);
     if (empty || !hx) continue;
@@ -223,12 +236,14 @@ function paintTone(ctx, frame, palette, opts) {
     p.moveTo(x + px + rad, y + py); p.arc(x + px, y + py, rad, 0, Math.PI * 2);
   }
   if (pix) stampPixels(ctx, pix, x, y, sx, sy, dpr, opts.over);
+  else if (stamp && sliced) { const m = maxRadDev + 3; const first = opts.cache ? !opts.cache.stamped : jA === 0; if (opts.cache) opts.cache.stamped = true;   // local change 7: the slice record's first paint clears the buffer, the rest keep it
+    stampDots(ctx, dots, opts.over, { first, y0: (y + jA * sy) * dpr - m, y1: (y + jB * sy) * dpr + m }); }
   else if (stamp && cellLvl) stampTone(ctx, dots, { key: [gx, gy, sx, sy, x, y, dpr, unit, size].join(","), gx, gy, sx, sy, x, y, dpr, cellLvl, cellFill, rads: SIZES.map((v) => 0.5 * unit * size * v * dpr) });
   else if (stamp) stampDots(ctx, dots, opts.over);
   else for (const m of layers) for (const [fill, p] of m) { ctx.fillStyle = fill; ctx.fill(p); } // big dots last, so they merge
   if (text.length) {
     ctx.font = `${cw / CELL_W}px ${FONT}`; ctx.textBaseline = "middle";
-    for (const [r, c, gch, hx] of text) { ctx.fillStyle = (!opts.mono && hx) || opts.ink; ctx.fillText(gch, x + c * cw, y + (r + 0.5) * ch); }
+    for (const [r, c, gch, hx] of text) { if (r < r0 || r >= r1) continue; ctx.fillStyle = (!opts.mono && hx) || opts.ink; ctx.fillText(gch, x + c * cw, y + (r + 0.5) * ch); }
   }
 }
 
@@ -321,9 +336,11 @@ function maskFor(r, fx, fy) {
   m = { R, n, a }; MASKS.set(key, m); return m;
 }
 const rgbOf = (h) => { let v = RGB.get(h); if (!v) { v = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)); RGB.set(h, v); } return v; };
-function stampDots(ctx, layers, over) {
+function stampDots(ctx, layers, over, slice) {
   const cv = ctx.canvas, W = cv.width, H = cv.height;
-  const img = pixelBuffer(ctx, over), d = img.data;
+  // a slice (local change 6) after the first stamps into the buffer the earlier slices filled, and puts back only its own rows
+  const keep = slice && !slice.first && !over && cv._apImg && cv._apImg.width === W && cv._apImg.height === H;
+  const img = keep ? cv._apImg : pixelBuffer(ctx, over), d = img.data;
   for (const L of layers) for (let k = 0; k < L.length; k += 4) {
     const cx = L[k], cy = L[k + 1], bx = Math.floor(cx), by = Math.floor(cy);
     const m = maskFor(L[k + 2], cx - bx - 0.5, cy - by - 0.5), [r, g, b] = rgbOf(L[k + 3]);
@@ -334,6 +351,12 @@ function stampDots(ctx, layers, over) {
         const o = (yy * W + xx) * 4, A = d[o + 3] / 255, na = cov + A * (1 - cov);
         d[o] = (r * cov + d[o] * A * (1 - cov)) / na; d[o + 1] = (g * cov + d[o + 1] * A * (1 - cov)) / na; d[o + 2] = (b * cov + d[o + 2] * A * (1 - cov)) / na; d[o + 3] = na * 255;
       } }
+  }
+  if (slice) {
+    const y0 = Math.max(0, Math.floor(slice.y0)), y1 = Math.min(H, Math.ceil(slice.y1));
+    if (y1 > y0) ctx.putImageData(img, 0, 0, 0, y0, W, y1 - y0);
+    cv._apTone = null; // the next live frame (if any) takes the full path
+    return;
   }
   ctx.putImageData(img, 0, 0);
 }

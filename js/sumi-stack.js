@@ -8,8 +8,11 @@
    (.lit, aria-pressed); the active plate's tag turns full paper (css). On a phone (the captions hidden) a tap also writes that plate's line
    under the drawing (.pl-note, aria-hidden: the buttons' labels carry it). Until layout() has placed the buttons the stack lacks .laid and
    css hides them, so nothing jumps. Reduced motion: already apart, no light, one still frame
-   (hover / focus still brightens the plate by a direct redraw). Draws inside the page's one frame loop at ~30 fps, subscribed only while on screen;
-   every dot is an arc on one of 16 radius-bucketed Path2Ds, so a frame is 16 fills. */
+   (hover / focus still brightens the plate by a direct redraw). Draws inside the page's one frame loop at ~30 fps, subscribed only while on screen, and only on a tick where something changed (the explosion, the light, a hover, a hold): a still stack costs nothing;
+   every dot is an arc on one of 16 radius-bucketed Path2Ds, so a frame is 16 fills (a cached unlit bitmap with only the lit dots redrawn was
+   tried and measured: the light's 3-sigma disc covers most of the plates, so it saved under 10 % and left seams at the disc's rim). Once
+   settled (apart, the light still) the stack leaves the loop altogether; the pointer, focus, a click or a resize wakes it.
+   On a phone or a touch tablet the caption slot under the drawing opens on the top plate's line, that plate held. */
 (() => {
   'use strict';
   const S = window.SUMI;
@@ -18,7 +21,8 @@
   const ctx = canvas.getContext('2d');
   const PAPER = '#e9e7e2', DPR = Math.min(2, devicePixelRatio || 1), FRAME = 1000 / 30;
   const N = 22, GAP = 64, SIGMA = 50, BUCKETS = 16, R0 = 0.55, DR = 0.26;   // dots per plate side, the exploded spacing (design px at 600 wide), the light's sigma (a spot, not a plate-wide brighten), the radius buckets
-  let W = 0, H = 0, k = 1, gap = GAP, cx = 0, hw = 0, hh = 0, yBase = 0, laidOut = false, inView = false, acc = 0, lastCost = 0;
+  let W = 0, H = 0, k = 1, gap = GAP, cx = 0, hw = 0, hh = 0, yBase = 0, laidOut = false, inView = false, acc = 0, lastCost = 0, dirty = true, running = false;
+  const stale = () => { dirty = true; };   // dirty: something the light / explosion does not cover changed (a size, a hover, a hold): draw on the next tick
   let exp = S.REDUCED ? 1 : 0, expT0 = null, exploded = S.REDUCED, hot = -1, pointerIn = false, focused = -1;
   const light = { x: 0, y: 0, a: 0, tx: 0, ty: 0, ta: 0 };
   const held = [false, false, false, false];
@@ -44,11 +48,11 @@
       const nm = b.querySelector('.name'), lh = nm ? parseFloat(getComputedStyle(nm).lineHeight) || 16 : 16;
       b.style.paddingTop = Math.max(0, Math.round(bh / 2 - lh / 2)) + 'px';             // the name's first line (its paper square) sits on the plate's leader; a wrapped line or the caption hangs below
     });
-    laidOut = true; wrap.classList.add('laid');
+    laidOut = true; wrap.classList.add('laid'); stale();
   }
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-    const e = ease(exp), base = Math.max(1.2, Math.min(2.4, 2.1 * k)), lx = light.x, ly = light.y, la = light.a, s2 = 2 * SIGMA * SIGMA * k * k;
+  // every dot of the drawing into c, lit by a light of strength la
+  function dots(c, la) {
+    const e = ease(exp), base = Math.max(1.2, Math.min(2.4, 2.1 * k)), lx = light.x, ly = light.y, s2 = 2 * SIGMA * SIGMA * k * k;
     const paths = []; for (let b = 0; b < BUCKETS; b++) paths.push(new Path2D());
     const dot = (x, y, v, l = 0) => {                                      // v 0..1 -> a radius bucket (the tone is the size); l = the light here, which enlarges the dot up to x1.8 at the centre
       const r = base * (0.22 + 0.78 * (v > 1 ? 1 : v)) * (1 + 0.8 * l), b = Math.min(BUCKETS - 1, Math.max(0, Math.round((r - R0) / DR))), rr = R0 + b * DR, p = paths[b];
@@ -73,19 +77,26 @@
     const top = plateY(3, e) - hh - 26 * k, bot = plateY(0, e) - 2 * k;    // the beam: a dotted vertical through the plates' centres, a bright cap
     for (let y = bot; y > top; y -= 5.5 * k) { const l = lit(cx, y); dot(cx, y, 0.18 + 0.4 * l, l); }
     dot(cx, top, 0.9); dot(cx - 4 * k, top + 3 * k, 0.3); dot(cx + 4 * k, top + 3 * k, 0.3);
-    ctx.fillStyle = PAPER; ctx.globalAlpha = 0.92;
-    for (const p of paths) ctx.fill(p);
-    ctx.globalAlpha = 1;
+    c.fillStyle = PAPER; c.globalAlpha = 0.92;
+    for (const p of paths) c.fill(p);
+    c.globalAlpha = 1;
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    dots(ctx, light.a);
   }
   let steps = 0, lastDt = 0;                                   // dev counters
   function step(dt, now) {
     steps++; lastDt = dt;
-    if (expT0 !== null && exp < 1) { exp = Math.min(1, (now - expT0) / 900); if (exp >= 1 && !exploded) { exploded = true; wrap.classList.add('exploded'); } }
+    if (expT0 !== null && exp < 1) { exp = Math.min(1, (now - expT0) / 900); if (exp >= 1 && !exploded) { exploded = true; dirty = true; wrap.classList.add('exploded'); } }   // dirty: the last frame of the explosion, exactly apart
     const f = 1 - Math.exp(-dt * 10);
     light.x += (light.tx - light.x) * f; light.y += (light.ty - light.y) * f; light.a += (light.ta - light.a) * (1 - Math.exp(-dt * 6));
     if (!inView || !laidOut) return;
     acc += dt * 1000; if (acc < FRAME) return; acc = 0;
-    const c0 = performance.now(); draw(); lastCost = performance.now() - c0;
+    // only when something changes: once apart, with the light settled (always so on a touch screen), the picture holds and costs nothing
+    const moving = exp < 1 || Math.abs(light.a - light.ta) > 0.003 || (light.a > 0.01 && (Math.abs(light.x - light.tx) > 0.3 || Math.abs(light.y - light.ty) > 0.3));
+    if (!moving && !dirty) { if (exp >= 1 && running) { running = false; S.remove(step); } return; }   // settled: off the loop until something wakes it
+    dirty = false; const c0 = performance.now(); draw(); lastCost = performance.now() - c0;
   }
   // the phone's caption slot: the line of the plate last pressed (or, when that one is released, of another still held), one clause a line
   const noteEl = wrap.parentElement && wrap.parentElement.querySelector('.pl-note');
@@ -98,22 +109,34 @@
   }
   // the light follows the pointer over the stack (the buttons sit on it); it fades when the pointer leaves; a focused plate pulls it to its centre
   const rect = () => canvas.getBoundingClientRect();
-  wrap.addEventListener('pointermove', e => { const r = rect(); light.tx = e.clientX - r.left; light.ty = e.clientY - r.top; light.ta = 1; pointerIn = true; }, { passive: true });
-  wrap.addEventListener('pointerleave', () => { pointerIn = false; if (focused < 0) light.ta = 0; });
+  const wake = () => { if (inView && !running && !S.REDUCED) { running = true; S.add(step); } };
+  wrap.addEventListener('pointermove', e => { const r = rect(); light.tx = e.clientX - r.left; light.ty = e.clientY - r.top; light.ta = 1; pointerIn = true; dirty = true; wake(); }, { passive: true });
+  wrap.addEventListener('pointerleave', () => { pointerIn = false; if (focused < 0) light.ta = 0; dirty = true; wake(); });
   btns.forEach(b => {
     const i = +b.dataset.k;
-    const on = () => { hot = i; if (S.REDUCED) draw(); }, off = () => { if (hot === i) hot = -1; if (S.REDUCED) draw(); };
+    const on = () => { hot = i; stale(); wake(); if (S.REDUCED) draw(); }, off = () => { if (hot === i) hot = -1; stale(); wake(); if (S.REDUCED) draw(); };
     b.addEventListener('pointerenter', on); b.addEventListener('pointerleave', off);
-    b.addEventListener('focus', () => { focused = i; on(); light.tx = cx; light.ty = plateY(i, 1); light.ta = 1; if (!exploded) { expT0 = performance.now() - 900; exp = 1; exploded = true; wrap.classList.add('exploded'); inView = true; draw(); } });   // keyboard focus before the stack has exploded: apart at once, so the control is never invisible
-    b.addEventListener('blur', () => { focused = -1; off(); if (!pointerIn) light.ta = 0; });
-    b.addEventListener('click', () => { held[i] = !held[i]; b.classList.toggle('lit', held[i]); b.setAttribute('aria-pressed', held[i] ? 'true' : 'false'); if (held[i]) last = b; note(); if (S.REDUCED) draw(); });
+    b.addEventListener('focus', () => { focused = i; on(); dirty = true; light.tx = cx; light.ty = plateY(i, 1); light.ta = 1; if (!exploded) { expT0 = performance.now() - 900; exp = 1; exploded = true; wrap.classList.add('exploded'); inView = true; draw(); } });   // keyboard focus before the stack has exploded: apart at once, so the control is never invisible
+    b.addEventListener('blur', () => { focused = -1; off(); if (!pointerIn) light.ta = 0; dirty = true; });
+    b.addEventListener('click', () => {
+      // a phone or a touch tablet (the caption slot is shown): single-select, so a tap always shows the tapped plate's line and a second tap never empties the slot
+      if (noteEl && getComputedStyle(noteEl).display !== 'none') {
+        btns.forEach(x => { const j = +x.dataset.k; held[j] = j === i; x.classList.toggle('lit', j === i); x.setAttribute('aria-pressed', j === i ? 'true' : 'false'); });
+        last = b; note(); stale(); wake(); if (S.REDUCED) draw(); return;
+      }
+      held[i] = !held[i]; b.classList.toggle('lit', held[i]); b.setAttribute('aria-pressed', held[i] ? 'true' : 'false'); if (held[i]) last = b; note(); stale(); wake(); if (S.REDUCED) draw(); });
   });
   layout();
+  // a phone or a touch tablet (the caption slot is shown): the slot opens on the top plate's line, that plate held, so it reads as a caption
+  // and a tap on another plate visibly changes it
+  if (noteEl && getComputedStyle(noteEl).display !== 'none') {
+    const b = btns.find(x => x.dataset.k === '3');
+    if (b) { held[3] = true; b.classList.add('lit'); b.setAttribute('aria-pressed', 'true'); last = b; note(); }
+  }
   if (S.REDUCED) { wrap.classList.add('exploded'); light.a = 0; draw(); }
   else {
     draw();
-    // subscribed to the page's loop only while the stack is on screen, so the loop can sleep elsewhere on the page
-    let running = false;
+    // subscribed to the page's loop only while the stack is on screen (and, once settled, only while something moves), so the loop can sleep
     const go = () => setTimeout(() => { expT0 = performance.now(); }, 250);
     const io = new IntersectionObserver(es => {
       inView = es[es.length - 1].isIntersecting;
@@ -122,8 +145,9 @@
     }, { threshold: 0.25 });
     io.observe(wrap);
   }
-  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { layout(); draw(); }, 160); }, { passive: true });
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { layout(); draw(); wake(); }, 160); }, { passive: true });
   // dev (local hosts only): a frame's cost; bench(n); at(e, lx, ly) sets the explosion and the light for screenshots
-  if (S.DEV) S.stack = { cost: () => lastCost, get inView() { return inView; }, get exploded() { return exploded; }, get dev() { return { steps, lastDt }; }, bench(n) { const a = performance.now(); for (let i = 0; i < n; i++) draw(); return ((performance.now() - a) / n).toFixed(2); },
-    at(e, lx, ly, a) { exp = e; if (e >= 1) { exploded = true; wrap.classList.add('exploded'); } if (lx !== undefined) { light.x = light.tx = lx; light.y = light.ty = ly; light.a = light.ta = a === undefined ? 1 : a; } inView = true; draw(); } };
+  if (S.DEV) S.stack = { cost: () => lastCost, get inView() { return inView; }, get exploded() { return exploded; }, get dev() { return { steps, lastDt }; }, bench(n) { const a = performance.now(); for (let i = 0; i < n; i++) draw(); return ((performance.now() - a) / n).toFixed(2); }, get running() { return running; },
+
+    get dirty() { return dirty; }, at(e, lx, ly, a) { exp = e; if (e >= 1) { exploded = true; wrap.classList.add('exploded'); } if (lx !== undefined) { light.x = light.tx = lx; light.y = light.ty = ly; light.a = light.ta = a === undefined ? 1 : a; } inView = true; draw(); } };
 })();

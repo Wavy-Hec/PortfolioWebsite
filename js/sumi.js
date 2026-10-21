@@ -18,12 +18,12 @@
   const subs = [];
   let raf = 0, timer = 0, prev = 0;
   const FRAME_MS = 1000 / 30;
-  const S = window.SUMI = { REDUCED, DEV, add(fn) { subs.push(fn); start(); }, remove(fn) { const i = subs.indexOf(fn); if (i >= 0) subs.splice(i, 1); } };
+  const S = window.SUMI = { REDUCED, DEV, add(fn) { if (!subs.includes(fn)) subs.push(fn); start(); }, remove(fn) { const i = subs.indexOf(fn); if (i >= 0) subs.splice(i, 1); } };
   function loop(now) {
     raf = 0;
     if (!subs.length) return;                                      // nothing animated on screen: the loop sleeps until S.add wakes it
     const dt = Math.min(0.05, (now - prev) / 1000 || 0.016); prev = now;
-    for (const fn of subs) fn(dt, now);
+    for (const fn of subs.slice()) fn(dt, now);                     // a copy: a drawing may unsubscribe itself inside its own tick
     timer = setTimeout(() => { timer = 0; raf = requestAnimationFrame(loop); }, Math.max(0, FRAME_MS - (performance.now() - now)));
   }
   function start() { if (REDUCED || raf || timer || document.hidden || gameOpen()) return; prev = performance.now(); raf = requestAnimationFrame(loop); }
@@ -77,11 +77,12 @@
     const name = el => {
       if (!lazy.has(el.parentElement)) return; lazy.delete(el.parentElement);
       const slug = el.dataset.piece.replace(/[^a-z0-9-]/g, '');
-      engine = engine || Promise.all([import('./ascii/ascii.js?v=11'), import('./ascii/lib/kit.js')]);
+      engine = engine || Promise.all([import('./ascii/ascii.js?v=13'), import('./ascii/lib/kit.js')]);
       Promise.all([engine, import(`./ascii/pieces/${slug}.js`)]).then(() => {
         const go = () => {
           fit();                                                        // sized here, not at parse: reading its width then would pull the page's first layout into this script
           if (STILL || 'still' in el.dataset) el.setAttribute('still', '');   // data-still: a print, drawn once on every screen
+          if (matchMedia('(max-width: 960px)').matches) el.setAttribute('contrast', '12');   // a phone's or a tablet's 5 px cells: a gentler curve, so the pagoda's sky ramps instead of stepping into a seam and the moon bridge keeps its midtones
           else if (el.dataset.fps) el.setAttribute('fps', el.dataset.fps);
           el.setAttribute('piece', el.dataset.piece);
         };
@@ -101,27 +102,42 @@
   })();
 
   /* ---------- the chapter drawings load on approach: the research stack and the Go2 sketch are not in the first view, so their scripts
-     are fetched when their chapter's top comes within 600 px of the screen's foot (or is above it: a link straight to #contact), checked on
-     load, scroll and resize, and in any case 4 s after the page has loaded (so they are there before anyone can reach them); the listeners
-     go once both are in ---------- */
+     are fetched when their chapter comes within 600 px of the screen's foot, seen by one IntersectionObserver (it never forces a layout, so
+     nothing here pulls the page's first layout into this script), and in any case 4 s after the page has loaded (so they are there before
+     anyone can reach them, and a section already above the screen, a link straight to #contact, is caught) ---------- */
   (() => {
     const load = src => { const s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s); };
-    const pending = [['.stack', 'js/sumi-stack.js?v=12'], ['.xray', 'js/sumi-xray.js?v=14']].map(([sel, src]) => [document.querySelector(sel), src]).filter(([el]) => el);
-    let queued = false;
-    function check(all) {
-      queued = false;
-      for (let i = pending.length - 1; i >= 0; i--) if (all === true || pending[i][0].getBoundingClientRect().top < innerHeight + 600) load(pending.splice(i, 1)[0][1]);
-      if (!pending.length) { removeEventListener('scroll', soon); removeEventListener('resize', soon); }
+    const pending = [['.stack', 'js/sumi-stack.js?v=15'], ['.xray', 'js/sumi-xray.js?v=15']].map(([sel, src]) => [document.querySelector(sel), src]).filter(([el]) => el);
+    let io = null;
+    function check() { if (io) io.disconnect(); while (pending.length) load(pending.shift()[1]); }
+    if ('IntersectionObserver' in window) {
+      io = new IntersectionObserver(es => {
+        for (const e of es) if (e.isIntersecting) { const i = pending.findIndex(p => p[0] === e.target); if (i >= 0) { io.unobserve(e.target); load(pending.splice(i, 1)[0][1]); } }
+      }, { rootMargin: '0px 0px 600px 0px' });
+      pending.forEach(([el]) => io.observe(el));
     }
-    function soon() { if (!queued) { queued = true; setTimeout(check, 50); } }
-    addEventListener('scroll', soon, { passive: true });
-    addEventListener('resize', soon, { passive: true });
-    addEventListener('load', () => setTimeout(() => check(true), 4000));
-    check(DEV && q.has('at'));   // dev captures (?at=, with ?stack= / ?xray=) want both at once
+    addEventListener('load', () => setTimeout(check, 4000));
+    if (DEV && q.has('at')) check();   // dev captures (?at=, with ?stack= / ?xray=) want both at once
   })();
 
+  /* ---------- a link to a section (/#research), on a first visit: the smooth scroll aims at where the section was before the web fonts
+     arrived, and the fonts then grow the chapters above it, so it stops short. Once the fonts are in and the scroll has had time to finish,
+     the section is put back at the top, unless the reader has moved in the meantime ---------- */
+  if (location.hash.length > 1 && 'fonts' in document) {
+    let t = null; try { t = document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch (e) {}
+    if (t && t !== document.body) {
+      let moved = false;
+      ['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach(ev => addEventListener(ev, () => { moved = true; }, { once: true, passive: true }));
+      document.fonts.ready.then(() => setTimeout(() => {
+        if (!moved && Math.abs(t.getBoundingClientRect().top) > 4) { try { t.scrollIntoView({ behavior: 'instant', block: 'start' }); } catch (e) { t.scrollIntoView(true); } }
+      }, 1500));
+    }
+  }
+
   /* ---------- the "!" over Raiden: hover or focus on the figure pops the paper plate above his head for 1.2 s, once per hover; silent. Under
-     keyboard focus the plate holds for as long as he has focus (css .figure:focus-visible .alert): it is the figure's focus cue ---------- */
+     keyboard focus the plate holds for as long as he has focus (css .figure:focus-visible .alert): it is the figure's focus cue. On a touch
+     screen only a tap pops it: a swipe that starts on him (he fills most of a phone's first screen) fires pointerenter but never a click, so
+     scrolling from the fold stays silent ---------- */
   (() => {
     const fig = document.querySelector('.hero .figure'), plate = fig && fig.querySelector('.alert');
     if (!fig || !plate) return;
@@ -131,7 +147,9 @@
       plate.classList.remove('on'); void plate.offsetWidth; plate.classList.add('on');
       clearTimeout(t); t = setTimeout(() => plate.classList.remove('on'), 1200);
     }
-    fig.addEventListener('pointerenter', pop);
+    const touchy = e => e.pointerType === 'touch' || matchMedia('(hover: none)').matches;
+    fig.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') pop(); });
+    fig.addEventListener('click', e => { if (touchy(e)) pop(); });   // a tap: the focus it gives pops first; a second tap (pointerleave re-armed it) pops again
     fig.addEventListener('pointerleave', () => { armed = true; });
     fig.addEventListener('focus', pop);
     // the hero clips (css overflow: clip); where clip is unsupported it is overflow: hidden, which the browser still scrolls to bring the
@@ -151,14 +169,19 @@
     if (msg) statusT = setTimeout(() => { el.textContent = msg; }, 50);
   }
   addEventListener('gameclose', () => status(''));
+  // launching: from the dial until the game is open (or its script fails), so a second click or tap inside the beat neither stacks a
+  // second "!" nor rings twice
+  let launching = false, launchT = 0;
+  const landed = () => { launching = false; clearTimeout(launchT); };
+  addEventListener('gameopen', landed);
   function openGame() {
-    if (window.MGSGame) { window.MGSGame.open(); return; }
+    if (window.MGSGame) { window.MGSGame.open(); landed(); return; }
     if (gameScriptRequested) return;
     gameScriptRequested = true;
     const s = document.createElement('script');
-    s.src = 'js/game.js?v=21';                                        // lazy: the game (142 KB) loads on the first call only
-    s.onload = () => { if (window.MGSGame) window.MGSGame.open(); };
-    s.onerror = () => { gameScriptRequested = false; status('Codec link failed. Try again.'); };
+    s.src = 'js/game.js?v=24';                                        // lazy: the game (142 KB) loads on the first call only
+    s.onload = () => { if (window.MGSGame) window.MGSGame.open(); landed(); };
+    s.onerror = () => { gameScriptRequested = false; landed(); status('Codec link failed. Try again.'); };
     document.body.appendChild(s);
   }
   function playCodecRing() {
@@ -175,6 +198,8 @@
     } catch (e) {}
   }
   function launchGame() {
+    if (launching || gameOpen()) return;
+    launching = true; launchT = setTimeout(landed, 10000);              // never stuck: a stalled fetch frees the dial after 10 s
     const alertMark = document.createElement('div');
     alertMark.className = 'mgs-alert';
     alertMark.textContent = '!';

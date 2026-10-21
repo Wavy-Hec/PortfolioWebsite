@@ -1,0 +1,6 @@
+# GitHub Pages builds this repo with Jekyll (there is no .nojekyll). Nothing here uses Jekyll's templating: every page is plain HTML and is
+# copied as it is. This file only keeps the developer tools (tools/: the link-preview card source, the image and résumé builders) and the
+# repo README out of the published site.
+exclude:
+  - tools
+  - README.md

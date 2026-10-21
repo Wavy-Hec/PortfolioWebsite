@@ -312,17 +312,18 @@
     document.documentElement.dataset.foldPerf = `n=${a.length} mean=${mean.toFixed(3)} p95=${p95.toFixed(3)} max=${a[a.length - 1].toFixed(3)} W=${W} H=${H} scale=${scale.toFixed(2)} items=${field.reduce((s, r) => s + r.items.length, 0)}`;
   }
   let ready = false;
-  function setup() {
-    hero.style.setProperty('--sh', scene.clientHeight + 'px');   // phones size Raiden to the scene (css)
-    drawMoon();
-    ready = build();
-    if (!ready) return;
+  const measure = () => hero.style.setProperty('--sh', scene.clientHeight + 'px');   // phones size Raiden to the scene (css)
+  function paintScene() { ready = build(); if (ready) firstGrass(); }
+  function firstGrass() {
     windT = REDUCED ? STILL_T : windT || STILL_T;
     sampleWind(windT);
     placeFog(0);
     drawGrass(windT);
-    if (!probed && !REDUCED) { probed = true; idle(probe); }   // once, after the first frame is up: no readback, no long task at load
+    // once, well after the fade-in (a fresh session's throwaway WebGL context is a ~50 ms task): watch() catches a slow rasteriser
+    // after ~1.5 s anyway, and once it has, the probe is not needed
+    if (!probed && !REDUCED) { probed = true; setTimeout(() => { if (!slow) idle(probe); }, 2000); }
   }
+  function setup() { measure(); drawMoon(); paintScene(); }   // a resize (already its own task, 120 ms after the last change)
   /* no GPU: the grass then costs ~250 ms/s of main thread at full quality. Read the WebGL renderer's name once (a throwaway context, lost at
      once): a software rasteriser (SwiftShader, Microsoft Basic Render Driver, llvmpipe, softpipe) or no WebGL at all means the light mode:
      the grass at .6 scale, the near grass at 15 fps, the far grass still. (v11 timed a pixel readback instead: on a real GPU that readback
@@ -339,8 +340,9 @@
     if (!slow && (r === 'none' || /SwiftShader|Basic Render|llvmpipe|softpipe|Software/i.test(r))) { slow = true; if (build()) drawGrass(windT); }
     if (DEV) { document.documentElement.dataset.foldSlow = slow ? '1' : '0'; document.documentElement.dataset.foldGpu = r; }
   }
-  // the first frame's work is split: the scene in an animation frame, each fog tile in an idle slot (the scene fades in over 1 s, so
-  // nothing visible changes), never one long task at load
+  // the first frame's work is split: the measurement in an animation frame (so Raiden never jumps), the field and the first grass in the
+  // task after it, the moon and each fog tile in an idle slot (the scene fades in over 1 s, so nothing visible changes), never one long
+  // task at load, and the first paint does not wait behind canvases that are still at opacity 0
   const idle = cb => ('requestIdleCallback' in window ? requestIdleCallback(cb, { timeout: 300 }) : setTimeout(cb, 50));
   fogs.forEach(f => idle(() => drawFog(f)));
   // a resize re-lays the scene; setup records the size it laid out, and the observer ignores any call at that size, so it runs once on load
@@ -348,8 +350,15 @@
   const first = () => {
     clearTimeout(rt); rt = 0;
     lastW = scene.clientWidth; lastH = scene.clientHeight;
-    setup();
-    if (DEV && q.has('wind')) { windT = +q.get('wind'); sampleWind(windT); placeFog(0); drawGrass(windT); }   // dev: a composed instant (?wind=<seconds>)
+    measure();
+    setTimeout(() => {                                         // the field in one task, its first grass in the next: two short tasks, not one long one
+      if (!build()) return;
+      setTimeout(() => {
+        ready = true; firstGrass();
+        if (DEV && q.has('wind')) { windT = +q.get('wind'); sampleWind(windT); placeFog(0); drawGrass(windT); }   // dev: a composed instant (?wind=<seconds>)
+      }, 0);
+    }, 0);
+    idle(drawMoon);
   };
   // the stacked layout (<= 960) sizes Raiden to the scene (--sh), whose height follows the words above it. Those words have the same height
   // in the web fonts and in their fallbacks (every line-height is a number and the sub wraps to the same lines: measured at 360-960), so

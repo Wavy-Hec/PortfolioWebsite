@@ -61,6 +61,9 @@
         const drop = left && T.l[1] > 0 && T.l[1] < JOINTS_Y && lx + w > cx - 0.293 * s - 14;   // a tag at the legs' height only; 0.293 m: the front foot's leftmost reach in the trot, 14 px its circle and some air
         el.style.left = lx + 'px'; el.style.top = (cy + (drop ? JOINTS_Y : T.l[1]) * s) + 'px'; el.classList.toggle('l', left);
       });
+      // a near miss reads as an accident in a ruled drawing: any tag within 12 px of the head tag's row takes that row (the IMU); its leader follows (draw reads style.top)
+      const hi = TAGS.findIndex(T => T.k === 'head'), hy = hi >= 0 && tagEls[hi] ? parseFloat(tagEls[hi].style.top) : NaN;
+      if (!isNaN(hy)) tagEls.forEach((el, i) => { if (i !== hi && TAGS[i] && Math.abs(parseFloat(el.style.top) - hy) <= 12) el.style.top = hy + 'px'; });
     } else tagEls.forEach(el => { el.style.left = ''; el.style.top = ''; el.classList.remove('l'); });
     laidOut = true;
   }

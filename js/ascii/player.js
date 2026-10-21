@@ -7,7 +7,7 @@
  */
 
 import { withLook, restyle } from "./glyphs.js";
-import { paint, renderMode, cellAspect, CELL_W, GlyphAtlas } from "./canvas.js?v=9"; // ?v: local cache key
+import { paint, renderMode, cellAspect, CELL_W, GlyphAtlas } from "./canvas.js?v=11"; // ?v: local cache key
 
 const ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;" };
 // Braille and the long diagonals fall back to a wider font than the cell in
@@ -90,28 +90,53 @@ export function play(pre, mod, opts = {}) {
       pre.style.display = "none";
     };
     measure();
-    render = (t) => {
+    // sl (local change 6): one horizontal slice of a still frame ({ r0, r1, last }); the first call builds the frame, sizes and clears
+    // the canvas, and keeps the frame on sl for the slices after it. Local change 7: an empty slice (r0 === r1) paints nothing, so the
+    // head is a task of its own; then an empty slice with sl.prime runs the frame-wide tone pass and clears the pixel buffer (canvas.js,
+    // opts.cache: both ride on sl to the slices after it), so no slice carries those fixed costs
+    render = (t, sl) => {
+      const head = !sl || !sl.f;
       const now = performance.now();
-      if (now - checked > 500) { checked = now; measure(); }
+      if (head && now - checked > 500) { checked = now; measure(); }
       const cw = px * CELL_W, ch = cw * aspect, dpr = Math.min(2, window.devicePixelRatio || 1);
       const k = raw && cw < MERGE_PX ? Math.ceil(MERGE_PX / cw) : 1;
-      const f = k > 1 ? restyle(raw(t), meta.palette, { ...look, merge: k }) : draw(t);
+      const f = !head ? sl.f : k > 1 ? restyle(raw(t), meta.palette, { ...look, merge: k }) : draw(t);
       const W = Math.ceil(meta.cols * cw), H = Math.ceil(meta.rows * ch);
-      if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) {
-        cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-        cv.style.width = W + "px"; cv.style.height = H + "px";
+      if (head) {
+        if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) {
+          cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+          cv.style.width = W + "px"; cv.style.height = H + "px";
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, W, H);
+        if (sl) sl.f = f;
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, W, H);
-      paint(ctx, f, f.palette || meta.palette, { ...look, cw: cw * k, ch: ch * k, mode, ink: color, atlas, dpr });
-      if (opts.onFrame) opts.onFrame(f, t);
+      if (sl && sl.r0 === sl.r1 && !sl.prime) return;
+      paint(ctx, f, f.palette || meta.palette, { ...look, cw: cw * k, ch: ch * k, mode, ink: color, atlas, dpr, ...(sl ? { r0: sl.r0, r1: sl.r1, cache: sl } : {}) });
+      if (opts.onFrame && (!sl || sl.last)) opts.onFrame(f, t);
     };
   }
   // Local change 5 (js/ascii/README.md): a still piece (drawn once) renders in a later task, so the piece's set-up (mod.default()
   // above) and its first paint are two tasks, not one long one (the pagoda at 4x CPU: ~41 ms + ~115 ms instead of ~160 ms).
+  // Local change 6: a halftone-dot still is also painted in SLICES horizontal bands, one idle callback each (the pagoda at 4x CPU: one
+  // ~100-200 ms render became four tasks under ~50 ms each); the frame's own mask fades the band in, so bands landing a few frames apart
+  // do not show. One `gone` guard covers every slice. Local change 7: the head (building the frame, sizing and clearing the canvas) is an
+  // idle task of its own, the frame-wide tone pass and the buffer's clear another, then six slices, so no task is the old long first slice.
   if (reduce || meta.still) {
     let gone = false;
-    (window.requestIdleCallback || ((f) => setTimeout(f, 1)))(() => { if (!gone) render(opts.t0 ?? 0); }, { timeout: 1000 });
+    const idle = (f) => (window.requestIdleCallback ? requestIdleCallback(f, { timeout: 1000 }) : setTimeout(f, 1));
+    const t = opts.t0 ?? 0, SLICES = 6;
+    if (opts.dom || mode !== "circle" || look.invert) { idle(() => { if (!gone) render(t); }); return () => { gone = true; }; }
+    const sl = { f: null }; let i = 0;
+    const next = () => {
+      if (gone) return;
+      sl.r0 = Math.round((meta.rows * i) / SLICES); sl.r1 = Math.round((meta.rows * (i + 1)) / SLICES); sl.last = i === SLICES - 1;
+      render(t, sl);
+      if (++i < SLICES) idle(next);
+    };
+    const prime = () => { if (gone) return; sl.prime = true; render(t, sl); sl.prime = false; idle(next); };
+    idle(() => { if (gone) return; sl.r0 = sl.r1 = 0; sl.last = false; render(t, sl); idle(prime); });
     return () => { gone = true; };
   }
   render(opts.t0 ?? 0);
