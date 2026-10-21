@@ -91,7 +91,7 @@
     if (gameScriptRequested) return;
     gameScriptRequested = true;
     const s = document.createElement('script');
-    s.src = 'js/game.js?v=13';                                        // lazy: the game (126 KB) loads on the first call only
+    s.src = 'js/game.js?v=14';                                        // lazy: the game (142 KB) loads on the first call only
     s.onload = () => { if (window.MGSGame) window.MGSGame.open(); };
     s.onerror = () => { gameScriptRequested = false; status('codec link failed — try again'); };
     document.body.appendChild(s);
