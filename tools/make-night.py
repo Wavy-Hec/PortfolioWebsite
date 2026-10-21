@@ -8,9 +8,9 @@ the fold of index.html (css .hero .figure) and the link-preview card (tools/og-c
 The source, img/ink-raiden.png (the portrait as he drew it, ink on paper), left the shipped tree with the old site: read it from history first,
   git show 1d2e5eb:img/ink-raiden.png > img/ink-raiden.png
 The red petals in the painting are dropped (the page is monochrome); the ink is the sumi ground itself, so only his paper is kept: face, hand,
-hair, the washes. Below 62 % of the plate (inside the grass) his paper dissolves by error diffusion at the plate's own pixel (gone by 84 %), a
-fine stochastic stipple rather than an ordered screen (v11: the Bayer 4x4 read as a checker beside the brush), so his legs sink into the grass
-as a two-colour print, never as a translucent grey (css masks only the shadow plate).
+hair, the washes. Below 60 % of the plate (inside the grass) his paper dissolves like dry brush, whole patches dropping out against a
+blotchy noise field (gone by 72 %; v12: v11's per-pixel stipple read as a screen-door texture), so his legs sink into the grass as a
+two-colour print, never as a translucent grey (css masks only the shadow plate).
 """
 import pathlib
 import random
@@ -74,32 +74,38 @@ def raiden():
     asis = Image.new("P", (w, h), 0)                                       # two colours: 0 clear, 1 paper (the petals are not drawn: no red on the page)
     asis.putpalette([0, 0, 0, *PAPER] + [0] * (768 - 6))
     s_ = asis.load()
-    # v11: the legs dissolve from 62 % down (inside the grass), fastest at first, gone by 84 %: each paper pixel's keep is spread by
-    # Floyd-Steinberg error diffusion (serpentine, a little jitter on the threshold), so the dissolve is a fine stipple with no ordered pattern
-    D0, D1 = 0.62, 0.84
-    err, nxt = [0.0] * (w + 2), [0.0] * (w + 2)
+    # v12: the legs dissolve like dry brush, not a stipple (the owner read v11's per-pixel error diffusion as a screen-door texture):
+    # from 60 % down his paper is kept where a blotchy noise field (9 px cells, smoothed) is under a falling threshold, so whole patches
+    # of stroke drop out with ragged edges, gone by 72 %; specks left smaller than 14 px in that zone are cleared. Below, his shadow
+    # plate (css: dark to 80 %, out by 90 %) carries his legs down into the grass as a dark silhouette.
+    D0, D1 = 0.60, 0.72
+    blot = _noise(w, h, 31, 64, 9, 9).filter(ImageFilter.GaussianBlur(3)).load()
     for y in range(h):
         v = y / h
-        keep = max(0.0, 1.0 - (v - D0) / (D1 - D0)) ** 1.8 if v > D0 else 1.0
-        xs = range(w) if y % 2 == 0 else range(w - 1, -1, -1)
-        dx = 1 if y % 2 == 0 else -1
-        for x in xs:
+        t = 0.0 if v <= D0 else min(1.0, (v - D0) / (D1 - D0))
+        keep = 1.0 - smooth(t)
+        for x in range(w):
             r, g, b, a = p[x, y]
             if a < 8 or not (pp[x, y] and dens[x, y] >= 77 and insp[x, y] >= 128):
                 continue
-            if keep >= 1.0:
+            if keep >= 1.0 or (keep > 0.0 and blot[x, y] / 255 < keep):
                 s_[x, y] = 1
+    y_lo = int(D0 * h) - 4
+    seen = set()
+    for y0 in range(y_lo, h):
+        for x0 in range(w):
+            if s_[x0, y0] != 1 or (x0, y0) in seen:
                 continue
-            val = keep + err[x + 1]
-            on = val > 0.5 + (grit.random() - .5) * .2
-            if on:
-                s_[x, y] = 1
-            e = val - (1.0 if on else 0.0)
-            err[x + 1 + dx] += e * 7 / 16
-            nxt[x + 1 - dx] += e * 3 / 16
-            nxt[x + 1] += e * 5 / 16
-            nxt[x + 1 + dx] += e * 1 / 16
-        err, nxt = nxt, [0.0] * (w + 2)
+            comp, stack = [], [(x0, y0)]
+            seen.add((x0, y0))
+            while stack:
+                x, y = stack.pop(); comp.append((x, y))
+                for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                    if 0 <= nx < w and y_lo <= ny < h and s_[nx, ny] == 1 and (nx, ny) not in seen:
+                        seen.add((nx, ny)); stack.append((nx, ny))
+            if len(comp) < 14:
+                for x, y in comp:
+                    s_[x, y] = 0
     # the cutout leaves specks of the painting's dither above the hair and beside the sword: clear the top 30 rows and the margins above row 66
     for y in range(66):
         for x in range(w):

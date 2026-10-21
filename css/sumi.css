@@ -92,10 +92,10 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
    never a translucent grey); his shadow runs on under it to 80 % and fades out by 90 %, so his legs sink into dark grass */
 .hero .figure img:first-child { -webkit-mask-image: linear-gradient(#000 80%, transparent 90%); mask-image: linear-gradient(#000 80%, transparent 90%) }
 .hero .figure:focus-visible { outline: none }
-/* the "!" over his head: a paper plate, popped by hover / focus on the figure for 1.2 s (js/sumi.js adds .on); silent. It sits in the air between
-   the fold's top and his hair (his ink starts 5.9 % down the plate), right of the moon's top (56 % across: never over its limb), never closer than 24 px to the nav's rule (the figure's box starts
-   F - fh - fb below it) */
-.hero .alert { position: absolute; z-index: 3; left: 56%; top: max(calc(var(--fh) * .059 - 1.12em - 18px), calc(24px + var(--fh) + var(--fb) - var(--F))); transform: translateX(-50%); font: 700 clamp(2.4rem, calc(var(--F) * .052), 6rem)/1 var(--mono); color: var(--paper); background: var(--sumi); border: 3px solid var(--paper); padding: .06em .28em; opacity: 0; pointer-events: none }
+/* the "!" over his head: a paper plate, popped by hover / focus on the figure for 1.2 s (js/sumi.js adds .on); silent. It sits right over
+   his crown, the MGS alert: centred on the highest point of his hair (52 % across his plate, 8 % down) with its foot 8 px above it, so
+   it reads as his, not as a badge by the nav; never closer than 24 px to the nav's rule (the figure's box starts F - fh - fb below it) */
+.hero .alert { position: absolute; z-index: 3; left: 52%; top: max(calc(var(--fh) * .08 - 1.12em - 16px), calc(24px + var(--fh) + var(--fb) - var(--F))); transform: translateX(-50%); font: 700 clamp(2.4rem, calc(var(--F) * .052), 6rem)/1 var(--mono); color: var(--paper); background: var(--sumi); border: 4px solid var(--paper); padding: .06em .28em; opacity: 0; pointer-events: none }
 .hero .alert.on { animation: alertPop .15s ease-out both, alertFade .3s ease-in .9s forwards }
 .hero .figure:focus-visible .alert { opacity: 1; animation: alertPop .15s ease-out both }   /* keyboard focus: the plate holds while he has it (WCAG 2.4.7), still silent */
 @keyframes alertPop { from { transform: translateX(-50%) scale(.4); opacity: 0 } to { transform: translateX(-50%) scale(1); opacity: 1 } }
@@ -344,7 +344,7 @@ body.game-open ascii-art { display: none }   /* under the codec call / the game:
   .hero h1 { font-size: clamp(40px, 6.4vw, 60px) }
   .hero .sub { font-size: 16px; margin-top: 30px }
   .scene { position: relative; inset: auto; flex: 1 0 auto; min-height: 420px; margin: 8px calc(-1 * var(--gutter)) 0 }   /* Raiden is sized to the scene (--sh, its height, set by js/sumi-fold.js): he fills what the words leave of the fold */
-  .hero .alert { top: calc(var(--fh) * .059 - 1.12em - 18px); font-size: 3rem; border-width: 2px }   /* the scene is in flow under the words: its top is not the rule */
+  .hero .alert { top: calc(var(--fh) * .08 - 1.12em - 14px); font-size: 3rem; border-width: 3px }   /* the scene is in flow under the words: its top is not the rule */
 }
 /* 721-960 only: Raiden up to 900 px and his right edge on the viewport's, the grass higher, so the band left of him is not bare */
 @media (min-width: 721px) and (max-width: 960px) { .hero { --fh: min(calc((var(--sh, var(--sh0)) - 24px) * 1.25), calc(100vw * 1.55), 900px); --fl: calc(100% - var(--fw) * 1.08); --gh: 42% } }
