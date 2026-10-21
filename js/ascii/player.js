@@ -127,7 +127,7 @@ export function play(pre, mod, opts = {}) {
       render(elapsed);
     }
     const wait = step - (performance.now() - last);
-    if (wait > 24) timer = setTimeout(wake, wait - 12);
+    if (wait > 24) timer = setTimeout(wake, Math.max(0, wait - 4)); // local: wake just short of the step, so one rAF lands past it (one wake per redraw, not two or three)
     else raf = requestAnimationFrame(loop);
   };
   let io;

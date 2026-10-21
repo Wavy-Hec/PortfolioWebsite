@@ -2047,7 +2047,7 @@
 
   // title + briefings: a codec call from the Colonel on 140.85 — Raiden (the site's
   // own ink, masked steel blue) on the left, the Colonel's breaking-up signal on the right
-  function startTitle() { state = 'title'; loadLevel(0); render(); showScreen({ cls: 'title', caller: 'INCOMING CALL', title: 'BIG SHELL', who: 'COLONEL', freq: '140.85', body: 'Raiden, this is the Colonel. The Big Shell is in enemy hands. Three areas: get the intel, reach the exit, stay out of sight.', sub: '', go: 'PRESS ENTER' }); }
+  function startTitle() { state = 'title'; loadLevel(0); render(); showScreen({ cls: 'title', caller: 'INCOMING CALL', title: 'BIG SHELL', who: 'COLONEL', freq: '140.85', body: 'Raiden, this is the Colonel. The Big Shell is in enemy hands. Three areas. In each one: get the intel, reach the exit, stay out of sight.', sub: '', go: 'PRESS ENTER' }); }
   function startBriefing() {
     state = 'briefing'; loadLevel(levelIdx); render();
     var pb = bestFor('op' + (levelIdx + 1));   // personal best line — omitted until an op is cleared once

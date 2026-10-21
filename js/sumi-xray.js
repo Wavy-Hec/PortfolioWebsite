@@ -25,12 +25,13 @@
   // a part that moves, so the leader stays on it while the robot trots), the label's place in metres from the figure's centre (desktop): for a
   // tag on the left (side 'l', its square at its right end) l[0] is where that square sits; for one on the right, its left edge
   const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-  const TAGS = [
-    { k: 'joints', side: 'l', a: p => p.RL.knee, l: [0.31, 0.43] },                                   // 12 joint motors (two lines, css .l2): under the ground line below the rear legs, its leader rising to the rear near knee right of both calves; nothing it names is crossed by its letters, at any width (right of the knee it ran out of room under ~1280 and was clamped onto the thigh)
-    { k: 'lengths', side: 'l', a: p => mid(p.FL.thigh, p.FL.knee), l: [-0.42, 0.27] },   // thigh / calf: the front near leg's thigh, at its middle
-    { k: 'imu', side: 'r', a: [0.02, -0.01], l: [0.1, -0.2] },                              // the trunk's centre
+  const TAGS = [                                                              // in on-screen reading order, head to feet (keyboard focus follows it)
     { k: 'head', side: 'l', a: [-BODY_L / 2 - 0.05, -0.04], l: [-0.4, -0.19] },             // the head block: the LiDAR and the camera
+    { k: 'imu', side: 'r', a: [0.02, -0.01], l: [0.1, -0.2] },                              // the trunk's centre
+    { k: 'lengths', side: 'l', a: p => mid(p.FL.thigh, p.FL.knee), l: [-0.42, 0.27] },   // thigh / calf: the front near leg's thigh, at its middle
+    { k: 'joints', side: 'l', a: p => p.RL.knee, l: [0.31, 0.43] },                                   // 12 joint motors (two lines, css .l2): under the ground line below the rear legs, its leader rising to the rear near knee right of both calves; nothing it names is crossed by its letters, at any width (right of the knee it ran out of room under ~1280 and was clamped onto the thigh)
   ];
+  const JOINTS_Y = TAGS.find(T => T.k === 'joints').l[1];                    // the row under the ground line
   const tagEls = [...wrap.querySelectorAll('.tag')];
   let W = 0, H = 0, s = 0, cx = 0, cy = 0, narrow = false, laidOut = false, inView = false, acc = 0, lastCost = 0;
   let t0 = null, phase = 0, walk = 0, resolved = S.REDUCED;
@@ -52,8 +53,8 @@
         const lx = clamp(cx + T.l[0] * s - (left ? w : 0), 8, maxX);
         // a left tag pushed right by the band's edge (721-1023) would put its square inside the front foot's swing (to 0.293 m left of the
         // centre): it drops to the joints tag's row under the ground line instead, its leader rising to its part; at 1024 and up nothing changes
-        const drop = innerWidth < 1024 && left && T.l[1] > 0 && T.l[1] < TAGS[0].l[1] && lx + w > cx - 0.293 * s - 14;   // a tag at the legs' height only; 0.293 m: the front foot's leftmost reach in the trot, 14 px its circle and some air
-        el.style.left = lx + 'px'; el.style.top = (cy + (drop ? TAGS[0].l[1] : T.l[1]) * s) + 'px'; el.classList.toggle('l', left);
+        const drop = innerWidth < 1024 && left && T.l[1] > 0 && T.l[1] < JOINTS_Y && lx + w > cx - 0.293 * s - 14;   // a tag at the legs' height only; 0.293 m: the front foot's leftmost reach in the trot, 14 px its circle and some air
+        el.style.left = lx + 'px'; el.style.top = (cy + (drop ? JOINTS_Y : T.l[1]) * s) + 'px'; el.classList.toggle('l', left);
       });
     } else tagEls.forEach(el => { el.style.left = ''; el.style.top = ''; el.classList.remove('l'); });
     laidOut = true;
@@ -214,6 +215,6 @@
     }, { threshold: 0.15 }).observe(wrap);
   }
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { layout(); S.REDUCED ? still() : draw(performance.now()); }, 150); }, { passive: true });
-  // dev: a frame's cost; at(sec) jumps the resolve clock for screenshots
-  S.xray = { cost: () => lastCost, bench(n) { const a = performance.now(); for (let i = 0; i < n; i++) draw(performance.now()); return ((performance.now() - a) / n).toFixed(2); }, at(sec) { t0 = performance.now() - sec * 1000; inView = true; walk = ease((sec - 1.2) / 1.0); draw(performance.now()); if (sec > 1.5) wrap.classList.add('resolved'); } };
+  // dev (local hosts only): a frame's cost; at(sec) jumps the resolve clock for screenshots
+  if (S.DEV) S.xray = { cost: () => lastCost, bench(n) { const a = performance.now(); for (let i = 0; i < n; i++) draw(performance.now()); return ((performance.now() - a) / n).toFixed(2); }, at(sec) { t0 = performance.now() - sec * 1000; inView = true; walk = ease((sec - 1.2) / 1.0); draw(performance.now()); if (sec > 1.5) wrap.classList.add('resolved'); } };
 })();

@@ -1,4 +1,4 @@
-/* SUMI v10 — the fold's weather. One wind: gusts that roll across the field from left to right bend the pampas, and the same wind drifts
+/* SUMI v11 — the fold's weather. One wind: gusts that roll across the field from left to right bend the pampas, and the same wind drifts
    the fog, each layer at its own pace (a wisp crosses the fold in 42-90 s). The moon is drawn once. Everything here is procedural: no
    images, no glyphs, no libraries. Back to front (css places the layers, .scene in index.html): the moon (a halftone disc, drawn once), the
    far fog, Raiden, the far grass, the fog bank, the near grass, the ground fog.
@@ -40,7 +40,7 @@
   /* ---------- the moon (v10): printed by the same hand as Raiden. His plate (img/raiden-night.png) is a 2-colour plate, paper dots on the
      night through a Bayer 4x4 screen at one plate pixel; the moon is drawn through the same screen at the same pitch (its canvas has one pixel
      per plate pixel and css scales both alike), in the same paper: one flat level, 6 of 16 dots (a regular printed screen, about two fifths
-     of paper, so his lit hair outranks it), no seas, no halo. The limb is the disc's own edge, crisp, pressed a little out of true (a seeded
+     of paper, so his lit hair outranks it; v11: falling off toward the limb and under four soft seas), no halo. The limb is the disc's own edge, feathered over its last 4 %, pressed a little out of true (a seeded
      wobble of under a dot, as a hand-cut screen would be). It sits behind his head on the lit side, his face and wind-blown hair crossing it,
      clear of the ink block behind his back (tools/make-night.py keeps his shadow off the disc). Drawn once (and on resize). ---------- */
   const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
@@ -56,10 +56,19 @@
     const c = N / 2, R = N / 2 - 1;
     const r0 = rng(1985), ph = [r0() * TAU, r0() * TAU, r0() * TAU];
     const wob = a => .7 * (.55 * Math.sin(3 * a + ph[0]) + .3 * Math.sin(5 * a + ph[1]) + .15 * Math.sin(8 * a + ph[2]));   // the limb, +-.7 dot
+    // v11: the disc has tone. The screen's level (7.5 of 16 where it is brightest) falls off toward the limb (1 - .45 r^2, limb
+    // darkening), dips under four wide soft seas (Gaussians at fixed places, up to -38 %: the highlands read as a lit crescent on his
+    // side), and fades to nothing over the outer 4 % of the radius, so the limb is a printed edge, not a cut sticker. A seeded jitter
+    // (+-.45 of a level) on the threshold frays the steps between levels. Still drawn once, so it costs nothing per frame.
+    const SEAS = [[-.28, -.22, .30, 1], [.22, -.02, .22, .8], [.02, .34, .2, .7], [-.4, .28, .14, .55]];
+    const jit = (x, y) => { let h = Math.imul(x * 374761393 + y * 668265263, 1274126177) >>> 0; h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0; return (h & 1023) / 1023 - .5; };
     for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
       const dx = x + .5 - c, dy = y + .5 - c, d = Math.hypot(dx, dy);
       if (d > R + 1 || (d > R - 1 && d > R + wob(Math.atan2(dy, dx)))) continue;   // the wobble (+-.7) is looked up only in the limb's 2 px ring
-      if (BAYER[(y & 3) * 4 + (x & 3)] < 6) { const i = (y * N + x) * 4; px[i] = 233; px[i + 1] = 231; px[i + 2] = 226; px[i + 3] = 255; }
+      const u = dx / R, v = dy / R, r2 = u * u + v * v;
+      let sea = 0; for (const [sx, sy, sg, w] of SEAS) sea += w * Math.exp(-((u - sx) * (u - sx) + (v - sy) * (v - sy)) / (2 * sg * sg));
+      const level = 7.5 * (1 - .45 * r2) * (1 - .38 * Math.min(1, sea)) * smooth(R, R * .96, d) + .9 * jit(x, y);
+      if (BAYER[(y & 3) * 4 + (x & 3)] + .5 < level) { const i = (y * N + x) * 4; px[i] = 233; px[i + 1] = 231; px[i + 2] = 226; px[i + 3] = 255; }
     }
     g.putImageData(im, 0, 0);
   }
@@ -113,14 +122,14 @@
     { d: .64, cv: 1, sp: 30 }, { d: .83, cv: 1, sp: 40 }, { d: 1, cv: 1, sp: 54 },
   ];
   const LIGHT = [.42, .62, .85, 1.08];                        // the plumes' four light levels: the fog's value away from him, lit only round his legs
-  let W = 0, H = 0, scale = 1, field = [], moonX = 0;
+  let W = 0, H = 0, scale = 1, field = [], moonX = 0, slow = false, probed = false, tickN = 0;
   const GRID = 64; const windGrid = new Float32Array(GRID + 2);
   function build() {
     const box = cvs[0].getBoundingClientRect(), sb = scene.getBoundingClientRect();
     W = Math.round(box.width); H = Math.round(box.height);
     if (!W || !H) return false;
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    scale = Math.min(dpr, Math.sqrt(1.2e6 / (W * H)));        // the grass renders at most ~1.2 Mpx per canvas
+    scale = Math.min(dpr, Math.sqrt(1.2e6 / (W * H))) * (slow ? .6 : 1);   // the grass renders at most ~1.2 Mpx per canvas (less on a software rasteriser)
     for (const c of cvs) { c.width = Math.round(W * scale); c.height = Math.round(H * scale); }
     moonX = W * .75;
     if (moonC) { const mb = moonC.getBoundingClientRect(); moonX = mb.left + mb.width / 2 - sb.left; }
@@ -211,10 +220,11 @@
   }
   const windAt = x => { const f = Math.min(GRID, Math.max(0, x / W * GRID)), i = f | 0; return windGrid[i] + (windGrid[i + 1] - windGrid[i]) * (f - i); };
 
-  function drawGrass(t) {
+  function drawGrass(t, which = 3) {                          // which: a bit mask of the canvases to redraw (1 the far, 2 the near)
     const g0 = cvs[0].getContext('2d'), g1 = cvs[1].getContext('2d');
-    for (const g of [g0, g1]) { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, g.canvas.width, g.canvas.height); g.setTransform(scale, 0, 0, scale, 0, 0); g.lineCap = 'round'; }
+    for (const g of [g0, g1]) { if (!(which & (g === g0 ? 1 : 2))) continue; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, g.canvas.width, g.canvas.height); g.setTransform(scale, 0, 0, scale, 0, 0); g.lineCap = 'round'; }
     for (const row of field) {
+      if (!(which & (row.cv ? 2 : 1))) continue;
       const g = row.cv ? g1 : g0;
       const body = LIGHT.map(() => new Path2D()), dark = new Path2D(), plumes = LIGHT.map(() => new Path2D()), tufts = LIGHT.map(() => new Path2D()), darkPl = new Path2D();
       const reach = .55 + .45 * row.d;
@@ -274,7 +284,8 @@
     push *= Math.exp(-dt / .9);
     sampleWind(windT);
     placeFog(dt * (.75 + .5 * meanWind));
-    drawGrass(windT);
+    if (!slow) drawGrass(windT);
+    else if (tickN++ & 1) drawGrass(windT, 2);                 // a software rasteriser: the near grass at 15 fps, the far grass still
     if (perf) { perf.push(performance.now() - t0); if (perf.length % 60 === 0) report(); }
   }
   function report() {
@@ -293,14 +304,26 @@
     sampleWind(windT);
     placeFog(0);
     drawGrass(windT);
+    if (!probed && !REDUCED) {                                 // once: time a 1 px readback of the near grass, which waits for its raster. Without a GPU
+      probed = true;                                           // (a software rasteriser) that is several ms, and the grass then costs ~250 ms/s of main thread
+      const t0 = performance.now(); cvs[1].getContext('2d').getImageData(0, 0, 1, 1);
+      if (performance.now() - t0 > 4) { slow = true; build(); drawGrass(windT); }
+      if (DEV) document.documentElement.dataset.foldSlow = slow ? '1' : '0';
+    }
   }
-  fogs.forEach(drawFog);
-  setup();
-  if (DEV && q.has('wind')) { windT = +q.get('wind'); sampleWind(windT); placeFog(0); drawGrass(windT); }   // dev: a composed instant (?wind=<seconds>)
+  // the first frame's work is split: the scene in the next animation frame, each fog tile in an idle slot (the scene fades in over 1 s, so
+  // nothing visible changes), never one long task at load
+  const idle = cb => ('requestIdleCallback' in window ? requestIdleCallback(cb, { timeout: 300 }) : setTimeout(cb, 50));
+  fogs.forEach(f => idle(() => drawFog(f)));
+  requestAnimationFrame(() => {
+    setup();
+    if (DEV && q.has('wind')) { windT = +q.get('wind'); sampleWind(windT); placeFog(0); drawGrass(windT); }   // dev: a composed instant (?wind=<seconds>)
+  });
   // a resize re-lays the scene; the observer's first call (on observe) and any call at an unchanged size do nothing, so setup runs once on load
-  let rt = 0, lastW = scene.clientWidth, lastH = scene.clientHeight;
+  let rt = 0, lastW = -1, lastH = -1;                          // (not read here: a layout read at parse would force the page's first layout)
   new ResizeObserver(() => {
     const w = scene.clientWidth, h = scene.clientHeight;
+    if (lastW < 0) { lastW = w; lastH = h; return; }
     if (w === lastW && h === lastH) return;
     lastW = w; lastH = h; clearTimeout(rt); rt = setTimeout(setup, 120);
   }).observe(scene);

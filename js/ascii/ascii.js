@@ -15,7 +15,7 @@
  * (redraw text and line work in the look too, not only shading); fps (local:
  * a frame-rate cap, read at start).
  */
-import { play } from "./player.js?v=9"; // ?v: local cache key (js/ascii/README.md)
+import { play } from "./player.js?v=10"; // ?v: local cache key (js/ascii/README.md)
 
 // Pieces sit next to this file on ascii-magic.com (/ascii/ascii.js, /ascii/pieces/) and one
 // folder up in the npm package (runtime/ascii.js, pieces/), so self-hosting the package works too.

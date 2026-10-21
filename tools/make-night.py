@@ -254,6 +254,7 @@ def shade(plate):
     m = [1 if y < cut and (hull[y * w + x] or body[x, y]) else 0 for y in range(h) for x in range(w)]
     fill_holes(m, w, h, 900)                                                # the painting's small paper flecks the plate dropped: ink, not moon
     m = tear(m, plate, w, h)
+    m = close_notch(m, plate, w, h)
     m = off_moon(m, plate, w, h)
     a = Image.new("L", (w, h), 0)
     a.putdata([v * 255 for v in m])
@@ -303,6 +304,30 @@ def tear(m, plate, w, h):
             B = TEAR * k * (0.5 + lp[x, y] / 255.0)
             if B >= 1.5 and din[i] / 3.0 <= B * (0.12 + 0.88 * fp[x, y] / 255.0):
                 out[i] = 0
+    return out
+
+
+# v11: the notch under his sleeve. Between the end of his sleeve and his ribs both plates were clear, a 65 px slot rising to the fist, so
+# the lit fog showed through his figure as a flat grey thumb. NOTCH (hand-set, like BODY's top) spans that slot from the fist down to the
+# sleeve's end, its foot a broken line from the sleeve's tip to his side; inside it every clear pixel becomes shadow. Below it the gap
+# stays open: the air under his arm.
+NOTCH = [(118, 520), (205, 520), (205, 648), (194, 652), (183, 661), (170, 668), (157, 664), (143, 670), (131, 663), (122, 640)]
+
+
+def close_notch(m, plate, w, h):
+    region = Image.new("L", (w * 4, h * 4), 0)
+    ImageDraw.Draw(region).polygon([(x * 4, y * 4) for x, y in NOTCH], fill=255)
+    rp = region.resize((w, h), Image.BOX).load()
+    pl = plate.load()
+    out = list(m)
+    n = 0
+    for y in range(500, 700):
+        for x in range(100, 220):
+            i = y * w + x
+            if rp[x, y] >= 128 and not out[i] and not pl[x, y]:
+                out[i] = 1
+                n += 1
+    print("close_notch: filled", n, "px")
     return out
 
 

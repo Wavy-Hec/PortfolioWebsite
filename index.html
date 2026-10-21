@@ -33,10 +33,10 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&family=Share+Tech+Mono&display=swap"></noscript>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&text=%E4%B8%80%E4%BA%8C%E4%B8%89%E5%9B%9B&display=swap">
-  <link rel="stylesheet" href="css/sumi.css?v=13">
+  <link rel="stylesheet" href="css/sumi.css?v=14">
   <!-- js/sumi.js loads the two chapter drawings (js/sumi-stack.js, js/sumi-xray.js) when their chapter comes within 600 px of the screen, or 4 s after load at the latest -->
-  <script src="js/sumi.js?v=11" defer></script>
-  <script src="js/sumi-fold.js?v=13" defer></script>
+  <script src="js/sumi.js?v=14" defer></script>
+  <script src="js/sumi-fold.js?v=14" defer></script>
   <!-- the halftone engine (a self-hosted copy of ascii-magic, js/ascii/README.md) draws the page's one <ascii-art> piece, the autumn pagoda after About: js/sumi.js imports the engine and names the piece only when the band nears the screen, so none of it is part of the first view. Nothing loads from ascii-magic.com. -->
   <script type="application/ld+json">
   {
@@ -82,14 +82,14 @@
     <section class="hero" aria-labelledby="h1">
       <div class="copy">
         <h1 id="h1"><span class="l">Teaching robots</span> <span class="l">to move, and to see.</span></h1>
-        <p class="sub">Hector Lugo — M.S. Computer Science at UTRGV. Reinforcement learning, computer vision, and vision-language models for robotics.</p>
+        <p class="sub">Hector Lugo. M.S. Computer Science, UTRGV. Reinforcement learning, computer vision, and vision-language models for robotics.</p>
         <a class="link cta" href="mailto:hlugo576@gmail.com">Get in touch →</a>
       </div>
       <div class="scene">
         <canvas class="moon" aria-hidden="true"></canvas>
         <div class="fog f-back" data-period="90" data-seed="3" aria-hidden="true"><canvas></canvas></div>
         <figure class="figure" tabindex="0" role="img" aria-label="Raiden, ink illustration by Yoji Shinkawa, standing in tall grass and fog under a full moon">
-          <img src="img/raiden-shade.png?v=12" width="640" height="1016" decoding="async" alt="">
+          <img src="img/raiden-shade.png?v=13" width="640" height="1016" decoding="async" alt="">
           <img src="img/raiden-night.png?v=12" width="640" height="1016" loading="eager" fetchpriority="high" decoding="async" alt="">
           <span class="alert" aria-hidden="true">!</span>
         </figure>
@@ -128,10 +128,10 @@
             </div>
           </li>
           <li class="feat">
-            <img src="img/proj-yolo-ink.png" srcset="img/proj-yolo-ink.png 640w, img/proj-yolo-ink-2x.png 1280w" sizes="(max-width: 720px) calc(100vw - 32px), (max-width: 1099px) 960px, 540px" width="640" height="360" loading="lazy" decoding="async" alt="Ink drawing: cars in tracking boxes at a road junction">
+            <img src="img/proj-yolo-ink.png?v=2" srcset="img/proj-yolo-ink.png?v=2 640w, img/proj-yolo-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) calc(100vw - 32px), (max-width: 1099px) 960px, 540px" width="640" height="360" loading="lazy" decoding="async" alt="Ink drawing: cars in tracking boxes on a road, a counting line across it">
             <div>
               <p class="kicker mono"><span class="n">03</span>YOLO11 · ByteTrack · Docker · Computer Vision</p>
-              <h3>FlowCount — Real-Time Traffic Analytics</h3>
+              <h3>FlowCount: Real-Time Traffic Analytics</h3>
               <p>YOLO11 detections feed a ByteTrack-style tracker (Kalman filter + Hungarian matching) for line counts, wrong-way alerts, zone occupancy, and heatmaps from webcam, video, or RTSP input. Web dashboard, Docker deploy, CI.</p>
               <p class="links"><a class="link" href="https://github.com/Wavy-Hec/ObjectDetection" rel="noopener">GitHub ↗</a></p>
             </div>
@@ -139,13 +139,13 @@
         </ol>
 
         <ol class="rows" start="4">
-          <li><span class="idx">04</span><img class="thumb" src="img/proj-rl-isaaclab-ink.png" srcset="img/proj-rl-isaaclab-ink.png 640w, img/proj-rl-isaaclab-ink-2x.png 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt=""><div><p class="t">RL Isaac Lab Framework</p><p class="d">My fork of Isaac Lab for robotic simulation and training: multi-agent systems and legged locomotion in physics-based environments, with LocoMuJoCo for imitation and benchmarking.</p><p class="links"><a class="link" href="https://github.com/Wavy-Hec/RL_IsaacLab" rel="noopener">GitHub ↗</a></p></div></li>
-          <li><span class="idx">05</span><img class="thumb" src="img/proj-fft-denoise-ink.png" srcset="img/proj-fft-denoise-ink.png 640w, img/proj-fft-denoise-ink-2x.png 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt=""><div><p class="t">Signal Denoising — Idaho National Laboratory</p><p class="d">A ResNet autoencoder denoises smart-grid sensor signals for anomaly detection, with signal preprocessing and parallel computing that cut training time by over 93% (30 days → 1–2 days).</p></div></li>
-          <li><span class="idx">06</span><img class="thumb" src="img/proj-rl-compression-ink.png" srcset="img/proj-rl-compression-ink.png 640w, img/proj-rl-compression-ink-2x.png 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt=""><div><p class="t">Senior Project — Autoencoder State Compression for RL</p><p class="d">Compressing the observations a PPO agent sees with an autoencoder, and measuring how compression affects RL performance, for efficient deployment in resource-constrained environments.</p><p class="links"><a class="link" href="https://github.com/Wavy-Hec/Senior_AEproject" rel="noopener">GitHub ↗</a></p></div></li>
-          <li><span class="idx">07</span><img class="thumb" src="img/proj-railway-ink.png" srcset="img/proj-railway-ink.png 640w, img/proj-railway-ink-2x.png 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt=""><div><p class="t">UC Riverside — Railway Crossing Accidents</p><p class="d">Summer 2023 at UC Riverside — spectral clustering applied to USDOT railway crossing accident records, published at ASME JRC 2024.</p><p class="links"><a class="link" href="https://github.com/Wavy-Hec/railway-accident-clustering" rel="noopener">GitHub ↗</a></p></div></li>
-          <li><span class="idx">08</span><img class="thumb" src="img/proj-chemo-ink.png" srcset="img/proj-chemo-ink.png 640w, img/proj-chemo-ink-2x.png 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt=""><div><p class="t">Personalized Chemotherapy Dosing</p><p class="d">A Decision Transformer learns personalized dosing from offline patient data — treatment planning framed as offline RL, published at ICICT 2025.</p><p class="links"><a class="link" href="https://link.springer.com/chapter/10.1007/978-981-96-6429-0_39" rel="noopener">Paper ↗</a></p></div></li>
-          <li><span class="idx">09</span><img class="thumb" src="img/proj-neon-grid-ink.png" srcset="img/proj-neon-grid-ink.png 640w, img/proj-neon-grid-ink-2x.png 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt=""><div><p class="t">Neon Grid</p><p class="d">A walkable ASCII cyberpunk city in a single HTML file — a first-person raycaster with no engine, no libraries, no assets.</p><p class="links"><a class="link" href="https://wavy-hec.github.io/neon-grid/" rel="noopener">Play ↗</a><a class="link" href="https://github.com/Wavy-Hec/neon-grid" rel="noopener">GitHub ↗</a></p></div></li>
-          <li><span class="idx">10</span><img class="thumb" src="img/proj-chess-ink.png" srcset="img/proj-chess-ink.png 640w, img/proj-chess-ink-2x.png 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt=""><div><p class="t">Chess-AlphaGO</p><p class="d">AlphaZero-style self-play for Gardner chess (5 × 5) built on Pgx — batched, JIT-compiled rollouts on GPU with JAX and MCTS via Gumbel MuZero.</p><p class="links"><a class="link" href="https://github.com/Wavy-Hec/Chess-AlphaGO" rel="noopener">GitHub ↗</a></p></div></li>
+          <li><span class="idx">04</span><img class="thumb" src="img/proj-rl-isaaclab-ink.png?v=2" srcset="img/proj-rl-isaaclab-ink.png?v=2 640w, img/proj-rl-isaaclab-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt=""><div><p class="t">RL in Isaac Lab</p><p class="d">My fork of Isaac Lab for robotic simulation and training: multi-agent systems and legged locomotion in physics-based environments, with LocoMuJoCo for imitation and benchmarking.</p><p class="links"><a class="link" href="https://github.com/Wavy-Hec/RL_IsaacLab" rel="noopener">GitHub ↗</a></p></div></li>
+          <li><span class="idx">05</span><img class="thumb" src="img/proj-fft-denoise-ink.png" srcset="img/proj-fft-denoise-ink.png 640w, img/proj-fft-denoise-ink-2x.png 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt=""><div><p class="t">Signal Denoising at Idaho National Laboratory</p><p class="d">A ResNet autoencoder denoises smart-grid sensor signals for anomaly detection, with signal preprocessing and parallel computing that cut training time by over 93% (30 days to 1–2 days).</p></div></li>
+          <li><span class="idx">06</span><img class="thumb" src="img/proj-rl-compression-ink.png" srcset="img/proj-rl-compression-ink.png 640w, img/proj-rl-compression-ink-2x.png 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt=""><div><p class="t">Senior Project: Autoencoder State Compression for RL</p><p class="d">Compressing the observations a PPO agent sees with an autoencoder, and measuring how compression affects RL performance, for efficient deployment in resource-constrained environments.</p><p class="links"><a class="link" href="https://github.com/Wavy-Hec/Senior_AEproject" rel="noopener">GitHub ↗</a></p></div></li>
+          <li><span class="idx">07</span><img class="thumb" src="img/proj-railway-ink.png" srcset="img/proj-railway-ink.png 640w, img/proj-railway-ink-2x.png 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt=""><div><p class="t">Railway Crossing Accidents at UC Riverside</p><p class="d">Spectral clustering applied to USDOT railway crossing accident records, summer 2023. Published at ASME JRC 2024.</p><p class="links"><a class="link" href="https://github.com/Wavy-Hec/railway-accident-clustering" rel="noopener">GitHub ↗</a></p></div></li>
+          <li><span class="idx">08</span><img class="thumb" src="img/proj-chemo-ink.png" srcset="img/proj-chemo-ink.png 640w, img/proj-chemo-ink-2x.png 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt=""><div><p class="t">Personalized Chemotherapy Dosing</p><p class="d">A Decision Transformer learns personalized dosing from offline patient data, framing treatment planning as offline RL. Published at ICICT 2025.</p><p class="links"><a class="link" href="https://link.springer.com/chapter/10.1007/978-981-96-6429-0_39" rel="noopener">Paper ↗</a></p></div></li>
+          <li><span class="idx">09</span><img class="thumb" src="img/proj-neon-grid-ink.png" srcset="img/proj-neon-grid-ink.png 640w, img/proj-neon-grid-ink-2x.png 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt=""><div><p class="t">Neon Grid</p><p class="d">A walkable ASCII cyberpunk city in a single HTML file: a first-person raycaster with no engine, no libraries, no assets.</p><p class="links"><a class="link" href="https://wavy-hec.github.io/neon-grid/" rel="noopener">Play ↗</a><a class="link" href="https://github.com/Wavy-Hec/neon-grid" rel="noopener">GitHub ↗</a></p></div></li>
+          <li><span class="idx">10</span><img class="thumb" src="img/proj-chess-ink.png?v=2" srcset="img/proj-chess-ink.png?v=2 640w, img/proj-chess-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt=""><div><p class="t">Chess-AlphaGO</p><p class="d">AlphaZero-style self-play for Gardner chess (5 × 5) built on Pgx, with batched, JIT-compiled GPU rollouts in JAX and MCTS via Gumbel MuZero.</p><p class="links"><a class="link" href="https://github.com/Wavy-Hec/Chess-AlphaGO" rel="noopener">GitHub ↗</a></p></div></li>
         </ol>
       </div>
     </section>
@@ -185,7 +185,7 @@
             <span class="when mono">Jan 2024 – Present</span>
             <div>
               <h3>Teaching Assistant</h3>
-              <p class="org mono">The University of Texas Rio Grande Valley</p>
+              <p class="org mono">The University of Texas Rio Grande Valley (UTRGV)</p>
               <p>Teach CS 1101 (Intro to CS) and Digital Image Processing to 40+ students, running lectures, labs, and grading.</p>
             </div>
           </li>
@@ -207,56 +207,62 @@
       <div class="in">
         <h2 id="h-research">Research &amp; publications</h2>
         <!-- two sentences, no figures: the Experience entries carry the numbers -->
-        <p class="lede">Two threads: hierarchical control for legged robots — a VLM navigator over PPO locomotion on the Unitree Go2 and G1 — and, with the Air Force Research Laboratory, the question of when fusing multi-camera video actually helps a vision-language model.</p>
+        <p class="lede">Two threads. The first is hierarchical control for legged robots: a VLM navigator over PPO locomotion on the Unitree Go2 and G1. The second, with the Air Force Research Laboratory, asks when fusing multi-camera video actually helps a vision-language model.</p>
 
         <!-- the stack, exploded: four isometric plates drawn as a halftone dot grid on the canvas (js/sumi-stack.js), a soft light following the cursor over them; cameras at the bottom, the policy on top. Each plate is a button laid over its plate on the canvas (hover / focus lights it and shows its line; Enter / Space / click holds it, aria-pressed). Still and already apart under reduced motion. -->
         <figure class="stack-wrap">
           <div class="stack" role="group" aria-label="The research stack, exploded: cameras and video streams, a vision-language model, a belief memory, and a navigator commanding a PPO locomotion policy">
             <canvas aria-hidden="true"></canvas>
             <ol class="plates">
-              <li><button type="button" class="pl" data-k="0" aria-pressed="false" aria-label="cameras / video streams — multi-camera video QA: when fusing camera feeds helps, and when it does not"><span class="name">cameras<span class="lg"> video streams</span></span><span class="cap">multi-camera video QA · when fusing feeds helps, and when it does not</span></button></li>
-              <li><button type="button" class="pl" data-k="1" aria-pressed="false" aria-label="vision-language model · Qwen2.5-VL · InternVL3 — 650K+ scored answers across 3 benchmarks on a multi-GPU SLURM cluster"><span class="name">vision-language model<span class="lg"> Qwen2.5-VL · InternVL3</span></span><span class="cap">650K+ scored answers · 3 benchmarks · multi-GPU SLURM cluster</span></button></li>
+              <li><button type="button" class="pl" data-k="0" aria-pressed="false" aria-label="cameras, video streams — multi-camera video QA: when fusing camera feeds helps, and when it does not"><span class="name">cameras<span class="lg"> video streams</span></span><span class="cap">multi-camera video QA · when fusing feeds helps, and when it does not</span></button></li>
+              <li><button type="button" class="pl" data-k="1" aria-pressed="false" aria-label="vision-language model, Qwen2.5-VL · InternVL3 — 650K+ scored answers across 3 benchmarks on a multi-GPU SLURM cluster"><span class="name">vision-language model<span class="lg"> Qwen2.5-VL · InternVL3</span></span><span class="cap">650K+ scored answers · 3 benchmarks · multi-GPU SLURM cluster</span></button></li>
               <li><button type="button" class="pl" data-k="2" aria-pressed="false" aria-label="belief memory — revisable, for out-of-view target search: it drops stale beliefs on contradiction"><span class="name">belief memory</span><span class="cap">revisable · drops stale beliefs on contradiction · out-of-view search</span></button></li>
-              <li><button type="button" class="pl" data-k="3" aria-pressed="false" aria-label="navigator → PPO locomotion policy — a frozen Qwen3-VL navigator steers a PPO policy on the Go2 and G1 in MuJoCo"><span class="name">navigator → PPO<span class="lg"> locomotion policy</span></span><span class="cap">a frozen Qwen3-VL navigator steers PPO · Go2 / G1 · MuJoCo</span></button></li>
+              <li><button type="button" class="pl" data-k="3" aria-pressed="false" aria-label="navigator → PPO, locomotion policy — a frozen Qwen3-VL navigator steers a PPO policy on the Go2 and G1 in MuJoCo"><span class="name">navigator → PPO<span class="lg"> locomotion policy</span></span><span class="cap">a frozen Qwen3-VL navigator steers PPO · Go2 / G1 · MuJoCo</span></button></li>
             </ol>
           </div>
-          <figcaption class="mono">the stack · lower two: the AFRL video study · upper two: the legged-robot navigator</figcaption>
+          <figcaption class="mono">the stack<span class="sep"> · </span><span class="cl">lower two: the AFRL video study</span><span class="sep"> · </span><span class="cl">upper two: the legged-robot navigator</span></figcaption>
         </figure>
 
-        <!-- the ICMLA paper links to the copy hosted here (papers/), never to the proceedings host (its PDF sits behind a password prompt); the DOI is not on Xplore yet, so it is printed, not linked. Under each title one mono line of tags (on its own line, so no separator dangles) -->
+        <!-- the ICMLA paper links to the copy hosted here (papers/), never to the proceedings host (its PDF sits behind a password prompt); the DOI is not on Xplore yet, so it is printed, not linked; IEEE's reuse notice sits under it, a footnote to that paper alone. Under each title one mono line of tags (on its own line, so no separator dangles) -->
         <h3 class="sr-only">Publications</h3>
         <ol class="rows pubs">
-          <li><span class="venue">IEEE ICMLA 2026</span><p class="t"><a href="papers/lugo-icmla-2026.pdf" rel="noopener">Vision–Language Guided Quadruped Navigation with Reinforcement Learning Control</a> <span class="idx">PDF · accepted</span><span class="doi">DOI 10.1109/ICMLA69890.2026.00094</span></p></li>
+          <li><span class="venue">IEEE ICMLA 2026</span><p class="t"><a href="papers/lugo-icmla-2026.pdf" rel="noopener">Vision–Language Guided Quadruped Navigation with Reinforcement Learning Control</a> <span class="idx">PDF · accepted</span><span class="doi">DOI 10.1109/ICMLA69890.2026.00094</span><span class="doi ieee">© 2026 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other works.</span></p></li>
           <li><span class="venue">ICICT 2025</span><p class="t"><a href="https://link.springer.com/chapter/10.1007/978-981-96-6429-0_39" rel="noopener">Personalized Chemotherapy Dosing Through Offline Reinforcement Learning</a> <span class="idx">first author</span></p></li>
           <li><span class="venue">ICICT 2025</span><p class="t"><a href="https://par.nsf.gov/servlets/purl/10673002" rel="noopener">Offline Reinforcement Learning Approaches for Safe and Effective Smart Grid Control</a></p></li>
           <li><span class="venue">ASME JRC 2024</span><p class="t"><a href="https://scholarworks.utrgv.edu/me_fac/354/" rel="noopener">Spectral Clustering in Railway Crossing Accidents Analysis</a> <span class="idx"><a href="https://github.com/Wavy-Hec/railway-accident-clustering" rel="noopener">code</a></span></p></li>
         </ol>
-        <p class="ieee mono">© 2026 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other works.</p>
         <p class="after"><a class="link" href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&amp;hl=en" rel="noopener">Full list on Google Scholar ↗</a></p>
       </div>
     </section>
 
-    <!-- 四 · about: the Shinkawa sketch as a lit print, the Go2 line drawing with its tags, then the paragraphs -->
+    <!-- 四 · about: the Shinkawa sketch as a lit print beside the paragraphs (stacked under 1100 px: print, words), then the Go2 line drawing with its tags, closing the chapter -->
     <section class="chapter about" id="about" aria-labelledby="h-about">
       <div class="mark" aria-hidden="true"><span class="num" lang="ja">四</span><span class="line"></span><span class="word">About</span></div>
       <div class="in">
         <h2 id="h-about">About</h2>
-        <figure class="print">
-          <div class="mat"><img src="img/ink-raiden-snake.png" width="560" height="790" loading="lazy" decoding="async" alt="Raiden in ink, standing with his sword lowered, a loose sketch behind him — Yoji Shinkawa"></div>
-          <figcaption class="mono">illustration: Yoji Shinkawa</figcaption>
-        </figure>
+        <div class="about-top">
+          <figure class="print">
+            <div class="mat"><img src="img/ink-raiden-snake.png?v=2" width="880" height="1242" loading="lazy" decoding="async" alt="Raiden in ink, standing with his sword lowered, a loose sketch behind him — Yoji Shinkawa"></div>
+            <figcaption class="mono">illustration: Yoji Shinkawa</figcaption>
+          </figure>
+          <div class="about-text">
+            <p>I'm Hector, a CS master's student at UTRGV. I work on getting robots to move and to understand what they're looking at: reinforcement learning for legged locomotion, computer vision, and vision-language models for navigation.</p>
+            <p>In summer 2026 I was an AI/ML research intern at the Air Force Research Laboratory, studying how vision-language models handle multi-camera video. The short version: when it actually helps to fuse camera feeds, and when it does not. A manuscript is in preparation. At UTRGV's Machine Intelligence Lab I built RL pipelines in LocoMuJoCo and NVIDIA Isaac Sim and trained locomotion policies meant to survive contact with real hardware.</p>
+            <p>When I'm not training agents, I train myself: taekwondo and hiking, slowly working up to summiting a real mountain.</p>
+          </div>
+        </div>
 
         <!-- the robot: a Unitree Go2 in side elevation, drawn procedurally in paper lines on deep sumi (js/sumi-xray.js): the kinematic skeleton inside a dotted silhouette, trotting in place. The hardware tags (left) are facts from the go2_description URDF and unitree.com/go2; the control stack (right) is his software, a chain of mono labels with no leaders onto the body. -->
         <div class="band">
           <div class="xray">
             <canvas aria-hidden="true"></canvas>
-            <p class="sr-only">A Unitree Go2 quadruped robot drawn as a kinematic sketch: its twelve joints and legs inside a dotted silhouette, trotting in place. The tags name its hardware: twelve joint motors, hip, thigh and calf on each of four legs; a thigh and a calf of 0.213 meters; an IMU at the trunk's center; a 4D LiDAR L2 and a wide-angle camera at the head.</p>
-            <!-- the tags: order matches TAGS in js/sumi-xray.js (joints, lengths, imu, head); toggle buttons: hover / focus brightens the part, Enter / Space holds it -->
+            <p class="sr-only">A Unitree Go2 quadruped robot drawn as a kinematic sketch: its twelve joints and legs inside a dotted silhouette, trotting in place. The tags name its hardware: a 4D LiDAR L2 and a wide-angle camera at the head; an IMU at the trunk's center; a thigh and a calf of 0.213 meters; twelve joint motors, hip, thigh and calf on each of four legs.</p>
+            <!-- the tags: order matches TAGS in js/sumi-xray.js (head, imu, lengths, joints: the drawing read top to bottom, so focus moves through it in reading order); toggle buttons: hover / focus brightens the part, Enter / Space holds it -->
             <ul class="tags" aria-label="Hardware">
-              <li><button type="button" class="tag" aria-pressed="false"><span class="tx">12 joint motors<span class="sep"> · </span><span class="l2">hip / thigh / calf × 4</span></span></button></li>
-              <li><button type="button" class="tag" aria-pressed="false">thigh 0.213 m · calf 0.213 m</button></li>
-              <li><button type="button" class="tag" aria-pressed="false">IMU</button></li>
               <li><button type="button" class="tag" aria-pressed="false">4D LiDAR L2 · wide-angle camera</button></li>
+              <li><button type="button" class="tag" aria-pressed="false">IMU</button></li>
+              <li><button type="button" class="tag" aria-pressed="false"><span class="tx">thigh 0.213 <span class="nc">m</span> · calf 0.213 <span class="nc">m</span></span></button></li>
+              <li><button type="button" class="tag" aria-pressed="false"><span class="tx">12 joint motors<span class="sep"> · </span><span class="l2">hip / thigh / calf × 4</span></span></button></li>
             </ul>
           </div>
           <div class="cstack" role="group" aria-labelledby="cs-h">
@@ -269,38 +275,34 @@
               <li>joint torques</li>
               <li>motors</li>
             </ol>
-            <p class="cs-f mono">revisable belief memory · out-of-view target search</p>
+            <p class="cs-f mono"><span class="cl">revisable belief memory</span><span class="sep"> · </span><span class="cl">out-of-view target search</span></p>
           </div>
-          <p class="band-cap mono">Unitree Go2 · kinematic sketch · leg lengths from the go2_description URDF<span class="fact">about 15 kg · 70 × 31 × 40 cm standing (unitree.com)</span></p>
+          <p class="band-cap mono">Unitree Go2 · kinematic sketch · <span class="nw">leg lengths</span> from the <span class="nc">go2_description</span> URDF<span class="fact"><span class="nw">about 15 <span class="nc">kg</span></span> · <span class="nw">70 × 31 × 40 <span class="nc">cm</span></span> standing <span class="nw">(<span class="nc">unitree.com</span>)</span></span></p>
         </div>
 
-        <div class="about-text">
-          <p>I'm Hector, a CS master's student at UTRGV. I work on getting robots to move and to understand what they're looking at: reinforcement learning for legged locomotion, computer vision, and vision-language models for navigation.</p>
-          <p>In summer 2026 I was an AI/ML research intern at the Air Force Research Laboratory, studying how vision-language models handle multi-camera video. The short version: when it actually helps to fuse camera feeds, and when it does not. A manuscript is in preparation. Back at school I built RL pipelines in LocoMuJoCo and NVIDIA Isaac Sim and trained locomotion policies meant to survive contact with real hardware.</p>
-          <p>When I'm not training agents, I train myself: taekwondo and hiking, slowly working up to summiting a real mountain.</p>
-        </div>
       </div>
     </section>
 
     <!-- the pagoda: a breath before the footer, nothing over it. autumn-pagoda-maples (js/ascii/pieces, from ascii-magic.com) in mono paper dots, full-bleed, rising out of
-         the sumi and sinking into the footer's deep sumi (css .breath). contrast 25 and css (opacity, a ramp on the sky): the dusk sky a dim ramp, not a white slab. It has no
-         piece attribute yet: js/sumi.js imports the engine and names the piece (data-piece) when the band comes within ~800 px of the screen, so none of it loads with the
-         first view; it plays at 8 fps (data-fps) and only on screen, drawn once on phones and touch screens; js/sumi.js sizes it (data-cols: one dot per cell, density 100). -->
-    <div class="breath" aria-hidden="true"><div class="frame"><ascii-art class="pagoda" data-piece="autumn-pagoda-maples" data-fps="8" look="dots" mono contrast="25" density="100" dot-size="48" data-cols="192" aria-hidden="true"></ascii-art></div></div>
+         the sumi and sinking into the footer's deep sumi (css .breath). A fine screen, not a dot-matrix sign: density 200 (two dots per cell each way, 3.75 px at 1440;
+         an integer ratio, so the dots do not beat against the cells), small dots (dot-size 22), contrast 18, and css (opacity, a ramp on the sky): the dusk sky sinks
+         into the sumi above the horizon. A print: drawn once and held (data-still) on every screen, so it costs nothing per frame. It has no piece attribute yet:
+         js/sumi.js imports the engine and names the piece (data-piece) when the band comes within ~800 px of the screen, so none of it loads with the first view;
+         js/sumi.js sizes it (data-cols: the piece's 192 columns). -->
+    <div class="breath" aria-hidden="true"><div class="frame"><ascii-art class="pagoda" data-piece="autumn-pagoda-maples" data-still look="dots" mono contrast="18" density="200" dot-size="22" data-phone-density="100" data-phone-dot-size="44" data-cols="192" aria-hidden="true"></ascii-art></div></div>
   </main>
 
-  <!-- contact = the footer: the name band, two link columns, the credits, the legal row -->
+  <!-- contact = the footer: the name band, two link columns, the legal row -->
   <footer class="foot" id="contact">
     <div class="harakiri">
       <h2>Hector Lugo</h2>
       <small>M.S. CS · UTRGV · robotics &amp; reinforcement learning</small>
     </div>
     <div class="cols">
-      <p class="brand">Open to research collaborations and robotics work. The fastest way is email.</p>
+      <p class="brand">Open to research collaborations and robotics work. The fastest way is email: <a class="mail" href="mailto:hlugo576@gmail.com">hlugo576@gmail.com</a></p>
       <div><h3>Site</h3><ul><li><a href="#work">Work</a></li><li><a href="#experience">Experience</a></li><li><a href="#research">Research</a></li><li><a href="#about">About</a></li><li><a href="resume.html">Résumé</a></li></ul></div>
       <div><h3>Contact</h3><ul><li><a href="mailto:hlugo576@gmail.com">Email</a></li><li><a href="https://linkedin.com/in/hector-lugo-3rd" rel="noopener">LinkedIn</a></li><li><a href="https://github.com/Wavy-Hec" rel="noopener">GitHub</a></li><li><a href="https://scholar.google.com/citations?user=Z-sAdqMAAAAJ&amp;hl=en" rel="noopener">Google Scholar</a></li></ul></div>
     </div>
-    <p class="credits mono">illustrations: Yoji Shinkawa · the pagoda: autumn-pagoda-maples, <a href="https://www.ascii-magic.com/" rel="noopener">ascii-magic.com</a></p>
     <div class="legal">
       <svg class="seal" aria-hidden="true" focusable="false"><use href="#seal"/></svg>
       <span>© 2026 Hector Lugo</span>

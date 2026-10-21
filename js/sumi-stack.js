@@ -36,7 +36,9 @@
       const cy = plateY(i, 1);
       const bh = Math.min(hh * 2 + 12, GAP * k - 2);                     // never taller than the plates' spacing: no two buttons' hit areas overlap
       b.style.left = (cx - hw) + 'px'; b.style.top = Math.round(cy - bh / 2) + 'px'; b.style.width = Math.round(W - (cx - hw)) + 'px'; b.style.height = Math.round(bh) + 'px';
-      b.style.paddingLeft = Math.round(hw * 2 + 22) + 'px';
+      b.style.paddingLeft = Math.round(hw * 2 + (W < 400 ? 12 : 22)) + 'px';             // a 360 phone: the label column starts 12 px past the plate, so VISION-LANGUAGE MODEL fits
+      const nm = b.querySelector('.name'), lh = nm ? parseFloat(getComputedStyle(nm).lineHeight) || 16 : 16;
+      b.style.paddingTop = Math.max(0, Math.round(bh / 2 - lh / 2)) + 'px';             // the name's first line (its paper square) sits on the plate's leader; a wrapped line or the caption hangs below
     });
     laidOut = true;
   }
@@ -116,7 +118,7 @@
     io.observe(wrap);
   }
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { layout(); draw(); }, 160); }, { passive: true });
-  // dev: a frame's cost; bench(n); at(e, lx, ly) sets the explosion and the light for screenshots
-  S.stack = { cost: () => lastCost, get inView() { return inView; }, get exploded() { return exploded; }, get dev() { return { spawned, steps, lastDt }; }, bench(n) { const a = performance.now(); for (let i = 0; i < n; i++) draw(); return ((performance.now() - a) / n).toFixed(2); },
+  // dev (local hosts only): a frame's cost; bench(n); at(e, lx, ly) sets the explosion and the light for screenshots
+  if (S.DEV) S.stack = { cost: () => lastCost, get inView() { return inView; }, get exploded() { return exploded; }, get dev() { return { spawned, steps, lastDt }; }, bench(n) { const a = performance.now(); for (let i = 0; i < n; i++) draw(); return ((performance.now() - a) / n).toFixed(2); },
     at(e, lx, ly, a) { exp = e; if (e >= 1) { exploded = true; wrap.classList.add('exploded'); } if (lx !== undefined) { light.x = light.tx = lx; light.y = light.ty = ly; light.a = light.ta = a === undefined ? 1 : a; } inView = true; draw(); }, sparks };
 })();

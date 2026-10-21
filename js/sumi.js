@@ -1,4 +1,4 @@
-/* SUMI v8 — one loop, two secrets. The loop: one requestAnimationFrame chain paced to ~30 fps by a timer that the fold's wind
+/* SUMI v9 — one loop, two secrets. The loop: one requestAnimationFrame chain paced to ~30 fps by a timer that the fold's wind
    (js/sumi-fold.js), the research stack (js/sumi-stack.js) and the Go2 sketch (js/sumi-xray.js) draw inside, each subscribed only while its
    drawing is on screen; asleep when nothing is subscribed, when the tab is hidden, while the game is open, and under reduced motion. Here too: the "!" over Raiden (hover / focus, silent), and the
    secret (the footer's 140.85, the Konami code, 140.85 typed -> the codec call -> the game, js/game.js, loaded on the first call only). */
@@ -18,7 +18,7 @@
   const subs = [];
   let raf = 0, timer = 0, prev = 0;
   const FRAME_MS = 1000 / 30;
-  const S = window.SUMI = { REDUCED, add(fn) { subs.push(fn); start(); }, remove(fn) { const i = subs.indexOf(fn); if (i >= 0) subs.splice(i, 1); } };
+  const S = window.SUMI = { REDUCED, DEV, add(fn) { subs.push(fn); start(); }, remove(fn) { const i = subs.indexOf(fn); if (i >= 0) subs.splice(i, 1); } };
   function loop(now) {
     raf = 0;
     if (!subs.length) return;                                      // nothing animated on screen: the loop sleeps until S.add wakes it
@@ -52,7 +52,7 @@
      cols x size x .602 px wide), so a piece with data-cols gets size = width / (cols x .602), at start and after a resize. data-piece: the engine
      (js/ascii/ascii.js, a module, imported here) and the piece are loaded only when its box comes within ~800 px of the screen, so none of it is
      part of the first view. On a phone or a touch screen the piece is drawn once and holds (still: a full-width halftone redraw costs ~26 ms on a
-     mid-range phone); elsewhere it plays at 8 fps (data-fps), only while on screen. ---------- */
+     mid-range phone); a piece marked data-still (the pagoda: a fine print) is drawn once everywhere; any other plays at its data-fps, only while on screen. ---------- */
   (() => {
     const pieces = [...document.querySelectorAll('ascii-art[data-cols]')];
     if (!pieces.length) return;
@@ -64,15 +64,16 @@
         if (el.getAttribute('size') !== size) el.setAttribute('size', size);
       }
     }
-    fit();
     let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(fit, 200); }, { passive: true });
     const lazy = new Map(pieces.filter(el => el.dataset.piece && !el.hasAttribute('piece')).map(el => [el.parentElement, el]));
-    const STILL = matchMedia('(max-width: 720px), (pointer: coarse)').matches;
+    const STILL = matchMedia('(max-width: 720px), (pointer: coarse)').matches, PHONE = matchMedia('(max-width: 720px)').matches;
     let engine = null;
     const name = el => {
-      engine = engine || import('./ascii/ascii.js?v=9');
+      engine = engine || import('./ascii/ascii.js?v=10');
       engine.then(() => {
-        if (STILL) el.setAttribute('still', '');
+        fit();                                                          // sized here, not at parse: reading its width then would pull the page's first layout into this script
+        if (STILL || 'still' in el.dataset) el.setAttribute('still', '');   // data-still: a print, drawn once on every screen
+        if (PHONE && el.dataset.phoneDensity) { el.setAttribute('density', el.dataset.phoneDensity); el.setAttribute('dot-size', el.dataset.phoneDotSize || '48'); }   // a phone's cells are ~3 px: one dot per cell, not sub-pixel dust
         else if (el.dataset.fps) el.setAttribute('fps', el.dataset.fps);
         el.setAttribute('piece', el.dataset.piece);
       }).catch(() => {});
@@ -91,7 +92,7 @@
      go once both are in ---------- */
   (() => {
     const load = src => { const s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s); };
-    const pending = [['.stack', 'js/sumi-stack.js?v=9'], ['.xray', 'js/sumi-xray.js?v=11']].map(([sel, src]) => [document.querySelector(sel), src]).filter(([el]) => el);
+    const pending = [['.stack', 'js/sumi-stack.js?v=10'], ['.xray', 'js/sumi-xray.js?v=12']].map(([sel, src]) => [document.querySelector(sel), src]).filter(([el]) => el);
     let queued = false;
     function check(all) {
       queued = false;
@@ -135,7 +136,7 @@
     if (gameScriptRequested) return;
     gameScriptRequested = true;
     const s = document.createElement('script');
-    s.src = 'js/game.js?v=17';                                        // lazy: the game (142 KB) loads on the first call only
+    s.src = 'js/game.js?v=18';                                        // lazy: the game (142 KB) loads on the first call only
     s.onload = () => { if (window.MGSGame) window.MGSGame.open(); };
     s.onerror = () => { gameScriptRequested = false; status('codec link failed — try again'); };
     document.body.appendChild(s);

@@ -17,21 +17,22 @@ await lets only the latest call play.
 
 Local changes 2-4 (2026-10-21, for the night page's frame budget; each is marked in its file):
 
-2. `ascii.js`: an `fps` attribute, read at start, caps the frame rate (`play(..., { maxFps })`). The night page plays the pagoda at 8 fps.
+2. `ascii.js`: an `fps` attribute, read at start, caps the frame rate (`play(..., { maxFps })`). The 404 plays the torii at 8 fps; the night page's pagoda is drawn once (`still`).
 3. `player.js`: between two renders the loop sleeps on a timer instead of requesting an animation frame every display frame, and off
    screen it sleeps altogether until its IntersectionObserver wakes it (upstream kept a 60 Hz requestAnimationFrame running while hidden).
+   The timer wakes 4 ms short of the next step, so the one animation frame after it lands past the step: one wake per redraw.
 4. `canvas.js` (`paintTone` with the pixel stamper, `stampTone`, `stampOne`): a live player re-stamps only the grid cells whose dot changed
    since its last frame (the pagoda: ~125 of 20,736), clearing each changed dot's box and stamping every dot that reaches into it, clipped to
    the box; the result is pixel-identical to a full redraw (checked) and a frame costs about half as much. Over a quarter of the cells
    changing, a new size or a new grid takes the full path.
 
-The engine's internal imports carry a `?v=` cache key (`./player.js?v=9`, `./canvas.js?v=9`) so a browser never mixes an old cached
+The engine's internal imports carry a `?v=` cache key (`./player.js?v=10`, `./canvas.js?v=9`) so a browser never mixes an old cached
 module with a new one. Everything else is byte-identical to the fetched copies.
 
 ## License
 
-The ascii-magic runtime and its pieces are © ascii-magic.com (ASCII Magic), used here with credit: the 404 says "halftone engine: ascii-magic.com" and
-the site README credits it. The licence is MIT per the owner's brief, as stated by the author; the site itself
+The ascii-magic runtime and its pieces are © ascii-magic.com (ASCII Magic), credited in this file and the site README
+(the pages themselves carry no credit line). The licence is MIT per the owner's brief, as stated by the author; the site itself
 exposes no LICENSE file and the package is not on npm, so verify the terms at ascii-magic.com (or get a line from the author) before
 this goes to GitHub Pages. MIT, in short: the copyright notice and the permission notice shall be included in all copies or
 substantial portions of the software; the software is provided "as is", without warranty of any kind.
