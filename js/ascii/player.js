@@ -107,8 +107,14 @@ export function play(pre, mod, opts = {}) {
       if (opts.onFrame) opts.onFrame(f, t);
     };
   }
+  // Local change 5 (js/ascii/README.md): a still piece (drawn once) renders in a later task, so the piece's set-up (mod.default()
+  // above) and its first paint are two tasks, not one long one (the pagoda at 4x CPU: ~41 ms + ~115 ms instead of ~160 ms).
+  if (reduce || meta.still) {
+    let gone = false;
+    (window.requestIdleCallback || ((f) => setTimeout(f, 1)))(() => { if (!gone) render(opts.t0 ?? 0); }, { timeout: 1000 });
+    return () => { gone = true; };
+  }
   render(opts.t0 ?? 0);
-  if (reduce || meta.still) return () => {};
   let raf = 0, timer = 0, visible = true, elapsed = opts.t0 ?? 0, prev = 0, stopped = false;
   const step = 1000 / Math.min(meta.fps, opts.maxFps || 60);
   // A random phase per player: a page of cards started together would otherwise all

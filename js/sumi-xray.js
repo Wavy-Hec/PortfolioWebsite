@@ -3,7 +3,7 @@
    outer silhouette as a dotted line, a faint ground line and shadow. Proportions from the go2_description URDF (unitree_ros): trunk 0.3762 m,
    hips 0.1934 m fore and aft of the centre, thigh and calf 0.213 m, knees folding back. It RESOLVES on entry (the skeleton draws itself joint
    by joint in 0.85 s, the silhouette fades in by 1.2 s, the leaders by 1.5 s, the tags by ~2 s; a timer, not the frame loop, reveals the tags, so
-   they arrive even when frames are throttled), then trots in place: a diagonal-pair gait, joint angles a sinusoid per leg,
+   they arrive even when frames are throttled), then trots in place: a diagonal-pair gait, the thigh a sinusoid per leg, the knee folding in swing and the stance foot planted on the ground line,
    every point from forward kinematics. The hardware tags (mono labels, a paper square, a hairline leader to the part) brighten their part on
    hover / focus. Reduced motion: the standing pose, everything present, no walk. One canvas, ~40 strokes a frame, inside the page's single
    frame loop at ~30 fps, subscribed only while the band is on screen. */
@@ -17,7 +17,10 @@
   // the robot (metres; x to the rear, y down; it faces left). Hip abduction joints sit on the body line; the thigh joint hangs 0.03 under them
   // (the real offset is lateral, invisible from the side), thigh 0.213 at th1 from the down vertical (positive = knee back), calf 0.213 at th1 + psi.
   const BODY_L = 0.3762, BODY_H = 0.095, HIP_X = 0.1934, THIGH = 0.213, CALF = 0.213, HIP_DROP = 0.03;
-  const TH1 = 0.8, PSI = -1.5, GAIT_HZ = 1.6;                                 // standing: the rear knee at (0.346, 0.178), the feet at y 0.341; the ground at 0.372
+  const TH1 = 0.8, PSI = -1.5, GAIT_HZ = 1.6;                                 // standing: the rear knee at (0.346, 0.178), the feet at y 0.341
+  // the ground: where the stance foot touches it, the foot circle's centre plus its radius at its lowest. In this gait the lowest foot is the
+  // standing one (each foot passes through it at sin(phase) = 0; the swing only lifts it), so the line is under every stance foot at every walk
+  const FOOT_R = 0.021, GROUND = HIP_DROP + THIGH * Math.cos(TH1) + CALF * Math.cos(TH1 + PSI) + FOOT_R;
   // legs: name, hip x, phase, near side (the far side draws dimmer, nudged back 0.018)
   const LEGS = [{ n: 'FL', x: -HIP_X, ph: 0, near: true }, { n: 'RR', x: HIP_X, ph: 0, near: false }, { n: 'FR', x: -HIP_X, ph: Math.PI, near: false }, { n: 'RL', x: HIP_X, ph: Math.PI, near: true }];
   const DRAW_ORDER = ['FL', 'RL', 'FR', 'RR'];                                 // the resolve: front near, rear near, front far, rear far
@@ -47,22 +50,26 @@
     s = Math.min((narrow ? W * 0.92 : W * 0.6) / 0.76, H * (narrow ? 1 : 0.66) / 0.43);   // px per metre: the figure is ~0.76 m long, 0.43 m from the head's top to the ground
     cx = W / 2; cy = H * (narrow ? 0.26 : 0.3);
     if (!narrow) {
+      // no tag starts left of the chapters' content edge (#about .in), so the band's left edge sits on the page's one line
+      const inner = document.querySelector('#about .in'), off = inner ? Math.round(inner.getBoundingClientRect().left - wrap.getBoundingClientRect().left) : 8, minX = Math.max(0, off);   // 0 where the band's padding already sits on the content edge (721-1180): the tags flush with it
       tagEls.forEach((el, i) => {
         const T = TAGS[i]; if (!T) return;
         const w = el.offsetWidth, left = T.side === 'l', maxX = W - 8 - w;
-        const lx = clamp(cx + T.l[0] * s - (left ? w : 0), 8, maxX);
-        // a left tag pushed right by the band's edge (721-1023) would put its square inside the front foot's swing (to 0.293 m left of the
-        // centre): it drops to the joints tag's row under the ground line instead, its leader rising to its part; at 1024 and up nothing changes
-        const drop = innerWidth < 1024 && left && T.l[1] > 0 && T.l[1] < JOINTS_Y && lx + w > cx - 0.293 * s - 14;   // a tag at the legs' height only; 0.293 m: the front foot's leftmost reach in the trot, 14 px its circle and some air
+        const lx = clamp(cx + T.l[0] * s - (left ? w : 0), Math.min(minX, maxX), maxX);
+        // a left tag pushed right (by the band's edge or the content edge) would put its square inside the front foot's swing (to 0.293 m
+        // left of the centre): it drops to the joints tag's row under the ground line instead, its leader rising to its part
+        const drop = left && T.l[1] > 0 && T.l[1] < JOINTS_Y && lx + w > cx - 0.293 * s - 14;   // a tag at the legs' height only; 0.293 m: the front foot's leftmost reach in the trot, 14 px its circle and some air
         el.style.left = lx + 'px'; el.style.top = (cy + (drop ? JOINTS_Y : T.l[1]) * s) + 'px'; el.classList.toggle('l', left);
       });
     } else tagEls.forEach(el => { el.style.left = ''; el.style.top = ''; el.classList.remove('l'); });
     laidOut = true;
   }
-  // forward kinematics for one leg at gait phase ph (walk = 0 is the standing pose)
+  // forward kinematics for one leg at gait phase ph (walk = 0 is the standing pose). In swing the knee folds (psi); in stance the calf angle
+  // is solved so the foot stays planted at the standing foot's height (the ground line's contact point) while the thigh sweeps it back
+  const FOOT_Y = GROUND - FOOT_R - HIP_DROP;                                   // the foot's height under the thigh joint, standing
   function legPose(leg, ph) {
-    const sw = Math.max(0, Math.sin(ph)), st = Math.min(0, Math.sin(ph));
-    const th1 = TH1 - 0.26 * Math.sin(ph) * walk, psi = PSI + (-0.42 * sw + 0.1 * st) * walk;
+    const sn = Math.sin(ph), th1 = TH1 - 0.26 * sn * walk;
+    const psi = sn > 0 ? PSI - 0.42 * sn * walk : -Math.acos(clamp((FOOT_Y - THIGH * Math.cos(th1)) / CALF, -1, 1)) - th1;
     const hx = leg.x + (leg.near ? 0 : 0.018), hy = 0, tx = hx, ty = HIP_DROP;
     const kx = tx + THIGH * Math.sin(th1), ky = ty + THIGH * Math.cos(th1);
     const fx = kx + CALF * Math.sin(th1 + psi), fy = ky + CALF * Math.cos(th1 + psi);
@@ -95,7 +102,6 @@
     const bob = 0.004 * Math.sin(phase * 2) * walk;
     cy += bob * s;
     const poses = {}; for (const L of LEGS) poses[L.n] = legPose(L, phase + L.ph);
-    const GROUND = HIP_DROP + 0.342;
     // the ground line and the shadow: a hairline, and a soft bar under the feet
     const silA = seg(t, 0.85, 1.2);
     ctx.strokeStyle = PAPER; ctx.globalAlpha = 0.25 * silA; ctx.lineWidth = 1;
@@ -122,7 +128,7 @@
         if (!L.near) continue;
         const p = poses[L.n], lit = L.n === 'FL' ? hl.lengths : 0; ctx.globalAlpha = silA * 0.5 * (1 + 0.6 * lit);
         capsule(p.thigh, p.knee, 0.024); capsule(p.knee, p.foot, 0.017);
-        ctx.setLineDash([]); joint(p.foot, 0.021 * s, 1); ctx.setLineDash([1.5, 3.5]);
+        ctx.setLineDash([]); joint(p.foot, FOOT_R * s, 1); ctx.setLineDash([1.5, 3.5]);
       }
       ctx.setLineDash([]);
       // the camera: a small filled circle on the head's face, the LiDAR a short arc above it; the IMU: a square at the body's centre

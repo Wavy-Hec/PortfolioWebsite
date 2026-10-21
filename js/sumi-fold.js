@@ -351,11 +351,11 @@
     setup();
     if (DEV && q.has('wind')) { windT = +q.get('wind'); sampleWind(windT); placeFog(0); drawGrass(windT); }   // dev: a composed instant (?wind=<seconds>)
   };
-  // the stacked layout (<= 960) sizes Raiden to the scene, whose height follows the words above it: wait for the web fonts (at most 0.8 s,
-  // inside the 1 s fade) so the moon and the field are built once, not once per font swap
-  if (matchMedia('(max-width: 960px)').matches && document.fonts && document.fonts.status !== 'loaded') {
-    Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 800))]).then(() => requestAnimationFrame(first));
-  } else requestAnimationFrame(first);
+  // the stacked layout (<= 960) sizes Raiden to the scene (--sh), whose height follows the words above it. Those words have the same height
+  // in the web fonts and in their fallbacks (every line-height is a number and the sub wraps to the same lines: measured at 360-960), so
+  // nothing waits for the fonts: the scene is measured on the first frame, early in the 1 s fade, and Raiden never jumps from css's
+  // 480 px default to the real height once he is visible
+  requestAnimationFrame(first);
   new ResizeObserver(() => {
     if (lastW < 0) return;                                     // not laid out yet: first() reads the size it lays out
     const w = scene.clientWidth, h = scene.clientHeight;

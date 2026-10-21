@@ -52,12 +52,14 @@
     .back { display: inline-block; margin-top: 16px; padding: 12px 0; font-family: var(--mono); font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--paper) }
     .back:hover, .back:focus-visible { text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 1px }
     @media (max-width: 720px) {
-      .torii { height: calc(200vw * .563 * .62); height: min(calc(200vw * .563 * .62), max(160px, calc(100vh - 360px))); height: min(calc(200vw * .563 * .62), max(160px, calc(100svh - 360px))) }
-      .torii { --sf: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent) }   /* the gate spans the phone: a narrow side fade keeps the kasagi's ends */
+      .torii { height: calc(200vw * .563 * .62); height: min(calc(200vw * .563 * .62), max(160px, calc(100vh - 360px))); height: min(calc(200vw * .563 * .62), max(160px, calc(100svh - 360px)));
+        --sf: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent) }   /* the gate spans the phone: a narrow side fade keeps the kasagi's ends */
       .torii ascii-art { width: 200vw; max-width: none; left: -50vw; top: calc(200vw / 192 * 6) }
       h1 { font-size: 32px }
       body { justify-content: flex-start; padding-top: 32px }   /* the art starts near the top: a phone's first view never opens on bare sumi */
     }
+    @media (min-width: 721px) and (max-width: 1024px) and (orientation: portrait) { body { justify-content: flex-start; padding-top: 48px } }   /* a portrait tablet: the same, not 250 px of bare sumi over the gate */
+    @media (min-width: 1600px) { .msg { margin-left: calc(50% - 576px); margin-right: calc(50% - 576px); max-width: none } }   /* the front page's large-screen measure: the words and their rule span the footer's 1152 px, centred */
   </style>
 </head>
 <body>
@@ -70,12 +72,12 @@
     (function () {
       var el = document.querySelector('.torii ascii-art');
       if (!el) return;
-      var fit = function () { var phone = innerWidth <= 720; el.setAttribute('size', (innerWidth / ((phone ? 96 : 192) * 0.602)).toFixed(2)); };
+      var fit = function () { var phone = innerWidth <= 720, s = (innerWidth / ((phone ? 96 : 192) * 0.602)).toFixed(2); if (el.getAttribute('size') !== s) el.setAttribute('size', s); };   // a height-only resize (a phone's URL bar) changes nothing, so it never redraws
       fit();
       // a print, as the front page's pagoda is: drawn once (the still attribute above) on every screen
       var rt; addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(fit, 200); }, { passive: true });
       var repo = /github\.io$/.test(location.hostname) || location.pathname.indexOf('/PortfolioWebsite/') === 0;
-      var paths = repo ? ['/PortfolioWebsite/js/ascii/ascii.js?v=10', '/js/ascii/ascii.js?v=10'] : ['/js/ascii/ascii.js?v=10', '/PortfolioWebsite/js/ascii/ascii.js?v=10'];   // the same key as js/sumi.js: bump both together
+      var paths = repo ? ['/PortfolioWebsite/js/ascii/ascii.js?v=11', '/js/ascii/ascii.js?v=11'] : ['/js/ascii/ascii.js?v=11', '/PortfolioWebsite/js/ascii/ascii.js?v=11'];   // the same key as js/sumi.js: bump both together
       import(paths[0]).catch(function () { return import(paths[1]); }).catch(function () { document.documentElement.classList.add('no-torii'); });
     })();
   </script>
@@ -83,7 +85,7 @@
     <p class="kicker">404 · page not found</p>
     <h1>Nothing stands here.</h1>
     <p>The link you followed points to a page that has moved or never existed. The front page has everything: the work, the experience, the papers.</p>
-    <a class="back" href="https://wavy-hec.github.io/PortfolioWebsite/">← back to the front page</a>
+    <a class="back" href="https://wavy-hec.github.io/PortfolioWebsite/"><span aria-hidden="true">← </span>back to the front page</a>
   </main>
 </body>
 </html>

@@ -227,7 +227,7 @@
   var LEVELS = [
     {
       name: 'STRUT A DEEP SEA DOCK', caller: 'COLONEL', freq: '140.85', floor: 'dock', weather: 'mist',
-      lost: 'Lost you at the Strut A deep sea dock.',
+      lost: 'Lost you at the Strut A Deep Sea Dock.',
       brief: 'Raiden, you’re in the dock. One Gurlukovich sentry walks the floor. Take the intel, reach the exit. If he spots you, break his line of sight and hold still until the alert passes.',
       map: ['####################', '#..................#', '#..####....####....#', '#..####....####....#',
         '#..................#', '#.......####.......#', '#.......####.......#', '#..................#',
@@ -247,9 +247,9 @@
         { path: [[17, 8], [8, 8]], speed: 82, fov: 1.13, range: 160, offset: 0.5 }], cameras: []
     },
     {
-      name: 'SHELL 1 CORE · B1', caller: 'COLONEL', freq: '140.85', floor: 'core',
-      lost: 'Lost you in the Shell 1 core, B1.',
-      brief: 'Shell 1 core, B1. Three patrols and a camera on the upper corridor. Knock on a wall to pull a guard off his route, or take him from behind. Then get the intel out.',
+      name: 'SHELL 1 CORE, B1', caller: 'COLONEL', freq: '140.85', floor: 'core',
+      lost: 'Lost you in the Shell 1 Core, B1.',
+      brief: 'Shell 1 Core, B1. Three patrols and a camera on the upper corridor. Knock on a wall to pull a guard off his route, or take him from behind. Then get the intel out.',
       map: ['####################', '#..................#', '#..##..####..##....#', '#..##..####..##....#',
         '#..................#', '#....####..####....#', '#....####..####....#', '#..................#',
         '#..##..####..##....#', '#..##..####..##....#', '#..................#', '####################'],
@@ -2206,7 +2206,7 @@
   function closeGame() {
     if (!open) return;
     open = false; stopAlertMusic();
-    document.body.classList.remove('game-open');   // resume dither/radar loops
+    document.body.classList.remove('game-open');   // the page's loop (js/sumi.js) resumes
     window.dispatchEvent(new CustomEvent('gameclose'));
     if (rafId) cancelAnimationFrame(rafId); rafId = null;
     document.removeEventListener('keydown', onKey, true);
@@ -2225,7 +2225,7 @@
     setTimeout(function () { if (!open) overlay.style.display = 'none'; }, 260);
   }
 
-  /* ---- dev sanity check: warn if an entity/waypoint/camera sits on a wall or is unreachable ---- */
+  /* ---- dev sanity check (local hosts only): warn if an entity/waypoint/camera sits on a wall or is unreachable ---- */
   function validate() {
     try {
       LEVELS.forEach(function (lv, n) {
@@ -2246,6 +2246,6 @@
     } catch (e) {}
   }
 
-  validate();
+  if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) validate();   // dev only: a visitor never runs the BFS
   window.MGSGame = { open: openGame, close: closeGame, get isOpen() { return open; } };
 })();

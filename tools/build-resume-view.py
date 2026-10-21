@@ -38,15 +38,15 @@ def friendly(uri: str) -> str:
         return "Call " + uri[4:]
     for needle, name in [
         ("linkedin", "LinkedIn profile"),
-        ("github.com/Wavy-Hec/MultiCam", "MultiCam repo on GitHub"),
+        ("github.com/Wavy-Hec/MultiCam", "AFRL multi-camera harness on GitHub"),
         ("github.com/Wavy-Hec/VLM", "VLM navigation repo on GitHub"),
         ("github.com/Wavy-Hec/poker-rl", "Poker RL repo on GitHub"),
-        ("github.com/Wavy-Hec/ObjectDetection", "Object detection repo on GitHub"),
-        ("github.com/Wavy-Hec/railway-accident-clustering", "Railway accident clustering repo on GitHub"),
+        ("github.com/Wavy-Hec/ObjectDetection", "FlowCount repo on GitHub"),
+        ("github.com/Wavy-Hec/railway-accident-clustering", "Railway Crossing Accidents code on GitHub"),
         ("github.com/Wavy-Hec", "GitHub profile"),
-        ("springer", "Read the paper (Springer)"),
-        ("nsf.gov", "Read the paper (NSF PAR)"),
-        ("scholarworks", "Read the paper (UTRGV ScholarWorks)"),
+        ("springer", "Personalized Chemotherapy Dosing paper (Springer)"),
+        ("nsf.gov", "Smart Grid Control paper (NSF PAR)"),
+        ("scholarworks", "Railway Crossing Accidents paper (UTRGV ScholarWorks)"),
         ("asme", "Read the paper (ASME)"),
     ]:
         if needle in uri:
@@ -76,16 +76,26 @@ def main() -> int:
 
     # 2. rebuild the hotspots from the PDF's link annotations, in % of the page
     pw, ph = page.rect.width, page.rect.height
+    links = [(l["uri"], l["from"]) for l in page.get_links() if l.get("uri")]
+    # neighbours: on a touch screen each hotspot's hit area grows ~13 px each way (resume.html .lk::after). Two links stacked within
+    # 10 pt of each other (overlapping in x) take the classes up / down, two side by side within 10 pt (overlapping in y) lft / rgt, so
+    # each keeps its own half of the gap and reaches further the other way: no two hit areas overlap.
+    near = {i: set() for i in range(len(links))}
+    for i, (_, a) in enumerate(links):
+        for j, (_, b) in enumerate(links):
+            if i == j:
+                continue
+            if a.x0 < b.x1 and b.x0 < a.x1 and 0 <= b.y0 - a.y1 < 10:
+                near[i].add("up"); near[j].add("down")
+            if a.y0 < b.y1 and b.y0 < a.y1 and 0 <= b.x0 - a.x1 < 10:
+                near[i].add("lft"); near[j].add("rgt")
     rows = []
-    for link in page.get_links():
-        uri = link.get("uri")
-        if not uri:
-            continue
-        r = link["from"]
+    for i, (uri, r) in enumerate(links):
         label = friendly(uri)
         target = ' target="_blank" rel="noopener"' if uri.startswith("http") else ""
+        cls = " ".join(["lk", *sorted(near[i])])
         rows.append(
-            f'      <a class="lk" href="{html.escape(uri, quote=True)}"{target} '
+            f'      <a class="{cls}" href="{html.escape(uri, quote=True)}"{target} '
             f'title="{html.escape(label, quote=True)}" aria-label="{html.escape(label, quote=True)}" '
             f'style="left:{r.x0 / pw * 100:.3f}%;top:{r.y0 / ph * 100:.3f}%;'
             f'width:{(r.x1 - r.x0) / pw * 100:.3f}%;height:{(r.y1 - r.y0) / ph * 100:.3f}%"></a>'
@@ -108,7 +118,7 @@ def main() -> int:
     new_markup = re.sub(r'width="\d+" height="\d+" (decoding="async"[^>]*)',
                         lambda m: f'width="{im.width}" height="{im.height}" {m.group(1)}', new_markup)
     VIEW.write_text(new_markup, encoding="utf-8")
-    print(f"{VIEW.name}: {len(rows)} link hotspots")
+    print(f"{VIEW.name}: {len(rows)} link hotspots (bump the image's ?v= in resume.html if the PNG changed)")
     return 0
 
 

@@ -1,13 +1,15 @@
 /* SUMI v7 — the research stack: four isometric plates drawn as a halftone dot grid, cursor-lit. Each plate is a field of N x N paper dots on
    sumi whose SIZE carries the tone (as the ascii-magic dots do: one colour, the dot grows with the light): a static isometric shading (a
    lighter centre, a bright rim along the edges, a hashed grain) plus a soft light that follows the cursor (a gaussian spot, sigma 50 px at 600 wide; the dots under it brighten and grow up to x1.8);
-   the plate's thickness is two dim rows of dots under its front edges; a dotted beam joins the plates with a bright cap; sparks (<= 40)
-   lift off the plate edges as short vertical dashes, drift up and fade in ~1.5 s. The plates slide apart from a collapsed stack the first time they are seen (.9 s, eased),
+   the plate's thickness is two dim rows of dots under its front edges; a dotted beam joins the plates with a bright cap; the cursor light is
+   the only thing that moves once the stack is apart (no sparks: on an exact dot drawing they read as stray marks). The plates slide apart from a collapsed stack the first time they are seen (.9 s, eased),
    once their chapter has settled; the names arrive after (css .exploded). The buttons (.pl, laid over each plate by layout()) are the
    controls: hover or focus lights the plate and shows its line, a focused plate pulls the light to its centre, click / Enter / Space holds it
-   (.lit, aria-pressed); the active plate's tag turns full paper (css). Reduced motion: already apart, no sparks, no light, one still frame
+   (.lit, aria-pressed); the active plate's tag turns full paper (css). On a phone (the captions hidden) a tap also writes that plate's line
+   under the drawing (.pl-note, aria-hidden: the buttons' labels carry it). Until layout() has placed the buttons the stack lacks .laid and
+   css hides them, so nothing jumps. Reduced motion: already apart, no light, one still frame
    (hover / focus still brightens the plate by a direct redraw). Draws inside the page's one frame loop at ~30 fps, subscribed only while on screen;
-   every dot is an arc on one of 12 radius-bucketed Path2Ds, so a frame is 12 fills. */
+   every dot is an arc on one of 16 radius-bucketed Path2Ds, so a frame is 16 fills. */
 (() => {
   'use strict';
   const S = window.SUMI;
@@ -22,7 +24,6 @@
   const held = [false, false, false, false];
   const grain = new Float32Array(N * N * 4);
   { let seed = 4321; for (let i = 0; i < grain.length; i++) { seed = (seed * 16807) % 2147483647; grain[i] = seed / 2147483647; } }
-  const sparks = []; let seed2 = 99; const rnd = () => (seed2 = (seed2 * 16807) % 2147483647) / 2147483647;
   const ease = v => v < 0 ? 0 : v > 1 ? 1 : v * v * (3 - 2 * v);
   const plateY = (i, e) => yBase - i * (gap * k * e + 6 * k * (1 - e));   // the centre y of plate i at explosion e (0 = a stack, 1 = apart)
 
@@ -43,7 +44,7 @@
       const nm = b.querySelector('.name'), lh = nm ? parseFloat(getComputedStyle(nm).lineHeight) || 16 : 16;
       b.style.paddingTop = Math.max(0, Math.round(bh / 2 - lh / 2)) + 'px';             // the name's first line (its paper square) sits on the plate's leader; a wrapped line or the caption hangs below
     });
-    laidOut = true;
+    laidOut = true; wrap.classList.add('laid');
   }
   function draw() {
     ctx.clearRect(0, 0, W, H);
@@ -74,26 +75,26 @@
     dot(cx, top, 0.9); dot(cx - 4 * k, top + 3 * k, 0.3); dot(cx + 4 * k, top + 3 * k, 0.3);
     ctx.fillStyle = PAPER; ctx.globalAlpha = 0.92;
     for (const p of paths) ctx.fill(p);
-    if (sparks.length) {                                                   // the sparks: short vertical dashes (two dot pitches tall) rising off the rims, each its own alpha
-      for (const sp of sparks) { ctx.globalAlpha = 0.9 * (1 - sp.age / sp.life); ctx.fillRect(sp.x - 0.7 * k, sp.y - sp.h, 1.4 * k, sp.h); }
-    }
     ctx.globalAlpha = 1;
   }
-  function spawn(now) {
-    const i = Math.floor(rnd() * 4), cy = plateY(i, ease(exp)), u = rnd(), left = rnd() < 0.5;
-    sparks.push({ x: left ? cx - hw + u * hw : cx + u * hw, y: left ? cy + u * hh : cy + (1 - u) * hh, vx: (rnd() - 0.5) * 6 * k, vy: -(14 + rnd() * 18) * k, h: (7 + rnd() * 5) * k, age: 0, life: 1.2 + rnd() * 0.6 });
-  }
-  let spawned = 0, steps = 0, lastDt = 0;                                   // dev counters
+  let steps = 0, lastDt = 0;                                   // dev counters
   function step(dt, now) {
     steps++; lastDt = dt;
     if (expT0 !== null && exp < 1) { exp = Math.min(1, (now - expT0) / 900); if (exp >= 1 && !exploded) { exploded = true; wrap.classList.add('exploded'); } }
     const f = 1 - Math.exp(-dt * 10);
     light.x += (light.tx - light.x) * f; light.y += (light.ty - light.y) * f; light.a += (light.ta - light.a) * (1 - Math.exp(-dt * 6));
     if (!inView || !laidOut) return;
-    if (exploded && sparks.length < 40 && rnd() < dt * 11) { spawn(now); spawned++; }
-    for (let i = sparks.length - 1; i >= 0; i--) { const sp = sparks[i]; sp.age += dt; if (sp.age >= sp.life) { sparks.splice(i, 1); continue; } sp.x += sp.vx * dt; sp.y += sp.vy * dt; sp.vx += (rnd() - 0.5) * 20 * k * dt; }
     acc += dt * 1000; if (acc < FRAME) return; acc = 0;
     const c0 = performance.now(); draw(); lastCost = performance.now() - c0;
+  }
+  // the phone's caption slot: the line of the plate last pressed (or, when that one is released, of another still held), one clause a line
+  const noteEl = wrap.parentElement && wrap.parentElement.querySelector('.pl-note');
+  let last = null;
+  function note() {
+    if (!noteEl) return;
+    const b = last && last.classList.contains('lit') ? last : btns.find(x => x.classList.contains('lit'));
+    last = b || null;
+    noteEl.replaceChildren(...(b ? [...b.querySelectorAll('.cap .cl')].map(c => { const s = document.createElement('span'); s.className = 'cl'; s.textContent = c.textContent; return s; }) : []));
   }
   // the light follows the pointer over the stack (the buttons sit on it); it fades when the pointer leaves; a focused plate pulls it to its centre
   const rect = () => canvas.getBoundingClientRect();
@@ -105,7 +106,7 @@
     b.addEventListener('pointerenter', on); b.addEventListener('pointerleave', off);
     b.addEventListener('focus', () => { focused = i; on(); light.tx = cx; light.ty = plateY(i, 1); light.ta = 1; if (!exploded) { expT0 = performance.now() - 900; exp = 1; exploded = true; wrap.classList.add('exploded'); inView = true; draw(); } });   // keyboard focus before the stack has exploded: apart at once, so the control is never invisible
     b.addEventListener('blur', () => { focused = -1; off(); if (!pointerIn) light.ta = 0; });
-    b.addEventListener('click', () => { held[i] = !held[i]; b.classList.toggle('lit', held[i]); b.setAttribute('aria-pressed', held[i] ? 'true' : 'false'); if (S.REDUCED) draw(); });
+    b.addEventListener('click', () => { held[i] = !held[i]; b.classList.toggle('lit', held[i]); b.setAttribute('aria-pressed', held[i] ? 'true' : 'false'); if (held[i]) last = b; note(); if (S.REDUCED) draw(); });
   });
   layout();
   if (S.REDUCED) { wrap.classList.add('exploded'); light.a = 0; draw(); }
@@ -123,6 +124,6 @@
   }
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { layout(); draw(); }, 160); }, { passive: true });
   // dev (local hosts only): a frame's cost; bench(n); at(e, lx, ly) sets the explosion and the light for screenshots
-  if (S.DEV) S.stack = { cost: () => lastCost, get inView() { return inView; }, get exploded() { return exploded; }, get dev() { return { spawned, steps, lastDt }; }, bench(n) { const a = performance.now(); for (let i = 0; i < n; i++) draw(); return ((performance.now() - a) / n).toFixed(2); },
-    at(e, lx, ly, a) { exp = e; if (e >= 1) { exploded = true; wrap.classList.add('exploded'); } if (lx !== undefined) { light.x = light.tx = lx; light.y = light.ty = ly; light.a = light.ta = a === undefined ? 1 : a; } inView = true; draw(); }, sparks };
+  if (S.DEV) S.stack = { cost: () => lastCost, get inView() { return inView; }, get exploded() { return exploded; }, get dev() { return { steps, lastDt }; }, bench(n) { const a = performance.now(); for (let i = 0; i < n; i++) draw(); return ((performance.now() - a) / n).toFixed(2); },
+    at(e, lx, ly, a) { exp = e; if (e >= 1) { exploded = true; wrap.classList.add('exploded'); } if (lx !== undefined) { light.x = light.tx = lx; light.y = light.ty = ly; light.a = light.ta = a === undefined ? 1 : a; } inView = true; draw(); } };
 })();

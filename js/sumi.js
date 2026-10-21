@@ -50,11 +50,12 @@
 
   /* ---------- the halftone pieces (<ascii-art>, js/ascii): sized to their CSS box. The engine draws a piece at a font size (its canvas is
      cols x size x .602 px wide), so a piece with data-cols gets size = width / (cols x .602), at start and after a resize. data-piece: the engine
-     (js/ascii/ascii.js, a module, imported here) and the piece are loaded only when its box comes within ~800 px of the screen, so none of it is
-     part of the first view. On a phone or a touch screen the piece is drawn once and holds (still: a full-width halftone redraw costs ~26 ms on a
-     mid-range phone); a piece marked data-still (the pagoda: a fine print) is drawn once everywhere; any other plays at its data-fps, only while on screen.
-     The one draw is a 40-110 ms task: it is named in an idle slot, and the observer reaches 1600 px ahead, so that slot comes before the
-     band is in view and never inside a scroll frame. ---------- */
+     (js/ascii/ascii.js, a module, imported here) and the piece are loaded 2.5 s after the page's load (or when its box comes within 1600 px
+     of the screen, if that is sooner), so none of it is part of the first view. On a phone or a touch screen the piece is drawn once and holds
+     (still: a full-width halftone redraw costs ~26 ms on a mid-range phone); a piece marked data-still (the pagoda: a fine print) is drawn once
+     everywhere; any other plays at its data-fps, only while on screen. The one draw (40-150 ms on a phone) is split by the player into the piece's
+     set-up and, a task later, its render (js/ascii/player.js, local change 5); it is named in an idle slot once
+     every module it needs is already fetched, while the reader is still on the first screens, not inside a scroll toward the band. ---------- */
   (() => {
     const pieces = [...document.querySelectorAll('ascii-art[data-cols]')];
     if (!pieces.length) return;
@@ -70,9 +71,14 @@
     const lazy = new Map(pieces.filter(el => el.dataset.piece && !el.hasAttribute('piece')).map(el => [el.parentElement, el]));
     const STILL = matchMedia('(max-width: 720px), (pointer: coarse)').matches;
     let engine = null;
+    // the engine and the piece (and the piece's kit) are fetched first, all in parallel, so the import inside the element's _start resolves
+    // from the module map and the draw follows the idle slot at once, not a network round trip later. The piece URL is exactly the one the
+    // engine builds (`${BASE}pieces/${slug}.js`, no cache key), or the module map would hold two copies.
     const name = el => {
-      engine = engine || import('./ascii/ascii.js?v=10');
-      engine.then(() => {
+      if (!lazy.has(el.parentElement)) return; lazy.delete(el.parentElement);
+      const slug = el.dataset.piece.replace(/[^a-z0-9-]/g, '');
+      engine = engine || Promise.all([import('./ascii/ascii.js?v=11'), import('./ascii/lib/kit.js')]);
+      Promise.all([engine, import(`./ascii/pieces/${slug}.js`)]).then(() => {
         const go = () => {
           fit();                                                        // sized here, not at parse: reading its width then would pull the page's first layout into this script
           if (STILL || 'still' in el.dataset) el.setAttribute('still', '');   // data-still: a print, drawn once on every screen
@@ -83,9 +89,13 @@
       }).catch(() => {});
     };
     if (!lazy.size) return;
-    if (!('IntersectionObserver' in window)) { lazy.forEach(name); return; }
+    // named 2.5 s after load, wherever the reader is: the one 40-150 ms draw then lands while the fold or Work is being read, never inside
+    // a flick toward About. The observer (1600 px ahead) stays as the fallback for a reader who jumps straight down.
+    const all = () => [...lazy.values()].forEach(name);
+    addEventListener('load', () => setTimeout(() => ('requestIdleCallback' in window) ? requestIdleCallback(all, { timeout: 4000 }) : all(), 2500));
+    if (!('IntersectionObserver' in window)) return;
     const io = new IntersectionObserver(es => {
-      for (const e of es) if (e.isIntersecting) { io.unobserve(e.target); name(lazy.get(e.target)); }
+      for (const e of es) if (e.isIntersecting) { io.unobserve(e.target); const el = lazy.get(e.target); if (el) name(el); }
     }, { rootMargin: '1600px 0px' });
     lazy.forEach((el, box) => io.observe(box));
   })();
@@ -96,7 +106,7 @@
      go once both are in ---------- */
   (() => {
     const load = src => { const s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s); };
-    const pending = [['.stack', 'js/sumi-stack.js?v=11'], ['.xray', 'js/sumi-xray.js?v=12']].map(([sel, src]) => [document.querySelector(sel), src]).filter(([el]) => el);
+    const pending = [['.stack', 'js/sumi-stack.js?v=12'], ['.xray', 'js/sumi-xray.js?v=14']].map(([sel, src]) => [document.querySelector(sel), src]).filter(([el]) => el);
     let queued = false;
     function check(all) {
       queued = false;
@@ -134,13 +144,19 @@
   /* ---------- the secret: 140.85 (the footer's last line, or typed) · Konami → the codec call → the game ----------
      The codec ring is the one sound on the page: four square-wave beeps from an AudioContext made on the gesture that dials. */
   let gameScriptRequested = false, actx = null;
-  function status(msg) { const el = document.getElementById('live-status'); if (el) el.textContent = msg; }
+  let statusT = 0;
+  function status(msg) {                                              // cleared first and written on the next tick, so a second call with the same words is announced again
+    const el = document.getElementById('live-status'); if (!el) return;
+    el.textContent = ''; clearTimeout(statusT);
+    if (msg) statusT = setTimeout(() => { el.textContent = msg; }, 50);
+  }
+  addEventListener('gameclose', () => status(''));
   function openGame() {
     if (window.MGSGame) { window.MGSGame.open(); return; }
     if (gameScriptRequested) return;
     gameScriptRequested = true;
     const s = document.createElement('script');
-    s.src = 'js/game.js?v=19';                                        // lazy: the game (142 KB) loads on the first call only
+    s.src = 'js/game.js?v=21';                                        // lazy: the game (142 KB) loads on the first call only
     s.onload = () => { if (window.MGSGame) window.MGSGame.open(); };
     s.onerror = () => { gameScriptRequested = false; status('Codec link failed. Try again.'); };
     document.body.appendChild(s);

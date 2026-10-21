@@ -15,9 +15,9 @@ same import and then started its own player, so an element with six attributes r
 last was stoppable. Here every call in a tick folds into one `_start()` (a microtask), and a generation token checked after the
 await lets only the latest call play.
 
-Local changes 2-4 (2026-10-21, for the night page's frame budget; each is marked in its file):
+Local changes 2-5 (2026-10-21, for the night page's frame budget; each is marked in its file):
 
-2. `ascii.js`: an `fps` attribute, read at start, caps the frame rate (`play(..., { maxFps })`). The 404 plays the torii at 8 fps; the night page's pagoda is drawn once (`still`).
+2. `ascii.js`: an `fps` attribute, read at start, caps the frame rate (`play(..., { maxFps })`). The 404's torii and the night page's pagoda are both drawn once (`still`); the fps attribute is available for a piece that plays.
 3. `player.js`: between two renders the loop sleeps on a timer instead of requesting an animation frame every display frame, and off
    screen it sleeps altogether until its IntersectionObserver wakes it (upstream kept a 60 Hz requestAnimationFrame running while hidden).
    The timer wakes 4 ms short of the next step, so the one animation frame after it lands past the step: one wake per redraw.
@@ -25,8 +25,11 @@ Local changes 2-4 (2026-10-21, for the night page's frame budget; each is marked
    since its last frame (the pagoda: ~125 of 20,736), clearing each changed dot's box and stamping every dot that reaches into it, clipped to
    the box; the result is pixel-identical to a full redraw (checked) and a frame costs about half as much. Over a quarter of the cells
    changing, a new size or a new grid takes the full path.
+5. `player.js` (`play`): a still piece (the `still` attribute, a piece's own `meta.still`, or reduced motion) renders its one frame in a
+   later task (`requestIdleCallback`, 1 s timeout; `setTimeout` where there is none) instead of right after the piece's set-up, so the
+   two are separate tasks: the pagoda at 4x CPU throttling went from one ~160 ms task to ~41 ms + ~115 ms.
 
-The engine's internal imports carry a `?v=` cache key (`./player.js?v=10`, `./canvas.js?v=9`) so a browser never mixes an old cached
+The engine's internal imports carry a `?v=` cache key (`./player.js?v=11`, `./canvas.js?v=9`) so a browser never mixes an old cached
 module with a new one. Everything else is byte-identical to the fetched copies.
 
 ## License
