@@ -112,9 +112,9 @@
           <li class="feat">
             <img src="img/proj-vlm-ink.png?v=2" srcset="img/proj-vlm-ink.png?v=2 640w, img/proj-vlm-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) calc(100vw - 32px), (max-width: 1099px) 960px, 540px" width="640" height="360" loading="lazy" decoding="async" alt="Ink drawing: a quadruped robot mid-stride">
             <div>
-              <p class="kicker mono"><span class="n">01</span><span class="tg">VLM + RL</span><span class="sep"> · </span><span class="tg">MuJoCo</span><span class="sep"> · </span><span class="tg">Qwen3-VL</span><span class="sep"> · </span><span class="tg">PPO</span></p>
+              <p class="kicker mono"><span class="n">01</span><span class="tg">VLM + RL</span><span class="sep"> · </span><span class="tg">MuJoCo</span><span class="sep"> · </span><span class="tg">Qwen3.5-9B</span><span class="sep"> · </span><span class="tg">PPO</span></p>
               <h3>VLM-Guided Legged Robot Navigation with Revisable Memory</h3>
-              <p>A frozen Qwen3-VL navigator steers a PPO locomotion policy (Go2/G1, MuJoCo). I designed a revisable belief memory for out-of-view target search that drops stale beliefs on contradiction, with memoryless and frame-history ablations.</p>
+              <p>A frozen Qwen3.5-9B navigator steers a PPO locomotion policy (Go2, MuJoCo). I designed a revisable belief memory for out-of-view target search that drops stale beliefs on contradiction, with memoryless and frame-history ablations.</p>
               <p class="links"><a class="link" href="https://github.com/Wavy-Hec/VLM" rel="noopener">GitHub<span class="sr-only">: VLM navigation</span><span aria-hidden="true"> ↗</span></a></p>
             </div>
           </li>
@@ -170,7 +170,7 @@
             <div>
               <h3>Research Assistant</h3>
               <p class="org mono">Machine Intelligence Lab, UTRGV</p>
-              <p>Researched hierarchical control for legged robots: a VLM navigator commanding RL locomotion policies on the Unitree Go2 and G1 humanoid. Co-authored an accepted IEEE ICMLA 2026 paper on VLM-guided quadruped navigation. Built Isaac Sim and MuJoCo environments and trained PPO locomotion and navigation policies for the Go2, including state autoencoders that cut compute cost and sped up training.</p>
+              <p>Researched hierarchical control for legged robots: a VLM navigator commanding RL locomotion policies on the Unitree Go2. Co-authored an accepted IEEE ICMLA 2026 paper on VLM-guided quadruped navigation. Built Isaac Sim and MuJoCo environments and trained PPO locomotion and navigation policies for the Go2, including state autoencoders that cut compute cost and sped up training.</p>
             </div>
           </li>
           <li>
@@ -207,14 +207,14 @@
       <div class="in">
         <h2 id="h-research">Research &amp; publications</h2>
         <!-- two sentences, no figures: the Experience entries carry the numbers -->
-        <p class="lede">Two threads. The first is hierarchical control for legged robots: a VLM navigator over PPO locomotion on the Unitree Go2 and G1. The second, begun during my Air Force Research Laboratory internship, asks when fusing multi-camera video actually helps a vision-language model.</p>
+        <p class="lede">Two threads. The first is hierarchical control for legged robots: a VLM navigator over PPO locomotion on the Unitree Go2. The second, begun during my Air Force Research Laboratory internship and still in progress, asks when fusing multi-camera video actually helps a vision-language model.</p>
 
         <!-- the stack, exploded: four isometric plates drawn as a halftone dot grid on the canvas (js/sumi-stack.js), a soft light following the cursor over them; cameras at the bottom, the policy on top. Each plate is a button laid over its plate on the canvas, listed top to bottom as they stand on screen (navigator first; data-k is the plate's index from the bottom) (hover / focus lights it and shows its line; Enter / Space / click holds it, aria-pressed). On a phone the plates show their names only, and the line of the plate last tapped is written under the drawing (.pl-note: aria-hidden, the buttons' labels carry it; it opens on the top plate's line). Still and already apart under reduced motion. -->
         <figure class="stack-wrap">
           <div class="stack" role="group" aria-label="The research stack, exploded: cameras and video streams, a vision-language model, a belief memory, and a navigator commanding a PPO locomotion policy">
             <canvas aria-hidden="true"></canvas>
             <ol class="plates">
-              <li><button type="button" class="pl" data-k="3" aria-pressed="false" aria-label="navigator to PPO locomotion policy: a frozen Qwen3-VL navigator steers a PPO policy on the Go2 and G1 in MuJoCo"><span class="name">navigator → PPO<span class="lg"> locomotion policy</span></span><span class="cap"><span class="cl">a frozen Qwen3-VL navigator steers PPO</span><span class="sep"> · </span><span class="cl">Go2/G1 · MuJoCo</span></span></button></li>
+              <li><button type="button" class="pl" data-k="3" aria-pressed="false" aria-label="navigator to PPO locomotion policy: a frozen Qwen3.5-9B navigator steers a PPO policy on the Go2 in MuJoCo"><span class="name">navigator → PPO<span class="lg"> locomotion policy</span></span><span class="cap"><span class="cl">a frozen Qwen3.5-9B navigator steers PPO</span><span class="sep"> · </span><span class="cl">Go2 · MuJoCo</span></span></button></li>
               <li><button type="button" class="pl" data-k="2" aria-pressed="false" aria-label="belief memory: revisable, for out-of-view target search; it drops stale beliefs on contradiction"><span class="name">belief memory</span><span class="cap"><span class="cl">drops stale beliefs on contradiction</span><span class="sep"> · </span><span class="cl">revisable · out-of-view search</span></span></button></li>
               <li><button type="button" class="pl" data-k="1" aria-pressed="false" aria-label="vision-language model, Qwen2.5-VL and InternVL3: 650K+ scored answers across 3 benchmarks on a multi-GPU SLURM cluster"><span class="name">vision-language model<span class="lg"> Qwen2.5-VL · InternVL3</span></span><span class="cap"><span class="cl">650K+ scored answers · 3 benchmarks</span><span class="sep"> · </span><span class="cl">multi-GPU SLURM cluster</span></span></button></li>
               <li><button type="button" class="pl" data-k="0" aria-pressed="false" aria-label="cameras, video streams: multi-camera video QA, when fusing camera feeds helps, and when it does not"><span class="name">cameras<span class="lg"> video streams</span></span><span class="cap"><span class="cl">multi-camera video QA</span><span class="sep"> · </span><span class="cl">when fusing feeds helps, and when it does not</span></span></button></li>
@@ -270,7 +270,7 @@
             <p class="cs-h mono" id="cs-h">control stack</p>
             <ol class="chain mono">
               <li>camera / video</li>
-              <li>VLM navigator (Qwen3-VL)</li>
+              <li>VLM navigator (Qwen3.5-9B)</li>
               <li>velocity command</li>
               <li>PPO locomotion policy</li>
               <li>joint torques</li>
