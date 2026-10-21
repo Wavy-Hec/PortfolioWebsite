@@ -1,11 +1,11 @@
-/* SUMI v6 — the research stack: four isometric plates drawn as a halftone dot grid, cursor-lit. Each plate is a field of N x N paper dots on
+/* SUMI v7 — the research stack: four isometric plates drawn as a halftone dot grid, cursor-lit. Each plate is a field of N x N paper dots on
    sumi whose SIZE carries the tone (as the ascii-magic dots do: one colour, the dot grows with the light): a static isometric shading (a
    lighter centre, a bright rim along the edges, a hashed grain) plus a soft light that follows the cursor (a gaussian spot, sigma 50 px at 600 wide; the dots under it brighten and grow up to x1.8);
    the plate's thickness is two dim rows of dots under its front edges; a dotted beam joins the plates with a bright cap; sparks (<= 40)
    lift off the plate edges as short vertical dashes, drift up and fade in ~1.5 s. The plates slide apart from a collapsed stack the first time they are seen (.9 s, eased),
    once their chapter has settled; the names arrive after (css .exploded). The buttons (.pl, laid over each plate by layout()) are the
    controls: hover or focus lights the plate and shows its line, a focused plate pulls the light to its centre, click / Enter / Space holds it
-   (.lit, aria-pressed). Red is only the active plate's tag (css). Reduced motion: already apart, no sparks, no light, one still frame
+   (.lit, aria-pressed); the active plate's tag turns full paper (css). Reduced motion: already apart, no sparks, no light, one still frame
    (hover / focus still brightens the plate by a direct redraw). Draws inside the page's one frame loop at ~30 fps, only while on screen;
    every dot is an arc on one of 12 radius-bucketed Path2Ds, so a frame is 12 fills. */
 (() => {
@@ -96,7 +96,7 @@
   btns.forEach((b, i) => {
     const on = () => { hot = i; if (S.REDUCED) draw(); }, off = () => { if (hot === i) hot = -1; if (S.REDUCED) draw(); };
     b.addEventListener('pointerenter', on); b.addEventListener('pointerleave', off);
-    b.addEventListener('focus', () => { focused = i; on(); light.tx = cx; light.ty = plateY(i, 1); light.ta = 1; });
+    b.addEventListener('focus', () => { focused = i; on(); light.tx = cx; light.ty = plateY(i, 1); light.ta = 1; if (!exploded) { expT0 = performance.now() - 900; exp = 1; exploded = true; wrap.classList.add('exploded'); inView = true; draw(); } });   // keyboard focus before the stack has exploded: apart at once, so the control is never invisible
     b.addEventListener('blur', () => { focused = -1; off(); if (!pointerIn) light.ta = 0; });
     b.addEventListener('click', () => { held[i] = !held[i]; b.classList.toggle('lit', held[i]); b.setAttribute('aria-pressed', held[i] ? 'true' : 'false'); if (S.REDUCED) draw(); });
   });

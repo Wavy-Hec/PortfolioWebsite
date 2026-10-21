@@ -8,60 +8,34 @@ and vision-language models for robotics.
 
 Vanilla HTML/CSS/JS. No build step, no frameworks, no runtime dependencies.
 
-## The night page (v5)
+## The page (sumi v7 — "poster")
 
-`index.html` is the night page: sumi ground, paper type (Shippori Mincho + Share Tech Mono), one red. It is built from
-`css/sumi.css`, `js/sumi.js` (the wind, the loop, the opening, the chapter numerals, the secret), `js/sumi-field.js` (the live
-ASCII pampas field in the hero and the footer), `js/sumi-xray.js` (the Unitree Go2 kinematic sketch in About) and `js/radar.js` (the Soliton radar, drawn at 108 px inside the page's
-one frame loop; `legacy.html` runs it on its own). The mark is a round red seal with the H+L cut as paper strokes: the `#seal` symbol in
-`index.html` / `resume.html`, the inline favicon, `favicon.svg`, `favicon-32.png` and `apple-touch-icon.png` are the same drawing.
-`resume.html` and `404.html` wear the same palette. The previous four-theme site is kept whole as `legacy.html` (with
-`style.css`, `js/script.js`, `js/dither.js`), linked from the footer. `sumi.html` only redirects to `./`.
-
-### The halftone pass (v6)
-
-`js/ascii/` is a self-hosted copy of the [ascii-magic](https://www.ascii-magic.com/) runtime (MIT; `js/ascii/README.md`), which draws the
-page's `<ascii-art>` pieces as mono paper dots: the Big Shell on the hero's horizon (`pieces/big-shell-sea.js`), the Shadow Moses heliport
-behind Work (`pieces/heliport-snow.js`), the Go2 trotting behind About (`pieces/go2-trot.js`) and `wind-grass-paper` (ascii-magic's
-`wind-grass` redrawn as paper brightness, one dot per cell) with a `low-moon` in the footer; `404.html` wears its `sea-torii-sunset` in mono (the engine loaded by an absolute URL, probing both the live
-`/PortfolioWebsite/` path and the repo root). The first three are original pieces in the ascii-magic piece format, under 8 KB each, that
-also read in `look="ascii"`. The research stack is `js/sumi-stack.js`: four isometric plates as a cursor-lit dot grid with sparks, each plate
-a button. `js/sumi.js` sizes every piece to its CSS box (`data-cols`) and carries the dev hooks for headless screenshots (`?at=all`,
-`?stack=`, `?focus=`, `?xray=`; they answer only on localhost / 127.0.0.1). Nothing is fetched from ascii-magic.com at runtime; the
-engine's `start()` is coalesced locally (one player per element, `js/ascii/README.md`).
-
-## Features
-
-- **Four switchable themes** (picker in the header, persisted per visitor):
-  | Theme | Look |
-  | --- | --- |
-  | `ink` | Blue-ink editorial with a dithered, drifting noise background (default) |
-  | `codec` | MGS2 green phosphor — codec HUD, Soliton radar, reticle cursor |
-  | `holonet` | Star Wars deep space — holo-glass panels, hyperspace jump on switch, lightsaber dividers, Death Star limb |
-  | `gotham` | Batman: TAS storm-sky noir — black deco skyline, searchlight, drifting clouds, distant lightning |
-- **Codec Infiltration** — a hidden MGS-style stealth mini-game. Enter the Konami code
-  (↑ ↑ ↓ ↓ ← → ← → B A) or use the footer `CODEC 140.85` button. Per-theme chrome,
-  personal best times, touch controls.
-- **Per-theme everything** — dithered hero portraits, project plates, codec-call quotes,
-  corner widget (Soliton radar / targeting computer / GCPD bat-signal tracker), and a
-  handful of curated easter eggs worth finding.
-- Accessible (WCAG AA contrast, keyboard-first picker and game, `prefers-reduced-motion`
-  respected throughout) and fast (inline SVG icon sprite, idle-deferred background,
-  ~80 KB compressed first load).
-
-## Files
+One page, monochrome: sumi ground (`#141416`), paper type (`#e9e7e2`, Shippori Mincho + Share Tech Mono), a still fog bank (in the fold only) and a
+silver grain. The fold is one figure — Raiden, illustrated by Yoji Shinkawa, cut out as paper — and a two-line headline. Then four
+chapters on a left rail (一 Work, 二 Experience, 三 Research, 四 About) and the footer.
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | All markup + the inline SVG icon sprite and pre-paint theme scripts |
-| `style.css` | Every component and all four theme scopes |
-| `js/script.js` | Theme system, picker, Konami/game loader, easter eggs, contact form, nav |
-| `js/game.js` | Codec Infiltration mini-game (lazy-loaded on first launch) |
-| `js/radar.js` | Corner widget — per-theme canvas instrument |
-| `js/dither.js` | Animated dithered noise background (ink/codec) |
-| `404.html` | Self-contained themed 404 page |
-| `img/` | All site images: dithered portrait renders (per-theme hero + codec-call), `proj-*` blueprint project plates (four palettes each), résumé page render |
-| `Hector_Lugo_Fall_Resume.pdf` | Résumé (opens in-browser from the site) |
+| `index.html` | The page: the fold, the ten project plates as lit prints, the five résumé entries, the research stack and the papers, the About print and the Go2 sketch, the footer |
+| `css/sumi.css` | The one stylesheet (tokens, the weather, every chapter, the responsive pass: 390 first, then 768, 1440, 1920) |
+| `js/sumi.js` | The frame loop (~30 fps, asleep when hidden or under reduced motion), the "!" over Raiden, the halftone piece's sizing, the secret |
+| `js/sumi-stack.js` | Research: four isometric plates as a cursor-lit dot grid, each a button |
+| `js/sumi-xray.js` | About: the Unitree Go2 in side elevation, drawn from forward kinematics (proportions from the `go2_description` URDF), with hardware tags |
+| `js/ascii/` | A self-hosted copy of the [ascii-magic](https://www.ascii-magic.com/) halftone runtime (MIT, `js/ascii/README.md`): draws the footer's field (`pieces/wind-grass-paper.js`) and the 404's torii (`pieces/sea-torii-sunset.js`) |
+| `js/game.js` | The hidden mini-game, loaded only when the footer's `140.85` is dialed (or the Konami code, or `140.85` typed) |
+| `img/` | `raiden-night.png` (the fold), `ink-raiden-snake.png` (About), `proj-*-ink.png` + `-2x` (the plates: 640 and 1280, 1-bit ink on paper), `resume-page1.png`, `og-card.png`, the two codec portraits the game uses |
+| `papers/lugo-icmla-2026.pdf` | The accepted manuscript of the ICMLA 2026 paper (author-posted; the IEEE notice sits under the publications list) |
+| `resume.html` | The résumé page: the PDF's first page as an image with its links re-created as hotspots (`tools/build-resume-view.py`) |
+| `404.html` | Self-contained night 404 with the torii |
+| `sumi.html` | A redirect stub to `./` (old links) |
+| `Hector_Lugo_Fall_Resume.pdf` | Résumé (downloads from `resume.html`) |
+
+The mark is a paper disc with the H+L cut as sumi strokes: the `#seal` symbol in `index.html` / `resume.html`, the inline favicon,
+`favicon.svg`, `favicon-32.png` and `apple-touch-icon.png` are the same drawing. `tools/og-card.html` is the source of the link-preview
+card.
+
+Accessible (keyboard-reachable everything, `prefers-reduced-motion` turns every movement off) and light (the first view is the page, one
+stylesheet, three small scripts, one 16 KB cutout and one 640 px plate; the halftone engine and the game load lazily).
 
 ## Run locally
 
@@ -70,8 +44,10 @@ python -m http.server 8000
 # open http://localhost:8000
 ```
 
+On a local host, `?at=all&vh=840` lays the whole page out at once for screenshots, `?stack=1,x,y` sets the research stack's light and
+`?xray=9` the sketch's clock.
+
 ## Deploy
 
-GitHub Pages, straight from `main` — no build. Cache-busting is manual: bump the
-`?v=` query on any CSS/JS file you change (`style.css` and the `js/` scripts are
-referenced in `index.html`; `js/game.js` is referenced in `js/script.js`).
+GitHub Pages, straight from `main` — no build. Cache-busting is manual: bump the `?v=` query on any CSS/JS file you change
+(referenced in `index.html`; `js/game.js` is referenced in `js/sumi.js`).
