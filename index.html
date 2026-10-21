@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&text=%E4%B8%80%E4%BA%8C%E4%B8%89%E5%9B%9B%E7%AC%AC%E7%AB%A0&display=swap">
   <link rel="stylesheet" href="css/sumi.css?v=20">
   <!-- js/sumi.js loads the two chapter drawings (js/sumi-stack.js, js/sumi-xray.js) when their chapter comes within 600 px of the screen, or 4 s after load at the latest -->
-  <script src="js/sumi.js?v=20" defer></script>
+  <script src="js/sumi.js?v=21" defer></script>
   <script src="js/sumi-fold.js?v=17" defer></script>
   <!-- the halftone engine (a self-hosted copy of ascii-magic, js/ascii/README.md) draws the page's one <ascii-art> piece, the autumn pagoda after About: js/sumi.js imports the engine and names the piece 2.5 s after load (sooner if the band nears the screen), so none of it is part of the first view. Nothing loads from ascii-magic.com. -->
   <script type="application/ld+json">
@@ -286,10 +286,10 @@
     <!-- the pagoda: a breath before the footer, nothing over it. autumn-pagoda-maples (js/ascii/pieces, from ascii-magic.com) in mono paper dots, full-bleed, rising out of
          the sumi and sinking into the footer's deep sumi (css .breath). A fine screen, not a dot-matrix sign: density 200 (two dots per cell each way, 3.75 px at 1440;
          an integer ratio, so the dots do not beat against the cells), small dots (dot-size 22), contrast 20 (12 at 960 px and below, js/sumi.js), and css (opacity, a moonlit glow round the spire): the far sky and the
-         horizon fall back, the pagoda stands as a silhouette, and above 960 px the band ends at the moon bridge's arc (no reflection). A print: drawn once and held (data-still) on every screen, so it costs nothing per frame. It has no piece attribute yet:
+         horizon fall back, the pagoda stands as a silhouette, and above 960 px the band ends at the moon bridge's arc (no reflection). On laptops and desktops it moves at 8 fps (data-fps) only while on screen: the bridge lanterns glow, a maple branch sways, leaves fall; on a phone or a touch screen, and under reduced motion, it is a print, drawn once and held. It has no piece attribute yet:
          js/sumi.js fetches the engine and the piece 2.5 s after load (or when the band comes within ~1600 px, if sooner) and names the piece (data-piece) in an idle slot, so none of it loads with the first view and the draw lands while the reader is still near the top;
          js/sumi.js sizes it (data-cols: the piece's 192 columns). -->
-    <div class="breath" aria-hidden="true"><div class="frame"><ascii-art class="pagoda" data-piece="autumn-pagoda-maples" data-still look="dots" mono contrast="20" density="200" dot-size="22" data-cols="192" aria-hidden="true"></ascii-art></div></div>
+    <div class="breath" aria-hidden="true"><div class="frame"><ascii-art class="pagoda" data-piece="autumn-pagoda-maples" data-fps="8" look="dots" mono contrast="20" density="200" dot-size="22" data-cols="192" aria-hidden="true"></ascii-art></div></div>
   </main>
 
   <!-- contact = the footer: the name band, two link columns, the legal row -->

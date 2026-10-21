@@ -52,8 +52,8 @@
      cols x size x .602 px wide), so a piece with data-cols gets size = width / (cols x .602), at start and after a resize. data-piece: the engine
      (js/ascii/ascii.js, a module, imported here) and the piece are loaded 2.5 s after the page's load (or when its box comes within 1600 px
      of the screen, if that is sooner), so none of it is part of the first view. On a phone or a touch screen the piece is drawn once and holds
-     (still: a full-width halftone redraw costs ~26 ms on a mid-range phone); a piece marked data-still (the pagoda: a fine print) is drawn once
-     everywhere; any other plays at its data-fps, only while on screen. The one draw (40-150 ms on a phone) is split by the player into the piece's
+     (still: a full-width halftone redraw costs ~26 ms on a mid-range phone); a piece marked data-still is drawn once
+     everywhere; any other plays at its data-fps (the pagoda: 8), only while on screen. The one draw (40-150 ms on a phone) is split by the player into the piece's
      set-up and, a task later, its render (js/ascii/player.js, local change 5); it is named in an idle slot once
      every module it needs is already fetched, while the reader is still on the first screens, not inside a scroll toward the band. ---------- */
   (() => {
@@ -83,7 +83,7 @@
           fit();                                                        // sized here, not at parse: reading its width then would pull the page's first layout into this script
           if (STILL || 'still' in el.dataset) el.setAttribute('still', '');   // data-still: a print, drawn once on every screen
           if (matchMedia('(max-width: 960px)').matches) el.setAttribute('contrast', '12');   // a phone's or a tablet's 5 px cells: a gentler curve, so the pagoda's sky ramps instead of stepping into a seam and the moon bridge keeps its midtones
-          else if (el.dataset.fps) el.setAttribute('fps', el.dataset.fps);
+          if (el.dataset.fps) el.setAttribute('fps', el.dataset.fps);                       // the frame-rate cap at every width that animates (a narrow laptop window too)
           el.setAttribute('piece', el.dataset.piece);
         };
         ('requestIdleCallback' in window) ? requestIdleCallback(go, { timeout: 1200 }) : setTimeout(go, 200);
