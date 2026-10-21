@@ -1,6 +1,6 @@
 # js/ascii — the halftone engine (self-hosted copy of ascii-magic)
 
-The runtime that draws the `<ascii-art>` elements on the night page and the 404: `ascii.js` (the custom element), `player.js`
+The runtime that draws the `<ascii-art>` elements (the 404's torii; the night page loads it again when a piece returns to it): `ascii.js` (the custom element), `player.js`
 (plays a piece into a canvas, only while on screen, holds the first frame under `prefers-reduced-motion`), `glyphs.js` (the
 "looks"), `canvas.js` (the halftone painters) and `lib/kit.js` (the toolbox the pieces are built from). The layout mirrors the
 upstream one so the "pieces sit next to this file" resolution in `ascii.js` works: pieces live in `pieces/`, the kit in `lib/`.
@@ -31,8 +31,8 @@ import of `../lib/kit.js` already matches this layout) is the night page's secon
 ~800 px of the screen (js/sumi.js, `data-piece`), so the module is not part of the first view. Note: the `LICENSE` fetched from the site
 alongside these copies is ascii-magic.com's 404 page, not a licence text; the MIT terms still rest on the owner's brief (see License above); confirm them on ascii-magic.com before publishing.
 
-`pieces/wind-grass-paper.js` is a derived work: ascii-magic's `wind-grass` (its gust field and blade model) redrawn at 192 x 72
-square cells with every cell a paper brightness, so the dots look halftones the blades themselves. It is the footer's field on the
-night page (v7). `pieces/sea-torii-sunset.js` (upstream, unchanged) is the 404's torii. The upstream `moonlit-sea` and `wind-grass`
+`pieces/sea-torii-sunset.js` (upstream, unchanged) is the 404's torii. The footer's v7 field, `pieces/wind-grass-paper.js` (a derived
+work of ascii-magic's `wind-grass`), was removed in v8: the fold now draws its own grass (`js/sumi-fold.js`, tapered curves on a canvas),
+and the night page's only piece is the autumn pagoda above. The upstream `moonlit-sea` and `wind-grass`
 pieces and the site's own v6 pieces (the Big Shell, the heliport, the Go2 trot, the low moon) were removed in v7: nothing used them.
 Credit as above.

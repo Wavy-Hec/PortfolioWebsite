@@ -1,6 +1,6 @@
-/* SUMI v7 — one loop, two secrets. The loop: one requestAnimationFrame chain paced to ~30 fps by a timer that the research stack
-   (js/sumi-stack.js) and the Go2 sketch (js/sumi-xray.js) draw inside; asleep when the tab is hidden, while the game is open, and under
-   reduced motion (nothing moves at all). Here too: the "!" over Raiden (hover / focus, silent), the halftone piece's sizing, and the
+/* SUMI v8 — one loop, two secrets. The loop: one requestAnimationFrame chain paced to ~30 fps by a timer that the fold's wind
+   (js/sumi-fold.js), the research stack (js/sumi-stack.js) and the Go2 sketch (js/sumi-xray.js) draw inside; asleep when the tab is hidden,
+   while the game is open, and under reduced motion (nothing moves at all). Here too: the "!" over Raiden (hover / focus, silent), and the
    secret (the footer's 140.85, the Konami code, 140.85 typed -> the codec call -> the game, js/game.js, loaded on the first call only). */
 (() => {
   'use strict';
@@ -71,6 +71,26 @@
     lazy.forEach((el, box) => io.observe(box));
   })();
 
+  /* ---------- the chapter drawings load on approach: the research stack and the Go2 sketch are not in the first view, so their scripts
+     are fetched when their chapter's top comes within 600 px of the screen's foot (or is above it: a link straight to #contact), checked on
+     load, scroll and resize, and in any case 4 s after the page has loaded (so they are there before anyone can reach them); the listeners
+     go once both are in ---------- */
+  (() => {
+    const load = src => { const s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s); };
+    const pending = [['.stack', 'js/sumi-stack.js?v=8'], ['.xray', 'js/sumi-xray.js?v=10']].map(([sel, src]) => [document.querySelector(sel), src]).filter(([el]) => el);
+    let queued = false;
+    function check(all) {
+      queued = false;
+      for (let i = pending.length - 1; i >= 0; i--) if (all === true || pending[i][0].getBoundingClientRect().top < innerHeight + 600) load(pending.splice(i, 1)[0][1]);
+      if (!pending.length) { removeEventListener('scroll', soon); removeEventListener('resize', soon); }
+    }
+    function soon() { if (!queued) { queued = true; setTimeout(check, 50); } }
+    addEventListener('scroll', soon, { passive: true });
+    addEventListener('resize', soon, { passive: true });
+    addEventListener('load', () => setTimeout(() => check(true), 4000));
+    check(/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && q.has('at'));   // dev captures (?at=, with ?stack= / ?xray=) want both at once
+  })();
+
   /* ---------- the "!" over Raiden: hover or focus on the figure pops the paper plate above his head for 1.2 s, once per hover; silent ---------- */
   (() => {
     const fig = document.querySelector('.hero .figure'), plate = fig && fig.querySelector('.alert');
@@ -85,7 +105,7 @@
     fig.addEventListener('pointerleave', () => { armed = true; });
     fig.addEventListener('focus', pop);
     // the hero clips (css overflow: clip); where clip is unsupported it is overflow: hidden, which the browser still scrolls to bring the
-    // focused figure (hanging past the fold's floor below 960) into view: hold it at 0
+    // focused figure (its plate hangs past the fold's floor) into view: hold it at 0
     const hero = fig.closest('.hero');
     if (hero) hero.addEventListener('scroll', () => { if (hero.scrollTop || hero.scrollLeft) { hero.scrollTop = 0; hero.scrollLeft = 0; } }, { passive: true });
     fig.addEventListener('blur', () => { armed = true; });

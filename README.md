@@ -8,22 +8,24 @@ and vision-language models for robotics.
 
 Vanilla HTML/CSS/JS. No build step, no frameworks, no runtime dependencies.
 
-## The page (sumi v7 — "poster")
+## The page (sumi v8 — the samurai fold)
 
-One page, monochrome: sumi ground (`#141416`), paper type (`#e9e7e2`, Shippori Mincho + Share Tech Mono), a still fog bank (in the fold only) and a
-silver grain. The fold is one figure — Raiden, illustrated by Yoji Shinkawa, cut out as paper — and a two-line headline. Then four
+One page, monochrome: sumi ground (`#141416`), paper type (`#e9e7e2`, Shippori Mincho + Share Tech Mono) and a silver grain. The fold is one
+scene and a two-line headline: Raiden (illustrated by Yoji Shinkawa, cut out as paper) in front of a pale full moon, standing in tall pampas
+grass that bends in gusts rolling left to right, with fog drifting on the same wind (all procedural, `js/sumi-fold.js`). Then four
 chapters on a left rail (一 Work, 二 Experience, 三 Research, 四 About) and the footer.
 
 | File | Purpose |
 | --- | --- |
 | `index.html` | The page: the fold, the ten project plates as lit prints, the five résumé entries, the research stack and the papers, the About print and the Go2 sketch, the footer |
 | `css/sumi.css` | The one stylesheet (tokens, the weather, every chapter, the responsive pass: 390 first, then 768, 1440, 1920) |
-| `js/sumi.js` | The frame loop (~30 fps, asleep when hidden or under reduced motion), the "!" over Raiden, the halftone piece's sizing, the secret |
+| `js/sumi.js` | The frame loop (~30 fps, asleep when hidden or under reduced motion), the two chapter drawings loaded on approach, the "!" over Raiden, the secret |
+| `js/sumi-fold.js` | The fold's weather: the moon (drawn once), four fog layers and the grass on one wind; only while the fold is on screen; one still frame under reduced motion |
 | `js/sumi-stack.js` | Research: four isometric plates as a cursor-lit dot grid, each a button |
 | `js/sumi-xray.js` | About: the Unitree Go2 in side elevation, drawn from forward kinematics (proportions from the `go2_description` URDF), with hardware tags |
-| `js/ascii/` | A self-hosted copy of the [ascii-magic](https://www.ascii-magic.com/) halftone runtime (MIT, `js/ascii/README.md`): draws the footer's field (`pieces/wind-grass-paper.js`) and the 404's torii (`pieces/sea-torii-sunset.js`) |
+| `js/ascii/` | A self-hosted copy of the [ascii-magic](https://www.ascii-magic.com/) halftone runtime (MIT, `js/ascii/README.md`): draws the 404's torii (`pieces/sea-torii-sunset.js`); the night page itself loads none of it in v8 |
 | `js/game.js` | The hidden mini-game, loaded only when the footer's `140.85` is dialed (or the Konami code, or `140.85` typed) |
-| `img/` | `raiden-night.png` (the fold), `ink-raiden-snake.png` (About), `proj-*-ink.png` + `-2x` (the plates: 640 and 1280, 1-bit ink on paper), `resume-page1.png`, `og-card.png`, the two codec portraits the game uses |
+| `img/` | `raiden-night.png` + `raiden-shade.png` (the fold: his paper plate and, under it, his ink as a hard-edged sumi silhouette so the moon never shows through him, `tools/make-night.py`), `ink-raiden-snake.png` (About), `proj-*-ink.png` + `-2x` (the plates: 640 and 1280, 1-bit ink on paper), `resume-page1.png`, `og-card.png`, the two codec portraits the game uses |
 | `papers/lugo-icmla-2026.pdf` | The accepted manuscript of the ICMLA 2026 paper (author-posted; the IEEE notice sits under the publications list) |
 | `resume.html` | The résumé page: the PDF's first page as an image with its links re-created as hotspots (`tools/build-resume-view.py`) |
 | `404.html` | Self-contained night 404 with the torii |
@@ -35,7 +37,8 @@ The mark is a paper disc with the H+L cut as sumi strokes: the `#seal` symbol in
 card.
 
 Accessible (keyboard-reachable everything, `prefers-reduced-motion` turns every movement off) and light (the first view is the page, one
-stylesheet, three small scripts, one 16 KB cutout and one 640 px plate; the halftone engine and the game load lazily).
+stylesheet, two small scripts, one 15 KB cutout and its 4 KB silhouette; the two chapter drawings load as their chapter approaches, the
+halftone engine and the game lazily).
 
 ## Run locally
 
@@ -45,7 +48,8 @@ python -m http.server 8000
 ```
 
 On a local host, `?at=all&vh=840` lays the whole page out at once for screenshots, `?stack=1,x,y` sets the research stack's light and
-`?xray=9` the sketch's clock.
+`?xray=9` the sketch's clock, `?wind=<seconds>` composes the fold's wind at that instant and `?perf=1` writes the fold's frame cost to
+`document.documentElement.dataset.foldPerf`.
 
 ## Deploy
 
