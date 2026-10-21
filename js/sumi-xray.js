@@ -6,7 +6,7 @@
    they arrive even when frames are throttled), then trots in place: a diagonal-pair gait, joint angles a sinusoid per leg,
    every point from forward kinematics. The hardware tags (mono labels, a paper square, a hairline leader to the part) brighten their part on
    hover / focus. Reduced motion: the standing pose, everything present, no walk. One canvas, ~40 strokes a frame, inside the page's single
-   frame loop at ~30 fps, only while the band is on screen. */
+   frame loop at ~30 fps, subscribed only while the band is on screen. */
 (() => {
   'use strict';
   const S = window.SUMI;
@@ -39,12 +39,12 @@
 
   function layout() {
     narrow = innerWidth <= 720;
-    W = wrap.clientWidth; H = narrow ? Math.round(W * 0.84) : Math.round(clamp(W * 0.62, 380, 560));   // a phone's canvas is taller than its figure needs: room under the feet for the ground line and its shadow
+    W = wrap.clientWidth; H = narrow ? Math.round(W * 0.7) : Math.round(clamp(W * 0.62, 380, 560));   // a phone's canvas fits the figure: a little air over the head, the ground line and its shadow under the feet
     canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
     canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     s = Math.min((narrow ? W * 0.92 : W * 0.6) / 0.76, H * (narrow ? 1 : 0.66) / 0.43);   // px per metre: the figure is ~0.76 m long, 0.43 m from the head's top to the ground
-    cx = W / 2; cy = H * (narrow ? 0.4 : 0.3);
+    cx = W / 2; cy = H * (narrow ? 0.26 : 0.3);
     if (!narrow) {
       tagEls.forEach((el, i) => {
         const T = TAGS[i]; if (!T) return;
@@ -205,8 +205,13 @@
     tagEls.forEach(el => ['pointerenter', 'pointerleave', 'focus', 'blur'].forEach(ev => el.addEventListener(ev, () => { for (const k in hl) hl[k] = hlT[k]; draw(performance.now()); })));
   } else {
     layout(); draw(performance.now());
-    S.add(step);
-    new IntersectionObserver(es => { inView = es.some(e => e.isIntersecting); if (inView) arm(); }, { threshold: 0.15 }).observe(wrap);
+    // subscribed to the page's loop only while the band is on screen, so the loop can sleep elsewhere on the page
+    let running = false;
+    new IntersectionObserver(es => {
+      inView = es[es.length - 1].isIntersecting;
+      if (inView && !running) { running = true; S.add(step); } else if (!inView && running) { running = false; S.remove(step); }
+      if (inView) arm();
+    }, { threshold: 0.15 }).observe(wrap);
   }
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { layout(); S.REDUCED ? still() : draw(performance.now()); }, 150); }, { passive: true });
   // dev: a frame's cost; at(sec) jumps the resolve clock for screenshots

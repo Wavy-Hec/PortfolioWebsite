@@ -6,7 +6,7 @@
    once their chapter has settled; the names arrive after (css .exploded). The buttons (.pl, laid over each plate by layout()) are the
    controls: hover or focus lights the plate and shows its line, a focused plate pulls the light to its centre, click / Enter / Space holds it
    (.lit, aria-pressed); the active plate's tag turns full paper (css). Reduced motion: already apart, no sparks, no light, one still frame
-   (hover / focus still brightens the plate by a direct redraw). Draws inside the page's one frame loop at ~30 fps, only while on screen;
+   (hover / focus still brightens the plate by a direct redraw). Draws inside the page's one frame loop at ~30 fps, subscribed only while on screen;
    every dot is an arc on one of 12 radius-bucketed Path2Ds, so a frame is 12 fills. */
 (() => {
   'use strict';
@@ -34,7 +34,8 @@
     cx = 170 * k; hw = 120 * k; hh = 40 * k; yBase = 302 * k;
     btns.forEach((b, i) => {                                              // the button spans its plate and the label's run to the right of it
       const cy = plateY(i, 1);
-      b.style.left = (cx - hw) + 'px'; b.style.top = Math.round(cy - hh - 6) + 'px'; b.style.width = Math.round(W - (cx - hw)) + 'px'; b.style.height = Math.round(hh * 2 + 12) + 'px';
+      const bh = Math.min(hh * 2 + 12, GAP * k - 2);                     // never taller than the plates' spacing: no two buttons' hit areas overlap
+      b.style.left = (cx - hw) + 'px'; b.style.top = Math.round(cy - bh / 2) + 'px'; b.style.width = Math.round(W - (cx - hw)) + 'px'; b.style.height = Math.round(bh) + 'px';
       b.style.paddingLeft = Math.round(hw * 2 + 22) + 'px';
     });
     laidOut = true;
@@ -103,10 +104,15 @@
   layout();
   if (S.REDUCED) { wrap.classList.add('exploded'); light.a = 0; draw(); }
   else {
-    draw(); S.add(step);
-    const ch = wrap.closest('[data-chapter]');
-    const go = () => { if (ch && ch.classList.contains('pending')) { setTimeout(go, 120); return; } setTimeout(() => { expT0 = performance.now(); }, 250); };
-    const io = new IntersectionObserver(es => { inView = es.some(e => e.isIntersecting); if (inView && expT0 === null) go(); }, { threshold: 0.25 });
+    draw();
+    // subscribed to the page's loop only while the stack is on screen, so the loop can sleep elsewhere on the page
+    let running = false;
+    const go = () => setTimeout(() => { expT0 = performance.now(); }, 250);
+    const io = new IntersectionObserver(es => {
+      inView = es[es.length - 1].isIntersecting;
+      if (inView && !running) { running = true; S.add(step); } else if (!inView && running) { running = false; S.remove(step); }
+      if (inView && expT0 === null) go();
+    }, { threshold: 0.25 });
     io.observe(wrap);
   }
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { layout(); draw(); }, 160); }, { passive: true });

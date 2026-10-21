@@ -1,6 +1,6 @@
 # js/ascii — the halftone engine (self-hosted copy of ascii-magic)
 
-The runtime that draws the `<ascii-art>` elements (the 404's torii; the night page loads it again when a piece returns to it): `ascii.js` (the custom element), `player.js`
+The runtime that draws the `<ascii-art>` elements (the night page's autumn pagoda and the 404's torii): `ascii.js` (the custom element), `player.js`
 (plays a piece into a canvas, only while on screen, holds the first frame under `prefers-reduced-motion`), `glyphs.js` (the
 "looks"), `canvas.js` (the halftone painters) and `lib/kit.js` (the toolbox the pieces are built from). The layout mirrors the
 upstream one so the "pieces sit next to this file" resolution in `ascii.js` works: pieces live in `pieces/`, the kit in `lib/`.
@@ -13,7 +13,20 @@ One local change, in `ascii.js` only (marked in the file): `start()` is coalesce
 `attributeChangedCallback` once per attribute already present and `connectedCallback` once more; upstream each call awaited the
 same import and then started its own player, so an element with six attributes ran six or seven rAF loops on one canvas and only the
 last was stoppable. Here every call in a tick folds into one `_start()` (a microtask), and a generation token checked after the
-await lets only the latest call play. Everything else is byte-identical to the fetched copies.
+await lets only the latest call play.
+
+Local changes 2-4 (2026-10-21, for the night page's frame budget; each is marked in its file):
+
+2. `ascii.js`: an `fps` attribute, read at start, caps the frame rate (`play(..., { maxFps })`). The night page plays the pagoda at 8 fps.
+3. `player.js`: between two renders the loop sleeps on a timer instead of requesting an animation frame every display frame, and off
+   screen it sleeps altogether until its IntersectionObserver wakes it (upstream kept a 60 Hz requestAnimationFrame running while hidden).
+4. `canvas.js` (`paintTone` with the pixel stamper, `stampTone`, `stampOne`): a live player re-stamps only the grid cells whose dot changed
+   since its last frame (the pagoda: ~125 of 20,736), clearing each changed dot's box and stamping every dot that reaches into it, clipped to
+   the box; the result is pixel-identical to a full redraw (checked) and a frame costs about half as much. Over a quarter of the cells
+   changing, a new size or a new grid takes the full path.
+
+The engine's internal imports carry a `?v=` cache key (`./player.js?v=9`, `./canvas.js?v=9`) so a browser never mixes an old cached
+module with a new one. Everything else is byte-identical to the fetched copies.
 
 ## License
 

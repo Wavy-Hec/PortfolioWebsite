@@ -194,6 +194,8 @@ function paintTone(ctx, frame, palette, opts) {
   const maxRadDev = 0.5 * unit * size * SIZES[SIZES.length - 1] * dpr;
   const stamp = maxRadDev <= 6 && typeof ImageData !== "undefined" && !opts.noStamp; // small dots: write pixels directly
   const dots = stamp ? SIZES.map(() => []) : null;
+  // local change 4 (js/ascii/README.md): each grid cell's dot (level, colour), so the next frame re-stamps only the cells that changed
+  const cellLvl = stamp && !opts.over ? new Int8Array(gx * gy).fill(-1) : null, cellFill = cellLvl ? new Array(gx * gy) : null;
   const pix = opts.dither ? [] : null; // dither: grid cells switched on by an 8x8 Bayer threshold
   const sample = (fx, fy) => { // bilinear brightness, nearest colour
     const c0 = Math.min(cols - 1, Math.max(0, Math.floor(fx))), r0 = Math.min(rows - 1, Math.max(0, Math.floor(fy)));
@@ -216,11 +218,12 @@ function paintTone(ctx, frame, palette, opts) {
     const rad = 0.5 * unit * size * SIZES[lvl];
     if (rad < 0.3) continue;
     const fill = opts.mono ? opts.ink : brighten(hx, sat);
-    if (stamp) { dots[lvl].push((x + px) * dpr, (y + py) * dpr, rad * dpr, fill); continue; }
+    if (stamp) { dots[lvl].push((x + px) * dpr, (y + py) * dpr, rad * dpr, fill); if (cellLvl) { cellLvl[j * gx + i] = lvl; cellFill[j * gx + i] = fill; } continue; }
     const m = layers[lvl]; let p = m.get(fill); if (!p) m.set(fill, (p = new Path2D()));
     p.moveTo(x + px + rad, y + py); p.arc(x + px, y + py, rad, 0, Math.PI * 2);
   }
   if (pix) stampPixels(ctx, pix, x, y, sx, sy, dpr, opts.over);
+  else if (stamp && cellLvl) stampTone(ctx, dots, { key: [gx, gy, sx, sy, x, y, dpr, unit, size].join(","), gx, gy, sx, sy, x, y, dpr, cellLvl, cellFill, rads: SIZES.map((v) => 0.5 * unit * size * v * dpr) });
   else if (stamp) stampDots(ctx, dots, opts.over);
   else for (const m of layers) for (const [fill, p] of m) { ctx.fillStyle = fill; ctx.fill(p); } // big dots last, so they merge
   if (text.length) {
@@ -333,6 +336,44 @@ function stampDots(ctx, layers, over) {
       } }
   }
   ctx.putImageData(img, 0, 0);
+}
+
+/* Local change 4 (js/ascii/README.md): an animated piece changes a few cells a frame (the autumn pagoda: ~125 of 20,736), so a live
+   player's frame re-stamps only those. The canvas keeps its pixel buffer (cv._apImg) and the last frame's cell levels; for each cell whose
+   dot changed, the box its dot can cover is cleared and every dot that can reach into that box is stamped again, clipped to the box: the
+   pixels come out exactly as a full redraw would make them. A new size, a new grid or a frame where over a quarter of the cells change
+   takes the full path. */
+function stampOne(d, W, H, cx, cy, rad, rgb, x0, y0, x1, y1) {
+  const bx = Math.floor(cx), by = Math.floor(cy), m = maskFor(rad, cx - bx - 0.5, cy - by - 0.5), [r, g, b] = rgb;
+  const mx0 = bx - m.R, my0 = by - m.R;
+  for (let j = 0; j < m.n; j++) { const yy = my0 + j; if (yy < y0 || yy >= y1 || yy < 0 || yy >= H) continue;
+    for (let i = 0; i < m.n; i++) { const xx = mx0 + i; if (xx < x0 || xx >= x1 || xx < 0 || xx >= W) continue;
+      const cov = m.a[j * m.n + i]; if (cov <= 0) continue;
+      const o = (yy * W + xx) * 4, A = d[o + 3] / 255, na = cov + A * (1 - cov);
+      d[o] = (r * cov + d[o] * A * (1 - cov)) / na; d[o + 1] = (g * cov + d[o + 1] * A * (1 - cov)) / na; d[o + 2] = (b * cov + d[o + 2] * A * (1 - cov)) / na; d[o + 3] = na * 255;
+    } }
+}
+function stampTone(ctx, layers, g) {
+  const cv = ctx.canvas, W = cv.width, H = cv.height, prev = cv._apTone, img = cv._apImg;
+  const full = () => { stampDots(ctx, layers, false); cv._apTone = { key: g.key, W, H, lvl: g.cellLvl, fill: g.cellFill }; };
+  if (!prev || prev.key !== g.key || prev.W !== W || prev.H !== H || !img || img.width !== W || img.height !== H) return full();
+  const n = g.gx * g.gy, changed = [];
+  for (let c = 0; c < n; c++) if (prev.lvl[c] !== g.cellLvl[c] || (g.cellLvl[c] >= 0 && prev.fill[c] !== g.cellFill[c])) { changed.push(c); if (changed.length > n / 4) return full(); }
+  if (changed.length) {
+    const d = img.data, rmax = Math.ceil(Math.max(...g.rads) + 1) + 1, pitch = Math.min(g.sx, g.sy) * g.dpr, k = Math.ceil((2 * rmax) / pitch);
+    for (const c of changed) {
+      const i = c % g.gx, j = (c - i) / g.gx;
+      const cx = (g.x + (i + 0.5) * g.sx) * g.dpr, cy = (g.y + (j + 0.5) * g.sy) * g.dpr;
+      const x0 = Math.max(0, Math.floor(cx) - rmax), x1 = Math.min(W, Math.floor(cx) + rmax + 1), y0 = Math.max(0, Math.floor(cy) - rmax), y1 = Math.min(H, Math.floor(cy) + rmax + 1);
+      for (let yy = y0; yy < y1; yy++) d.fill(0, (yy * W + x0) * 4, (yy * W + x1) * 4);
+      for (let jj = Math.max(0, j - k); jj <= Math.min(g.gy - 1, j + k); jj++) for (let ii = Math.max(0, i - k); ii <= Math.min(g.gx - 1, i + k); ii++) {
+        const cc = jj * g.gx + ii, lv = g.cellLvl[cc]; if (lv < 0) continue;
+        stampOne(d, W, H, (g.x + (ii + 0.5) * g.sx) * g.dpr, (g.y + (jj + 0.5) * g.sy) * g.dpr, g.rads[lv], rgbOf(g.cellFill[cc]), x0, y0, x1, y1);
+      }
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  cv._apTone = { key: g.key, W, H, lvl: g.cellLvl, fill: g.cellFill };
 }
 
 function paintText(ctx, frame, palette, x, y, cw, ch, ink, atlas, dpr = 1) {

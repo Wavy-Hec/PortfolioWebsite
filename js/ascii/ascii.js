@@ -12,9 +12,10 @@
  * (0 to 100, default 0), dot-size (halftone dot size, 25 to 120, default 51),
  * steps (halftone dot sizes: 3, 5, or 0 for smooth), density (dot spacing, 40
  * to 250, default 131: more dots closer together, dot size unchanged), all
- * (redraw text and line work in the look too, not only shading).
+ * (redraw text and line work in the look too, not only shading); fps (local:
+ * a frame-rate cap, read at start).
  */
-import { play } from "./player.js";
+import { play } from "./player.js?v=9"; // ?v: local cache key (js/ascii/README.md)
 
 // Pieces sit next to this file on ascii-magic.com (/ascii/ascii.js, /ascii/pieces/) and one
 // folder up in the npm package (runtime/ascii.js, pieces/), so self-hosting the package works too.
@@ -53,6 +54,7 @@ class AsciiArt extends HTMLElement {
       this.stop = play(this.pre, mod, {
         speed: parseFloat(this.getAttribute("speed")) || 1,
         still: this.hasAttribute("still") || undefined,
+        maxFps: parseFloat(this.getAttribute("fps")) || undefined, // local change 2 (js/ascii/README.md): a frame-rate cap
         look: {
           look: this.getAttribute("look") || undefined,
           chars: this.getAttribute("chars") || undefined,

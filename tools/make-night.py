@@ -2,25 +2,26 @@
 the fold of index.html (css .hero .figure) and the link-preview card (tools/og-card.html). Python + Pillow, no numpy.
 
   python tools/make-night.py          -> img/raiden-night.png + img/raiden-shade.png (v8: his hard-edged shadow, under the plate, so the
-                                         moon behind him does not show through his ink); run oxipng -o4 --strip safe on both after
+                                         moon behind him does not show through his ink; v9: the block's edges torn into dry brush, the
+                                         shadow kept off the moon's disc but for his own strokes); run oxipng -o4 --strip safe on both after
 
 The source, img/ink-raiden.png (the portrait as he drew it, ink on paper), left the shipped tree with the old site: read it from history first,
   git show 1d2e5eb:img/ink-raiden.png > img/ink-raiden.png
 The red petals in the painting are dropped (the page is monochrome); the ink is the sumi ground itself, so only his paper is kept: face, hand,
-hair, the washes. The feet dissolve into the fog from 74 % down through a Bayer 4x4 at 2 px cells.
+hair, the washes. Below 62 % of the plate (inside the grass) his paper dissolves by error diffusion at the plate's own pixel (gone by 84 %), a
+fine stochastic stipple rather than an ordered screen (v11: the Bayer 4x4 read as a checker beside the brush), so his legs sink into the grass
+as a two-colour print, never as a translucent grey (css masks only the shadow plate).
 """
 import pathlib
-from PIL import Image, ImageChops, ImageDraw, ImageFilter
+import random
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageOps
 
 HERE = pathlib.Path(__file__).resolve().parent
 IMG = HERE.parent / "img"
-BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
 PAPER = (233, 231, 226)
+# the moon (css .hero --mx / --my / --md: its centre as fractions of the plate, its diameter as a fraction of the plate's height); keep in step
+MOON_X, MOON_Y, MOON_D = .345, .19, .315
 SUMI_L = 20                                                                  # the shadow is grey 20 (#141414): within 2 of sumi #141416
-
-
-def thr(x, y, cell=2):
-    return (BAYER[(y // cell) % 4][(x // cell) % 4] + 0.5) / 16.0
 
 
 def smooth(t):
@@ -69,21 +70,36 @@ def raiden():
             if a >= 8 and r >= 60 and not (r > 150 and g < 90):
                 pp[x, y] = 255
     dens = paper.filter(ImageFilter.BoxBlur(12)).load()
+    grit = random.Random(85)
     asis = Image.new("P", (w, h), 0)                                       # two colours: 0 clear, 1 paper (the petals are not drawn: no red on the page)
     asis.putpalette([0, 0, 0, *PAPER] + [0] * (768 - 6))
     s_ = asis.load()
+    # v11: the legs dissolve from 62 % down (inside the grass), fastest at first, gone by 84 %: each paper pixel's keep is spread by
+    # Floyd-Steinberg error diffusion (serpentine, a little jitter on the threshold), so the dissolve is a fine stipple with no ordered pattern
+    D0, D1 = 0.62, 0.84
+    err, nxt = [0.0] * (w + 2), [0.0] * (w + 2)
     for y in range(h):
         v = y / h
-        keep = 1.0 - smooth((v - 0.74) / 0.24)                              # the feet dissolve into the grass from 74 % down
-        for x in range(w):
+        keep = max(0.0, 1.0 - (v - D0) / (D1 - D0)) ** 1.8 if v > D0 else 1.0
+        xs = range(w) if y % 2 == 0 else range(w - 1, -1, -1)
+        dx = 1 if y % 2 == 0 else -1
+        for x in xs:
             r, g, b, a = p[x, y]
-            if a < 8:
+            if a < 8 or not (pp[x, y] and dens[x, y] >= 77 and insp[x, y] >= 128):
                 continue
-            t = thr(x, y)
-            if keep <= t:
-                continue
-            if pp[x, y] and dens[x, y] >= 77 and insp[x, y] >= 128:
+            if keep >= 1.0:
                 s_[x, y] = 1
+                continue
+            val = keep + err[x + 1]
+            on = val > 0.5 + (grit.random() - .5) * .2
+            if on:
+                s_[x, y] = 1
+            e = val - (1.0 if on else 0.0)
+            err[x + 1 + dx] += e * 7 / 16
+            nxt[x + 1 - dx] += e * 3 / 16
+            nxt[x + 1] += e * 5 / 16
+            nxt[x + 1 + dx] += e * 1 / 16
+        err, nxt = nxt, [0.0] * (w + 2)
     # the cutout leaves specks of the painting's dither above the hair and beside the sword: clear the top 30 rows and the margins above row 66
     for y in range(66):
         for x in range(w):
@@ -116,9 +132,24 @@ def raiden():
                 for x, y in comp:
                     s_[x, y] = 0
     # the painting's ink box left of his raised hand (its dither rim read as a dotted rectangle in the dark): cleared, the sleeve kept
+    # (v9: that cut is ragged, a seeded walk of -6..+12 px about x 72, so the sleeve does not end on a ruled line)
+    jr, jag, j = random.Random(72), {}, 0.0
+    for y in range(520, 643):
+        j = max(-6.0, min(12.0, j * .82 + jr.gauss(0, 3.2)))
+        jag[y] = 72 + int(round(j))
     for y in range(520, 643):
         for x in range(106):
-            if s_[x, y] and (x < 72 or y >= 626):
+            if s_[x, y] and (x < jag[y] or y >= 626):
+                s_[x, y] = 0
+    # v10: the moon sits behind his head (MOON_*). A fine wisp of his hair ran down the moon's left limb (u 35-100, v 129-252), its specks
+    # backed by a thin shadow rim: over the disc it ringed a moon-coloured island and notched the limb. It goes, paper and all, so the left
+    # limb is clean and only the trailing strand above it crosses into the sky.
+    wisp = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(wisp).polygon([(0, 129), (97, 129), (104, 140), (128, 236), (128, 253), (0, 253)], fill=255)
+    wp = wisp.load()
+    for y in range(120, 260):
+        for x in range(140):
+            if wp[x, y]:
                 s_[x, y] = 0
     save(asis, "raiden-night.png")
     shade(asis)
@@ -222,6 +253,8 @@ def shade(plate):
     cut = int(h * 0.90)                                                     # below the css mask's foot: nothing
     m = [1 if y < cut and (hull[y * w + x] or body[x, y]) else 0 for y in range(h) for x in range(w)]
     fill_holes(m, w, h, 900)                                                # the painting's small paper flecks the plate dropped: ink, not moon
+    m = tear(m, plate, w, h)
+    m = off_moon(m, plate, w, h)
     a = Image.new("L", (w, h), 0)
     a.putdata([v * 255 for v in m])
     out = Image.new("LA", (w, h), SUMI_L)
@@ -229,6 +262,91 @@ def shade(plate):
     p = IMG / "raiden-shade.png"
     out.save(p, optimize=True)
     print("raiden-shade.png", p.stat().st_size, "bytes", out.size)
+
+
+# v9: the block's edges torn. Shinkawa's ink block behind his back has a straight right edge and the hand-set shoulder contour above it is a
+# smooth line; on a wide screen, over the fog, both read as a cut-out. So every edge of the mass right of his neck and below his hair runs
+# dry: a pixel stays ink only if it lies deeper inside the mass than the band B times a bristle-streak noise (streaks combed down and to the
+# right, with the wind), so the edge breaks into dry-brush strokes over up to TEAR px and his shadow side fades into the night. B is 0 at his
+# head and hand (their edges are his drawing; the sleeve's cut edge below the hand gets a narrow band), swells and thins along the edge with a slow noise, and shrinks next to his own paper strokes
+# so the drawn back keeps its ink round them.
+TEAR = 80
+
+
+def _noise(w, h, seed, sigma, sx, sy):
+    rnd = random.Random(seed)
+    nw, nh = w // sx + 2, h // sy + 2
+    data = bytes(min(255, max(0, int(128 + rnd.gauss(0, sigma)))) for _ in range(nw * nh))
+    return Image.frombytes("L", (nw, nh), data).resize((nw * sx, nh * sy), Image.BILINEAR).crop((0, 0, w, h))
+
+
+def tear(m, plate, w, h):
+    din = chamfer([1 - v for v in m], w, h)                                # depth inside the mass (px x 3)
+    fib = ImageOps.autocontrast(ImageChops.add(_noise(w, h, 21, 70, 26, 2), _noise(w, h, 22, 30, 5, 1), scale=2.0, offset=-64), cutoff=1)
+    D = int((w * w + h * h) ** .5) + 8
+    big = Image.new("L", (D, D))
+    for oy in range(0, D, h):
+        for ox in range(0, D, w):
+            big.paste(fib, (ox, oy))
+    fib = big.rotate(-14, resample=Image.BILINEAR).crop(((D - w) // 2, (D - h) // 2, (D - w) // 2 + w, (D - h) // 2 + h))
+    low = ImageOps.autocontrast(_noise(w, h, 15, 60, 40, 40).filter(ImageFilter.GaussianBlur(9)), cutoff=1)
+    paper = plate.point(lambda v: 255 if v else 0, "L").filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.GaussianBlur(10))
+    fp, lp, dp = fib.load(), low.load(), paper.load()
+    out = list(m)
+    for y in range(270, h):
+        for x in range(w):
+            i = y * w + x
+            if not m[i] or din[i] > TEAR * 4.5:
+                continue
+            k = max(smooth((x - 300) / 170.0), 0.4 * smooth((110 - x) / 36.0) * (500 <= y < 700))   # the back; and the sleeve's cut edge
+            k *= 1.0 - 0.75 * smooth(dp[x, y] / 255.0 / .35)
+            B = TEAR * k * (0.5 + lp[x, y] / 255.0)
+            if B >= 1.5 and din[i] / 3.0 <= B * (0.12 + 0.88 * fp[x, y] / 255.0):
+                out[i] = 0
+    return out
+
+
+# v10: over the moon only his drawing may cross the disc: (a) the ink block behind his back (BODY, right of his neck) is cleared within 3 px
+# of the disc, so the limb runs on behind his shoulder instead of being bitten; (b) every piece of the shadow (with the paper on it) that
+# is not joined to his figure, a fleck of a hair tip, is cleared within 24 px of the disc, so no dark specks float on the moon or nick its limb.
+def off_moon(m, plate, w, h):
+    cx, cy, R = MOON_X * w, MOON_Y * h, MOON_D * h / 2
+    near = lambda x, y, pad: (x + .5 - cx) ** 2 + (y + .5 - cy) ** 2 <= (R + pad) ** 2
+    region = Image.new("L", (w * 4, h * 4), 0)
+    ImageDraw.Draw(region).polygon([(x * 4, y * 4) for x, y in BODY], fill=255)
+    region = region.resize((w, h), Image.BOX).load()
+    out = list(m)
+    y0, y1, x0, x1 = max(0, int(cy - R - 30)), min(h, int(cy + R + 30)), max(0, int(cx - R - 30)), min(w, int(cx + R + 30))
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            if out[y * w + x] and x >= 330 and region[x, y] >= 128 and near(x, y, 3):
+                out[y * w + x] = 0
+    pl = plate.load()
+    ink = [1 if (out[i] or pl[i % w, i // w]) else 0 for i in range(w * h)]
+    seen = bytearray(w * h)
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            i = y * w + x
+            if not ink[i] or seen[i] or not near(x, y, 24):
+                continue
+            comp, stack, i0 = [], [i], i
+            seen[i] = 1
+            while stack:
+                j = stack.pop()
+                comp.append(j)
+                jx, jy = j % w, j // w
+                for k in ((j - 1) if jx else -1, (j + 1) if jx < w - 1 else -1, j - w if jy else -1, j + w if jy < h - 1 else -1,
+                          (j - w - 1) if jx and jy else -1, (j - w + 1) if jx < w - 1 and jy else -1,
+                          (j + w - 1) if jx and jy < h - 1 else -1, (j + w + 1) if jx < w - 1 and jy < h - 1 else -1):
+                    if k >= 0 and ink[k] and not seen[k]:
+                        seen[k] = 1
+                        stack.append(k)
+            if len(comp) <= 4000:
+                for j in comp:
+                    out[j] = 0
+                    pl[j % w, j // w] = 0
+    plate.save(IMG / "raiden-night.png", optimize=True, transparency=0)
+    return out
 
 
 if __name__ == "__main__":

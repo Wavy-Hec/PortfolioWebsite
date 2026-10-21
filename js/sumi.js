@@ -1,13 +1,16 @@
 /* SUMI v8 — one loop, two secrets. The loop: one requestAnimationFrame chain paced to ~30 fps by a timer that the fold's wind
-   (js/sumi-fold.js), the research stack (js/sumi-stack.js) and the Go2 sketch (js/sumi-xray.js) draw inside; asleep when the tab is hidden,
-   while the game is open, and under reduced motion (nothing moves at all). Here too: the "!" over Raiden (hover / focus, silent), and the
+   (js/sumi-fold.js), the research stack (js/sumi-stack.js) and the Go2 sketch (js/sumi-xray.js) draw inside, each subscribed only while its
+   drawing is on screen; asleep when nothing is subscribed, when the tab is hidden, while the game is open, and under reduced motion. Here too: the "!" over Raiden (hover / focus, silent), and the
    secret (the footer's 140.85, the Konami code, 140.85 typed -> the codec call -> the game, js/game.js, loaded on the first call only). */
 (() => {
   'use strict';
   const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // dev: any uncaught error surfaces in the title so a headless --dump-dom can see it
-  addEventListener('error', e => { document.title = 'WF-ERR ' + e.message; });
-  addEventListener('unhandledrejection', e => { document.title = 'WF-ERR ' + (e.reason && e.reason.message || e.reason); });
+  const DEV = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  // dev (local hosts only): any uncaught error surfaces in the title so a headless --dump-dom can see it; a visitor's tab is never renamed
+  if (DEV) {
+    addEventListener('error', e => { document.title = 'WF-ERR ' + e.message; });
+    addEventListener('unhandledrejection', e => { document.title = 'WF-ERR ' + (e.reason && e.reason.message || e.reason); });
+  }
   const q = new URLSearchParams(location.search);
   const gameOpen = () => document.body.classList.contains('game-open');
 
@@ -18,6 +21,7 @@
   const S = window.SUMI = { REDUCED, add(fn) { subs.push(fn); start(); }, remove(fn) { const i = subs.indexOf(fn); if (i >= 0) subs.splice(i, 1); } };
   function loop(now) {
     raf = 0;
+    if (!subs.length) return;                                      // nothing animated on screen: the loop sleeps until S.add wakes it
     const dt = Math.min(0.05, (now - prev) / 1000 || 0.016); prev = now;
     for (const fn of subs) fn(dt, now);
     timer = setTimeout(() => { timer = 0; raf = requestAnimationFrame(loop); }, Math.max(0, FRAME_MS - (performance.now() - now)));
@@ -31,7 +35,6 @@
   /* dev: ?at=<scrollY> jumps there once the page has loaded (for headless screenshots of a chapter), with ?stack=e,x,y[,a] (the research
      stack's explosion and light), ?focus=<selector> (keyboard focus) and ?xray=<seconds> (the sketch's resolve clock). Local hosts only. */
   {
-    const DEV = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
     const at = DEV ? q.get('at') : null;
     if (at !== null) addEventListener('load', () => setTimeout(() => {
       if (at === 'all') { const h = document.querySelector('.hero'), vh = +q.get('vh') || 840; if (h) { h.style.minHeight = vh + 'px'; h.style.height = vh + 'px'; } dispatchEvent(new Event('resize')); }
@@ -46,8 +49,10 @@
   }
 
   /* ---------- the halftone pieces (<ascii-art>, js/ascii): sized to their CSS box. The engine draws a piece at a font size (its canvas is
-     cols x size x .602 px wide), so a piece with data-cols gets size = width / (cols x .602), at start and after a resize. data-piece: the piece
-     is named only when its box comes within ~800 px of the screen, so its module is never part of the first view. ---------- */
+     cols x size x .602 px wide), so a piece with data-cols gets size = width / (cols x .602), at start and after a resize. data-piece: the engine
+     (js/ascii/ascii.js, a module, imported here) and the piece are loaded only when its box comes within ~800 px of the screen, so none of it is
+     part of the first view. On a phone or a touch screen the piece is drawn once and holds (still: a full-width halftone redraw costs ~26 ms on a
+     mid-range phone); elsewhere it plays at 8 fps (data-fps), only while on screen. ---------- */
   (() => {
     const pieces = [...document.querySelectorAll('ascii-art[data-cols]')];
     if (!pieces.length) return;
@@ -62,7 +67,16 @@
     fit();
     let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(fit, 200); }, { passive: true });
     const lazy = new Map(pieces.filter(el => el.dataset.piece && !el.hasAttribute('piece')).map(el => [el.parentElement, el]));
-    const name = el => el.setAttribute('piece', el.dataset.piece);
+    const STILL = matchMedia('(max-width: 720px), (pointer: coarse)').matches;
+    let engine = null;
+    const name = el => {
+      engine = engine || import('./ascii/ascii.js?v=9');
+      engine.then(() => {
+        if (STILL) el.setAttribute('still', '');
+        else if (el.dataset.fps) el.setAttribute('fps', el.dataset.fps);
+        el.setAttribute('piece', el.dataset.piece);
+      }).catch(() => {});
+    };
     if (!lazy.size) return;
     if (!('IntersectionObserver' in window)) { lazy.forEach(name); return; }
     const io = new IntersectionObserver(es => {
@@ -77,7 +91,7 @@
      go once both are in ---------- */
   (() => {
     const load = src => { const s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s); };
-    const pending = [['.stack', 'js/sumi-stack.js?v=8'], ['.xray', 'js/sumi-xray.js?v=10']].map(([sel, src]) => [document.querySelector(sel), src]).filter(([el]) => el);
+    const pending = [['.stack', 'js/sumi-stack.js?v=9'], ['.xray', 'js/sumi-xray.js?v=11']].map(([sel, src]) => [document.querySelector(sel), src]).filter(([el]) => el);
     let queued = false;
     function check(all) {
       queued = false;
@@ -88,10 +102,11 @@
     addEventListener('scroll', soon, { passive: true });
     addEventListener('resize', soon, { passive: true });
     addEventListener('load', () => setTimeout(() => check(true), 4000));
-    check(/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && q.has('at'));   // dev captures (?at=, with ?stack= / ?xray=) want both at once
+    check(DEV && q.has('at'));   // dev captures (?at=, with ?stack= / ?xray=) want both at once
   })();
 
-  /* ---------- the "!" over Raiden: hover or focus on the figure pops the paper plate above his head for 1.2 s, once per hover; silent ---------- */
+  /* ---------- the "!" over Raiden: hover or focus on the figure pops the paper plate above his head for 1.2 s, once per hover; silent. Under
+     keyboard focus the plate holds for as long as he has focus (css .figure:focus-visible .alert): it is the figure's focus cue ---------- */
   (() => {
     const fig = document.querySelector('.hero .figure'), plate = fig && fig.querySelector('.alert');
     if (!fig || !plate) return;
@@ -120,7 +135,7 @@
     if (gameScriptRequested) return;
     gameScriptRequested = true;
     const s = document.createElement('script');
-    s.src = 'js/game.js?v=14';                                        // lazy: the game (142 KB) loads on the first call only
+    s.src = 'js/game.js?v=17';                                        // lazy: the game (142 KB) loads on the first call only
     s.onload = () => { if (window.MGSGame) window.MGSGame.open(); };
     s.onerror = () => { gameScriptRequested = false; status('codec link failed — try again'); };
     document.body.appendChild(s);

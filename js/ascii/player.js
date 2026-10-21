@@ -7,7 +7,7 @@
  */
 
 import { withLook, restyle } from "./glyphs.js";
-import { paint, renderMode, cellAspect, CELL_W, GlyphAtlas } from "./canvas.js";
+import { paint, renderMode, cellAspect, CELL_W, GlyphAtlas } from "./canvas.js?v=9"; // ?v: local cache key
 
 const ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;" };
 // Braille and the long diagonals fall back to a wider font than the cell in
@@ -109,26 +109,36 @@ export function play(pre, mod, opts = {}) {
   }
   render(opts.t0 ?? 0);
   if (reduce || meta.still) return () => {};
-  let raf = 0, visible = true, elapsed = opts.t0 ?? 0, prev = 0, stopped = false;
+  let raf = 0, timer = 0, visible = true, elapsed = opts.t0 ?? 0, prev = 0, stopped = false;
   const step = 1000 / Math.min(meta.fps, opts.maxFps || 60);
   // A random phase per player: a page of cards started together would otherwise all
   // redraw on the same frame (one long frame, then idle ones), which reads as stutter.
   let last = (typeof performance !== "undefined" ? performance.now() : 0) - Math.random() * step;
+  // Local change 3 (js/ascii/README.md): between two renders the loop sleeps on a timer (no requestAnimationFrame
+  // every display frame), and off screen it sleeps altogether until the observer wakes it.
+  const wake = () => { timer = 0; if (!raf && !stopped && visible) raf = requestAnimationFrame(loop); };
   const loop = (now) => {
-    if (stopped) return;
-    raf = requestAnimationFrame(loop);
-    if (!visible) { prev = now; return; }
+    raf = 0;
+    if (stopped || !visible) { prev = 0; return; }
     if (prev) elapsed += ((now - prev) / 1000) * speed;
     prev = now;
-    if (now - last < step) return;
-    last = now - ((now - last) % step); // keep the phase instead of snapping to this frame
-    render(elapsed);
+    if (now - last >= step) {
+      last = now - ((now - last) % step); // keep the phase instead of snapping to this frame
+      render(elapsed);
+    }
+    const wait = step - (performance.now() - last);
+    if (wait > 24) timer = setTimeout(wake, wait - 12);
+    else raf = requestAnimationFrame(loop);
   };
   let io;
   if (typeof IntersectionObserver !== "undefined") {
-    io = new IntersectionObserver((es) => { visible = es[0].isIntersecting; }, { rootMargin: "100px" });
+    io = new IntersectionObserver((es) => {
+      visible = es[es.length - 1].isIntersecting;
+      if (!visible) prev = 0;
+      else if (!raf && !timer && !stopped) raf = requestAnimationFrame(loop);
+    }, { rootMargin: "100px" });
     io.observe(pre._canvas || pre);
   }
   raf = requestAnimationFrame(loop);
-  return () => { stopped = true; cancelAnimationFrame(raf); if (io) io.disconnect(); };
+  return () => { stopped = true; cancelAnimationFrame(raf); clearTimeout(timer); if (io) io.disconnect(); };
 }

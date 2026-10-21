@@ -8,8 +8,11 @@
    Systems: pixel-art operatives, Alert/Evasion/Caution states with BFS-pathing
    guard AI, a stealth toolkit (walk/run noise, cardboard box, wall-knock lure,
    CQC subdue), a rectangular radar minimap, security cameras, codec presentation.
-   Palette: codec phosphor mint (#77d2a6 / #b4ecd0) on dark steel and sea, paper
-   (#e9e7e2) for danger. NO RED anywhere (alerts, damage and game over included).
+   Palette: moonlit steel blue. A deep navy ground (#0b1220 / #0e1726), steel-blue
+   linework and type (#8fa6c0 / #b8c6d6, dim #7189a6), cool greys for secondary
+   things, and paper (#e9e7e2) for the brightest highlights: alerts, the player's
+   crown, hostile cones. NO red, amber or mint anywhere (alerts, damage and game
+   over included).
    Perf rules: no ctx.shadowBlur / ctx.filter; <= 9 gradients per frame (only the
    vision cones make one each); the static world (floor, walls, doorway, radar
    map, mist sprite, the Colonel's portrait) is pre-baked once per level/open.
@@ -41,7 +44,7 @@
    lore (the sprite's pale hair follows the site's own ink of him), any quoted
    game dialogue. Every caller line below is original.
    Raiden's codec portrait is the site's own img/raiden-night.png, masked and
-   tinted mint; the Colonel's is drawn here (a dithered silhouette whose signal
+   tinted steel blue; the Colonel's is drawn here (a dithered silhouette whose signal
    breaks up). No portrait art, logo or trademark image is shipped for this game.
    =========================================================================== */
 (function () {
@@ -61,54 +64,58 @@
   var RUN_NOISE_R = 96, KNOCK_R = 150, NOISE_INT = 0.3, KNOCK_CD = 1.1;
   var CQC_R = 24, CQC_REAR = 2.4, CQC_CD = 0.8, PICKUP_R = 15, EXIT_R = 16;
 
-  /* ---- palette: codec mint on dark steel and night sea; sprites carry their own
-     tones. Danger is PAPER (#e9e7e2), suspicion is dim paper (#bab8b3): there is
+  /* ---- palette: moonlit steel blue on a navy night sea; sprites carry their own
+     tones. Danger is PAPER (#e9e7e2), suspicion a cool light grey (#c3cbd5): there is
      no red, rose or amber anywhere in this file. ---- */
   var C = {
-    bg: '#0a1314', panel: '#101b1c',
-    floorA: '#0c1617', floorB: '#0f1a1c',            // checker pair (steel, faint)
-    floorDot: 'rgba(119,210,166,0.05)',              // dither dots
-    grid: 'rgba(119,210,166,0.035)',
-    wallFace: '#1b2729', wallTop: '#33474a',         // lit top face
-    wallRim: '#86a89d',                              // 1px top rim highlight
-    wallFront: '#131d1f',                            // south "front face" (2.5D height)
-    wallSide: '#0b1213',                             // shaded right edge
-    wallEdge: '#4f6f69', wallShadow: 'rgba(0,0,0,0.42)',
-    green: '#77d2a6', bright: '#b4ecd0', dim: '#4f8f7a',
-    paper: '#e9e7e2', paperDim: '#bab8b3', steel: '#7d8b8e', ink: '#141416'
+    bg: '#0b1220', panel: '#0e1726',
+    floorA: '#0c1422', floorB: '#0f1827',            // checker pair (steel, faint)
+    floorDot: 'rgba(143,166,192,0.05)',              // dither dots
+    grid: 'rgba(143,166,192,0.035)',
+    wallFace: '#1a2433', wallTop: '#34465e',         // lit top face
+    wallRim: '#8a9cb3',                              // 1px top rim highlight
+    wallFront: '#121b29',                            // south "front face" (2.5D height)
+    wallSide: '#0a101b',                             // shaded right edge
+    wallEdge: '#4b5e79', wallShadow: 'rgba(0,0,0,0.42)',
+    line: '#8fa6c0', bright: '#b8c6d6', dim: '#7189a6',
+    paper: '#e9e7e2', paperDim: '#c3cbd5', steel: '#7c8a9c', ink: '#141416'
   };
   /* per-op floor identity (baked once in buildBg — zero per-frame cost) */
   var FLOORS = {
-    dock: { a: '#0d1618', b: '#0f191b' },     // Strut A deck: treadplate steel
-    bridge: { a: '#050f13', b: '#061115' },   // AB bridge: night sea under a catwalk grate
-    core: { a: '#0c1617', b: '#0f1a1b' }      // Shell 1 core: composite panels
+    dock: { a: '#0d1523', b: '#0f1826' },     // Strut A deck: treadplate steel
+    bridge: { a: '#060c18', b: '#07101c' },   // AB bridge: night sea under a catwalk grate
+    core: { a: '#0c1422', b: '#0f1827' }      // Shell 1 core: composite panels
   };
 
   /* ---- pixel sprites (16x16 grids = one tile tall at SCALE 2; '.' transparent).
      Drawn rotated to face; sprites face UP pre-rotation (facing + PI/2).
      Read top-down: weapon forward (row 0 = muzzle, the brightest W pixel, so
      facing reads instantly), then head, shoulders, torso, legs. Symmetric
-     about the column 7|8 seam except the bandana tails. Letters:
-     K internal edge · S suit · B suit shade · G hair/helmet · h hair tail ·
-     g gunmetal · H skin · W muzzle · V visor. ---- */
-  // Raiden — slim: shoulders 10 px (the guards' are 12), a dark steel suit with
-  // dark gloves on the pistol (no bright pixels across his chest), and a pale
-  // ROUNDED crown — the brightest thing on him — and a short tail in a mid tone (h)
+     about the column 7|8 seam (Raiden's crown is lit from the left). Letters:
+     K internal edge · S suit · L suit highlight · B suit shade · G hair/helmet ·
+     P hair shade · g gunmetal · H face (cool grey) · W muzzle ·
+     V visor. ---- */
+  // Raiden — readable from above as a person, not a glyph: a round PALE head
+  // (G lit, P its shaded side; 2-4-4-4-4 px, an oval) sits INSIDE the shoulders
+  // with no dark ring around it, so it reads as a head between shoulders; a
+  // mid steel-blue suit (S, L the lit shoulder caps, B shade) narrows from 10 px
+  // shoulders to the waist; both arms reach forward to the pistol (g, dark),
+  // whose muzzle (W) is the facing cue.
   var PLAYER = [
     '.......WW.......',
     '.......gg.......',
-    '.......gg.......',
-    '......KggK......',
     '......BggB......',
     '.....SB..BS.....',
-    '....SB.KK.BS....',
-    '...SSKGGGGKSS...',
-    '...SKGGGGGGKS...',
-    '...SKGGGGGGKS...',
-    '...SBKGGGGKBS...',
-    '....SBKhhKBS....',
-    '.....SBhhBS.....',
-    '.....SBKKBS.....',
+    '.....S....S.....',
+    '....LS.PP.SL....',
+    '...LLSPGGPSLL...',
+    '...LSSGGGGSSL...',
+    '...BSSGGGPSSB...',
+    '...BSSPGPPSSB...',
+    '....BSSSSSSB....',
+    '....BBSSSSBB....',
+    '.....BSSSSB.....',
+    '.....SB..BS.....',
     '.....SB..BS.....',
     '.....BB..BB.....'
   ];
@@ -152,7 +159,7 @@
     '.KKKKKKKKKKKKKK.',
     '................'
   ];
-  // intel keycard (8x6): mint body, lighter top stripe, a paper contact notch
+  // intel keycard (8x6): steel-blue body, lighter top stripe, a paper contact notch
   // (W) and a 1px darker slot
   var KEYCARD = [
     '.AAAAAA.',
@@ -164,17 +171,17 @@
   ];
   // frame B of the 2-frame walk cycle (legs passing) — rows 14–15 swapped
   var WALK_B_ROWS = ['....KSBKKBSK....', '.....KK..KK.....'];
-  var PLAYER_B = PLAYER.slice(0, 14).concat(['.....KSBBSK.....', '......KK.KK.....']);
+  var PLAYER_B = PLAYER.slice(0, 14).concat(['......SBBS......', '......BB.BB.....']);   // legs passing
   var GUARD_B = GUARD.slice(0, 14).concat(WALK_B_ROWS);
-  var PAL_PLAYER = { K: '#050b0c', S: '#3f575a', B: '#26373a', G: '#dcdbd2', h: '#8d928c', g: '#6c7a7c', W: '#d8f5e6' };
-  var PAL_GUARD = { K: '#050a0b', S: '#56656a', H: '#c3ae92', B: '#37444a', G: '#2b3539', g: '#6b7577', W: '#a9b6b4', V: '#8fc9ad' };
-  var PAL_GUARD_HOT = { K: '#050a0b', S: '#8e9b9c', H: '#d4c3aa', B: '#5f6c6f', G: '#3d484b', g: '#a4aeaf', W: '#e9e7e2', V: '#e9e7e2' };
-  var PAL_GUARD_DOWN = { K: '#040708', S: '#3c474a', H: '#887a66', B: '#272f34', G: '#1e2528', g: '#4b5253', W: '#767f7e', V: '#5b7d6d' };
-  var PAL_BOX = { K: '#2b2a24', B: '#867d6a', W: '#aca38d', D: '#5f5849' };
-  var PAL_KEY = { A: '#5f9c86', L: '#b4ecd0', W: '#e9e7e2', D: '#2f5a4c' };
+  var PAL_PLAYER = { K: '#060a12', S: '#5d708a', L: '#8496b0', B: '#3c4b61', G: '#e9e7e2', P: '#b4bfcc', g: '#262f3e', W: '#b8c6d6' };
+  var PAL_GUARD = { K: '#050912', S: '#566478', H: '#a3adba', B: '#364257', G: '#2a3445', g: '#6b7588', W: '#a9b6c6', V: '#9fb4cc' };
+  var PAL_GUARD_HOT = { K: '#050912', S: '#8e9bac', H: '#d0d6de', B: '#5f6c80', G: '#3c4759', g: '#a4aebe', W: '#e9e7e2', V: '#e9e7e2' };
+  var PAL_GUARD_DOWN = { K: '#04070e', S: '#3c475a', H: '#7c8594', B: '#262f3e', G: '#1d2433', g: '#4b5262', W: '#767f8e', V: '#5a6b80' };
+  var PAL_BOX = { K: '#262b33', B: '#7d8796', W: '#a7b0bc', D: '#565f6d' };
+  var PAL_KEY = { A: '#6f86a3', L: '#b8c6d6', W: '#e9e7e2', D: '#2c3d55' };
 
   /* ---- pre-rendered sprite canvases (crisp pixels + 1px outline; built once).
-     Player gets a faint bright outline (hero pop); guards a dark one (grounded). ---- */
+     Every sprite gets a dark 1px outline (grounded on the floor). ---- */
   var SPR = null;
   function makeSprite(grid, pal, outline) {
     var rows = grid.length, cols = grid[0].length, pad = 1;
@@ -194,14 +201,14 @@
     return cv;
   }
   function buildSprites() {
-    var pOut = 'rgba(180,236,208,0.35)', gOut = 'rgba(3,10,6,0.9)';
+    var pOut = 'rgba(3,6,12,0.9)', gOut = 'rgba(3,6,12,0.9)';   // both dark: Raiden pops by his pale crown and lighter suit, not a halo
     SPR = {
       player: [makeSprite(PLAYER, PAL_PLAYER, pOut), makeSprite(PLAYER_B, PAL_PLAYER, pOut)],
       guard: [makeSprite(GUARD, PAL_GUARD, gOut), makeSprite(GUARD_B, PAL_GUARD, gOut)],
       guardHot: [makeSprite(GUARD, PAL_GUARD_HOT, gOut), makeSprite(GUARD_B, PAL_GUARD_HOT, gOut)],
       guardDown: makeSprite(GUARD, PAL_GUARD_DOWN, gOut),
       box: makeSprite(BOX, PAL_BOX, 'rgba(0,0,0,0.5)'),
-      key: makeSprite(KEYCARD, PAL_KEY, 'rgba(6,16,10,0.8)')
+      key: makeSprite(KEYCARD, PAL_KEY, 'rgba(5,10,20,0.8)')
     };
   }
 
@@ -211,12 +218,17 @@
      (the open bridge), 'mist' = mist only (the enclosed dock), none in the core.
      lost = where the Colonel loses the signal (game over). Every call is the
      Colonel on 140.85.
-     Maps/paths/speeds are the gameplay and stay put. ---- */
+     Maps/paths/speeds are the gameplay and stay put. Every op starts with Raiden at
+     [1,10] and no watcher able to see that tile for the opening seconds. The
+     westbound patrols used to turn at column 2 and spot a still Raiden in ~4 s: in
+     op 2 the row-8 sentry now turns at column 8 (out of range of the spawn: the open
+     floor there has no cover), in op 3 the row-7 patrol turns at column 5, where the
+     walls at [3-4, 8-9] block the line to the spawn. ---- */
   var LEVELS = [
     {
       name: 'STRUT A DEEP SEA DOCK', caller: 'COLONEL', freq: '140.85', floor: 'dock', weather: 'mist',
       lost: 'Lost you at the Strut A deep sea dock.',
-      brief: 'Raiden, you’re in the dock. One Gurlukovich sentry walks the floor. Take the intel, reach the exit. If he spots you, break his line of sight and hold still until it passes.',
+      brief: 'Raiden, you’re in the dock. One Gurlukovich sentry walks the floor. Take the intel, reach the exit. If he spots you, break his line of sight and hold still until the alert passes.',
       map: ['####################', '#..................#', '#..####....####....#', '#..####....####....#',
         '#..................#', '#.......####.......#', '#.......####.......#', '#..................#',
         '#..####....####....#', '#..####....####....#', '#..................#', '####################'],
@@ -226,13 +238,13 @@
     {
       name: 'AB CONNECTING BRIDGE', caller: 'COLONEL', freq: '140.85', floor: 'bridge', weather: 'sea',
       lost: 'Lost you on the AB connecting bridge.',
-      brief: 'The bridge to Strut B. Two sentries, crossing in opposite directions. Use the cargo to break their sightlines. Running is fast, but the grating carries. A still box hides you.',
+      brief: 'The bridge to Strut B. Two sentries, crossing in opposite directions. Use the cargo to break their sightlines. Running is fast, but the grating carries the sound. A still box hides you.',
       map: ['####################', '#..................#', '#..##..##..##..##..#', '#..##..##..##..##..#',
         '#..................#', '#..................#', '#..##..##..##..##..#', '#..##..##..##..##..#',
         '#..................#', '#..................#', '#..................#', '####################'],
       start: [1, 10], exit: [18, 1], intel: [9, 5],
       guards: [{ path: [[2, 4], [17, 4]], speed: 82, fov: 1.13, range: 160 },
-        { path: [[17, 8], [2, 8]], speed: 82, fov: 1.13, range: 160, offset: 0.5 }], cameras: []
+        { path: [[17, 8], [8, 8]], speed: 82, fov: 1.13, range: 160, offset: 0.5 }], cameras: []
     },
     {
       name: 'SHELL 1 CORE · B1', caller: 'COLONEL', freq: '140.85', floor: 'core',
@@ -243,20 +255,20 @@
         '#..##..####..##....#', '#..##..####..##....#', '#..................#', '####################'],
       start: [1, 10], exit: [18, 1], intel: [9, 5],
       guards: [{ path: [[2, 4], [17, 4]], speed: 92, fov: 1.2, range: 172 },
-        { path: [[17, 7], [2, 7]], speed: 92, fov: 1.2, range: 172, offset: 0.5 },
+        { path: [[17, 7], [5, 7]], speed: 92, fov: 1.2, range: 172, offset: 0.5 },
         { path: [[2, 10], [17, 10]], speed: 88, fov: 1.15, range: 165, offset: 0.25 }],
       cameras: [{ t: [13, 1], base: Math.PI / 2, arc: 0.9, speed: 0.8, fov: 0.95, range: 150 }]
     }
   ];
 
   /* ---- CHROME palette (frame / bar / HUD / buttons / screens / toast): one map,
-     written as CSS custom properties on .mgsg-overlay. Codec mint on dark steel;
-     paper (--mg-paper) is the danger colour, dim paper (--mg-pdim) the caution. ---- */
+     written as CSS custom properties on .mgsg-overlay. Steel blue on navy;
+     paper (--mg-paper) is the danger colour, cool grey (--mg-pdim) the caution. ---- */
   var CHROME = {
-    bg: '#0a1314', panel: '#101b1c', line: '#1d2c2d', edge: '#3d675c', border: '#2a4741',
-    text: '#77d2a6', hi: '#b4ecd0', dim: '#6b9184', glow: '119,210,166', hglow: '180,236,208',
-    shade: '5,10,11', pad: '16,27,28', veil: 'rgba(6,9,10,0.93)', toastbg: 'rgba(5,10,11,.84)',
-    paper: '#e9e7e2', pdim: '#bab8b3'
+    bg: '#0b1220', panel: '#0e1726', line: '#1b2638', edge: '#46607f', border: '#2b3d56',
+    text: '#8fa6c0', hi: '#b8c6d6', dim: '#7d93ae', glow: '143,166,192', hglow: '184,198,214',
+    shade: '5,9,18', pad: '14,23,38', veil: 'rgba(5,8,15,0.93)', toastbg: 'rgba(5,9,18,.84)',
+    paper: '#e9e7e2', pdim: '#c3cbd5'
   };
   var CHROME_VARS = {
     bg: '--mg-bg', panel: '--mg-panel', line: '--mg-line', edge: '--mg-edge', border: '--mg-border',
@@ -281,6 +293,7 @@
     + 'box-shadow:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(var(--mg-glow),.08),0 0 32px rgba(var(--mg-glow),.12);'
     + 'overflow:hidden;display:flex;flex-direction:column;'
     + 'outline:1px solid rgba(var(--mg-glow),.12);outline-offset:-4px;transform-origin:50% 50%;}'
+    + '.mgsg-frame:focus-visible{outline:2px solid var(--mg-text);outline-offset:-2px;}'
     /* codec connect / disconnect: the frame opens out of a horizontal line and
        closes back into one (transform only — compositor) */
     + '.mgsg-overlay.in .mgsg-frame{animation:mgsgConnect .3s cubic-bezier(.2,.8,.3,1) 1;}'
@@ -297,8 +310,8 @@
     + 'background:var(--mg-text);margin-right:8px;vertical-align:1px;box-shadow:0 0 6px rgba(var(--mg-glow),.8);'
     + 'animation:mgsgBlink 1.4s steps(1) infinite;}'
     + '.mgsg-frame.alarm .f::before{background:var(--mg-paper);box-shadow:0 0 6px rgba(233,231,226,.7);animation-duration:.5s;}'
-    /* caution: the LCD chip and stage pick up dim paper */
-    + '.mgsg-frame.caution .f{color:var(--mg-pdim);border-color:#4d5a58;text-shadow:none;}'
+    /* caution: the LCD chip and stage pick up the cool caution grey */
+    + '.mgsg-frame.caution .f{color:var(--mg-pdim);border-color:#505a68;text-shadow:none;}'
     + '.mgsg-frame.caution .f::before{background:var(--mg-pdim);box-shadow:none;animation-duration:.9s;}'
     + '.mgsg-btn{background:transparent;border:1px solid var(--mg-edge);color:var(--mg-text);font:inherit;font-size:12px;'
     + 'line-height:1;padding:5px 8px;border-radius:4px;cursor:pointer;}'
@@ -308,7 +321,7 @@
     + 'font-size:10.5px;line-height:16px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mg-dim);flex-shrink:0;}'
     + '.mgsg-hud b{color:var(--mg-text);font-weight:400;text-shadow:0 0 5px rgba(var(--mg-glow),.35);}'
     + '.mgsg-stbadge{padding:0 7px;border:1px solid currentColor;border-radius:2px;letter-spacing:2px;color:var(--mg-text);background:rgba(var(--mg-glow),.08);}'
-    + '.mgsg-stbadge.alert,.mgsg-stbadge.evasion{color:var(--mg-paper);}.mgsg-stbadge.caution{color:var(--mg-pdim);background:rgba(186,184,179,.08);}'
+    + '.mgsg-stbadge.alert,.mgsg-stbadge.evasion{color:var(--mg-paper);}.mgsg-stbadge.caution{color:var(--mg-pdim);background:rgba(195,203,213,.08);}'
     + '.mgsg-stbadge.evasion{background:rgba(233,231,226,.08);}'
     + '.mgsg-stbadge.alert{background:rgba(233,231,226,.14);animation:mgsgBlink .5s steps(1) infinite;}'
     + '.mgsg-life{display:inline-flex;align-items:center;gap:6px;}'
@@ -329,7 +342,7 @@
     + '.mgsg-stage::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:5;'
     + 'background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 3px);}'
     + '.mgsg-stage.alarm{box-shadow:inset 0 0 0 2px var(--mg-paper),inset 0 0 0 3px rgba(var(--mg-glow),.5),inset 0 0 70px rgba(233,231,226,.08);}'
-    + '.mgsg-stage.caution{box-shadow:inset 0 0 0 2px rgba(186,184,179,.35),inset 0 0 70px rgba(186,184,179,.06);}'
+    + '.mgsg-stage.caution{box-shadow:inset 0 0 0 2px rgba(195,203,213,.35),inset 0 0 70px rgba(195,203,213,.06);}'
     + '.mgsg-stage.alarm::before{background:radial-gradient(ellipse 105% 105% at 50% 50%,rgba(233,231,226,.03) 40%,rgba(0,0,0,.48) 100%);'
     + 'animation:mgsgAlarmPulse 1.1s ease-in-out infinite;}'
     + '.mgsg-canvas{display:block;width:100%;height:auto;}'
@@ -369,12 +382,12 @@
     + '.mgsg-port{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;}'
     + '.mgsg-port .px{position:relative;width:96px;height:96px;border:1px solid var(--mg-edge);background:var(--mg-panel);overflow:hidden;'
     + 'box-shadow:0 0 0 1px rgba(var(--mg-shade),.8),0 0 14px rgba(var(--mg-glow),.12);}'
-    /* RAIDEN: the site's own ink of him (img/raiden-night.png, paper on alpha) used as a mask over a mint fill:
-       his head and hair in codec phosphor; a 2 px dither grid over it reads as a codec CRT */
+    /* RAIDEN: the site's own ink of him (img/raiden-night.png, paper on alpha) used as a mask over a steel-blue fill:
+       his head and hair in moonlit steel; a 2 px dither grid over it reads as a codec CRT */
     + '.mgsg-port .px.raiden{--s:1;}'
     + '.mgsg-port .px.raiden i{position:absolute;inset:0;background:var(--mg-text);'
-    + '-webkit-mask:url(img/raiden-night.png) no-repeat calc(-100px * var(--s)) calc(-75px * var(--s))/calc(300px * var(--s)) auto;'
-    + 'mask:url(img/raiden-night.png) no-repeat calc(-100px * var(--s)) calc(-75px * var(--s))/calc(300px * var(--s)) auto;}'
+    + '-webkit-mask:url(img/raiden-night.png?v=11) no-repeat calc(-100px * var(--s)) calc(-75px * var(--s))/calc(300px * var(--s)) auto;'
+    + 'mask:url(img/raiden-night.png?v=11) no-repeat calc(-100px * var(--s)) calc(-75px * var(--s))/calc(300px * var(--s)) auto;}'
     + '.mgsg-port .px.raiden b{position:absolute;inset:0;background:radial-gradient(circle,transparent 0 .7px,rgba(var(--mg-shade),.55) .8px) 0 0/2px 2px;}'
     /* COLONEL: a canvas (48 px, pixelated), drawn in buildColonel(), its signal breaking up in glitchColonel() */
     + '.mgsg-port .px canvas{display:block;width:100%;height:100%;image-rendering:pixelated;}'
@@ -421,14 +434,17 @@
     + '.mgsg-bar .f{font-size:11px;letter-spacing:1px;padding:3px 6px;flex-shrink:0;white-space:nowrap;}'
     + '.mgsg-bar .f::before{margin-right:5px;}'
     + '.mgsg-bar .mgsg-btn{padding:5px 6px;font-size:11px;flex-shrink:0;white-space:nowrap;}'
-    + '.mgsg-hud{gap:6px 10px;padding:6px 8px;font-size:11px;letter-spacing:1px;}'
+    + '.mgsg-hud{gap:4px 7px;padding:6px 8px;font-size:11px;letter-spacing:.5px;}.mgsg-hud>span{white-space:nowrap;}.mgsg-lifebar{width:40px;}'
+    + '.mgsg-stbadge{letter-spacing:1px;padding:0 4px;}.mgsg-life{gap:4px;}'
     + '.mgsg-foot{gap:8px;padding:6px 8px;}}'
+    /* the narrowest phones (360): the strip stays one line even with EVASION/CAUTION in the badge */
+    + '@media (max-width:380px){.mgsg-hud{gap:4px 6px;font-size:10px;letter-spacing:0;}.mgsg-lifebar{width:32px;}}'
     + '.mgsg-screen p{max-width:46ch;font-size:13px;line-height:1.65;color:var(--mg-text);margin:0;}'
     + '.mgsg-screen .sub{color:var(--mg-dim);font-size:12px;letter-spacing:1px;}'
-    + '.mgsg-screen .go{margin-top:6px;color:var(--mg-hi);animation:mgsgBlink 1.1s steps(1) infinite;}'
+    + '.mgsg-screen .go{margin-top:6px;color:var(--mg-hi);animation:mgsgGoBlink 1.1s steps(1) infinite;}'
     + '.mgsg-screen.fail h2{color:var(--mg-pdim);}'
     /* GAME OVER letterbox bars */
-    + '.mgsg-screen.fail::before,.mgsg-screen.fail::after{content:"";position:absolute;left:0;right:0;height:13%;background:#020603;}'
+    + '.mgsg-screen.fail::before,.mgsg-screen.fail::after{content:"";position:absolute;left:0;right:0;height:13%;background:#03060d;}'
     + '.mgsg-screen.fail::before{top:0}.mgsg-screen.fail::after{bottom:0}'
     + '.mgsg-screen .lost{font-size:clamp(26px,7vw,52px);color:var(--mg-paper);letter-spacing:6px;margin:0;'
     + 'text-shadow:0 0 14px rgba(233,231,226,.3);animation:mgsgFlicker .8s steps(2) 2;}'
@@ -453,15 +469,21 @@
     + '.mgsg-flash{position:absolute;inset:0;background:var(--mg-paper);opacity:0;pointer-events:none;}'
     + '.mgsg-flash.on{animation:mgsgFlash .5s ease-out;}'
     /* codec subtitle toast — visible mirror of the aria-live announcements */
+    /* one line (nowrap + ellipsis: the aria-live region keeps the full text), so it never wraps into a
+       block over the floor; on desktop it sits on the outer wall row at the stage's foot */
     + '.mgsg-toast{position:absolute;left:50%;bottom:10px;z-index:6;max-width:88%;padding:4px 12px;'
     + 'background:var(--mg-toastbg);border:1px solid var(--mg-edge);border-radius:3px;'
+    + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:16px;'
     + 'color:var(--mg-hi);font-size:12px;letter-spacing:1px;text-align:center;pointer-events:none;'
     + 'opacity:0;transform:translateX(-50%) translateY(4px);transition:opacity .18s ease,transform .18s ease;}'
     + '.mgsg-toast.show{opacity:1;transform:translateX(-50%);}'
-    + '.mgsg-touch .mgsg-toast{bottom:72px;}'
+    /* touch (the deck covers the stage foot) and narrow stages: a slim line on the TOP wall row,
+       between the radar and the exit, clear of every floor tile */
+    + '.mgsg-touch .mgsg-toast{top:1px;bottom:auto;max-width:62%;padding:0 8px;font-size:9.5px;line-height:12px;letter-spacing:.5px;}'
+    + '@media (max-width:520px){.mgsg-toast{top:1px;bottom:auto;max-width:62%;padding:0 8px;font-size:9.5px;line-height:12px;letter-spacing:.5px;}}'
     /* CRT roll bar + alarm hazard stripes + power-on sweep (compositor-only) */
     + '.mgsg-roll{position:absolute;left:0;right:0;top:-30%;height:26%;pointer-events:none;z-index:6;'
-    + 'background:linear-gradient(180deg,transparent,rgba(180,236,208,.045) 50%,transparent);'
+    + 'background:linear-gradient(180deg,transparent,rgba(184,198,214,.045) 50%,transparent);'
     + 'animation:mgsgRoll 7s linear infinite;}'
     + '.mgsg-hazard{position:absolute;left:0;width:200%;height:5px;z-index:6;pointer-events:none;display:none;'
     + 'background:repeating-linear-gradient(45deg,rgba(233,231,226,.5) 0 10px,transparent 10px 20px);}'
@@ -490,18 +512,17 @@
     + '.mgsg-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}'
     + '.mgsg-overlay,.mgsg-overlay *{cursor:auto !important;}'
     + '.mgsg-overlay .mgsg-btn,.mgsg-overlay .mgsg-pad button,.mgsg-overlay .mgsg-acts button{cursor:pointer !important;}'
-    /* Phone portrait: overlaid on the letterboxed stage the touch controls
+    /* Portrait touch screens (phones and tablets): overlaid on the letterboxed stage the touch controls
        covered ~72% of the playfield. Drop them below the stage into real frame
        padding (frame is overflow:hidden, so negative bottom alone would clip);
        the overlay already scrolls + margin:auto safe-centers on short
-       viewports, so the taller frame degrades gracefully. Toast reclaims the
-       stage bottom it vacated. Must sit AFTER the base .mgsg-pad/.mgsg-acts/
+       viewports, so the taller frame degrades gracefully. The toast stays on the
+       top wall row. Must sit AFTER the base .mgsg-pad/.mgsg-acts/
        .mgsg-touch .mgsg-toast rules — equal specificity, source order wins. */
-    + '@media (max-width:700px) and (orientation:portrait){'
+    + '@media (orientation:portrait){'
     + '.mgsg-touch .mgsg-frame{padding-bottom:172px;}'
     + '.mgsg-touch .mgsg-pad{bottom:-160px;}'
     + '.mgsg-touch .mgsg-acts{bottom:-133px;}'
-    + '.mgsg-touch .mgsg-toast{bottom:10px;}'
     + '.mgsg-touch .mgsg-screen{bottom:-172px;justify-content:center;justify-content:safe center;overflow-y:auto;}'
     + '}'
     + '.mgsg-touch.mgsg-scr .mgsg-pad,.mgsg-touch.mgsg-scr .mgsg-acts{visibility:hidden;}'
@@ -515,7 +536,7 @@
     + '.mgsg-screen.show{animation:none;clip-path:none}.mgsg-screen.show .mgsg-beam{animation:none}}'
     + '@keyframes mgsgConnect{0%{transform:scale(.55,.006);opacity:.5}45%{transform:scale(1,.006);opacity:1}100%{transform:none}}'
     + '@keyframes mgsgDisconnect{0%{transform:none}55%{transform:scale(1,.006);opacity:1}100%{transform:scale(0,.006);opacity:0}}'
-    + '@keyframes mgsgBlink{50%{opacity:.25}}@keyframes mgsgFlash{from{opacity:.3}to{opacity:0}}'
+    + '@keyframes mgsgBlink{50%{opacity:.25}}@keyframes mgsgGoBlink{50%{opacity:.55}}@keyframes mgsgFlash{from{opacity:.3}to{opacity:0}}'
     + '@keyframes mgsgAlarmPulse{50%{opacity:.55}}@keyframes mgsgFlicker{50%{opacity:.4}}'
     + '@keyframes mgsgStamp{from{transform:scale(2.4);opacity:0}to{transform:scale(1);opacity:1}}'
     + '@keyframes mgsgStampTall{from{transform:scale(2.4) scaleY(1.28);opacity:0}to{transform:scaleY(1.28);opacity:1}}'
@@ -583,7 +604,7 @@
     overlay.innerHTML =
       '<div class="mgsg-frame" tabindex="-1">'
       + '<div class="mgsg-bar"><span class="t">&#9658; BIG SHELL</span><span class="f">140.85</span>'
-      + '<button type="button" class="mgsg-btn" data-act="mute" title="Toggle sound">SND</button>'
+      + '<button type="button" class="mgsg-btn" data-act="mute" title="Toggle sound">SND ON</button>'
       + '<button type="button" class="mgsg-btn" data-act="close" title="Disconnect (Esc)">&times; EXIT</button></div>'
       + '<div class="mgsg-hud"><span class="mgsg-stbadge" data-hud="state">NORMAL</span>'
       + '<span class="mgsg-life">LIFE <span class="mgsg-lifebar"><i></i></span></span>'
@@ -622,7 +643,7 @@
       + '<div class="mgsg-acts" aria-hidden="true">'
       + '<button data-act2="run" tabindex="-1">RUN</button>'
       + '<button data-act2="box" tabindex="-1">BOX</button>'
-      + '<button data-act2="knock" tabindex="-1">KNK</button>'
+      + '<button data-act2="knock" tabindex="-1">KNOCK</button>'
       + '<button data-act2="cqc" tabindex="-1">CQC</button></div>'
       + '</div>'
       + '<div class="mgsg-foot"><span><kbd>WASD</kbd> move</span><span><kbd>Shift</kbd> run</span>'
@@ -653,7 +674,7 @@
     $('[data-act="close"]').addEventListener('click', closeGame);
     muteBtn.addEventListener('click', function (e) {
       unlockAudio();  // real gesture — resume a policy-suspended AudioContext
-      muted = !muted; muteBtn.textContent = muted ? 'MUTE' : 'SND';
+      muted = !muted; muteBtn.textContent = muted ? 'SND OFF' : 'SND ON';
       muteBtn.style.color = muted ? 'var(--mg-dim)' : '';
       if (muted) stopAlertMusic();
       else if (alertPhase === 'alert' || alertPhase === 'evasion') startAlertMusic();
@@ -722,20 +743,20 @@
   // damage DIMS the edges of the world, it never tints them). Plus the mist sprite.
   function buildStaticGrads() {
     poolGrad = ctx.createRadialGradient(0, 0, 6, 0, 0, 130);
-    poolGrad.addColorStop(0, 'rgba(180,236,208,0.10)'); poolGrad.addColorStop(1, 'rgba(180,236,208,0)');
+    poolGrad.addColorStop(0, 'rgba(184,198,214,0.10)'); poolGrad.addColorStop(1, 'rgba(184,198,214,0)');
     vigGrad = ctx.createRadialGradient(W / 2, H / 2, H * 0.32, W / 2, H / 2, H * 0.8);
-    vigGrad.addColorStop(0, 'rgba(2,5,6,0)'); vigGrad.addColorStop(1, 'rgba(2,5,6,1)');
+    vigGrad.addColorStop(0, 'rgba(2,4,10,0)'); vigGrad.addColorStop(1, 'rgba(2,4,10,1)');
     // mist: a 192x64 soft ellipse of silver fog, baked once (drawn scaled + alpha'd per frame)
     mistSprite = document.createElement('canvas'); mistSprite.width = 192; mistSprite.height = 64;
     var m = mistSprite.getContext('2d'); m.setTransform(1, 0, 0, 1 / 3, 0, 0);
     var mg = m.createRadialGradient(96, 96, 4, 96, 96, 94);
-    mg.addColorStop(0, 'rgba(206,216,212,0.9)'); mg.addColorStop(0.55, 'rgba(206,216,212,0.35)'); mg.addColorStop(1, 'rgba(206,216,212,0)');
+    mg.addColorStop(0, 'rgba(208,214,222,0.9)'); mg.addColorStop(0.55, 'rgba(208,214,222,0.35)'); mg.addColorStop(1, 'rgba(208,214,222,0)');
     m.fillStyle = mg; m.fillRect(0, 0, 192, 192);
   }
 
   /* ===================== the Colonel's codec portrait =====================
-     A 48 px head-and-shoulders silhouette, ordered-dithered (4x4 Bayer) in codec
-     mint, lit from the upper left; baked once. glitchColonel() runs only while a
+     A 48 px head-and-shoulders silhouette, ordered-dithered (4x4 Bayer) in steel
+     blue, lit from the upper left; baked once. glitchColonel() runs only while a
      codec call is on screen (~9 fps, a setInterval, not the game loop): one or two
      rows tear sideways and a few static lines cross it; every ~3 s the signal breaks
      up hard for a third of a second. Reduced motion: the still, clean frame. */
@@ -757,7 +778,7 @@
       else if (inBody) lum = 0.66 - 0.5 * Math.hypot((x - 14) / 30, (y - 38) / 18) - (Math.abs(x - 24) < 3 && y < 44 ? 0.3 : 0);   // a collar line
       else lum = 0;
       var on = lum * 16 > BAYER4[(y & 3) * 4 + (x & 3)] + 0.5, i = (y * S + x) * 4;
-      d[i] = on ? 119 : 8; d[i + 1] = on ? 210 : 21; d[i + 2] = on ? 166 : 20; d[i + 3] = 255;
+      d[i] = on ? 143 : 8; d[i + 1] = on ? 166 : 14; d[i + 2] = on ? 192 : 26; d[i + 3] = 255;
     }
     g.putImageData(img, 0, 0);
     return cv;
@@ -770,13 +791,13 @@
     n = heavy ? 6 : (Math.random() < 0.55 ? 1 : 2);
     for (i = 0; i < n; i++) {   // torn rows: a band redrawn shifted sideways
       var y = (Math.random() * S) | 0, h = 1 + ((Math.random() * (heavy ? 6 : 3)) | 0), dx = ((Math.random() - 0.5) * (heavy ? 20 : 6)) | 0;
-      g.fillStyle = '#081514'; g.fillRect(0, y, S, h);
+      g.fillStyle = '#08101c'; g.fillRect(0, y, S, h);
       g.drawImage(colBase, 0, y, S, h, dx, y, S, h);
     }
     n = heavy ? 16 : 3;
     for (i = 0; i < n; i++) {   // static lines
       var ry = (Math.random() * S) | 0;
-      g.fillStyle = 'rgba(180,236,208,' + (0.15 + Math.random() * 0.5).toFixed(2) + ')';
+      g.fillStyle = 'rgba(184,198,214,' + (0.15 + Math.random() * 0.5).toFixed(2) + ')';
       for (var sx2 = 0; sx2 < S; sx2 += 2) if (Math.random() < 0.5) g.fillRect(sx2, ry, 2, 1);
     }
   }
@@ -902,10 +923,10 @@
     intelGot = !level.intel;
     // per-level cached glow gradients (exit + intel are static per level)
     exitGlowGrad = ctx.createRadialGradient(exitPt.x, exitPt.y, 3, exitPt.x, exitPt.y, 20);
-    exitGlowGrad.addColorStop(0, 'rgba(180,236,208,1)'); exitGlowGrad.addColorStop(1, 'rgba(180,236,208,0)');
+    exitGlowGrad.addColorStop(0, 'rgba(184,198,214,1)'); exitGlowGrad.addColorStop(1, 'rgba(184,198,214,0)');
     if (intel) {
       intelHaloGrad = ctx.createRadialGradient(intel.x, intel.y, 2, intel.x, intel.y, 18);
-      intelHaloGrad.addColorStop(0, 'rgba(180,236,208,1)'); intelHaloGrad.addColorStop(1, 'rgba(180,236,208,0)');
+      intelHaloGrad.addColorStop(0, 'rgba(184,198,214,1)'); intelHaloGrad.addColorStop(1, 'rgba(184,198,214,0)');
     } else intelHaloGrad = null;
 
     guards = level.guards.map(function (g) {
@@ -951,65 +972,65 @@
         if (((x + y) >> 3) & 1) { b.moveTo(x - 2, y + 1.5); b.lineTo(x + 2, y - 1.5); } else { b.moveTo(x - 2, y - 1.5); b.lineTo(x + 2, y + 1.5); }
       }
       b.save(); b.translate(0, 1); b.strokeStyle = 'rgba(0,0,0,0.5)'; b.stroke(); b.restore();
-      b.strokeStyle = 'rgba(180,236,208,0.11)'; b.stroke();
+      b.strokeStyle = 'rgba(184,198,214,0.11)'; b.stroke();
       // bolted deck plates: seams every 4 tiles, rivets along them
       b.beginPath();
       for (x = TILE * 4; x < W; x += TILE * 4) { b.moveTo(x + .5, 0); b.lineTo(x + .5, H); }
       for (y = TILE * 3; y < H; y += TILE * 3) { b.moveTo(0, y + .5); b.lineTo(W, y + .5); }
       b.strokeStyle = 'rgba(0,0,0,0.45)'; b.stroke();
-      b.fillStyle = 'rgba(180,236,208,0.12)';
+      b.fillStyle = 'rgba(184,198,214,0.12)';
       for (x = TILE * 4; x < W; x += TILE * 4) for (y = 6; y < H; y += 12) b.fillRect(x - 2, y, 1, 1);
       // wet sheen: long faint streaks laid down by the wind (it blows from the left)
-      b.strokeStyle = 'rgba(180,236,208,0.035)'; b.lineWidth = 2; b.beginPath();
+      b.strokeStyle = 'rgba(184,198,214,0.035)'; b.lineWidth = 2; b.beginPath();
       for (i = 0; i < 14; i++) { x = hash01(500 + i * 2) * W; y = hash01(501 + i * 2) * H; var len = 70 + hash01(700 + i) * 110; b.moveTo(x, y); b.lineTo(x + len, y + len * 0.12); }
       b.stroke();
       // drain grates: the night sea showing through the deck
       var drains = [[6, 7], [13, 1], [15, 10]];
       for (i = 0; i < drains.length; i++) {
         var dx0 = drains[i][0] * TILE + 6, dy0 = drains[i][1] * TILE + 10;
-        b.fillStyle = '#03090c'; b.fillRect(dx0, dy0, 20, 12);
-        b.fillStyle = 'rgba(119,210,166,0.14)'; b.fillRect(dx0 + 3 + i * 3, dy0 + 5, 7, 1);
-        b.fillStyle = 'rgba(125,139,142,0.5)'; for (x = dx0 + 2; x < dx0 + 20; x += 3) b.fillRect(x, dy0, 1, 12);
-        b.strokeStyle = 'rgba(125,139,142,0.45)'; b.lineWidth = 1; b.strokeRect(dx0 + .5, dy0 + .5, 19, 11);
+        b.fillStyle = '#030710'; b.fillRect(dx0, dy0, 20, 12);
+        b.fillStyle = 'rgba(143,166,192,0.14)'; b.fillRect(dx0 + 3 + i * 3, dy0 + 5, 7, 1);
+        b.fillStyle = 'rgba(124,138,156,0.5)'; for (x = dx0 + 2; x < dx0 + 20; x += 3) b.fillRect(x, dy0, 1, 12);
+        b.strokeStyle = 'rgba(124,138,156,0.45)'; b.lineWidth = 1; b.strokeRect(dx0 + .5, dy0 + .5, 19, 11);
       }
       // the floor's edge over the water channel: dim-paper chevrons along the last floor row
       var hy = (ROWS - 1) * TILE - 5;
       b.save(); b.beginPath(); b.rect(TILE, hy, W - TILE * 2, 5); b.clip();
       b.fillStyle = 'rgba(0,0,0,0.35)'; b.fillRect(TILE, hy, W - TILE * 2, 5);
-      b.strokeStyle = 'rgba(186,184,179,0.3)'; b.lineWidth = 4; b.beginPath();
+      b.strokeStyle = 'rgba(195,203,213,0.3)'; b.lineWidth = 4; b.beginPath();
       for (x = TILE - 8; x < W; x += 12) { b.moveTo(x, hy + 6); b.lineTo(x + 6, hy - 1); }
       b.stroke(); b.restore();
       // night floodlight pools (baked radial gradients — never per-frame)
       var pools = [[px(4), TILE, 110], [px(15), H - TILE, 100], [W - TILE, px(6), 80]];
       for (i = 0; i < pools.length; i++) {
         var fl = b.createRadialGradient(pools[i][0], pools[i][1], 4, pools[i][0], pools[i][1], pools[i][2]);
-        fl.addColorStop(0, 'rgba(206,232,222,0.10)'); fl.addColorStop(1, 'rgba(206,232,222,0)');
+        fl.addColorStop(0, 'rgba(210,220,232,0.10)'); fl.addColorStop(1, 'rgba(210,220,232,0)');
         b.fillStyle = fl; b.fillRect(pools[i][0] - pools[i][2], pools[i][1] - pools[i][2], pools[i][2] * 2, pools[i][2] * 2);
       }
     } else if (kind === 'bridge') {
       // the AB connecting bridge: the night sea under the whole walk ...
-      b.fillStyle = '#030a0e'; b.fillRect(0, 0, W, H);
+      b.fillStyle = '#030812'; b.fillRect(0, 0, W, H);
       for (i = 0; i < 90; i++) {   // swell glints, laid along the wind
         x = hash01(i * 5) * W; y = hash01(i * 5 + 1) * H;
-        b.fillStyle = 'rgba(119,210,166,' + (0.05 + hash01(i * 5 + 3) * 0.11).toFixed(3) + ')';
+        b.fillStyle = 'rgba(143,166,192,' + (0.05 + hash01(i * 5 + 3) * 0.11).toFixed(3) + ')';
         b.fillRect(x | 0, y | 0, (6 + hash01(i * 5 + 2) * 24) | 0, 1);
       }
       // ... seen through a catwalk grate (1 px steel every 4 px) ...
       b.beginPath();
       for (x = 0.5; x < W; x += 4) { b.moveTo(x, 0); b.lineTo(x, H); }
       for (y = 0.5; y < H; y += 4) { b.moveTo(0, y); b.lineTo(W, y); }
-      b.strokeStyle = 'rgba(96,112,115,0.17)'; b.lineWidth = 1; b.stroke();
+      b.strokeStyle = 'rgba(96,110,128,0.17)'; b.lineWidth = 1; b.stroke();
       // ... on heavier stringers every 2 tiles across the span
       b.beginPath();
       for (x = TILE * 2; x < W; x += TILE * 2) { b.moveTo(x + 1, 0); b.lineTo(x + 1, H); }
-      b.strokeStyle = 'rgba(130,146,148,0.24)'; b.lineWidth = 2; b.stroke();
+      b.strokeStyle = 'rgba(130,144,160,0.24)'; b.lineWidth = 2; b.stroke();
       // handrails along the inner edges of the outer walls, stanchions every 24 px
-      b.fillStyle = 'rgba(186,184,179,0.22)';
+      b.fillStyle = 'rgba(195,203,213,0.22)';
       b.fillRect(TILE, TILE + 1, W - 2 * TILE, 2); b.fillRect(TILE, H - TILE - 3, W - 2 * TILE, 2);
       for (x = TILE + 8; x < W - TILE; x += 24) { b.fillRect(x, TILE + 1, 2, 5); b.fillRect(x, H - TILE - 6, 2, 5); }
     } else if (kind === 'core') {
       // catwalk grating: fine cross-hatch
-      b.strokeStyle = 'rgba(119,210,166,0.035)'; b.lineWidth = 1; b.beginPath();
+      b.strokeStyle = 'rgba(143,166,192,0.035)'; b.lineWidth = 1; b.beginPath();
       for (x = -H; x < W; x += 8) { b.moveTo(x, 0); b.lineTo(x + H, H); b.moveTo(x + H, 0); b.lineTo(x, H); }
       b.stroke();
       // composite panel seams every 2 tiles + rivets at the joints
@@ -1017,7 +1038,7 @@
       for (x = TILE * 2; x < W; x += TILE * 2) { b.moveTo(x + .5, 0); b.lineTo(x + .5, H); }
       for (y = TILE * 2; y < H; y += TILE * 2) { b.moveTo(0, y + .5); b.lineTo(W, y + .5); }
       b.stroke();
-      b.fillStyle = 'rgba(180,236,208,0.12)';
+      b.fillStyle = 'rgba(184,198,214,0.12)';
       for (x = TILE * 2; x < W; x += TILE * 2) for (y = TILE * 2; y < H; y += TILE * 2) b.fillRect(x - 1, y - 1, 3, 3);
       // dim-paper hazard chevrons on the floor cells of the row in front of the
       // camera (its own row is wall/corridor) — clipped to floor tiles only
@@ -1028,7 +1049,7 @@
         for (cc = c0; cc <= c1; cc++) if (!walls[cr][cc]) { b.rect(cc * TILE, yb + 4, TILE, TILE - 8); any = true; }
         if (any) {
           b.clip();
-          b.strokeStyle = 'rgba(186,184,179,0.26)'; b.lineWidth = 3; b.beginPath();
+          b.strokeStyle = 'rgba(195,203,213,0.26)'; b.lineWidth = 3; b.beginPath();
           for (x = c0 * TILE - 6; x < (c1 + 1) * TILE + 6; x += 12) { b.moveTo(x, yb + 4); b.lineTo(x + 7, yb + TILE / 2); b.lineTo(x, yb + TILE - 4); }
           b.stroke();
         }
@@ -1052,18 +1073,18 @@
     var wx = (ec + d[0]) * TILE, wy = (er + d[1]) * TILE, vert = d[1] !== 0, ox, oy, ow, oh;
     if (vert) { ox = wx + 8; ow = TILE - 16; oh = TILE - 4; oy = d[1] < 0 ? wy + 4 : wy; }
     else { oy = wy + 8; oh = TILE - 16; ow = TILE - 4; ox = d[0] < 0 ? wx + 4 : wx; }
-    b.fillStyle = '#03100b'; b.fillRect(ox, oy, ow, oh);   // recessed opening
+    b.fillStyle = '#040a16'; b.fillRect(ox, oy, ow, oh);   // recessed opening
     // far-end light strip + two dim treads stepping toward the threshold
-    b.fillStyle = 'rgba(180,236,208,0.55)';
+    b.fillStyle = 'rgba(184,198,214,0.55)';
     if (vert) b.fillRect(ox + 2, d[1] < 0 ? oy : oy + oh - 3, ow - 4, 3);
     else b.fillRect(d[0] < 0 ? ox : ox + ow - 3, oy + 2, 3, oh - 4);
-    b.fillStyle = 'rgba(180,236,208,0.10)';
+    b.fillStyle = 'rgba(184,198,214,0.10)';
     for (i = 1; i <= 2; i++) {
       if (vert) b.fillRect(ox + 3, d[1] < 0 ? oy + 3 + i * 8 : oy + oh - 4 - i * 8, ow - 6, 1);
       else b.fillRect(d[0] < 0 ? ox + 3 + i * 8 : ox + ow - 4 - i * 8, oy + 3, 1, oh - 6);
     }
     var x0 = ox + .5, y0 = oy + .5, x1 = ox + ow - .5, y1 = oy + oh - .5;
-    b.strokeStyle = 'rgba(180,236,208,0.7)'; b.lineWidth = 1; b.beginPath();
+    b.strokeStyle = 'rgba(184,198,214,0.7)'; b.lineWidth = 1; b.beginPath();
     if (vert && d[1] < 0) { b.moveTo(x0, y1 + 1); b.lineTo(x0, y0); b.lineTo(x1, y0); b.lineTo(x1, y1 + 1); }
     else if (vert) { b.moveTo(x0, y0 - 1); b.lineTo(x0, y1); b.lineTo(x1, y1); b.lineTo(x1, y0 - 1); }
     else if (d[0] < 0) { b.moveTo(x1 + 1, y0); b.lineTo(x0, y0); b.lineTo(x0, y1); b.lineTo(x1 + 1, y1); }
@@ -1072,7 +1093,7 @@
     // light spill onto the exit tile from the threshold (the shared edge), clipped to the tile
     var tx = px(ec) + d[0] * TILE / 2, ty = px(er) + d[1] * TILE / 2, sr = TILE * 1.1;
     var sp = b.createRadialGradient(tx, ty, 2, tx, ty, sr);
-    sp.addColorStop(0, 'rgba(180,236,208,0.42)'); sp.addColorStop(0.55, 'rgba(180,236,208,0.13)'); sp.addColorStop(1, 'rgba(180,236,208,0)');
+    sp.addColorStop(0, 'rgba(184,198,214,0.42)'); sp.addColorStop(0.55, 'rgba(184,198,214,0.13)'); sp.addColorStop(1, 'rgba(184,198,214,0)');
     b.save(); b.beginPath(); b.rect(ec * TILE, er * TILE, TILE, TILE); b.clip();
     b.fillStyle = sp; b.fillRect(tx - sr, ty - sr, sr * 2, sr * 2);
     b.restore();
@@ -1087,26 +1108,26 @@
   }
   function bakeWaterRow(b, r) {
     var y0 = r * TILE, x0 = TILE, w = W - 2 * TILE, x, i, top = r === 0;
-    b.fillStyle = '#02080b'; b.fillRect(x0, y0, w, TILE);
+    b.fillStyle = '#02060e'; b.fillRect(x0, y0, w, TILE);
     // long low swells (static; seaGlints drifts the bright ones per frame)
-    b.fillStyle = 'rgba(119,210,166,0.05)';
+    b.fillStyle = 'rgba(143,166,192,0.05)';
     for (i = 0; i < 16; i++) b.fillRect(x0 + (hash01(900 + i + r) * w) | 0, y0 + 4 + ((hash01(940 + i + r) * (TILE - 12)) | 0), (20 + hash01(980 + i) * 50) | 0, 1);
     if (level.floor === 'bridge') {
       // handrail on the deck side: a paper-dim bar, posts every 2 tiles, the deck's shadow on the water
       var ry = top ? y0 + TILE - 4 : y0 + 2;
       b.fillStyle = 'rgba(0,0,0,0.45)'; b.fillRect(x0, top ? y0 + TILE - 9 : y0 + 4, w, 5);
-      b.fillStyle = 'rgba(186,184,179,0.42)'; b.fillRect(x0, ry, w, 2);
+      b.fillStyle = 'rgba(195,203,213,0.42)'; b.fillRect(x0, ry, w, 2);
       for (x = x0 + 2 * TILE; x < x0 + w; x += 2 * TILE) {
-        b.fillStyle = 'rgba(186,184,179,0.55)'; b.fillRect(x - 1, top ? ry - 5 : ry, 3, 7);
+        b.fillStyle = 'rgba(195,203,213,0.55)'; b.fillRect(x - 1, top ? ry - 5 : ry, 3, 7);
         b.fillStyle = 'rgba(0,0,0,0.5)'; b.fillRect(x - 1, top ? ry - 6 : ry + 7, 3, 1);
       }
     } else {
       // the dock edge: a steel lip and a bollard every 4 tiles
-      b.fillStyle = '#3a474a'; b.fillRect(x0, y0, w, 3);
+      b.fillStyle = '#3a4658'; b.fillRect(x0, y0, w, 3);
       b.fillStyle = 'rgba(0,0,0,0.5)'; b.fillRect(x0, y0 + 3, w, 3);
       for (x = x0 + 2 * TILE; x < x0 + w; x += 4 * TILE) {
-        b.fillStyle = '#56656a'; b.fillRect(x - 4, y0 - 2, 8, 7);
-        b.fillStyle = 'rgba(186,184,179,0.5)'; b.fillRect(x - 4, y0 - 2, 8, 1);
+        b.fillStyle = '#566478'; b.fillRect(x - 4, y0 - 2, 8, 7);
+        b.fillStyle = 'rgba(195,203,213,0.5)'; b.fillRect(x - 4, y0 - 2, 8, 1);
       }
     }
   }
@@ -1120,23 +1141,23 @@
       while (isCrate(c, r + bh)) bh++;
       var x0 = c * TILE, y0 = r * TILE, w = bw * TILE, h = bh * TILE, fh = 7, top = h - fh;
       b.fillStyle = 'rgba(0,0,0,0.42)'; b.fillRect(x0 + 2, y0 + h, w, 5);           // drop shadow
-      b.fillStyle = '#2b3638'; b.fillRect(x0, y0, w, top);                         // lid
-      b.fillStyle = '#141d1f'; b.fillRect(x0, y0 + top, w, fh);                    // front face
+      b.fillStyle = '#2a3546'; b.fillRect(x0, y0, w, top);                         // lid
+      b.fillStyle = '#131b28'; b.fillRect(x0, y0 + top, w, fh);                    // front face
       b.fillStyle = 'rgba(0,0,0,0.35)';
       for (i = 4; i < w; i += 4) b.fillRect(x0 + i, y0 + top, 1, fh);             // ribs on the face
       for (i = 3; i < w - 2; i += 4) {                                             // corrugation on the lid
         b.fillStyle = 'rgba(0,0,0,0.26)'; b.fillRect(x0 + i, y0 + 2, 1, top - 4);
-        b.fillStyle = 'rgba(190,206,204,0.07)'; b.fillRect(x0 + i + 1, y0 + 2, 1, top - 4);
+        b.fillStyle = 'rgba(192,202,214,0.07)'; b.fillRect(x0 + i + 1, y0 + 2, 1, top - 4);
       }
       var sy = y0 + (top >> 1);                                                    // lid seam
       b.fillStyle = 'rgba(0,0,0,0.55)'; b.fillRect(x0 + 1, sy, w - 2, 1);
-      b.fillStyle = 'rgba(190,206,204,0.14)'; b.fillRect(x0 + 1, sy + 1, w - 2, 1);
-      b.fillStyle = 'rgba(186,184,179,0.32)';                                      // stencil line
+      b.fillStyle = 'rgba(192,202,214,0.14)'; b.fillRect(x0 + 1, sy + 1, w - 2, 1);
+      b.fillStyle = 'rgba(195,203,213,0.32)';                                      // stencil line
       for (i = 0; i < 5; i++) b.fillRect(x0 + 8 + i * 5, y0 + 7, 3, 2);
-      b.fillStyle = '#56656a';                                                     // corner castings
+      b.fillStyle = '#566478';                                                     // corner castings
       b.fillRect(x0, y0, 4, 4); b.fillRect(x0 + w - 4, y0, 4, 4); b.fillRect(x0, y0 + top - 4, 4, 4); b.fillRect(x0 + w - 4, y0 + top - 4, 4, 4);
-      b.strokeStyle = 'rgba(134,168,157,0.45)'; b.lineWidth = 1; b.strokeRect(x0 + .5, y0 + .5, w - 1, h - 1);
-      b.fillStyle = 'rgba(180,236,208,0.22)'; b.fillRect(x0 + 1, y0, w - 2, 1);    // lit top rim
+      b.strokeStyle = 'rgba(138,156,180,0.45)'; b.lineWidth = 1; b.strokeRect(x0 + .5, y0 + .5, w - 1, h - 1);
+      b.fillStyle = 'rgba(184,198,214,0.22)'; b.fillRect(x0 + 1, y0, w - 2, 1);    // lit top rim
     }
   }
   // drifting glints for the water rows: a transparent strip (W + 8 by one tile), drawn
@@ -1148,7 +1169,7 @@
     seaGlints.width = Math.ceil((W + 8) * dpr); seaGlints.height = Math.ceil(TILE * dpr);
     var g = seaGlints.getContext('2d'), i; g.setTransform(dpr, 0, 0, dpr, 0, 0);
     for (i = 0; i < 26; i++) {
-      g.fillStyle = 'rgba(180,236,208,' + (0.10 + hash01(i * 7 + 3) * 0.16).toFixed(3) + ')';
+      g.fillStyle = 'rgba(184,198,214,' + (0.10 + hash01(i * 7 + 3) * 0.16).toFixed(3) + ')';
       g.fillRect((hash01(i * 7) * (W + 8)) | 0, 9 + ((hash01(i * 7 + 1) * 13) | 0), (4 + hash01(i * 7 + 2) * 16) | 0, 1);
     }
   }
@@ -1175,10 +1196,10 @@
     // exit pad, baked (visible from spawn — chevron hatch + frame)
     var ec = level.exit[0], er = level.exit[1], ex0 = ec * TILE, ey0 = er * TILE;
     b.save(); b.beginPath(); b.rect(ex0 + 2, ey0 + 2, TILE - 4, TILE - 4); b.clip();
-    b.strokeStyle = 'rgba(180,236,208,0.14)'; b.lineWidth = 3; b.beginPath();
+    b.strokeStyle = 'rgba(184,198,214,0.14)'; b.lineWidth = 3; b.beginPath();
     for (var sD = -TILE; sD < TILE; sD += 8) { b.moveTo(ex0 + sD, ey0 + TILE); b.lineTo(ex0 + sD + TILE, ey0); }
     b.stroke(); b.restore();
-    b.strokeStyle = 'rgba(180,236,208,0.25)'; b.lineWidth = 1;
+    b.strokeStyle = 'rgba(184,198,214,0.25)'; b.lineWidth = 1;
     b.strokeRect(ex0 + 2.5, ey0 + 2.5, TILE - 5, TILE - 5);
     // faint tile grid
     b.strokeStyle = C.grid; b.lineWidth = 1; b.beginPath();
@@ -1225,9 +1246,9 @@
     }
     if (level.floor === 'bridge') bakeCrates(b);
     bakeDoorway(b, ec, er);
-    // baked ambient light: phosphor bloom at center, dark corners (one-time cost)
+    // baked ambient light: a faint moonlit bloom at center, dark corners (one-time cost)
     var lg = b.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, Math.max(W, H) * 0.62);
-    lg.addColorStop(0, 'rgba(159,227,196,0.05)');
+    lg.addColorStop(0, 'rgba(164,182,204,0.05)');
     lg.addColorStop(0.6, 'rgba(0,0,0,0)');
     lg.addColorStop(1, 'rgba(0,0,0,0.32)');
     b.fillStyle = lg; b.fillRect(0, 0, W, H);
@@ -1237,11 +1258,11 @@
     radarMap = document.createElement('canvas');
     radarMap.width = Math.ceil(mw * dpr); radarMap.height = Math.ceil(mh * dpr);
     var m = radarMap.getContext('2d'); m.setTransform(dpr, 0, 0, dpr, 0, 0);
-    m.fillStyle = 'rgba(8,26,20,0.72)'; m.fillRect(0, 0, mw, mh);
+    m.fillStyle = 'rgba(8,16,30,0.72)'; m.fillRect(0, 0, mw, mh);
     for (r = 0; r < ROWS; r++) for (c = 0; c < COLS; c++) {
       if (!walls[r][c]) continue;
-      m.fillStyle = 'rgba(119,210,166,0.42)'; m.fillRect(c * ts, r * ts, ts + 0.5, ts + 0.5);
-      if (r > 0 && !walls[r - 1][c]) { m.fillStyle = 'rgba(180,236,208,0.7)'; m.fillRect(c * ts, r * ts, ts + 0.5, 1); }
+      m.fillStyle = 'rgba(143,166,192,0.42)'; m.fillRect(c * ts, r * ts, ts + 0.5, ts + 0.5);
+      if (r > 0 && !walls[r - 1][c]) { m.fillStyle = 'rgba(184,198,214,0.7)'; m.fillRect(c * ts, r * ts, ts + 0.5, 1); }
     }
   }
   function playerTile() { return { c: tcol(player.x), r: trow(player.y) }; }
@@ -1254,7 +1275,7 @@
     updatePlayer(dt);
 
     if (intel && !intelGot && Math.hypot(player.x - intel.x, player.y - intel.y) < PICKUP_R) {
-      if (boxed) { if (!boxHinted) { boxHinted = true; announce('Get out of the box to grab the intel.'); } }
+      if (boxed) { if (!boxHinted) { boxHinted = true; announce('Leave the box to take the intel.'); } }
       else { intelGot = true; sfxPickup(); addPulse(intel.x, intel.y, '233,231,226'); announce('Intel acquired. Reach the exit.'); updateHud(); }
     }
     // reaching the exit wins the frame outright — even if a guard would grab you on the same tick
@@ -1384,7 +1405,7 @@
   function doBox() { boxed = !boxed; beep(boxed ? 150 : 210, 0.05, 'square', 0.05); announce(boxed ? 'In the box.' : 'Out of the box.'); }
   function doKnock() {
     if (knockCD > 0) return;
-    if (alertPhase === 'alert' || alertPhase === 'evasion') { announce('No use — they are already alerted.'); return; }
+    if (alertPhase === 'alert' || alertPhase === 'evasion') { announce('No use — already alerted.'); return; }
     knockCD = KNOCK_CD; emitNoise(player.x, player.y, KNOCK_R); sfxKnock(); announce('Knock — luring a guard.');
   }
   function doCQC() {
@@ -1398,7 +1419,7 @@
       var ang = Math.atan2(player.y - g.y, player.x - g.x);
       if (Math.abs(angDiff(ang, g.facing)) >= CQC_REAR && d < bestd) { bestd = d; best = g; }
     }
-    if (best) { cqcCD = CQC_CD; best.down = true; best.seeing = false; best.spotTimer = 0; addPulse(best.x, best.y, '180,236,208'); sfxCQC(); announce('Guard subdued.'); }
+    if (best) { cqcCD = CQC_CD; best.down = true; best.seeing = false; best.spotTimer = 0; addPulse(best.x, best.y, '184,198,214'); sfxCQC(); announce('Guard subdued.'); }
     else announce('No guard to subdue.');
   }
 
@@ -1459,16 +1480,18 @@
   }
   function updateCamera(c, dt) { c.facing = c.base + Math.sin(elapsed * c.speed) * c.arc; }
 
+  // the one countdown readout (whole seconds, rounded up), shared by the DOM badge and the canvas window
+  function phaseSecs() { return Math.ceil(Math.max(0, alertPhase === 'evasion' ? evasionTimer : cautionTimer)); }
   function updateHud() {
     var ph = alertPhase;
     stateBadge.className = 'mgsg-stbadge' + (ph !== 'normal' ? ' ' + ph : '');
-    stateBadge.textContent = ph === 'alert' ? '! ALERT' : ph === 'evasion' ? 'EVASION ' + Math.ceil(Math.max(0, evasionTimer))
-      : ph === 'caution' ? 'CAUTION ' + Math.ceil(Math.max(0, cautionTimer)) : 'NORMAL';
+    stateBadge.textContent = ph === 'alert' ? '! ALERT' : ph === 'evasion' ? 'EVASION ' + phaseSecs()
+      : ph === 'caution' ? 'CAUTION ' + phaseSecs() : 'NORMAL';
     // write the bar width only when the rounded value changes — render() reads
     // canvas.clientWidth each frame, and a dirty style every frame would force a layout
     var lwid = (life * 100).toFixed(0) + '%';
     if (lwid !== lastLifeW) { lastLifeW = lwid; lifeFill.style.width = lwid; }
-    // healthy = codec mint; warning = dim paper; critical = paper (blinking)
+    // healthy = steel blue; warning = cool grey; critical = paper (blinking)
     var lcol = life > 0.5 ? 'var(--mg-text)' : life > 0.25 ? 'var(--mg-pdim)' : 'var(--mg-paper)';
     if (lcol !== lastLifeC) { lastLifeC = lcol; lifeFill.style.background = lcol; }
     lifeFill.parentNode.classList.toggle('low', life < 0.25);
@@ -1489,11 +1512,11 @@
   // 8-way facing snap keeps rotated pixel art crisp; vision cones keep the
   // smooth unsnapped facing — classic 2D-stealth look, identical gameplay
   var STEP8 = Math.PI / 4;
-  // radar minimap geometry: 96x48 bezelled rectangle in the top-left corner —
-  // bezel + label end inside row 1 so it occludes as little corridor as
-  // possible (the screen is translucent for the rest). One room per op, so the
-  // radar shows ALL of it, fixed: 640x384 at 48/384 = 80x48, centred in the box
-  var RADAR_X = 6, RADAR_Y = 6, RADAR_W = 96, RADAR_H = 48, RADAR_SC = 48 / 384;
+  // radar minimap geometry: a 90x54 bezelled rectangle in the top-left corner,
+  // the room's own 5:3 shape, so the whole room fills the box edge to edge
+  // (640x384 at 54/384 = 90x54, nothing wasted). The bezel ends at y 63, inside
+  // row 1; the RADAR label sits to the box's right, under the LIFE window.
+  var RADAR_X = 6, RADAR_Y = 5, RADAR_W = 90, RADAR_H = 54, RADAR_SC = 54 / 384;
   var RADAR_OX = RADAR_X + (RADAR_W - W * RADAR_SC) / 2, RADAR_OY = RADAR_Y + (RADAR_H - H * RADAR_SC) / 2;
   var DASH_CALM = [4, 3], DASH_NONE = [];  // hoisted — no per-frame arrays
   function drawSpriteImg(img, x, y, angle, bobPhase) {
@@ -1504,7 +1527,7 @@
     ctx.restore();
   }
   function drawCone(d, roomAlert) {
-    // calm = mint light, dashed edge; suspicious / caution = dim paper; hostile =
+    // calm = steel-blue light, dashed edge; suspicious / caution = cool grey; hostile =
     // paper-white searchlight (no red: danger reads as hard white light)
     var rgb, edgeA, calm = false;
     if (roomAlert || d.seeing) {
@@ -1512,8 +1535,8 @@
       // edge strobes while this watcher has live eyes on the player
       edgeA = d.seeing && !reduceMotion ? 0.45 + 0.3 * Math.abs(Math.sin(elapsed * 9)) : 0.6;
     }
-    else if ((d.spotTimer || 0) > 0 || alertPhase === 'caution') { rgb = '186,184,179'; edgeA = 0.45; }
-    else { rgb = '119,210,166'; edgeA = 0.30; calm = true; }
+    else if ((d.spotTimer || 0) > 0 || alertPhase === 'caution') { rgb = '195,203,213'; edgeA = 0.45; }
+    else { rgb = '143,166,192'; edgeA = 0.30; calm = true; }
     var half = d.fov * (d.fovMul || 1) / 2, range = d.range * (d.rangeMul || 1), STEPS = 20;
     // hostile cones fill a little brighter so they read over the alarm vignette;
     // the additive white is kept low so the floor under it never blows out
@@ -1583,7 +1606,7 @@
     ctx.fillStyle = col; ctx.font = '9px "Share Tech Mono",monospace';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('EXIT', x, y);
   }
-  // intel = a mint keycard (pre-rendered SPR.key) bobbing gently over its
+  // intel = a steel-blue keycard (pre-rendered SPR.key) bobbing gently over its
   // cached halo; the bright contact notch is the read, so no '!' glyph is needed
   function drawIntel() {
     if (!intel || intelGot) return;
@@ -1608,7 +1631,7 @@
     ctx.fillStyle = c.seeing ? C.paper : C.bright; ctx.fillRect(6, -1.5, 2, 3);  // lens slit
     ctx.restore();
     var led = c.seeing || Math.sin(elapsed * 6) > 0;
-    ctx.fillStyle = c.seeing ? C.paper : led ? C.green : 'rgba(119,210,166,0.25)';
+    ctx.fillStyle = c.seeing ? C.paper : led ? C.line : 'rgba(143,166,192,0.25)';
     ctx.fillRect(c.x - 1, c.y - 11, 2, 2);
   }
   function drawGuard(g, roomAlert) {
@@ -1618,18 +1641,18 @@
       drawSpriteImg(SPR.guardDown, g.x, g.y, g.facing + Math.PI, null);
       ctx.font = 'bold 9px "Share Tech Mono",monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
       var zb = reduceMotion ? 0 : Math.round(Math.sin(elapsed * 2.2) * 1.5);
-      ctx.fillStyle = 'rgba(4,14,11,0.7)'; ctx.fillRect(g.x + 6, g.y - 21 + zb, 15, 10);
+      ctx.fillStyle = 'rgba(4,9,18,0.7)'; ctx.fillRect(g.x + 6, g.y - 21 + zb, 15, 10);
       ctx.fillStyle = C.paperDim; ctx.fillText('zz', g.x + 8, g.y - 11 + zb);
       return;
     }
     drawShadow(g.x, g.y);
     drawSpriteImg(SPR[(g.seeing || roomAlert) ? 'guardHot' : 'guard'][g.moving ? (Math.floor(g.walk / Math.PI) % 2) : 0],
       g.x, g.y, g.facing + Math.PI / 2, g.moving ? g.walk : null);
-    // awareness gauge — the arc fills dim paper -> paper with spotTimer before the alarm trips
+    // awareness gauge — the arc fills cool grey -> paper with spotTimer before the alarm trips
     // (gauge + plate sit above the 36px sprite: half-height 18 + a 2–6px gap)
     if (!roomAlert && g.spotTimer > 0.05 && g.spotTimer < SPOT_FULL) {
       var t = g.spotTimer / SPOT_FULL;
-      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(4,14,11,0.65)';
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(4,9,18,0.65)';
       ctx.beginPath(); ctx.arc(g.x, g.y - 24, 7, 0, Math.PI * 2); ctx.stroke();
       ctx.strokeStyle = t < 0.7 ? C.paperDim : C.paper;
       ctx.beginPath(); ctx.arc(g.x, g.y - 24, 7, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * t); ctx.stroke();
@@ -1640,7 +1663,7 @@
     if (mark !== g.lastMark) { g.markSince = elapsed; g.lastMark = mark; }
     if (mark) drawAlertPlate(g.x, g.y - 20, mark, elapsed - (g.markSince || 0));
   }
-  // MGS alert plate. "!" = a paper plate, mint 2px stroke, a sumi glyph (the site's
+  // MGS alert plate. "!" = a paper plate, steel-blue 2px stroke, a sumi glyph (the site's
   // own "!" over Raiden, in the game); "?" = a dim-paper plate, paper stroke, sumi glyph.
   // Pops in from 2.6x (ease-out over 0.14s), holds large ~0.5s, then eases down
   // to a small persistent plate. reduceMotion shows the small plate immediately.
@@ -1654,33 +1677,42 @@
     var w = 14 * s, h = 18 * s, x0 = x - w / 2, y0 = yBottom - h;
     var bang = mark === '!';
     ctx.fillStyle = bang ? C.paper : C.paperDim; ctx.fillRect(x0, y0, w, h);
-    ctx.lineWidth = s < 0.8 ? 1.5 : 2; ctx.strokeStyle = bang ? C.green : C.paper; ctx.strokeRect(x0, y0, w, h);
+    ctx.lineWidth = s < 0.8 ? 1.5 : 2; ctx.strokeStyle = bang ? C.line : C.paper; ctx.strokeRect(x0, y0, w, h);
     ctx.font = 'bold ' + Math.round(14 * s) + 'px "Share Tech Mono",monospace';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillStyle = C.ink; ctx.fillText(mark, x, y0 + h / 2 + 1);
   }
   // radar — MGS2's rectangular minimap: the level's wall layout (baked radarMap,
-  // one drawImage) showing the whole room, guards as mint blips with their cone wedges
-  // (paper while one has eyes on you), cameras dim paper, exit bearing once the
+  // one drawImage) showing the whole room, guards as steel-blue blips with their cone wedges
+  // (paper while one has eyes on you), cameras cool grey, exit bearing once the
   // intel is in hand. JAMMED (alert/evasion, or forceJam on the game-over freeze)
-  // = mint static stripes. No gradients here.
+  // = steel-blue static stripes. No gradients here.
+  // radarFade: the box dims to 0.3 while Raiden or a standing guard is under it
+  // (MGS2 fades its HUD the same way), so nobody vanishes in the corner
+  var radarFade = 1;
+  function underRadar(px, py) { return px > RADAR_X - 12 && px < RADAR_X + RADAR_W + 12 && py > RADAR_Y - 12 && py < RADAR_Y + RADAR_H + 14; }
   function drawRadar(forceJam) {
     var x = RADAR_X, y = RADAR_Y, w = RADAR_W, h = RADAR_H, cx = x + w / 2, cy = y + h / 2, sc = RADAR_SC, i;
     var jam = forceJam || alertPhase === 'alert' || alertPhase === 'evasion';
+    var hid = underRadar(player.x, player.y);
+    for (i = 0; !hid && i < guards.length; i++) if (!guards[i].down && underRadar(guards[i].x, guards[i].y)) hid = true;
+    var fadeTo = hid ? 0.3 : 1;
+    radarFade = reduceMotion ? fadeTo : radarFade + (fadeTo - radarFade) * 0.25;
+    ctx.globalAlpha = radarFade;
     ctx.save();
     // bezel + screen — translucent, so a sprite walking under the corner stays visible
-    ctx.fillStyle = 'rgba(4,14,11,0.6)'; ctx.fillRect(x - 4, y - 4, w + 8, h + 8);
-    ctx.strokeStyle = 'rgba(119,210,166,0.18)'; ctx.lineWidth = 3; ctx.strokeRect(x - 3.5, y - 3.5, w + 7, h + 7);
+    ctx.fillStyle = 'rgba(4,9,18,0.6)'; ctx.fillRect(x - 4, y - 4, w + 8, h + 8);
+    ctx.strokeStyle = 'rgba(143,166,192,0.18)'; ctx.lineWidth = 3; ctx.strokeRect(x - 3.5, y - 3.5, w + 7, h + 7);
     ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
     if (jam) {
       // static: 2px bands whose brightness hashes off (row, frame) — no allocation
       var fr = reduceMotion ? 0 : Math.floor(elapsed * 16);
       for (i = 0; i < h; i += 2) {
         var v = Math.sin((i + fr * 7) * 12.9898) * 43758.5453; v -= Math.floor(v);
-        ctx.fillStyle = 'rgba(119,210,166,' + (0.04 + v * 0.2).toFixed(2) + ')';
+        ctx.fillStyle = 'rgba(143,166,192,' + (0.04 + v * 0.2).toFixed(2) + ')';
         ctx.fillRect(x, y + i, w, 2);
       }
-      ctx.fillStyle = 'rgba(5,10,11,0.75)'; ctx.fillRect(cx - 22, cy - 6, 44, 12);
+      ctx.fillStyle = 'rgba(5,9,18,0.75)'; ctx.fillRect(cx - 22, cy - 6, 44, 12);
       ctx.fillStyle = C.bright; ctx.font = 'bold 8px "Share Tech Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('JAMMED', cx, cy + 0.5);
     } else {
       var ox = RADAR_OX, oy = RADAR_OY;
@@ -1689,14 +1721,14 @@
         var g = guards[i]; if (g.down) continue;
         var rx = ox + g.x * sc, ry = oy + g.y * sc;
         var hf = g.fov * (g.fovMul || 1) / 2;
-        ctx.fillStyle = g.seeing ? 'rgba(233,231,226,0.28)' : 'rgba(119,210,166,0.22)'; ctx.beginPath(); ctx.moveTo(rx, ry);
+        ctx.fillStyle = g.seeing ? 'rgba(233,231,226,0.28)' : 'rgba(143,166,192,0.22)'; ctx.beginPath(); ctx.moveTo(rx, ry);
         ctx.arc(rx, ry, g.range * (g.rangeMul || 1) * sc, g.facing - hf, g.facing + hf); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = g.seeing ? C.paper : C.green; ctx.fillRect(rx - 1.5, ry - 1.5, 3, 3);
+        ctx.fillStyle = g.seeing ? C.paper : C.line; ctx.fillRect(rx - 1.5, ry - 1.5, 3, 3);
       }
       for (i = 0; i < cameras.length; i++) {
         var cm = cameras[i], rx2 = ox + cm.x * sc, ry2 = oy + cm.y * sc;
         var hf2 = cm.fov / 2;
-        ctx.fillStyle = 'rgba(186,184,179,0.16)'; ctx.beginPath(); ctx.moveTo(rx2, ry2);
+        ctx.fillStyle = 'rgba(195,203,213,0.16)'; ctx.beginPath(); ctx.moveTo(rx2, ry2);
         ctx.arc(rx2, ry2, cm.range * sc, cm.facing - hf2, cm.facing + hf2); ctx.closePath(); ctx.fill();
         ctx.fillStyle = C.paperDim; ctx.fillRect(rx2 - 1.5, ry2 - 1.5, 3, 3);
       }
@@ -1705,7 +1737,7 @@
         var rex = ox + exitPt.x * sc, rey = oy + exitPt.y * sc;
         if (reduceMotion || Math.sin(elapsed * 6) > -0.3) {
           ctx.fillStyle = C.bright; ctx.fillRect(rex - 1.5, rey - 1.5, 3, 3);
-          ctx.strokeStyle = 'rgba(180,236,208,0.55)'; ctx.lineWidth = 1; ctx.strokeRect(rex - 3.5, rey - 3.5, 7, 7);
+          ctx.strokeStyle = 'rgba(184,198,214,0.55)'; ctx.lineWidth = 1; ctx.strokeRect(rex - 3.5, rey - 3.5, 7, 7);
         }
       }
       // player dot + facing tick — bearing reads off the radar at a glance
@@ -1718,14 +1750,16 @@
     }
     ctx.restore();
     // frame + corner ticks
-    ctx.strokeStyle = jam ? 'rgba(180,236,208,0.7)' : 'rgba(119,210,166,0.5)'; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, w - 1, h - 1);
-    ctx.strokeStyle = 'rgba(180,236,208,0.55)'; ctx.beginPath();
+    ctx.strokeStyle = jam ? 'rgba(184,198,214,0.7)' : 'rgba(143,166,192,0.5)'; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, w - 1, h - 1);
+    ctx.strokeStyle = 'rgba(184,198,214,0.55)'; ctx.beginPath();
     ctx.moveTo(x - 4, y + 4); ctx.lineTo(x - 4, y - 4); ctx.lineTo(x + 4, y - 4);
     ctx.moveTo(x + w - 4, y - 4); ctx.lineTo(x + w + 4, y - 4); ctx.lineTo(x + w + 4, y + 4);
     ctx.moveTo(x + w + 4, y + h - 4); ctx.lineTo(x + w + 4, y + h + 4); ctx.lineTo(x + w - 4, y + h + 4);
     ctx.moveTo(x + 4, y + h + 4); ctx.lineTo(x - 4, y + h + 4); ctx.lineTo(x - 4, y + h - 4);
     ctx.stroke();
-    ctx.fillStyle = C.dim; ctx.font = '8px "Share Tech Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText('RADAR', cx, y + h + 7);
+    // the label only where it is legible (a phone scales the canvas to ~0.55: 8 px would be 4 px of noise)
+    if (lastWide) { ctx.fillStyle = C.dim; ctx.font = '8px "Share Tech Mono",monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText('RADAR', x + w + 9, y + h + 1); }
+    ctx.globalAlpha = 1;
   }
   /* ---- in-canvas MGS HUD windows — visual duplicates of the DOM strip (which
      stays the accessible source of truth). Drawn after the radar, only when the
@@ -1737,22 +1771,22 @@
        ITEM window  bottom-right                    x 536–632, y 353–381
      fillRect / strokeRect / fillText / arc only — no gradients, so the per-frame
      gradient budget is untouched. reduceMotion: no blinking, values only. ---- */
-  var HUD_FONT = '8px "Share Tech Mono",monospace', HUD_PANEL = 'rgba(4,14,11,0.62)', HUD_EDGE = 'rgba(119,210,166,0.35)';
+  var HUD_FONT = '8px "Share Tech Mono",monospace', HUD_PANEL = 'rgba(4,9,18,0.62)', HUD_EDGE = 'rgba(143,166,192,0.35)';
   function hudPanel(x, y, w, h, edge) {
     ctx.fillStyle = HUD_PANEL; ctx.fillRect(x, y, w, h);
     ctx.strokeStyle = edge || HUD_EDGE; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, w - 1, h - 1);
   }
-  // cooldown ring: dim track; a dim-paper arc grows as the timer recharges; full mint ring when ready
+  // cooldown ring: dim track; a dim-paper arc grows as the timer recharges; full steel-blue ring when ready
   function hudRing(x, y, cd, max) {
-    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(119,210,166,0.22)';
+    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(143,166,192,0.22)';
     ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.stroke();
     if (cd > 0) {
       ctx.strokeStyle = C.paperDim;
       ctx.beginPath(); ctx.arc(x, y, 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - cd / max)); ctx.stroke();
     } else {
-      ctx.strokeStyle = C.green;
+      ctx.strokeStyle = C.line;
       ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = C.green; ctx.fillRect(x - 1.5, y - 1.5, 3, 3);
+      ctx.fillStyle = C.line; ctx.fillRect(x - 1.5, y - 1.5, 3, 3);
     }
   }
   function drawHudWindows() {
@@ -1762,25 +1796,25 @@
     hudPanel(118, 7, 212, 18);
     ctx.textAlign = 'left'; ctx.fillStyle = C.dim; ctx.fillText('LIFE', 124, 16.5);
     ctx.fillStyle = 'rgba(0,0,0,0.38)'; ctx.fillRect(150, 11, 176, 10);
-    ctx.strokeStyle = 'rgba(119,210,166,0.55)'; ctx.lineWidth = 1; ctx.strokeRect(150.5, 11.5, 175, 9);
+    ctx.strokeStyle = 'rgba(143,166,192,0.55)'; ctx.lineWidth = 1; ctx.strokeRect(150.5, 11.5, 175, 9);
     var lw = Math.round(174 * Math.max(0, Math.min(1, life)));
     if (lw > 0 && (life >= 0.25 || blinkOn)) {
-      ctx.fillStyle = life > 0.5 ? C.green : life > 0.25 ? C.paperDim : C.paper;
+      ctx.fillStyle = life > 0.5 ? C.line : life > 0.25 ? C.paperDim : C.paper;
       ctx.fillRect(151, 12, lw, 8);
     }
-    ctx.fillStyle = 'rgba(4,14,11,0.75)';
+    ctx.fillStyle = 'rgba(4,9,18,0.75)';
     for (i = 158; i < 325; i += 8) ctx.fillRect(i, 12, 1, 8);   // segment ticks every 8px
     // (d) alert-phase countdown — digits left-aligned at a fixed x so they never jitter
-    if (alertPhase !== 'normal') {
+    if (alertPhase !== 'normal' && state === 'playing') {
       var ph = alertPhase, pc = ph === 'caution' ? C.paperDim : C.paper;
-      var pe = ph === 'caution' ? 'rgba(186,184,179,0.45)' : 'rgba(233,231,226,0.6)';
+      var pe = ph === 'caution' ? 'rgba(195,203,213,0.45)' : 'rgba(233,231,226,0.6)';
       hudPanel(340, 7, 130, 18, pe);
       ctx.textAlign = 'left'; ctx.fillStyle = pc;
       if (ph === 'alert') { ctx.fillText('ALERT', 358, 16.5); if (blinkOn) ctx.fillText('!', 346, 16.5); }   // word stays, the ! blinks
       else {
         ctx.fillText(ph === 'evasion' ? 'EVASION' : 'CAUTION', 346, 16.5);
         ctx.fillStyle = ph === 'caution' ? C.paperDim : C.paper;
-        ctx.fillText(Math.max(0, ph === 'evasion' ? evasionTimer : cautionTimer).toFixed(2), 404, 16.5);
+        ctx.fillText(String(phaseSecs()), 404, 16.5);
       }
     }
     if (coarsePointer) return;   // the touch d-pad / action buttons overlay both bottom corners
@@ -1788,13 +1822,13 @@
     hudPanel(8, 353, 96, 28);
     hudRing(21, 367, cqcCD, CQC_CD); hudRing(63, 367, knockCD, KNOCK_CD);
     ctx.textAlign = 'left'; ctx.font = HUD_FONT;
-    ctx.fillStyle = cqcCD > 0 ? C.dim : C.green; ctx.fillText('CQC', 31, 367.5);
-    ctx.fillStyle = knockCD > 0 ? C.dim : C.green; ctx.fillText('KNOCK', 73, 367.5);
+    ctx.fillStyle = cqcCD > 0 ? C.dim : C.line; ctx.fillText('CQC', 31, 367.5);
+    ctx.fillStyle = knockCD > 0 ? C.dim : C.line; ctx.fillText('KNOCK', 73, 367.5);
     // (b) ITEM window — the box (mini SPR.box) when worn, an empty slot otherwise
     hudPanel(536, 353, 96, 28);
     ctx.fillStyle = C.dim; ctx.fillText('ITEM', 541, 367.5);
     ctx.fillStyle = 'rgba(0,0,0,0.38)'; ctx.fillRect(570, 356, 22, 22);
-    ctx.strokeStyle = boxed ? 'rgba(180,236,208,0.6)' : 'rgba(119,210,166,0.3)'; ctx.lineWidth = 1; ctx.strokeRect(570.5, 356.5, 21, 21);
+    ctx.strokeStyle = boxed ? 'rgba(184,198,214,0.6)' : 'rgba(143,166,192,0.3)'; ctx.lineWidth = 1; ctx.strokeRect(570.5, 356.5, 21, 21);
     if (boxed) {
       ctx.drawImage(SPR.box, 572, 358, 18, 18);   // exact 1:2 of the 2x sprite at an integer origin (no ragged rows)
       ctx.fillStyle = C.bright; ctx.fillText('BOX', 598, 367.5);
@@ -1821,12 +1855,12 @@
     drawExit(); drawIntel();
     for (i = 0; i < noisePings.length; i++) {
       var pg = noisePings[i], t = pg.t / 0.6;
-      ctx.strokeStyle = 'rgba(159,227,196,' + (0.5 * (1 - t)) + ')'; ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(164,182,204,' + (0.5 * (1 - t)) + ')'; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.arc(pg.x, pg.y, pg.r * t, 0, Math.PI * 2); ctx.stroke();
-      ctx.strokeStyle = 'rgba(159,227,196,' + (0.3 * (1 - t)) + ')'; ctx.lineWidth = 1;   // trailing ring
+      ctx.strokeStyle = 'rgba(164,182,204,' + (0.3 * (1 - t)) + ')'; ctx.lineWidth = 1;   // trailing ring
       ctx.beginPath(); ctx.arc(pg.x, pg.y, pg.r * t * 0.65, 0, Math.PI * 2); ctx.stroke();
     }
-    // event pulses: mint ring on a CQC takedown, paper ring on the intel grab
+    // event pulses: steel-blue ring on a CQC takedown, paper ring on the intel grab
     for (i = 0; i < fxPulses.length; i++) {
       var fp = fxPulses[i], ft = fp.t / 0.45, fr = reduceMotion ? 13 : 5 + ft * 15;
       ctx.strokeStyle = 'rgba(' + fp.c + ',' + (0.75 * (1 - ft)).toFixed(3) + ')';
@@ -1859,12 +1893,12 @@
     var vigA = hitFlashT > 0 ? 0.38 * (hitFlashT / 0.18) : 0;
     if (life > 0 && life < 0.3 && state === 'playing') vigA = Math.max(vigA, reduceMotion ? 0.14 : 0.10 + 0.08 * Math.sin(elapsed * 5));
     if (vigA > 0) { ctx.globalAlpha = Math.min(0.6, vigA * 1.5); ctx.fillStyle = vigGrad; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
-    drawRadar();
     // MGS HUD windows on wide canvases only (one clientWidth read per frame);
     // narrow/phone layouts rely on the DOM strip alone
     // gate on the RENDERED width: a height-capped frame letterboxes the canvas (object-fit: contain)
     var wide = Math.min(canvas.clientWidth, canvas.clientHeight * W / H) >= 520;
     if (wide !== lastWide) { lastWide = wide; overlay.classList.toggle('mgsg-wide', wide); }   // hides the DOM badge + gauge
+    drawRadar();
     if (wide) drawHudWindows();
   }
 
@@ -1895,12 +1929,12 @@
   /* ===================== screens / transitions ===================== */
   // gameplay messages go to the aria-live region AND (during play) to a visible
   // codec-subtitle toast — sighted players get the same guidance as SR users
-  function announce(m) {
+  function announce(m, ms) {
     if (srLive) srLive.textContent = m;
     if (!toastEl || state !== 'playing') return;
     toastEl.textContent = m; toastEl.classList.add('show');
     if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toastTimer = null; toastEl.classList.remove('show'); }, 2200);
+    toastTimer = setTimeout(function () { toastTimer = null; toastEl.classList.remove('show'); }, ms || 2200);
   }
   function hideToast() {
     if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
@@ -1923,6 +1957,10 @@
   }
   function showScreen(o) {
     hideToast();  // a live gameplay toast (z above the screen) must not float over a menu
+    // every screen change stands the live-play chrome down: the DOM badge names the screen (never a stale
+    // "! ALERT" or "CAUTION 20" under it) and the alarm wash, hazard tape and paper LCD chip go;
+    // resumeGame() / the next run's updateHud() bring the live state back
+    endChrome(o.cls === 'pause' ? 'PAUSED' : o.cls === 'fail' ? 'NO SIGNAL' : (o.cls === 'title' || o.cls === 'brief') ? 'NORMAL' : 'CLEAR');
     screenEl.className = 'mgsg-screen show' + (o.cls ? ' ' + o.cls : '');
     overlay.classList.add('mgsg-scr');   // phone: the screen also covers the control deck, which hides
     // restart the codec wipe + beam on every screen change (the 'show' class may
@@ -2008,7 +2046,7 @@
   }
 
   // title + briefings: a codec call from the Colonel on 140.85 — Raiden (the site's
-  // own ink, masked mint) on the left, the Colonel's breaking-up signal on the right
+  // own ink, masked steel blue) on the left, the Colonel's breaking-up signal on the right
   function startTitle() { state = 'title'; loadLevel(0); render(); showScreen({ cls: 'title', caller: 'INCOMING CALL', title: 'BIG SHELL', who: 'COLONEL', freq: '140.85', body: 'Raiden, this is the Colonel. The Big Shell is in enemy hands. Three areas: get the intel, reach the exit, stay out of sight.', sub: '', go: 'PRESS ENTER' }); }
   function startBriefing() {
     state = 'briefing'; loadLevel(levelIdx); render();
@@ -2019,18 +2057,19 @@
     hideScreen(); keys = Object.create(null); touchDir = { up: 0, down: 0, left: 0, right: 0 }; running = false;
     // CRT power-on sweep as gameplay starts
     if (!reduceMotion) { canvas.classList.remove('on'); void canvas.offsetWidth; canvas.classList.add('on'); }
-    state = 'playing'; announce('Go.');
+    state = 'playing'; announce('Go.', 900);   // a beat, not a banner
   }
   function pauseGame() {
     if (state !== 'playing') return;
     state = 'paused'; stopAlertMusic();
-    showScreen({ cls: 'pause', title: 'PAUSED', body: 'Codec on hold, Raiden. Your position is held.', sub: coarsePointer ? 'TAP EXIT TO DISCONNECT' : 'ESC AGAIN TO DISCONNECT', go: 'PRESS ENTER TO RESUME', retry: true });
+    render();   // redraw the frame under the screen without the live phase window (drawHudWindows draws it only while playing)
+    showScreen({ cls: 'pause', title: 'PAUSED', body: 'Codec on hold, Raiden. Your position is safe.', sub: coarsePointer ? 'TAP EXIT TO DISCONNECT' : 'ESC AGAIN TO DISCONNECT', go: 'PRESS ENTER TO RESUME', retry: true });
   }
   function resumeGame() {
     hideScreen(); keys = Object.create(null); touchDir = { up: 0, down: 0, left: 0, right: 0 }; running = false;
-    state = 'playing';
+    state = 'playing'; updateHud();   // the badge and the alarm chrome return with the run
     if (alertPhase === 'alert' || alertPhase === 'evasion') startAlertMusic();
-    announce('Resumed.');
+    announce('Resumed.', 900);
   }
   function levelClear() {
     totalTime += elapsed; totalAlerts += alertsThisLevel; stopAlertMusic(); sfxClear();
@@ -2041,7 +2080,7 @@
       var rank = rankFor(alertsThisLevel, elapsed);
       var stats = [['TIME', fmt(elapsed)], ['ALERTS', String(alertsThisLevel)]];
       if (!opRec && opPrev !== null) stats.push(['BEST', fmt(opPrev)]);
-      state = 'clear'; render(); endChrome('CLEAR'); showScreen({ title: 'OP ' + (levelIdx + 1) + ' CLEAR', big: rank, rec: opRec ? 'NEW RECORD' : '', body: alertsThisLevel ? ('Extracted — ' + plural(alertsThisLevel, 'alert') + ' raised.') : 'Clean extraction. No alerts.', stats: stats, go: 'PRESS ENTER TO CONTINUE' });
+      state = 'clear'; render(); showScreen({ title: 'OP ' + (levelIdx + 1) + ' CLEAR', big: rank, rec: opRec ? 'NEW RECORD' : '', body: alertsThisLevel ? ('Extracted — ' + plural(alertsThisLevel, 'alert') + ' raised.') : 'Clean extraction. No alerts.', stats: stats, go: 'PRESS ENTER TO CONTINUE' });
     } else {
       // mission rank counts every op: total alerts + total time
       var mRank = rankFor(totalAlerts, totalTime, 165);
@@ -2049,10 +2088,10 @@
       var totRec = noteBest('total', totalTime);
       var mStats = [['TOTAL TIME', fmt(totalTime)], ['TOTAL ALERTS', String(totalAlerts)]];
       if (!totRec && totPrev !== null) mStats.push(['BEST', fmt(totPrev)]);
-      state = 'complete'; render(); endChrome('CLEAR'); showScreen({ title: 'MISSION COMPLETE', big: mRank, rec: totRec ? 'NEW RECORD' : '', body: (totalAlerts ? 'All three areas clear — ' + plural(totalAlerts, 'alert') + ' across the mission.' : 'All three areas clear, and not one alert.') + ' Good work, Raiden. Colonel out.', stats: mStats, go: 'PRESS ENTER TO REPLAY' });
+      state = 'complete'; render(); showScreen({ title: 'MISSION COMPLETE', big: mRank, rec: totRec ? 'NEW RECORD' : '', body: (totalAlerts ? 'All three areas clear — ' + plural(totalAlerts, 'alert') + ' across the mission.' : 'All three areas clear, and not one alert.') + ' Good work, Raiden. Colonel out.', stats: mStats, go: 'PRESS ENTER TO REPLAY' });
     }
   }
-  // end screens: the DOM state badge stops blinking a stale phase, and the alarm
+  // screens: the DOM state badge stops showing (or blinking) a stale phase, and the alarm
   // chrome (hazard tape, paper LCD chip, the stage wash) stands down under the screen
   function endChrome(label) {
     stateBadge.className = 'mgsg-stbadge'; stateBadge.textContent = label;
@@ -2067,10 +2106,9 @@
     // no gradient, no tint) and show the radar jammed — it stays under GAME OVER
     ctx.save();
     ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = '#808080'; ctx.fillRect(0, 0, W, H);
-    ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = 'rgba(4,7,8,0.55)'; ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = 'rgba(4,6,12,0.55)'; ctx.fillRect(0, 0, W, H);
     ctx.restore();
     drawRadar(true);
-    endChrome('NO SIGNAL');
     showScreen({ cls: 'fail', title: 'GAME OVER', big: 'SIGNAL LOST', bigCls: 'lost', body: 'Raiden? Raiden, respond! ' + level.lost, stats: [['OP', (levelIdx + 1) + '/' + LEVELS.length], ['TIME', fmt(elapsed)]], go: 'PRESS ENTER / R TO RETRY' });
   }
   function advance() {
@@ -2150,6 +2188,8 @@
     overlay.classList.remove('out');
     levelIdx = 0; totalTime = 0; totalAlerts = 0; keys = Object.create(null); touchDir = { up: 0, down: 0, left: 0, right: 0 }; running = false; boxed = false;
     prevFocus = document.activeElement;
+    // the page behind the dialog is inert while it is open: no screen reader browses it, nothing in it takes focus
+    Array.prototype.forEach.call(document.querySelectorAll('body > header, body > main, body > footer, body > .skip'), function (el) { el.inert = true; });
     document.body.style.overflow = 'hidden'; overlay.style.display = 'flex';
     document.addEventListener('keydown', onKey, true);
     document.addEventListener('keyup', onKey, true);
@@ -2179,6 +2219,7 @@
     glitchColonel(false); stopTicks();
     freqEl.textContent = '140.85';
     resetInput(); boxed = false;  // resetInput also clears touchDir — no stuck d-pad on reopen
+    Array.prototype.forEach.call(document.querySelectorAll('body > header, body > main, body > footer, body > .skip'), function (el) { el.inert = false; });
     try { if (prevFocus && prevFocus.focus) prevFocus.focus(); } catch (e) {}
     prevFocus = null;
     setTimeout(function () { if (!open) overlay.style.display = 'none'; }, 260);

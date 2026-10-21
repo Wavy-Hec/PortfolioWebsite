@@ -1,7 +1,7 @@
-/* SUMI v8 — the fold's weather. One wind: gusts that roll across the field from left to right bend the pampas, and the same wind drifts
+/* SUMI v10 — the fold's weather. One wind: gusts that roll across the field from left to right bend the pampas, and the same wind drifts
    the fog, each layer at its own pace (a wisp crosses the fold in 42-90 s). The moon is drawn once. Everything here is procedural: no
-   images, no glyphs, no libraries. Back to front (css places the layers, .scene in index.html): the moon, the far fog, the wisps over the
-   moon's lower limb, Raiden, the far grass, the fog bank, the near grass, the ground fog.
+   images, no glyphs, no libraries. Back to front (css places the layers, .scene in index.html): the moon (a halftone disc, drawn once), the
+   far fog, Raiden, the far grass, the fog bank, the near grass, the ground fog.
    It runs inside the page's one loop (js/sumi.js, ~30 fps): only while the fold is on screen, never while the tab is hidden or the codec
    call / game is open. Under prefers-reduced-motion it draws one still frame, the grass bent mid-gust, and stops. */
 (() => {
@@ -37,59 +37,37 @@
   }
   const octaves = (r, cx, cy, k = 4) => Array.from({ length: k }, (_, o) => lattice(cx << o, cy << o, r));
 
-  /* ---------- the moon: a pale full disc at ~54 % of paper at its brightest (~57 % with the grain over it), a darker limb, faint maria, a soft halo that bleeds into the
-     fog. Drawn once (and on resize) into a canvas twice its diameter; the grain lies over it (css body::after). ---------- */
+  /* ---------- the moon (v10): printed by the same hand as Raiden. His plate (img/raiden-night.png) is a 2-colour plate, paper dots on the
+     night through a Bayer 4x4 screen at one plate pixel; the moon is drawn through the same screen at the same pitch (its canvas has one pixel
+     per plate pixel and css scales both alike), in the same paper: one flat level, 6 of 16 dots (a regular printed screen, about two fifths
+     of paper, so his lit hair outranks it), no seas, no halo. The limb is the disc's own edge, crisp, pressed a little out of true (a seeded
+     wobble of under a dot, as a hand-cut screen would be). It sits behind his head on the lit side, his face and wind-blown hair crossing it,
+     clear of the ink block behind his back (tools/make-night.py keeps his shadow off the disc). Drawn once (and on resize). ---------- */
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
   const moonC = scene.querySelector('canvas.moon');
   function drawMoon() {
     if (!moonC) return;
-    const css = moonC.clientWidth;
-    if (!css) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    const N = Math.max(64, Math.min(1400, Math.round(css * dpr)));
+    const css = moonC.clientWidth, plate = scene.querySelector('.figure img');
+    if (!css || !plate || !plate.clientHeight) return;
+    const k = Math.max(plate.clientHeight / 1016, 1 / Math.min(window.devicePixelRatio || 1, 3));   // css px per dot: his plate's pitch, never under a device pixel
+    const N = Math.max(32, Math.min(1400, Math.round(css / k)));
     moonC.width = moonC.height = N;
-    const g = moonC.getContext('2d');
-    const c = N / 2, R = N / 4;
-    // the halo: wide and faint, eased to nothing at twice the radius, so it reads as lit air, not a glow
-    const h = g.createRadialGradient(c, c, R * .97, c, c, R * 2);
-    [[0, .085], [.08, .06], [.22, .034], [.42, .016], [.68, .005], [1, 0]].forEach(([o, a]) => h.addColorStop(o, `rgba(${PAPER},${a})`));
-    g.fillStyle = h; g.fillRect(0, 0, N, N);
-    // the disc: limb-darkened, its light a little up and to the left
-    const D = Math.ceil(R * 2) + 4, dc = D / 2;
-    const d = document.createElement('canvas'); d.width = d.height = D;
-    const dg = d.getContext('2d');
-    const lg = dg.createRadialGradient(dc - R * .14, dc - R * .12, 0, dc, dc, R);
-    const tone = k => `rgb(${Math.round(233 * k)},${Math.round(231 * k)},${Math.round(226 * k)})`;
-    [[0, .545], [.45, .53], [.75, .48], [.92, .425], [1, .355]].forEach(([o, k]) => lg.addColorStop(o, tone(k)));
-    dg.beginPath(); dg.arc(dc, dc, R, 0, TAU); dg.fillStyle = lg; dg.fill();
-    // the maria: dark seas from a seeded noise field, mostly in the upper half like the real near side, their shores fairly crisp (a narrow
-    // step, so they read as seas, not cloud); a mottle over the highlands, and a fine one at ~2.5 % (the regolith)
-    const M = 256, mc = document.createElement('canvas'); mc.width = mc.height = M;
-    const mg = mc.getContext('2d'), im = mg.createImageData(M, M), px = im.data;
-    const r = rng(1969), seas = octaves(r, 3, 3, 4), mottle = octaves(r, 9, 9, 3), fine = octaves(r, 40, 40, 2);
-    for (let y = 0; y < M; y++) for (let x = 0; x < M; x++) {
-      const u = x / M, v = y / M;
-      const bias = .1 * (1 - v) - .06 * Math.abs(u - .45);
-      const sea = smooth(.56, .62, fbm(seas, u, v) + bias);
-      const mot = fbm(mottle, u, v), fn = fbm(fine, u, v);
-      const a = Math.min(1, Math.max(0, sea * .62 + Math.max(0, mot - .5) * .5 + (fn - .5) * .12));
-      const i = (y * M + x) * 4; px[i] = 18; px[i + 1] = 18; px[i + 2] = 20; px[i + 3] = Math.round(a * 255);
+    const g = moonC.getContext('2d'), im = g.createImageData(N, N), px = im.data;
+    const c = N / 2, R = N / 2 - 1;
+    const r0 = rng(1985), ph = [r0() * TAU, r0() * TAU, r0() * TAU];
+    const wob = a => .7 * (.55 * Math.sin(3 * a + ph[0]) + .3 * Math.sin(5 * a + ph[1]) + .15 * Math.sin(8 * a + ph[2]));   // the limb, +-.7 dot
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      const dx = x + .5 - c, dy = y + .5 - c, d = Math.hypot(dx, dy);
+      if (d > R + 1 || (d > R - 1 && d > R + wob(Math.atan2(dy, dx)))) continue;   // the wobble (+-.7) is looked up only in the limb's 2 px ring
+      if (BAYER[(y & 3) * 4 + (x & 3)] < 6) { const i = (y * N + x) * 4; px[i] = 233; px[i + 1] = 231; px[i + 2] = 226; px[i + 3] = 255; }
     }
-    mg.putImageData(im, 0, 0);
-    dg.globalCompositeOperation = 'source-atop'; dg.globalAlpha = .42; dg.imageSmoothingQuality = 'high';
-    dg.drawImage(mc, dc - R, dc - R, R * 2, R * 2);
-    // the limb itself: a hairline of shade so the disc has an edge in the fog
-    dg.globalAlpha = 1; dg.globalCompositeOperation = 'source-over';
-    const lr = dg.createRadialGradient(dc, dc, R * .9, dc, dc, R);
-    lr.addColorStop(0, 'rgba(18,18,20,0)'); lr.addColorStop(1, 'rgba(18,18,20,.16)');
-    dg.beginPath(); dg.arc(dc, dc, R, 0, TAU); dg.fillStyle = lr; dg.fill();
-    g.drawImage(d, c - dc, c - dc);
+    g.putImageData(im, 0, 0);
   }
 
-  /* ---------- the fog: four soft layers, each a seeded noise tile (wrapping in x) with its own height profile, drawn once at low
+  /* ---------- the fog: three soft layers, each a seeded noise tile (wrapping in x) with its own height profile, drawn once at low
      resolution; css stretches it (the fog is all soft edge) and the wind slides it right. ---------- */
   const FOG = {
     'f-back': { cells: [5, 3], cut: [.36, .8], str: .11, prof: v => smooth(0, .75, v) * (.7 + .3 * v) },
-    'f-wisp': { cells: [7, 2], cut: [.5, .86], str: .16, prof: v => Math.pow(Math.sin(Math.PI * v), 2) },
     'f-mid': { cells: [6, 3], cut: [.34, .78], str: .2, prof: v => smooth(0, .62, v) * (1 - .3 * smooth(.8, 1, v)) },
     'f-low': { cells: [8, 2], cut: [.3, .74], str: .22, prof: v => smooth(0, .55, v) },
   };
@@ -115,7 +93,7 @@
     g.putImageData(im, 0, 0); g.putImageData(im, TW, 0);
   }
   // seeded starting offsets, so the still frame is composed the same way every time
-  fogs.forEach((f, i) => { f.off = [.31, .62, .18, .77][i % 4]; });
+  fogs.forEach((f, i) => { f.off = [.31, .18, .77][i % 3]; });   // (v9: the wisp layer over the old moon's limb is gone: digital fog over a printed moon)
   function placeFog(dtWind) {
     for (const f of fogs) {
       f.off = (f.off + dtWind / f.period) % 1;
@@ -124,16 +102,17 @@
   }
 
   /* ---------- the grass: pampas, six rows deep. Far rows: short, dim, dense, an even stand on the far canvas (behind the fog bank). Near
-     rows: tall clumps of 3-7 with open ground between, on the near canvas, a few silhouetted dark against the lit fog, and a few taller
-     stems (before his thigh, at the left edge). The field's top swells and dips. Each stem is a tapered quadratic curve with arching
-     leaves; most carry a feathery plume (thin curved filaments) of its own size and droop; the plumes catch the moon, a third dimmer far
-     from it. ---------- */
+     rows: tall clumps of 3-7 with open ground between, on the near canvas, half of them silhouetted dark against the lit fog (v9: a dark
+     foreground and few, small plumes, so the bright hooks never outshine his face), and a few taller stems (before his thigh, at the left
+     edge). The field's top swells and dips. Each stem is a tapered quadratic curve with arching
+     leaves; some carry a feathery plume (thin curved filaments), each of its own length, lean and curl (v10: no two alike, so no row of
+     hooks). Only the plumes round his legs, under the moon, catch the light; the rest sit at the fog's value, the far rows dimmest. ---------- */
   const cvs = [scene.querySelector('canvas.g-far'), scene.querySelector('canvas.g-near')];
   const ROWS = [
     { d: 0, cv: 0, sp: 10 }, { d: .2, cv: 0, sp: 15 }, { d: .4, cv: 0, sp: 22 },
     { d: .64, cv: 1, sp: 30 }, { d: .83, cv: 1, sp: 40 }, { d: 1, cv: 1, sp: 54 },
   ];
-  const LIGHT = [.55, .72, .9, 1.08];                         // the plumes' four light levels: far from the moon ~ a third dimmer than under it
+  const LIGHT = [.42, .62, .85, 1.08];                        // the plumes' four light levels: the fog's value away from him, lit only round his legs
   let W = 0, H = 0, scale = 1, field = [], moonX = 0;
   const GRID = 64; const windGrid = new Float32Array(GRID + 2);
   function build() {
@@ -148,11 +127,13 @@
     const plate = scene.querySelector('.figure img:last-of-type'), pb = plate && plate.getBoundingClientRect();
     const thighX = pb && pb.width ? pb.left - sb.left + pb.width * .4 : W * .78;   // a few tall stems stand in front of his thigh
     const narrow = W < 720;
+    const figL = pb && pb.width ? pb.left - sb.left + pb.width * .08 : W, figR = pb && pb.width ? pb.left - sb.left + pb.width * .95 : W;   // on a phone his coat fills the grass's height: no pale plume tips on it
     const r = rng(8085);
     const swell = octaves(rng(77), 5, 1, 3);                   // the stand's density and height along x
     const sky = octaves(rng(31), 3, 1, 2);                     // the field's top edge: slow swells and dips, +-12 % of the grass's height
     const skyAt = x => Math.max(-1, Math.min(1, (fbm(sky, ((x / W) * .9 + 1) % 1, .5) - .5) / .16));
-    const lightAt = x => { const L = Math.max(0, 1 - Math.abs(x - moonX) / (W * .75)); const m = .7 + .38 * Math.pow(L, 1.3); return m < .8 ? 0 : m < .9 ? 1 : m < 1 ? 2 : 3; };
+    const litX = (moonX + thighX) / 2;                         // under the moon, round his legs
+    const lightAt = x => { const L = Math.max(0, 1 - Math.abs(x - litX) / Math.max(160, W * .2)); return L > .7 ? 3 : L > .45 ? 2 : L > .15 ? 1 : 0; };
     field = ROWS.map(row => {
       const d = row.d, sp = row.sp * (narrow ? .78 : 1), near = d >= .6;
       const baseY = H * (.62 + .4 * d);
@@ -163,18 +144,19 @@
         const k0 = skyAt(x), bucket = lightAt(x);
         for (let c = 0; c < n; c++) {
           const xc = x + (c - (n - 1) / 2) * cw + (r() - .5) * cw * .7;
-          const dark = d >= .8 && !tall && r() < .17;
+          const dark = near && r() < (tall ? .6 : d >= .8 ? .5 : .22);   // v9: the near stand is mostly silhouette, so the eye goes to his face
           const y0 = baseY + (r() - .5) * H * .05;
           let sh = H * lerp(.24, .82, Math.pow(d, 1.05)) * (.55 + .7 * smooth(.25, .75, sw)) * (.75 + .4 * r()) + H * .12 * k0 * (.4 + .6 * d);
           if (tall) sh = H * (.74 + .12 * r());
           sh = Math.max(H * .08, Math.min(y0 * .8, sh));         // the plume stays on the canvas
           const nStems = near ? 1 + (r() < .25 ? 1 : 0) : 1;
           for (let k = 0; k < nStems; k++) {
-            const plume = !dark && (tall || r() < lerp(.55, .92, d) * (near ? .6 : 1));
+            let plume = !dark && r() < (tall ? .5 : lerp(.55, .92, d) * (near ? .3 : .33));   // few plumes: a third of the far stems, fewer up close
+            if (narrow && xc > figL && xc < figR) plume = false;
             items.push({
               stem: true, x: xc + (r() - .5) * sp * .2, y: y0, h: sh * (k ? .82 + .1 * r() : 1), w: lerp(.7, 2.1, d), lean: -.04 + .2 * r(),
-              flex: .5 + .35 * r(), ph: r() * TAU, fr: 1.1 + 1.1 * r(), plume, pl: sh * (.15 + .09 * r()) * (near ? .6 + r() : 1),
-              dr: near ? .6 + .9 * r() : 1, nf: d < .4 ? 2 : 3, bucket, dark,
+              flex: .5 + .35 * r(), ph: r() * TAU, fr: 1.1 + 1.1 * r(), plume, pl: sh * (.06 + .2 * r()) * (near ? .5 + .4 * r() : 1),
+              dr: .15 + 1.5 * r(), pa: (r() - .4) * 1.1, nf: 1 + Math.floor(r() * 3), bucket, dark,
             });
           }
           const nLeaves = near ? 1 + (r() < .55 ? 1 : 0) : 1 + (r() < .5 ? 1 : 0);
@@ -202,8 +184,8 @@
         }
         if (d === 1) { clump(thighX, 3, true); clump(W * .035 + 6, 2, true); }   // the tall ones: before his thigh, and at the left edge
       }
-      const a = lerp(.1, .34, d);
-      return { ...row, items, leafA: a, plumeA: LIGHT.map(m => Math.min(.86, lerp(.24, .74, d) * m)) };
+      const a = lerp(.1, .28, d);
+      return { ...row, items, leafA: a, plumeA: LIGHT.map(m => Math.min(.62, lerp(.24, .58, d) * m * (near ? 1 : .5))) };   // the far plumes at half: grass and fog
     });
     return true;
   }
@@ -251,7 +233,7 @@
           const nx = Math.cos(a1) * it.w * .5, ny = Math.sin(a1) * it.w * .5;
           P.moveTo(it.x - nx, it.y - ny); P.quadraticCurveTo(cx - nx * .5, cy - ny * .5, tx, ty); P.quadraticCurveTo(cx + nx * .5, cy + ny * .5, it.x + nx, it.y + ny); P.closePath();
           if (it.plume) {                                      // the plume: a soft feather along a drooping axis (a tapered fill), combed by a few fine filaments
-            const pl = it.pl, ax = th * 1.2 + .1, droop = (.32 + .25 * reach) * it.dr;
+            const pl = it.pl, ax = th * 1.2 + .1 + it.pa, droop = (.32 + .25 * reach) * it.dr;
             const bx = tx - Math.sin(a2) * pl * .45, by = ty + Math.cos(a2) * pl * .45;
             const cx2 = bx + pl * .55 * Math.sin(ax), cy2 = by - pl * .55 * Math.cos(ax);
             const ex = bx + pl * Math.sin(ax + droop), ey = by - pl * Math.cos(ax + droop);
@@ -279,7 +261,7 @@
         g.fillStyle = `rgba(${PAPER},${(row.plumeA[b] * .55).toFixed(3)})`; g.fill(tufts[b]);
         g.strokeStyle = `rgba(${PAPER},${row.plumeA[b]})`; g.stroke(plumes[b]);
       }
-      if (row.d >= .8) { g.fillStyle = 'rgba(12,12,14,.92)'; g.fill(dark); }   // the silhouetted clumps: blades only (a dark plume reads as a bird)
+      if (row.d >= .6) { g.fillStyle = 'rgba(12,12,14,.94)'; g.fill(dark); }   // the silhouetted clumps: blades only (a dark plume reads as a bird)
     }
   }
 
@@ -315,8 +297,13 @@
   fogs.forEach(drawFog);
   setup();
   if (DEV && q.has('wind')) { windT = +q.get('wind'); sampleWind(windT); placeFog(0); drawGrass(windT); }   // dev: a composed instant (?wind=<seconds>)
-  let rt = 0;
-  new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(setup, 120); }).observe(scene);
+  // a resize re-lays the scene; the observer's first call (on observe) and any call at an unchanged size do nothing, so setup runs once on load
+  let rt = 0, lastW = scene.clientWidth, lastH = scene.clientHeight;
+  new ResizeObserver(() => {
+    const w = scene.clientWidth, h = scene.clientHeight;
+    if (w === lastW && h === lastH) return;
+    lastW = w; lastH = h; clearTimeout(rt); rt = setTimeout(setup, 120);
+  }).observe(scene);
   if (REDUCED || !S) return;                                   // one still frame
 
   let onScreen = false, running = false;
