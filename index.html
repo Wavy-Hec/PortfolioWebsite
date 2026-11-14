@@ -23,28 +23,26 @@
   <meta name="twitter:description" content="Reinforcement-learning and vision systems: legged robots, multi-camera video, smart-grid signals.">
   <meta name="twitter:image" content="https://wavy-hec.github.io/PortfolioWebsite/img/og-card.png?v=6">
   <meta name="twitter:image:alt" content="Hector Lugo — Teaching machines to see, and to decide. Raiden, illustrated by Yoji Shinkawa, before a halftone moon in tall grass and fog.">
-  <!-- favicon = the seal (favicon.svg: the same paths as #seal below, paper and sumi) -->
   <link rel="icon" href="favicon.svg?v=8" type="image/svg+xml">
   <link rel="icon" href="favicon-32.png?v=7" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="apple-touch-icon.png?v=7">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Latin faces load async (display=swap accepts FOUT); Shippori at 400 only. The numerals request subsets Shippori Mincho to 一二三四 and 第章 (~2 KB) and is not deferred: the marks must not flash. -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&family=Share+Tech+Mono&display=swap"></noscript>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&text=%E4%B8%80%E4%BA%8C%E4%B8%89%E5%9B%9B%E7%AC%AC%E7%AB%A0&display=swap">
   <link rel="stylesheet" href="css/sumi.css?v=23">
-  <!-- js/sumi.js loads the two chapter drawings (js/sumi-stack.js, js/sumi-xray.js) when their chapter comes within 600 px of the screen, or 4 s after load at the latest -->
   <script src="js/sumi.js?v=21" defer></script>
   <script src="js/sumi-fold.js?v=17" defer></script>
-  <!-- the halftone engine (a self-hosted copy of ascii-magic, js/ascii/README.md) draws the page's one <ascii-art> piece, the autumn pagoda after About: js/sumi.js imports the engine and names the piece 2.5 s after load (sooner if the band nears the screen), so none of it is part of the first view. Nothing loads from ascii-magic.com. -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Person",
     "name": "Hector Lugo",
     "url": "https://wavy-hec.github.io/PortfolioWebsite/",
-    "jobTitle": "Teaching Assistant",
+    "image": "https://wavy-hec.github.io/PortfolioWebsite/img/og-card.png",
+    "description": "M.S. Computer Science student at UTRGV working on reinforcement learning and vision systems for robots.",
+    "jobTitle": "Machine Learning Researcher",
     "worksFor": { "@type": "Organization", "name": "The University of Texas Rio Grande Valley" },
     "alumniOf": { "@type": "CollegeOrUniversity", "name": "The University of Texas Rio Grande Valley" },
     "email": "mailto:hlugo576@gmail.com",
@@ -58,11 +56,9 @@
   </script>
 </head>
 <body id="top">
-  <!-- the seal: a paper disc with an H whose right stem drops into an L's foot, cut as three sumi strokes. Referenced by every .seal on the page; favicon.svg, favicon-32.png and the touch icon are the same drawing. -->
   <svg class="defs" aria-hidden="true" focusable="false"><symbol id="seal" viewBox="0 0 64 64"><path fill="#e9e7e2" d="M32.4 2.2C48.6 1.3 62.6 14.6 62 31.4 61.5 47.9 49.2 61.4 32.6 62 16 62.6 2.2 49.4 2 32.8 1.8 16.6 16 3 32.4 2.2Z"/><path fill="#141416" d="M14.2 14.4 23 14 23.6 50.2 14.6 50.6ZM22 29.2 32.6 28.8 32.8 36 22.2 36.4ZM31.4 14.2 40.4 13.8 40.8 42.6 51.6 42.2 52 49.6 31.8 50.6Z"/></symbol></svg>
 
   <a class="skip" href="#main">Skip to content</a>
-  <!-- the silver grain lies over everything (css body::after); the fog belongs to the fold only (.scene .fog) -->
 
   <header class="nav">
     <a class="wordmark" href="#top"><svg class="seal" aria-hidden="true" focusable="false"><use href="#seal"/></svg><span class="wm">Hector Lugo</span></a>
@@ -509,7 +505,7 @@
     <div class="breath" aria-hidden="true"><div class="frame"><ascii-art class="pagoda" data-piece="autumn-pagoda-maples" data-fps="8" look="dots" mono contrast="20" density="200" dot-size="22" data-cols="192" aria-hidden="true"></ascii-art></div></div>
   </main>
 
-  <!-- contact = the footer: the name band, two link columns, the legal row -->
+  <!-- contact -->
   <footer class="foot" id="contact">
     <div class="harakiri">
       <h2>Hector Lugo</h2>
@@ -523,7 +519,6 @@
     <div class="legal">
       <svg class="seal" aria-hidden="true" focusable="false"><use href="#seal"/></svg>
       <span>© 2026 Hector Lugo</span>
-      <!-- the last line: a frequency. Plain mono text that is also the trigger: it opens the codec call and the game (js/sumi.js) -->
       <button type="button" id="codec-launch" class="freq" aria-label="140.85: a secret for fans, opens a hidden mini-game">140.85</button>
     </div>
   </footer>
