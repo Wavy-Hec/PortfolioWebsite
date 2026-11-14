@@ -1,16 +1,10 @@
 #!/usr/bin/env python3
-"""Regenerate the résumé viewer (img/resume-page1.png + the link overlay in resume.html).
+"""Rebuild the résumé page from the PDF: img/resume-page1.png and the link hotspots in resume.html.
 
-Run this whenever the résumé PDF (see PDF below) changes, or the on-screen
-résumé and its clickable links will drift out of sync with the PDF.
+Run it whenever the PDF changes:
 
     pip install pymupdf pillow
     python tools/build-resume-view.py
-
-Why an image instead of an embedded PDF: a browser configured to download PDFs
-(common on macOS) cannot be forced to render one inline via <object>/<iframe>.
-An <img> always displays. The PDF's own link annotations are re-created as
-percentage-positioned <a> hotspots so hover and clicking still work.
 """
 import html
 import pathlib
@@ -19,106 +13,112 @@ import shutil
 import subprocess
 import sys
 
-import fitz  # pymupdf
+import pymupdf
 from PIL import Image
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 PDF = ROOT / "Hector_Lugo_Fall_Resume.pdf"
 IMG = ROOT / "img/resume-page1.png"
 VIEW = ROOT / "resume.html"
-ZOOM = 2.0        # 2x = 144dpi, crisp on hidpi screens
-PALETTE = 128     # quantize: text stays sharp, file size roughly halves
+ZOOM = 2.0
+PALETTE = 128
+NEAR_PT = 10
+
+LABELS = [
+    ("linkedin", "LinkedIn profile"),
+    ("github.com/Wavy-Hec/MultiCam", "AFRL multi-camera harness on GitHub"),
+    ("github.com/Wavy-Hec/VLM", "VLM navigation repo on GitHub"),
+    ("github.com/Wavy-Hec/poker-rl", "Poker RL repo on GitHub"),
+    ("github.com/Wavy-Hec/ObjectDetection", "FlowCount repo on GitHub"),
+    ("github.com/Wavy-Hec/railway-accident-clustering", "Railway Crossing Accidents code on GitHub"),
+    ("github.com/Wavy-Hec", "GitHub profile"),
+    ("springer", "Personalized Chemotherapy Dosing paper (Springer)"),
+    ("nsf.gov", "Smart Grid Control paper (NSF PAR)"),
+    ("scholarworks", "Railway Crossing Accidents paper (UTRGV ScholarWorks)"),
+]
 
 
-def friendly(uri: str) -> str:
-    """Human label for the hotspot's tooltip / screen-reader name."""
+def label_for(uri):
     if uri.startswith("mailto:"):
         return "Email " + uri[7:]
     if uri.startswith("tel:"):
-        return "Call " + uri[4:]
-    for needle, name in [
-        ("linkedin", "LinkedIn profile"),
-        ("github.com/Wavy-Hec/MultiCam", "AFRL multi-camera harness on GitHub"),
-        ("github.com/Wavy-Hec/VLM", "VLM navigation repo on GitHub"),
-        ("github.com/Wavy-Hec/poker-rl", "Poker RL repo on GitHub"),
-        ("github.com/Wavy-Hec/ObjectDetection", "FlowCount repo on GitHub"),
-        ("github.com/Wavy-Hec/railway-accident-clustering", "Railway Crossing Accidents code on GitHub"),
-        ("github.com/Wavy-Hec", "GitHub profile"),
-        ("springer", "Personalized Chemotherapy Dosing paper (Springer)"),
-        ("nsf.gov", "Smart Grid Control paper (NSF PAR)"),
-        ("scholarworks", "Railway Crossing Accidents paper (UTRGV ScholarWorks)"),
-        ("asme", "Read the paper (ASME)"),
-    ]:
+        number = uri[4:]
+        us = re.fullmatch(r"\+1(\d{3})(\d{3})(\d{4})", number)
+        return "Call " + (f"+1 ({us[1]}) {us[2]}-{us[3]}" if us else number)
+    for needle, label in LABELS:
         if needle in uri:
-            return name
+            return label
     return uri
 
 
-def main() -> int:
+def neighbours(rects):
+    """Mark links that sit right above, below or beside another, so their touch areas do not overlap."""
+    marks = [set() for _ in rects]
+    for i, a in enumerate(rects):
+        for j, b in enumerate(rects):
+            if i == j:
+                continue
+            if a.x0 < b.x1 and b.x0 < a.x1 and 0 <= b.y0 - a.y1 < NEAR_PT:
+                marks[i].add("up")
+                marks[j].add("down")
+            if a.y0 < b.y1 and b.y0 < a.y1 and 0 <= b.x0 - a.x1 < NEAR_PT:
+                marks[i].add("lft")
+                marks[j].add("rgt")
+    return marks
+
+
+def hotspot(uri, rect, marks, page):
+    width, height = page.rect.width, page.rect.height
+    left = rect.x0 / width * 100
+    top = rect.y0 / height * 100
+    w = (rect.x1 - rect.x0) / width * 100
+    h = (rect.y1 - rect.y0) / height * 100
+    # the upper link of a stacked pair hangs from its bottom edge, so its taller target grows upward
+    vertical = f"bottom:{100 - top - h:.3f}%" if "up" in marks else f"top:{top:.3f}%"
+    label = html.escape(label_for(uri), quote=True)
+    target = ' target="_blank" rel="noopener"' if uri.startswith("http") else ""
+    classes = " ".join(["lk", *sorted(marks)])
+    return (
+        f'        <a class="{classes}" href="{html.escape(uri, quote=True)}"{target} '
+        f'title="{label}" aria-label="{label}" '
+        f'style="left:{left:.3f}%;{vertical};width:{w:.3f}%;height:{h:.3f}%"></a>'
+    )
+
+
+def main():
     if not PDF.exists():
         print(f"missing {PDF.name}", file=sys.stderr)
         return 1
 
-    doc = fitz.open(PDF)
-    if doc.page_count != 1:
-        print(f"note: {doc.page_count} pages — this builder handles page 1 only", file=sys.stderr)
-    page = doc[0]
-
-    # 1. render the page to a PNG, then quantize to keep it small
-    page.get_pixmap(matrix=fitz.Matrix(ZOOM, ZOOM)).save(IMG)
-    im = Image.open(IMG).convert("RGB")
-    im.quantize(colors=PALETTE, method=Image.MEDIANCUT, dither=Image.NONE).save(IMG, optimize=True)
-    # lossless squeeze (~7% on top of Pillow's optimize) — skipped if oxipng
-    # isn't installed (winget install Shssoichiro.Oxipng)
+    page = pymupdf.open(PDF)[0]
+    page.get_pixmap(matrix=pymupdf.Matrix(ZOOM, ZOOM)).save(IMG)
+    image = Image.open(IMG).convert("RGB")
+    image.quantize(colors=PALETTE, method=Image.MEDIANCUT, dither=Image.NONE).save(IMG, optimize=True)
     if oxipng := shutil.which("oxipng"):
         subprocess.run([oxipng, "-o", "4", "--strip", "safe", str(IMG)], check=False)
-    print(f"{IMG.name}: {im.width}x{im.height}, {IMG.stat().st_size:,} bytes")
+    print(f"{IMG.name}: {image.width}x{image.height}, {IMG.stat().st_size:,} bytes")
 
-    # 2. rebuild the hotspots from the PDF's link annotations, in % of the page
-    pw, ph = page.rect.width, page.rect.height
-    links = [(l["uri"], l["from"]) for l in page.get_links() if l.get("uri")]
-    # neighbours: on a touch screen each hotspot's hit area grows ~13 px each way (resume.html .lk::after). Two links stacked within
-    # 10 pt of each other (overlapping in x) take the classes up / down, two side by side within 10 pt (overlapping in y) lft / rgt, so
-    # each keeps its own half of the gap and reaches further the other way: no two hit areas overlap.
-    near = {i: set() for i in range(len(links))}
-    for i, (_, a) in enumerate(links):
-        for j, (_, b) in enumerate(links):
-            if i == j:
-                continue
-            if a.x0 < b.x1 and b.x0 < a.x1 and 0 <= b.y0 - a.y1 < 10:
-                near[i].add("up"); near[j].add("down")
-            if a.y0 < b.y1 and b.y0 < a.y1 and 0 <= b.x0 - a.x1 < 10:
-                near[i].add("lft"); near[j].add("rgt")
-    rows = []
-    for i, (uri, r) in enumerate(links):
-        label = friendly(uri)
-        target = ' target="_blank" rel="noopener"' if uri.startswith("http") else ""
-        cls = " ".join(["lk", *sorted(near[i])])
-        rows.append(
-            f'      <a class="{cls}" href="{html.escape(uri, quote=True)}"{target} '
-            f'title="{html.escape(label, quote=True)}" aria-label="{html.escape(label, quote=True)}" '
-            f'style="left:{r.x0 / pw * 100:.3f}%;top:{r.y0 / ph * 100:.3f}%;'
-            f'width:{(r.x1 - r.x0) / pw * 100:.3f}%;height:{(r.y1 - r.y0) / ph * 100:.3f}%"></a>'
-        )
+    links = [(link["uri"], link["from"]) for link in page.get_links() if link.get("uri")]
+    marks = neighbours([rect for _, rect in links])
+    rows = [hotspot(uri, rect, marks[i], page) for i, (uri, rect) in enumerate(links)]
 
-    # 3. swap the overlay inside resume.html, leaving the rest of the page alone
     markup = VIEW.read_text(encoding="utf-8")
-    new_markup, count = re.subn(
-        r'(width="\d+" height="\d+" decoding="async"[^>]*>\n).*?(\n    </div>)',
+    markup, count = re.subn(
+        r'(<img src="img/resume-page1\.png[^>]*>\n).*?(\n      </div>)',
         lambda m: m.group(1) + "\n".join(rows) + m.group(2),
         markup,
         flags=re.S,
     )
     if count != 1:
-        print("could not locate the overlay block in resume.html", file=sys.stderr)
+        print("could not find the hotspots in resume.html", file=sys.stderr)
         return 1
-
-    # keep the <img> dimensions honest so the browser reserves the right box
-    # ([^>]* preserves attributes after decoding, e.g. fetchpriority="high")
-    new_markup = re.sub(r'width="\d+" height="\d+" (decoding="async"[^>]*)',
-                        lambda m: f'width="{im.width}" height="{im.height}" {m.group(1)}', new_markup)
-    VIEW.write_text(new_markup, encoding="utf-8")
-    print(f"{VIEW.name}: {len(rows)} link hotspots (bump the image's ?v= in resume.html if the PNG changed)")
+    markup = re.sub(
+        r'(<img src="img/resume-page1\.png[^>]*?) width="\d+" height="\d+"',
+        rf'\1 width="{image.width}" height="{image.height}"',
+        markup,
+    )
+    VIEW.write_text(markup, encoding="utf-8")
+    print(f"{VIEW.name}: {len(rows)} hotspots (bump the image's ?v= if the PNG changed)")
     return 0
 
 
