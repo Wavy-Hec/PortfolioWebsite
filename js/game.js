@@ -59,7 +59,6 @@
     dim: '#7d93ae',
     paper: '#e9e7e2',
     paperDim: '#c3cbd5',
-    steel: '#7c8a9c',
     ink: '#141416',
   };
   var FLOORS = {
@@ -200,13 +199,15 @@
     return cv;
   }
   function buildSprites() {
-    var pOut = 'rgba(3,6,12,0.9)',
-      gOut = 'rgba(3,6,12,0.9)';
+    var outline = 'rgba(3,6,12,0.9)';
     SPR = {
-      player: [makeSprite(PLAYER, PAL_PLAYER, pOut), makeSprite(PLAYER_B, PAL_PLAYER, pOut)],
-      guard: [makeSprite(GUARD, PAL_GUARD, gOut), makeSprite(GUARD_B, PAL_GUARD, gOut)],
-      guardHot: [makeSprite(GUARD, PAL_GUARD_HOT, gOut), makeSprite(GUARD_B, PAL_GUARD_HOT, gOut)],
-      guardDown: makeSprite(GUARD, PAL_GUARD_DOWN, gOut),
+      player: [makeSprite(PLAYER, PAL_PLAYER, outline), makeSprite(PLAYER_B, PAL_PLAYER, outline)],
+      guard: [makeSprite(GUARD, PAL_GUARD, outline), makeSprite(GUARD_B, PAL_GUARD, outline)],
+      guardHot: [
+        makeSprite(GUARD, PAL_GUARD_HOT, outline),
+        makeSprite(GUARD_B, PAL_GUARD_HOT, outline),
+      ],
+      guardDown: makeSprite(GUARD, PAL_GUARD_DOWN, outline),
       box: makeSprite(BOX, PAL_BOX, 'rgba(0,0,0,0.5)'),
       key: makeSprite(KEYCARD, PAL_KEY, 'rgba(5,10,20,0.8)'),
     };
@@ -1309,9 +1310,7 @@
     var kind = level.floor,
       i,
       x,
-      y,
-      cx = W / 2,
-      cy = H / 2;
+      y;
     if (kind === 'dock') {
       b.lineWidth = 1;
       b.beginPath();
@@ -1948,7 +1947,7 @@
 
     var roomAlert = alertPhase === 'alert' || alertPhase === 'evasion';
     for (var gi = 0; gi < guards.length; gi++) updateGuard(guards[gi], dt, roomAlert);
-    for (var ci = 0; ci < cameras.length; ci++) updateCamera(cameras[ci], dt);
+    for (var ci = 0; ci < cameras.length; ci++) updateCamera(cameras[ci]);
 
     var losNow = false,
       fullSpot = false,
@@ -2286,7 +2285,7 @@
       g.pscanBase = g.facing;
     }
   }
-  function updateCamera(c, dt) {
+  function updateCamera(c) {
     c.facing = c.base + Math.sin(elapsed * c.speed) * c.arc;
   }
 
@@ -2377,7 +2376,7 @@
       STEPS = 20;
     var hot = roomAlert || d.seeing;
     var grad = ctx.createRadialGradient(d.x, d.y, 4, d.x, d.y, range);
-    grad.addColorStop(0, 'rgba(' + rgb + (hot ? ',0.30)' : ',0.30)'));
+    grad.addColorStop(0, 'rgba(' + rgb + ',0.30)');
     grad.addColorStop(0.5, 'rgba(' + rgb + (hot ? ',0.11)' : ',0.09)'));
     grad.addColorStop(1, 'rgba(' + rgb + ',0)');
     ctx.beginPath();
@@ -3539,75 +3538,5 @@
     }, 260);
   }
 
-  // level data check, run on localhost only
-  function validate() {
-    try {
-      LEVELS.forEach(function (lv, n) {
-        var w = lv.map.map(function (row) {
-          return row.split('').map(function (ch) {
-            return ch === '#';
-          });
-        });
-        var wall = function (p) {
-          return !p || p[1] < 0 || p[0] < 0 || p[1] >= ROWS || p[0] >= COLS || w[p[1]][p[0]];
-        };
-        if (lv.map.length !== ROWS)
-          console.warn('[MGSGame] L' + (n + 1) + ' rows=' + lv.map.length);
-        ['start', 'exit', 'intel'].forEach(function (key) {
-          if (lv[key] && wall(lv[key]))
-            console.warn('[MGSGame] L' + (n + 1) + ' ' + key + ' on wall', lv[key]);
-        });
-        lv.guards.forEach(function (g, gi) {
-          g.path.forEach(function (p) {
-            if (wall(p)) console.warn('[MGSGame] L' + (n + 1) + ' guard ' + gi + ' wp on wall', p);
-          });
-        });
-        (lv.cameras || []).forEach(function (cm, ci) {
-          if (wall(cm.t))
-            console.warn('[MGSGame] L' + (n + 1) + ' camera ' + ci + ' on wall', cm.t);
-        });
-        var seen = Array.from({ length: ROWS }, function () {
-          return Array(COLS).fill(false);
-        });
-        var q = [[lv.start[0], lv.start[1]]];
-        seen[lv.start[1]][lv.start[0]] = true;
-        while (q.length) {
-          var cur = q.shift();
-          [
-            [1, 0],
-            [-1, 0],
-            [0, 1],
-            [0, -1],
-          ].forEach(function (d) {
-            var nc = cur[0] + d[0],
-              nr = cur[1] + d[1];
-            if (nc >= 0 && nr >= 0 && nc < COLS && nr < ROWS && !w[nr][nc] && !seen[nr][nc]) {
-              seen[nr][nc] = true;
-              q.push([nc, nr]);
-            }
-          });
-        }
-        var reach = function (p, what) {
-          if (p && !seen[p[1]][p[0]])
-            console.warn('[MGSGame] L' + (n + 1) + ' ' + what + ' unreachable', p);
-        };
-        reach(lv.exit, 'exit');
-        reach(lv.intel, 'intel');
-        lv.guards.forEach(function (g, gi) {
-          g.path.forEach(function (p) {
-            reach(p, 'guard ' + gi + ' wp');
-          });
-        });
-      });
-    } catch (e) {}
-  }
-
-  if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) validate();
-  window.MGSGame = {
-    open: openGame,
-    close: closeGame,
-    get isOpen() {
-      return open;
-    },
-  };
+  window.MGSGame = { open: openGame, close: closeGame };
 })();
