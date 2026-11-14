@@ -1,59 +1,12 @@
-/* ===========================================================================
-   BIG SHELL — a hidden top-down stealth mini-game: Raiden's three operations on
-   the Big Shell (Metal Gear Solid 2), behind the footer's 140.85 / the Konami
-   code / 140.85 typed (wired in js/sumi.js, which loads this file on the first
-   call). Self-contained: injects its own styles + DOM and exposes
-   window.MGSGame = { open, close }.
-
-   Systems: pixel-art operatives, Alert/Evasion/Caution states with BFS-pathing
-   guard AI, a stealth toolkit (walk/run noise, cardboard box, wall-knock lure,
-   CQC subdue), a rectangular radar minimap, security cameras, codec presentation.
-   Palette: moonlit steel blue. A deep navy ground (#0b1220 / #0e1726), steel-blue
-   linework and type (#8fa6c0 / #b8c6d6, dim #7d93ae), cool greys for secondary
-   things, and paper (#e9e7e2) for the brightest highlights: alerts, the player's
-   crown, hostile cones. NO red, amber or mint anywhere (alerts, damage and game
-   over included).
-   Perf rules: no ctx.shadowBlur / ctx.filter; <= 9 gradients per frame (only the
-   vision cones make one each); the static world (floor, walls, doorway, radar
-   map, mist sprite, the Colonel's portrait) is pre-baked once per level/open.
-
-   SOURCES — every Metal Gear name used in this file, and where it was checked
-   (retrieved 2026-10-20). Nothing else from the series is used.
-   - The Big Shell: an environmental clean-up facility erected in the lower New
-     York Harbor, seized by the Sons of Liberty; Raiden, a rookie FOXHOUND agent,
-     infiltrates it in the Plant chapter.
-     https://en.wikipedia.org/wiki/Metal_Gear_Solid_2:_Sons_of_Liberty
-   - The Gurlukovich mercenaries: a Russian mercenary force that patrols the
-     facility (the guards in every operation).
-     https://en.wikipedia.org/wiki/Metal_Gear_Solid_2:_Sons_of_Liberty
-   - Raiden's codec contacts: his commanding officer the Colonel (and his
-     girlfriend Rosemary); designed by Yoji Shinkawa.
-     https://en.wikipedia.org/wiki/Raiden_(Metal_Gear)
-   - The Colonel's frequency in the Plant chapter: 140.85 (codec list
-     "Colonel | 140.85"); 140.85 is the mission-control channel of each chapter.
-     https://www.gamerevolution.com/?p=30494 (MGS2 walkthrough, codec list)
-     https://amkstation.com/fr/metal-gear-solid-2-all-codec-frequencies/
-   - Area names, verbatim from the Plant walkthrough: "Strut A Deep Sea Dock",
-     "AB connecting bridge", "Shell 1 Core, B1" (guards pass between crates there).
-     https://www.gamerevolution.com/?p=30494
-   - Security cameras on the Big Shell ("Shoot the camera with the SOCOM").
-     https://www.gamerevolution.com/?p=30494
-   - The radar goes dark in alert and evasion phases (series convention; drawn
-     here as JAMMED). https://en.wikipedia.org/wiki/Metal_Gear_Solid_(1998_video_game)
-   Not used, because they could not be verified: suit names, hair colour as
-   lore (the sprite's pale hair follows the site's own ink of him), any quoted
-   game dialogue. Every caller line below is original.
-   Raiden's codec portrait is the site's own img/raiden-night.png, masked and
-   tinted steel blue; the Colonel's is drawn here (a dithered silhouette whose signal
-   breaks up). No portrait art, logo or trademark image is shipped for this game.
-   =========================================================================== */
+// Big Shell, a hidden top-down stealth game. It opens from the footer's 140.85, by typing 140.85,
+// or by the Konami code (js/sumi.js loads this file the first time), and exposes
+// window.MGSGame with open and close.
 (function () {
   'use strict';
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var coarsePointer = window.matchMedia('(pointer: coarse)').matches;
 
-  /* ---- geometry (logical px; CSS scales the canvas) ---- */
   var COLS = 20,
     ROWS = 12,
     TILE = 32,
@@ -68,7 +21,7 @@
   var LOS_STEP = 6,
     SCAN_TIME = 1.05,
     SCAN_ARC = 0.7;
-  var SPOT_FULL = 1.0; // suspicion needed to raise the alarm
+  var SPOT_FULL = 1.0;
   var ALERT_GRACE = 2.2,
     EVASION_TIME = 16,
     CAUTION_TIME = 20,
@@ -86,21 +39,19 @@
     PICKUP_R = 15,
     EXIT_R = 16;
 
-  /* ---- palette: moonlit steel blue on a navy night sea; sprites carry their own
-     tones. Danger is PAPER (#e9e7e2), suspicion a cool light grey (#c3cbd5): there is
-     no red, rose or amber anywhere in this file. ---- */
+  // steel blue on navy; danger is paper, caution a cool grey, and nothing is red or amber
   var C = {
     bg: '#0b1220',
     panel: '#0e1726',
     floorA: '#0c1422',
-    floorB: '#0f1827', // checker pair (steel, faint)
-    floorDot: 'rgba(143,166,192,0.05)', // dither dots
+    floorB: '#0f1827',
+    floorDot: 'rgba(143,166,192,0.05)',
     grid: 'rgba(143,166,192,0.035)',
     wallFace: '#1a2433',
-    wallTop: '#34465e', // lit top face
-    wallRim: '#8a9cb3', // 1px top rim highlight
-    wallFront: '#121b29', // south "front face" (2.5D height)
-    wallSide: '#0a101b', // shaded right edge
+    wallTop: '#34465e',
+    wallRim: '#8a9cb3',
+    wallFront: '#121b29',
+    wallSide: '#0a101b',
     wallEdge: '#4b5e79',
     wallShadow: 'rgba(0,0,0,0.42)',
     line: '#8fa6c0',
@@ -111,27 +62,13 @@
     steel: '#7c8a9c',
     ink: '#141416',
   };
-  /* per-op floor identity (baked once in buildBg — zero per-frame cost) */
   var FLOORS = {
-    dock: { a: '#0d1523', b: '#0f1826' }, // Strut A deck: treadplate steel
-    bridge: { a: '#060c18', b: '#07101c' }, // AB bridge: night sea under a catwalk grate
-    core: { a: '#0c1422', b: '#0f1827' }, // Shell 1 core: composite panels
+    dock: { a: '#0d1523', b: '#0f1826' },
+    bridge: { a: '#060c18', b: '#07101c' },
+    core: { a: '#0c1422', b: '#0f1827' },
   };
 
-  /* ---- pixel sprites (16x16 grids = one tile tall at SCALE 2; '.' transparent).
-     Drawn rotated to face; sprites face UP pre-rotation (facing + PI/2).
-     Read top-down: weapon forward (row 0 = muzzle, the brightest W pixel, so
-     facing reads instantly), then head, shoulders, torso, legs. Symmetric
-     about the column 7|8 seam (Raiden's crown is lit from the left). Letters:
-     K internal edge · S suit · L suit highlight · B suit shade · G hair/helmet ·
-     P hair shade · g gunmetal · H face (cool grey) · W muzzle ·
-     V visor. ---- */
-  // Raiden — readable from above as a person, not a glyph: a round PALE head
-  // (G lit, P its shaded side; 2-4-4-4-4 px, an oval) sits INSIDE the shoulders
-  // with no dark ring around it, so it reads as a head between shoulders; a
-  // mid steel-blue suit (S, L the lit shoulder caps, B shade) narrows from 10 px
-  // shoulders to the waist; both arms reach forward to the pistol (g, dark),
-  // whose muzzle (W) is the facing cue.
+  // the figures face up and are rotated to their heading when drawn
   var PLAYER = [
     '.......WW.......',
     '.......gg.......',
@@ -150,8 +87,6 @@
     '.....SB..BS.....',
     '.....BB..BB.....',
   ];
-  // Gurlukovich mercenary — helmet dome with a visor band (V, the facing cue),
-  // rifle forward, broad armored shoulders; lit paper-white when hostile
   var GUARD = [
     '.......WW.......',
     '.......gg.......',
@@ -170,8 +105,6 @@
     '...SBB....BBS...',
     '....BB....BB....',
   ];
-  // cardboard box from above: lit top edge, centre lid seam, taped corner
-  // tabs (W), shaded right/bottom (D), a label line + a stamped print mark
   var BOX = [
     '................',
     '.KKKKKKKKKKKKKK.',
@@ -190,12 +123,9 @@
     '.KKKKKKKKKKKKKK.',
     '................',
   ];
-  // intel keycard (8x6): steel-blue body, lighter top stripe, a paper contact notch
-  // (W) and a 1px darker slot
   var KEYCARD = ['.AAAAAA.', 'ALLLLLWA', 'AAAAAAAA', 'AAAAAAAA', 'ADDAAAAA', '.AAAAAA.'];
-  // frame B of the 2-frame walk cycle (legs passing) — rows 14–15 swapped
   var WALK_B_ROWS = ['....KSBKKBSK....', '.....KK..KK.....'];
-  var PLAYER_B = PLAYER.slice(0, 14).concat(['......SBBS......', '......BB.BB.....']); // legs passing
+  var PLAYER_B = PLAYER.slice(0, 14).concat(['......SBBS......', '......BB.BB.....']);
   var GUARD_B = GUARD.slice(0, 14).concat(WALK_B_ROWS);
   var PAL_PLAYER = {
     K: '#060a12',
@@ -240,8 +170,6 @@
   var PAL_BOX = { K: '#262b33', B: '#7d8796', W: '#a7b0bc', D: '#565f6d' };
   var PAL_KEY = { A: '#6f86a3', L: '#b8c6d6', W: '#e9e7e2', D: '#2c3d55' };
 
-  /* ---- pre-rendered sprite canvases (crisp pixels + 1px outline; built once).
-     Every sprite gets a dark 1px outline (grounded on the floor). ---- */
   var SPR = null;
   function makeSprite(grid, pal, outline) {
     var rows = grid.length,
@@ -273,7 +201,7 @@
   }
   function buildSprites() {
     var pOut = 'rgba(3,6,12,0.9)',
-      gOut = 'rgba(3,6,12,0.9)'; // both dark: Raiden pops by his pale crown and lighter suit, not a halo
+      gOut = 'rgba(3,6,12,0.9)';
     SPR = {
       player: [makeSprite(PLAYER, PAL_PLAYER, pOut), makeSprite(PLAYER_B, PAL_PLAYER, pOut)],
       guard: [makeSprite(GUARD, PAL_GUARD, gOut), makeSprite(GUARD_B, PAL_GUARD, gOut)],
@@ -284,18 +212,7 @@
     };
   }
 
-  /* ---- levels: maps 20x12 ('#' wall / '.' floor). Tile coords [col,row].
-     Three Big Shell areas (names verbatim from the SOURCES above) — floor:
-     buildBg() identity key; weather: 'sea' = wind-driven spray + drifting mist
-     (the open bridge), 'mist' = mist only (the enclosed dock), none in the core.
-     lost = where the Colonel loses the signal (game over). Every call is the
-     Colonel on 140.85.
-     Maps/paths/speeds are the gameplay and stay put. Every op starts with Raiden at
-     [1,10] and no watcher able to see that tile for the opening seconds. The
-     westbound patrols used to turn at column 2 and spot a still Raiden in ~4 s: in
-     op 2 the row-8 sentry now turns at column 8 (out of range of the spawn: the open
-     floor there has no cover), in op 3 the row-7 patrol turns at column 5, where the
-     walls at [3-4, 8-9] block the line to the spawn. ---- */
+  // no patrol may see the start tile [1, 10] at first, hence the short routes in ops 2 and 3
   var LEVELS = [
     {
       name: 'STRUT A DEEP SEA DOCK',
@@ -445,9 +362,6 @@
     },
   ];
 
-  /* ---- CHROME palette (frame / bar / HUD / buttons / screens / toast): one map,
-     written as CSS custom properties on .mgsg-overlay. Steel blue on navy;
-     paper (--mg-paper) is the danger colour, cool grey (--mg-pdim) the caution. ---- */
   var CHROME = {
     bg: '#0b1220',
     panel: '#0e1726',
@@ -491,10 +405,6 @@
     return s;
   }
 
-  /* ---- injected stylesheet (one-time).
-     Perf guardrails: all glow here is text-shadow/box-shadow (composited once);
-     CRT/vignette/alarm wash are CSS pseudo-elements — GPU compositor only.
-     Chrome colors are var(--mg-*) refs, written once from CHROME. ---- */
   var CSS =
     '' +
     '.mgsg-overlay{' +
@@ -503,22 +413,18 @@
     'background:var(--mg-veil);backdrop-filter:blur(2px);font-family:"Share Tech Mono",ui-monospace,monospace;' +
     'color:var(--mg-text);opacity:0;transition:opacity .25s ease;padding:16px;overscroll-behavior:contain;overflow-y:auto;}' +
     '.mgsg-overlay.in{opacity:1;}' +
-    /* max-height + shrinking stage keep HUD/footer reachable on short viewports;
-       margin:auto = safe centering (overflow stays scrollable, never clipped off-top) */
+    // margin:auto keeps the top of a too-tall frame reachable, which flex centring alone does not
     '.mgsg-frame{width:min(92vw,1080px);margin:auto;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);' +
     'background:var(--mg-bg);border:1px solid var(--mg-border);border-radius:8px;' +
     'box-shadow:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(var(--mg-glow),.08),0 0 32px rgba(var(--mg-glow),.12);' +
     'overflow:hidden;display:flex;flex-direction:column;' +
     'outline:1px solid rgba(var(--mg-glow),.12);outline-offset:-4px;transform-origin:50% 50%;}' +
     '.mgsg-frame:focus-visible{outline:2px solid var(--mg-text);outline-offset:-2px;}' +
-    /* codec connect / disconnect: the frame opens out of a horizontal line and
-       closes back into one (transform only — compositor) */
     '.mgsg-overlay.in .mgsg-frame{animation:mgsgConnect .3s cubic-bezier(.2,.8,.3,1) 1;}' +
     '.mgsg-overlay.out .mgsg-frame{animation:mgsgDisconnect .24s ease-in 1 forwards;}' +
     '.mgsg-bar{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--mg-line);' +
     'background:var(--mg-panel);font-size:13px;letter-spacing:1.5px;flex-shrink:0;}' +
     '.mgsg-bar .t{color:var(--mg-hi);text-transform:uppercase;text-shadow:0 0 8px rgba(var(--mg-glow),.5);}' +
-    /* frequency readout as an LCD chip */
     '.mgsg-bar .f{margin-left:auto;color:var(--mg-hi);letter-spacing:2px;font-size:12px;' +
     'background:rgba(var(--mg-shade),.6);border:1px solid var(--mg-border);border-radius:3px;padding:3px 9px;' +
     'text-shadow:0 0 6px rgba(var(--mg-glow),.6);font-variant-numeric:tabular-nums;}' +
@@ -527,13 +433,11 @@
     'background:var(--mg-text);margin-right:8px;vertical-align:1px;box-shadow:0 0 6px rgba(var(--mg-glow),.8);' +
     'animation:mgsgBlink 1.4s steps(1) infinite;}' +
     '.mgsg-frame.alarm .f::before{background:var(--mg-paper);box-shadow:0 0 6px rgba(233,231,226,.7);animation-duration:.5s;}' +
-    /* caution: the LCD chip and stage pick up the cool caution grey */
     '.mgsg-frame.caution .f{color:var(--mg-pdim);border-color:#505a68;text-shadow:none;}' +
     '.mgsg-frame.caution .f::before{background:var(--mg-pdim);box-shadow:none;animation-duration:.9s;}' +
     '.mgsg-btn{background:transparent;border:1px solid var(--mg-edge);color:var(--mg-text);font:inherit;font-size:12px;' +
     'line-height:1;padding:5px 8px;border-radius:4px;cursor:pointer;}' +
     '.mgsg-btn:hover{background:rgba(var(--mg-glow),.1);color:var(--mg-hi);}' +
-    /* the DOM strip: slim (the canvas carries the MGS2 windows); it stays the accessible source of truth */
     '.mgsg-hud{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 12px;border-bottom:1px solid var(--mg-line);' +
     'font-size:11px;line-height:16px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mg-dim);flex-shrink:0;}' +
     '.mgsg-hud b{color:var(--mg-text);font-weight:400;text-shadow:0 0 5px rgba(var(--mg-glow),.35);}' +
@@ -542,8 +446,7 @@
     '.mgsg-stbadge.evasion{background:rgba(233,231,226,.08);}' +
     '.mgsg-stbadge.alert{background:rgba(233,231,226,.14);animation:mgsgBlink .5s steps(1) infinite;}' +
     '.mgsg-life{display:inline-flex;align-items:center;gap:6px;}' +
-    /* wide canvases draw their own LIFE gauge + phase countdown (drawHudWindows): the DOM badge and gauge
-       step out of sight there but stay readable to assistive tech (visually hidden, not display:none) */
+    // the canvas draws these when wide: clipped, not display:none, so screen readers still get them
     '.mgsg-wide .mgsg-stbadge,.mgsg-wide .mgsg-life{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;}' +
     '.mgsg-lifebar{position:relative;width:88px;height:6px;border:1px solid var(--mg-edge);border-radius:4px;overflow:hidden;background:rgba(0,0,0,.3);}' +
     '.mgsg-lifebar i{display:block;height:100%;width:100%;background:var(--mg-text);transition:width .12s linear;}' +
@@ -552,7 +455,6 @@
     '.mgsg-lifebar.low i{animation:mgsgBlink .6s steps(1) infinite;}' +
     '.mgsg-stage{position:relative;flex:1 1 auto;min-height:0;background:var(--mg-bg);transition:box-shadow .2s ease;' +
     'box-shadow:inset 0 0 70px rgba(var(--mg-glow),.06);}' +
-    /* CRT vignette + scanlines (mirrors the site .crt) — pseudo-elements, zero canvas cost */
     '.mgsg-stage::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:5;' +
     'background:radial-gradient(ellipse 105% 105% at 50% 50%,transparent 55%,rgba(0,0,0,.42) 100%);' +
     'transition:background .3s ease;}' +
@@ -563,8 +465,6 @@
     '.mgsg-stage.alarm::before{background:radial-gradient(ellipse 105% 105% at 50% 50%,rgba(233,231,226,.03) 40%,rgba(0,0,0,.48) 100%);' +
     'animation:mgsgAlarmPulse 1.1s ease-in-out infinite;}' +
     '.mgsg-canvas{display:block;width:100%;height:auto;}' +
-    /* modern browsers: stage keeps the playfield aspect and the canvas letterboxes
-       inside it, so a height-capped frame scales the game instead of clipping it */
     '@supports (aspect-ratio:1/1){' +
     '.mgsg-stage{aspect-ratio:' +
     W +
@@ -573,46 +473,35 @@
     ';}' +
     '.mgsg-canvas{position:absolute;inset:0;height:100%;object-fit:contain;}' +
     '}' +
-    /* overflow:hidden — a tall codec call can never paint over the HUD/footer
-       (the phone block below turns it into a scroll instead) */
     '.mgsg-screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;' +
     'text-align:center;gap:12px;padding:24px;overflow:hidden;backdrop-filter:blur(1px);' +
     'opacity:0;visibility:hidden;transform:translateY(6px);' +
     'transition:opacity .22s ease,transform .22s ease,visibility .22s;' +
     'background:linear-gradient(rgba(var(--mg-shade),.93),rgba(var(--mg-shade),.86) 30%,rgba(var(--mg-shade),.86) 70%,rgba(var(--mg-shade),.95));}' +
-    /* codec wipe: every screen opens from a horizontal beam (clip-path, compositor-only) */
     '.mgsg-screen.show{opacity:1;visibility:visible;transform:none;animation:mgsgWipe .25s ease-out 1;}' +
     '.mgsg-beam{position:absolute;left:0;right:0;top:50%;height:1px;background:var(--mg-hi);opacity:0;pointer-events:none;' +
     'box-shadow:0 0 8px rgba(var(--mg-hglow),.8);}' +
     '.mgsg-screen.show .mgsg-beam{animation:mgsgBeam .3s ease-out 1;}' +
     '.mgsg-screen h2{font-size:clamp(20px,4.4vw,32px);color:var(--mg-hi);letter-spacing:3px;margin:0;' +
     'text-shadow:0 0 12px rgba(var(--mg-hglow),.45),0 0 2px rgba(var(--mg-hglow),.8);}' +
-    /* logotype — condensed MGS treatment: bold, tall (scaleY), stacked chrome shadow */
     '.mgsg-screen.title h2,.mgsg-screen .rank{font-weight:700;letter-spacing:4px;transform:scaleY(1.28);transform-origin:50% 100%;' +
     'text-shadow:0 1px 0 rgba(var(--mg-hglow),.9),0 2px 0 rgba(var(--mg-glow),.55),0 3px 0 rgba(var(--mg-shade),.9),' +
     '3px 4px 0 rgba(var(--mg-shade),.85),0 0 22px rgba(var(--mg-glow),.35);}' +
-    /* scaleY from the bottom edge grows the plate upward — reserve that room so
-       the double rule never crosses the kicker above it */
+    // the title scales up from its bottom edge; the top margin keeps it clear of the caller line
     '.mgsg-screen.title h2{font-size:clamp(30px,7vw,52px);padding:8px 18px 12px;margin-top:.55em;' +
     'border-top:3px double var(--mg-border);border-bottom:3px double var(--mg-border);}' +
-    /* caller line as a small kicker */
     '.mgsg-screen .caller{color:var(--mg-dim);font-size:11px;letter-spacing:6px;text-transform:uppercase;}' +
-    /* codec call layout (title + briefing): portrait | wave + frequency strip | portrait */
     '.mgsg-call{display:none;grid-template-columns:96px minmax(120px,1fr) 96px;align-items:center;gap:14px;width:min(100%,520px);}' +
     '.mgsg-screen.title .mgsg-call,.mgsg-screen.brief .mgsg-call{display:grid;}' +
     '.mgsg-port{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;}' +
     '.mgsg-port .px{position:relative;width:96px;height:96px;border:1px solid var(--mg-edge);background:var(--mg-panel);overflow:hidden;' +
     'box-shadow:0 0 0 1px rgba(var(--mg-shade),.8),0 0 14px rgba(var(--mg-glow),.12);}' +
-    /* RAIDEN: the site's own ink of him (img/raiden-night.png, paper on alpha) used as a mask over a steel-blue fill:
-       his head and hair in moonlit steel; a 2 px dither grid over it reads as a codec CRT */
     '.mgsg-port .px.raiden{--s:1;}' +
     '.mgsg-port .px.raiden i{position:absolute;inset:0;background:var(--mg-text);' +
     '-webkit-mask:url(img/raiden-night.png?v=12) no-repeat calc(-100px * var(--s)) calc(-75px * var(--s))/calc(300px * var(--s)) auto;' +
     'mask:url(img/raiden-night.png?v=12) no-repeat calc(-100px * var(--s)) calc(-75px * var(--s))/calc(300px * var(--s)) auto;}' +
     '.mgsg-port .px.raiden b{position:absolute;inset:0;background:radial-gradient(circle,transparent 0 .7px,rgba(var(--mg-shade),.55) .8px) 0 0/2px 2px;}' +
-    /* COLONEL: a canvas (48 px, pixelated), drawn in buildColonel(), its signal breaking up in glitchColonel() */
     '.mgsg-port .px canvas{display:block;width:100%;height:100%;image-rendering:pixelated;}' +
-    /* inset scanlines over every portrait (pseudo-element, compositor-only) */
     '.mgsg-port .px::after{content:"";position:absolute;inset:0;pointer-events:none;' +
     'background:repeating-linear-gradient(0deg,rgba(0,0,0,.28) 0 1px,transparent 1px 3px),' +
     'linear-gradient(rgba(var(--mg-glow),.06),transparent 40%,rgba(var(--mg-shade),.35));}' +
@@ -626,29 +515,19 @@
     'box-shadow:0 0 6px rgba(var(--mg-hglow),.8);transition:left .45s cubic-bezier(.2,.8,.3,1);}' +
     '.mgsg-fstrip b{position:absolute;top:100%;margin-top:3px;font-weight:400;font-size:11px;letter-spacing:1px;color:var(--mg-dim);transform:translateX(-50%);}' +
     '.mgsg-fnum{font-size:15px;letter-spacing:3px;color:var(--mg-hi);font-variant-numeric:tabular-nums;text-shadow:0 0 8px rgba(var(--mg-glow),.5);}' +
-    /* phone widths: the aspect-locked stage is ~210px tall at 375px. On a touch
-       phone (portrait) a menu screen also covers the control deck below the stage
-       (see the portrait block), so the call keeps a compact row: Raiden 56 px |
-       frequency strip | the Colonel 56 px. Gaps/padding tighten; safe centering
-       scrolls rather than clips if a screen ever overflows */
     '@media (max-width:520px){' +
     '.mgsg-screen{gap:6px;padding:12px;justify-content:flex-start;justify-content:safe center;overflow-y:auto;}' +
     '.mgsg-call{grid-template-columns:56px minmax(0,1fr) 56px;gap:10px;width:100%;}' +
     '.mgsg-port .px{width:56px;height:56px;}.mgsg-port .px.raiden{--s:.5833;}' +
     '.mgsg-cc{gap:4px;}.mgsg-fstrip{height:10px;margin-bottom:8px;}.mgsg-fstrip b{display:none;}.mgsg-fnum{font-size:12px;letter-spacing:2px;}' +
-    /* a narrow window WITHOUT the touch deck has only the ~210 px stage for the call: the portraits and strip step out */
+    // a narrow window without touch controls has only the stage's height: portraits and strip go
     '.mgsg-overlay:not(.mgsg-touch) .mgsg-call{grid-template-columns:1fr;gap:0;width:auto;}' +
     '.mgsg-overlay:not(.mgsg-touch) .mgsg-port,.mgsg-overlay:not(.mgsg-touch) .mgsg-fstrip,.mgsg-overlay:not(.mgsg-touch) .mgsg-fnum,' +
     '.mgsg-overlay:not(.mgsg-touch) .mgsg-screen.show .mgsg-wave,.mgsg-overlay:not(.mgsg-touch) .mgsg-screen .mgsg-rec{display:none !important;}.mgsg-overlay:not(.mgsg-touch) .mgsg-screen{padding:8px 12px;gap:5px;}' +
     '.mgsg-screen.title h2{margin-top:.3em;padding:2px 10px 4px;font-size:22px;}' +
     '.mgsg-screen p{font-size:11px;line-height:1.4;}.mgsg-screen .go{margin-top:2px;}' +
-    /* the stage is ~210 px tall here: smaller op titles, rank, SIGNAL LOST and stats, thinner letterbox bars */
     '.mgsg-overlay .mgsg-screen:not(.title) h2{font-size:17px;letter-spacing:2px;}.mgsg-overlay .mgsg-screen .rank{font-size:28px;}.mgsg-overlay .mgsg-screen .lost{font-size:22px;letter-spacing:4px;}' +
     '.mgsg-overlay .mgsg-stats{font-size:11px;gap:1px 14px;margin:0;}.mgsg-overlay .mgsg-screen.fail::before,.mgsg-overlay .mgsg-screen.fail::after{height:5%;}.mgsg-overlay .mgsg-screen.brief .sub{display:none;}}' +
-    /* phones: the bar row's min-content (title + LCD chip + SND + EXIT) used to
-       exceed 94vw and push the frame past the screen. Smaller title that may
-       ellipsize (min-width:0 lets the flex item shrink), tighter gaps/padding,
-       and the HUD strip wraps — the frame now fits 100vw at 375px */
     '@media (max-width:480px){' +
     '.mgsg-bar{gap:6px;padding:7px 8px;font-size:11px;letter-spacing:1px;}' +
     '.mgsg-bar .t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}' +
@@ -658,30 +537,23 @@
     '.mgsg-hud{gap:4px 7px;padding:6px 8px;font-size:11px;letter-spacing:.5px;}.mgsg-hud>span{white-space:nowrap;}.mgsg-lifebar{width:40px;}' +
     '.mgsg-stbadge{letter-spacing:1px;padding:0 4px;}.mgsg-life{gap:4px;}' +
     '.mgsg-foot{gap:8px;padding:6px 8px;}}' +
-    /* the narrowest phones (360): the strip stays one line even with EVASION/CAUTION in the badge */
-    '@media (max-width:380px){.mgsg-hud{gap:4px 6px;font-size:11px;letter-spacing:0;}.mgsg-lifebar{width:32px;}}' /* 11 px, the page's mono floor: the strip wraps to a second row (flex-wrap) rather than shrinking the type */ +
+    '@media (max-width:380px){.mgsg-hud{gap:4px 6px;font-size:11px;letter-spacing:0;}.mgsg-lifebar{width:32px;}}' +
     '.mgsg-screen p{max-width:46ch;font-size:13px;line-height:1.65;color:var(--mg-text);margin:0;}' +
     '.mgsg-screen .sub{color:var(--mg-dim);font-size:12px;letter-spacing:1px;}' +
     '.mgsg-screen .go{margin-top:6px;color:var(--mg-hi);animation:mgsgGoBlink 1.1s steps(1) infinite;}' +
     '.mgsg-screen.fail h2{color:var(--mg-pdim);}' +
-    /* GAME OVER letterbox bars */
     '.mgsg-screen.fail::before,.mgsg-screen.fail::after{content:"";position:absolute;left:0;right:0;height:13%;background:#03060d;}' +
     '.mgsg-screen.fail::before{top:0}.mgsg-screen.fail::after{bottom:0}' +
     '.mgsg-screen .lost{font-size:clamp(26px,7vw,52px);color:var(--mg-paper);letter-spacing:6px;margin:0;' +
     'text-shadow:0 0 14px rgba(233,231,226,.3);animation:mgsgFlicker .8s steps(2) 2;}' +
     '.mgsg-screen .rank{font-size:clamp(40px,10vw,80px);color:var(--mg-hi);line-height:1;margin:0;' +
     'animation:mgsgStampTall .35s cubic-bezier(.2,1.6,.4,1) 1;}' +
-    /* NEW RECORD flourish — stamped chip under the rank on clear/complete screens
-       (scoped like .rank so it outranks the .mgsg-screen p color) */
     '.mgsg-screen .mgsg-rec{margin:0;font-size:13px;letter-spacing:4px;color:var(--mg-hi);' +
     'border:1px solid var(--mg-edge);border-radius:3px;padding:4px 12px;background:rgba(var(--mg-glow),.10);' +
     'text-shadow:0 0 10px rgba(var(--mg-hglow),.6);' +
     'animation:mgsgStamp .35s cubic-bezier(.2,1.6,.4,1) 1,mgsgBlink 1.1s steps(1) 2 .4s;}' +
-    /* codec audio wave (matches the site .codec-wave) — title/brief screens only */
     '.mgsg-wave{display:none;align-items:flex-end;gap:3px;height:16px;}' +
     '.mgsg-screen.title.show .mgsg-wave,.mgsg-screen.brief.show .mgsg-wave{display:inline-flex;}' +
-    /* transform (compositor-only), not height — mirrors the site .codec-wave fix;
-       15px tall, bottom-anchored, base scaleY(.4)=6px = old static height */
     '.mgsg-wave i{width:3px;height:15px;transform:scaleY(.4);transform-origin:50% 100%;background:var(--mg-text);animation:mgsgWave 1s ease-in-out infinite;}' +
     '.mgsg-wave i:nth-child(2){animation-delay:.15s}.mgsg-wave i:nth-child(3){animation-delay:.3s}' +
     '.mgsg-wave i:nth-child(4){animation-delay:.45s}.mgsg-wave i:nth-child(5){animation-delay:.6s}' +
@@ -689,20 +561,14 @@
     'display:flex;gap:12px;flex-wrap:wrap;flex-shrink:0;}.mgsg-foot kbd{border:1px solid var(--mg-edge);border-radius:3px;padding:0 4px;color:var(--mg-text);}' +
     '.mgsg-flash{position:absolute;inset:0;background:var(--mg-paper);opacity:0;pointer-events:none;}' +
     '.mgsg-flash.on{animation:mgsgFlash .5s ease-out;}' +
-    /* codec subtitle toast — visible mirror of the aria-live announcements */
-    /* one line (nowrap + ellipsis: the aria-live region keeps the full text), so it never wraps into a
-       block over the floor; on desktop it sits on the outer wall row at the stage's foot */
     '.mgsg-toast{position:absolute;left:50%;bottom:10px;z-index:6;max-width:88%;padding:4px 12px;' +
     'background:var(--mg-toastbg);border:1px solid var(--mg-edge);border-radius:3px;' +
     'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:16px;' +
     'color:var(--mg-hi);font-size:12px;letter-spacing:1px;text-align:center;pointer-events:none;' +
     'opacity:0;transform:translateX(-50%) translateY(4px);transition:opacity .18s ease,transform .18s ease;}' +
     '.mgsg-toast.show{opacity:1;transform:translateX(-50%);}' +
-    /* touch (the deck covers the stage foot) and narrow stages: a slim line on the TOP wall row,
-       between the radar and the exit, clear of every floor tile */
     '.mgsg-touch .mgsg-toast{top:1px;bottom:auto;max-width:62%;padding:0 8px;font-size:11px;line-height:14px;letter-spacing:.5px;}' +
     '@media (max-width:520px){.mgsg-toast{top:1px;bottom:auto;max-width:62%;padding:0 8px;font-size:11px;line-height:14px;letter-spacing:.5px;}}' +
-    /* CRT roll bar + alarm hazard stripes + power-on sweep (compositor-only) */
     '.mgsg-roll{position:absolute;left:0;right:0;top:-30%;height:26%;pointer-events:none;z-index:6;' +
     'background:linear-gradient(180deg,transparent,rgba(184,198,214,.045) 50%,transparent);' +
     'animation:mgsgRoll 7s linear infinite;}' +
@@ -711,7 +577,6 @@
     '.hz-t{top:0}.hz-b{bottom:0}' +
     '.mgsg-stage.alarm .mgsg-hazard{display:block;animation:mgsgHzScroll 1.2s linear infinite;}' +
     '.mgsg-canvas.on{animation:mgsgPowerOn .3s cubic-bezier(.2,.8,.3,1) 1;transform-origin:50% 50%;}' +
-    /* stats grid on clear/complete/fail screens */
     '.mgsg-stats{display:none;grid-template-columns:auto auto;gap:4px 18px;font-size:13px;letter-spacing:2px;margin:4px 0;}' +
     '.mgsg-stats span:nth-child(odd){color:var(--mg-dim);text-align:left;}' +
     '.mgsg-stats span:nth-child(even){color:var(--mg-hi);text-align:right;text-shadow:0 0 6px rgba(var(--mg-glow),.4);}' +
@@ -728,18 +593,11 @@
     '.mgsg-pad .p{grid-area:2/2;font-size:11px;letter-spacing:1px;color:var(--mg-dim);}' +
     '.mgsg-touch .mgsg-pad,.mgsg-touch .mgsg-acts{display:grid;}' +
     '.mgsg-touch .mgsg-foot{display:none;}' +
-    /* SND/EXIT are the only affordances in touch mode — give them touch-size targets */
     '.mgsg-touch .mgsg-bar .mgsg-btn{min-height:40px;min-width:44px;}' +
     '.mgsg-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}' +
     '.mgsg-overlay,.mgsg-overlay *{cursor:auto !important;}' +
     '.mgsg-overlay .mgsg-btn,.mgsg-overlay .mgsg-pad button,.mgsg-overlay .mgsg-acts button{cursor:pointer !important;}' +
-    /* Portrait touch screens (phones and tablets): overlaid on the letterboxed stage the touch controls
-       covered ~72% of the playfield. Drop them below the stage into real frame
-       padding (frame is overflow:hidden, so negative bottom alone would clip);
-       the overlay already scrolls + margin:auto safe-centers on short
-       viewports, so the taller frame degrades gracefully. The toast stays on the
-       top wall row. Must sit AFTER the base .mgsg-pad/.mgsg-acts/
-       .mgsg-touch .mgsg-toast rules — equal specificity, source order wins. */
+    // the frame clips its overflow, so the controls below the stage get real padding to sit in
     '@media (orientation:portrait){' +
     '.mgsg-touch .mgsg-frame{padding-bottom:172px;}' +
     '.mgsg-touch .mgsg-pad{bottom:-160px;}' +
@@ -747,8 +605,6 @@
     '.mgsg-touch .mgsg-screen{bottom:-172px;justify-content:center;justify-content:safe center;overflow-y:auto;}' +
     '}' +
     '.mgsg-touch.mgsg-scr .mgsg-pad,.mgsg-touch.mgsg-scr .mgsg-acts{visibility:hidden;}' +
-    /* a touch phone: the frame takes the width (6 px each side) and is centred in the screen's height, as on a tablet (margin:auto: a frame
-       taller than the screen still scrolls, never clips off the top); the stage grows with it (aspect-locked), and the pad sits lower, nearer the thumb */
     '@media (max-width:520px){.mgsg-overlay.mgsg-touch{padding:6px;}.mgsg-touch .mgsg-frame{width:calc(100vw - 12px);margin:auto;}}' +
     '@media (prefers-reduced-motion:reduce){.mgsg-screen .go{animation:none}.mgsg-overlay{transition:none}.mgsg-stage{transition:none}' +
     '.mgsg-stage.alarm::before,.mgsg-bar .f::before,.mgsg-stbadge.alert,.mgsg-lifebar.low i,.mgsg-wave i,' +
@@ -772,7 +628,6 @@
     '@keyframes mgsgPowerOn{0%{transform:scaleY(.005) scaleX(1.1);opacity:.4}60%{transform:scaleY(1.04)}100%{transform:none;opacity:1}}' +
     '@keyframes mgsgStatIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1}}';
 
-  /* ---- module handles (built lazily on first open) ---- */
   var built = false,
     open = false;
   var overlay,
@@ -783,7 +638,7 @@
     dpr = 1;
   var stateBadge, lifeFill, hudIntel, hudLevel, hudTime;
   var lastLifeW = '',
-    lastLifeC = ''; // last DOM life-bar width/color written (skip no-op style writes)
+    lastLifeC = '';
   var screenEl,
     scrCaller,
     scrTitle,
@@ -797,37 +652,34 @@
     flashEl,
     srLive,
     muteBtn;
-  var scrPortThem, scrWhoThem, scrFnum, scrNeedle, beamEl, freqEl; // codec-call layout + wipe beam + LCD chip
+  var scrPortThem, scrWhoThem, scrFnum, scrNeedle, beamEl, freqEl;
   var toastEl = null,
     toastTimer = null,
     typeTimer = null;
-  var radarMap = null; // radar minimap wall layout (baked in buildBg at radar scale)
-  var seaGlints = null; // drifting glints for the open-water rows (dock channel, bridge edges), baked per level
-  var lastWide = null; // canvas HUD on/off last frame (toggles .mgsg-wide once per change)
-  var mistSprite = null; // one soft fog blob, baked once; the sea ops draw it a few times per frame (no per-frame gradient)
+  var radarMap = null;
+  var seaGlints = null;
+  var lastWide = null;
+  var mistSprite = null;
   var colCtx = null,
     colBase = null,
     colTimer = null,
-    colFrame = 0; // the Colonel's codec portrait (48 px canvas) + its glitch clock
+    colFrame = 0;
   var rafId = null,
     lastT = 0,
     muted = false,
     audioCtx = null,
     prevFocus = null,
     alertLoop = null;
-  var bgLayer = null; // pre-rendered floor+walls (rebuilt on loadLevel/sizeCanvas)
-  var shakeT = 0; // screen-shake timer (set on alert, decays in update)
-  var hitFlashT = 0; // taking-fire vignette timer (visual only)
-  var hitBeepCD = 0; // throttle for the taking-fire beep
-  var fxPulses = []; // transient ring pulses (CQC takedown, intel grab) — presentation only
-  // cached gradients — created once (pool/vignette) or per level (exit/intel);
-  // render() never calls createRadialGradient for these (only the cones remain per-frame — the radar is gradient-free)
+  var bgLayer = null;
+  var shakeT = 0;
+  var hitFlashT = 0;
+  var hitBeepCD = 0;
+  var fxPulses = [];
   var poolGrad = null,
     vigGrad = null,
     exitGlowGrad = null,
     intelHaloGrad = null;
 
-  /* ---- game state ---- */
   var state = 'title'; // title | briefing | playing | paused | clear | complete | over
   var levelIdx = 0,
     level = null,
@@ -859,7 +711,6 @@
   var keys = Object.create(null);
   var touchDir = { up: 0, down: 0, left: 0, right: 0 };
 
-  /* ===================== build DOM / styles ===================== */
   function $(sel) {
     return overlay.querySelector(sel);
   }
@@ -902,8 +753,6 @@
       '<div class="mgsg-toast" aria-hidden="true"></div>' +
       '<div class="mgsg-screen"><i class="mgsg-beam" aria-hidden="true"></i><span class="caller" data-scr="caller"></span>' +
       '<h2 data-scr="title">BIG SHELL</h2>' +
-      /* codec call row (title + briefing only): Raiden | wave + frequency strip | the Colonel.
-         Decorative — announce() carries the same information to the aria-live region. */
       '<div class="mgsg-call" aria-hidden="true">' +
       '<div class="mgsg-port"><div class="px raiden"><i></i><b></b></div><span class="who">RAIDEN</span></div>' +
       '<div class="mgsg-cc"><span class="mgsg-wave"><i></i><i></i><i></i><i></i><i></i></span>' +
@@ -976,32 +825,25 @@
 
     $('[data-act="close"]').addEventListener('click', closeGame);
     muteBtn.addEventListener('click', function (e) {
-      unlockAudio(); // real gesture — resume a policy-suspended AudioContext
+      unlockAudio();
       muted = !muted;
       muteBtn.textContent = muted ? 'SND OFF' : 'SND ON';
       muteBtn.style.color = muted ? 'var(--mg-dim)' : '';
       if (muted) stopAlertMusic();
       else if (alertPhase === 'alert' || alertPhase === 'evasion') startAlertMusic();
-      // A mouse/touch click leaves focus on this button, and onKey defers
-      // Enter/Space to a focused .mgsg-btn — so every Enter would keep toggling
-      // SND instead of advancing the screen. Hand focus back to the frame for
-      // pointer activations; keyboard activations (detail 0) keep focus so
-      // Tab users can toggle repeatedly.
+      // a pointer click (detail > 0) returns focus to the frame, or Enter would keep toggling sound
       if (e.detail > 0) frame.focus();
     });
 
-    // tap/click anywhere on a menu screen advances it (touch users have no Enter)
     screenEl.addEventListener('click', function () {
       if (state !== 'playing') advance();
     });
-    // mid-run retry from the pause screen — the touch path back into a level
     scrRetry.addEventListener('click', function (e) {
       e.stopPropagation();
       unlockAudio();
       startBriefing();
     });
 
-    // touch d-pad (movement)
     Array.prototype.forEach.call(
       overlay.querySelectorAll('.mgsg-pad button[data-dir]'),
       function (b) {
@@ -1021,7 +863,6 @@
         b.addEventListener('mouseleave', set(0));
       },
     );
-    // touch action buttons (+ the d-pad center pause)
     Array.prototype.forEach.call(
       overlay.querySelectorAll('.mgsg-acts button,.mgsg-pad button[data-act2]'),
       function (b) {
@@ -1034,8 +875,8 @@
             else if (a === 'box') doBox();
             else if (a === 'knock') doKnock();
             else if (a === 'cqc') doCQC();
-            else if (a === 'pause') pauseGame(); // touch users need a pause path too
-          } else advance(); // any action button doubles as "continue" on menu screens
+            else if (a === 'pause') pauseGame();
+          } else advance();
         };
         b.addEventListener('touchstart', press, { passive: false });
         b.addEventListener('mousedown', press);
@@ -1053,9 +894,7 @@
     );
   }
 
-  /* ===================== canvas sizing (DPR-aware; refreshed each open) ===================== */
-  // the frame is up to 1080 CSS px wide (and height-capped): back the 640x384 canvas with enough
-  // device pixels for that width so the 8 px HUD type stays sharp. Quarter steps, capped at 2.
+  // enough device pixels for the stage at its CSS size: 0.92 and 1080 mirror .mgsg-frame's width
   function targetDpr() {
     var r = window.devicePixelRatio || 1,
       vw = window.innerWidth || W,
@@ -1068,13 +907,9 @@
     canvas.width = W * dpr;
     canvas.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.imageSmoothingEnabled = false; // canvas resize resets state — keep pixel art crisp
-    if (walls) buildBg(); // rebuild static layer at the new DPR (first open: no level yet)
+    ctx.imageSmoothingEnabled = false; // resizing the canvas resets its context
+    if (walls) buildBg();
   }
-  // gradients that never change shape: player light pool (drawn under a translate,
-  // so it is built at the origin) and the full-strength dark vignette (drawn through
-  // globalAlpha, which scales it for both taking-fire flashes and low-life pulses:
-  // damage DIMS the edges of the world, it never tints them). Plus the mist sprite.
   function buildStaticGrads() {
     poolGrad = ctx.createRadialGradient(0, 0, 6, 0, 0, 130);
     poolGrad.addColorStop(0, 'rgba(184,198,214,0.10)');
@@ -1082,7 +917,7 @@
     vigGrad = ctx.createRadialGradient(W / 2, H / 2, H * 0.32, W / 2, H / 2, H * 0.8);
     vigGrad.addColorStop(0, 'rgba(2,4,10,0)');
     vigGrad.addColorStop(1, 'rgba(2,4,10,1)');
-    // mist: a 192x64 soft ellipse of silver fog, baked once (drawn scaled + alpha'd per frame)
+
     mistSprite = document.createElement('canvas');
     mistSprite.width = 192;
     mistSprite.height = 64;
@@ -1096,12 +931,6 @@
     m.fillRect(0, 0, 192, 192);
   }
 
-  /* ===================== the Colonel's codec portrait =====================
-     A 48 px head-and-shoulders silhouette, ordered-dithered (4x4 Bayer) in steel
-     blue, lit from the upper left; baked once. glitchColonel() runs only while a
-     codec call is on screen (~9 fps, a setInterval, not the game loop): one or two
-     rows tear sideways and a few static lines cross it; every ~3 s the signal breaks
-     up hard for a third of a second. Reduced motion: the still, clean frame. */
   var BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
   function buildColonel() {
     var S = 48,
@@ -1124,15 +953,15 @@
         var lum;
         if (inHead) {
           lum = 0.98 - 0.6 * Math.hypot((x - 19) / 12, (y - 14) / 14);
-          if (y < 11) lum *= 0.5; // the hairline
-          if (y >= 17 && y <= 19 && Math.abs(x - 24) >= 2 && Math.abs(x - 24) <= 7) lum *= 0.3; // the brow / eye shadow
-          if (y >= 26) lum *= 0.7; // the jaw falls into shade
+          if (y < 11) lum *= 0.5;
+          if (y >= 17 && y <= 19 && Math.abs(x - 24) >= 2 && Math.abs(x - 24) <= 7) lum *= 0.3;
+          if (y >= 26) lum *= 0.7;
         } else if (inNeck) lum = 0.26;
         else if (inBody)
           lum =
             0.66 -
             0.5 * Math.hypot((x - 14) / 30, (y - 38) / 18) -
-            (Math.abs(x - 24) < 3 && y < 44 ? 0.3 : 0); // a collar line
+            (Math.abs(x - 24) < 3 && y < 44 ? 0.3 : 0);
         else lum = 0;
         var on = lum * 16 > BAYER4[(y & 3) * 4 + (x & 3)] + 0.5,
           i = (y * S + x) * 4;
@@ -1154,7 +983,6 @@
     if (reduceMotion) return;
     n = heavy ? 6 : Math.random() < 0.55 ? 1 : 2;
     for (i = 0; i < n; i++) {
-      // torn rows: a band redrawn shifted sideways
       var y = (Math.random() * S) | 0,
         h = 1 + ((Math.random() * (heavy ? 6 : 3)) | 0),
         dx = ((Math.random() - 0.5) * (heavy ? 20 : 6)) | 0;
@@ -1164,7 +992,6 @@
     }
     n = heavy ? 16 : 3;
     for (i = 0; i < n; i++) {
-      // static lines
       var ry = (Math.random() * S) | 0;
       g.fillStyle = 'rgba(184,198,214,' + (0.15 + Math.random() * 0.5).toFixed(2) + ')';
       for (var sx2 = 0; sx2 < S; sx2 += 2) if (Math.random() < 0.5) g.fillRect(sx2, ry, 2, 1);
@@ -1184,10 +1011,7 @@
     }, 110);
   }
 
-  /* ===================== audio (tiny WebAudio sfx) ===================== */
-  // Called from genuine gestures (keydown / clicks / touchstart): under strict autoplay
-  // policies (Safari/iOS) a context created outside a gesture starts 'suspended' and
-  // must be resume()d inside one, or every sfx silently no-ops.
+  // browsers keep an AudioContext suspended until it is resumed inside a real gesture
   function unlockAudio() {
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1262,7 +1086,7 @@
     }
   }
 
-  /* ===================== geometry / grid helpers ===================== */
+  // grid helpers
   function px(t) {
     return t * TILE + TILE / 2;
   }
@@ -1318,7 +1142,6 @@
         return { x: x + cs * (d - LOS_STEP), y: y + sn * (d - LOS_STEP) };
     return { x: x + cs * maxd, y: y + sn * maxd };
   }
-  // BFS one step from (sc,sr) toward (gc,gr) over floor tiles; null if there/unreachable
   function bfsStep(sc, sr, gc, gr) {
     if (sc === gc && sr === gr) return null;
     if (gc < 0 || gr < 0 || gc >= COLS || gr >= ROWS || walls[gr][gc]) return null;
@@ -1356,14 +1179,13 @@
     while (prev[c2] !== -1 && prev[c2] !== startK) c2 = prev[c2];
     return { dc: (c2 % COLS) - sc, dr: ((c2 / COLS) | 0) - sr };
   }
-  // a noise at (x,y) makes nearby patrolling guards investigate that spot
   function emitNoise(x, y, radius) {
     noisePings.push({ x: x, y: y, r: radius, t: 0 });
     if (alertPhase === 'alert' || alertPhase === 'evasion') return;
     for (var i = 0; i < guards.length; i++) {
       var g = guards[i];
       if (g.down) continue;
-      if (g.behavior === 'investigate' && g.invTimer > 0) continue; // already checking a spot — don't re-home onto the live player
+      if (g.behavior === 'investigate' && g.invTimer > 0) continue;
       if (Math.hypot(g.x - x, g.y - y) <= radius) {
         g.behavior = 'investigate';
         g.invC = tcol(x);
@@ -1373,12 +1195,10 @@
       }
     }
   }
-  // purely visual ring pulse (CQC takedown, intel grab) — guards never react to it
   function addPulse(x, y, rgb) {
     if (fxPulses.length < 6) fxPulses.push({ x: x, y: y, c: rgb, t: 0 });
   }
 
-  /* ===================== level setup ===================== */
   function loadLevel(i) {
     level = LEVELS[i];
     walls = level.map.map(function (row) {
@@ -1390,7 +1210,6 @@
     exitPt = { x: px(level.exit[0]), y: px(level.exit[1]) };
     intel = level.intel ? { x: px(level.intel[0]), y: px(level.intel[1]) } : null;
     intelGot = !level.intel;
-    // per-level cached glow gradients (exit + intel are static per level)
     exitGlowGrad = ctx.createRadialGradient(exitPt.x, exitPt.y, 3, exitPt.x, exitPt.y, 20);
     exitGlowGrad.addColorStop(0, 'rgba(184,198,214,1)');
     exitGlowGrad.addColorStop(1, 'rgba(184,198,214,0)');
@@ -1481,15 +1300,11 @@
     buildBg();
   }
 
-  /* ---- pre-rendered background layer (floor + walls). Static world lives here;
-     per-frame canvas work is 1 blit + ~10 entities + a handful of gradients. ---- */
-  // deterministic 0..1 hash for baked scatter (glints, lugs) — no Math.random,
-  // so every rebuild (DPR change, retry) bakes the identical floor
+  // a fixed hash, not Math.random, so every rebuild bakes the same floor
   function hash01(n) {
     var v = Math.sin(n * 12.9898 + 78.233) * 43758.5453;
     return v - Math.floor(v);
   }
-  // per-op floor dressing, drawn under the walls (they fully cover their tiles)
   function bakeFloorIdentity(b) {
     var kind = level.floor,
       i,
@@ -1498,8 +1313,6 @@
       cx = W / 2,
       cy = H / 2;
     if (kind === 'dock') {
-      // Strut A's deck: treadplate — raised lugs every 8 px, alternating diagonals,
-      // each with a 1 px shadow under its lit edge
       b.lineWidth = 1;
       b.beginPath();
       for (y = 4; y < H; y += 8)
@@ -1519,7 +1332,7 @@
       b.restore();
       b.strokeStyle = 'rgba(184,198,214,0.11)';
       b.stroke();
-      // bolted deck plates: seams every 4 tiles, rivets along them
+
       b.beginPath();
       for (x = TILE * 4; x < W; x += TILE * 4) {
         b.moveTo(x + 0.5, 0);
@@ -1534,7 +1347,7 @@
       b.fillStyle = 'rgba(184,198,214,0.12)';
       for (x = TILE * 4; x < W; x += TILE * 4)
         for (y = 6; y < H; y += 12) b.fillRect(x - 2, y, 1, 1);
-      // wet sheen: long faint streaks laid down by the wind (it blows from the left)
+
       b.strokeStyle = 'rgba(184,198,214,0.035)';
       b.lineWidth = 2;
       b.beginPath();
@@ -1546,7 +1359,7 @@
         b.lineTo(x + len, y + len * 0.12);
       }
       b.stroke();
-      // drain grates: the night sea showing through the deck
+
       var drains = [
         [6, 7],
         [13, 1],
@@ -1565,7 +1378,7 @@
         b.lineWidth = 1;
         b.strokeRect(dx0 + 0.5, dy0 + 0.5, 19, 11);
       }
-      // the floor's edge over the water channel: dim-paper chevrons along the last floor row
+
       var hy = (ROWS - 1) * TILE - 5;
       b.save();
       b.beginPath();
@@ -1582,7 +1395,7 @@
       }
       b.stroke();
       b.restore();
-      // night floodlight pools (baked radial gradients — never per-frame)
+
       var pools = [
         [px(4), TILE, 110],
         [px(15), H - TILE, 100],
@@ -1608,17 +1421,15 @@
         );
       }
     } else if (kind === 'bridge') {
-      // the AB connecting bridge: the night sea under the whole walk ...
       b.fillStyle = '#030812';
       b.fillRect(0, 0, W, H);
       for (i = 0; i < 90; i++) {
-        // swell glints, laid along the wind
         x = hash01(i * 5) * W;
         y = hash01(i * 5 + 1) * H;
         b.fillStyle = 'rgba(143,166,192,' + (0.05 + hash01(i * 5 + 3) * 0.11).toFixed(3) + ')';
         b.fillRect(x | 0, y | 0, (6 + hash01(i * 5 + 2) * 24) | 0, 1);
       }
-      // ... seen through a catwalk grate (1 px steel every 4 px) ...
+
       b.beginPath();
       for (x = 0.5; x < W; x += 4) {
         b.moveTo(x, 0);
@@ -1631,7 +1442,7 @@
       b.strokeStyle = 'rgba(96,110,128,0.17)';
       b.lineWidth = 1;
       b.stroke();
-      // ... on heavier stringers every 2 tiles across the span
+
       b.beginPath();
       for (x = TILE * 2; x < W; x += TILE * 2) {
         b.moveTo(x + 1, 0);
@@ -1640,7 +1451,7 @@
       b.strokeStyle = 'rgba(130,144,160,0.24)';
       b.lineWidth = 2;
       b.stroke();
-      // handrails along the inner edges of the outer walls, stanchions every 24 px
+
       b.fillStyle = 'rgba(195,203,213,0.22)';
       b.fillRect(TILE, TILE + 1, W - 2 * TILE, 2);
       b.fillRect(TILE, H - TILE - 3, W - 2 * TILE, 2);
@@ -1649,7 +1460,6 @@
         b.fillRect(x, H - TILE - 6, 2, 5);
       }
     } else if (kind === 'core') {
-      // catwalk grating: fine cross-hatch
       b.strokeStyle = 'rgba(143,166,192,0.035)';
       b.lineWidth = 1;
       b.beginPath();
@@ -1660,7 +1470,7 @@
         b.lineTo(x, H);
       }
       b.stroke();
-      // composite panel seams every 2 tiles + rivets at the joints
+
       b.strokeStyle = 'rgba(0,0,0,0.28)';
       b.beginPath();
       for (x = TILE * 2; x < W; x += TILE * 2) {
@@ -1675,8 +1485,7 @@
       b.fillStyle = 'rgba(184,198,214,0.12)';
       for (x = TILE * 2; x < W; x += TILE * 2)
         for (y = TILE * 2; y < H; y += TILE * 2) b.fillRect(x - 1, y - 1, 3, 3);
-      // dim-paper hazard chevrons on the floor cells of the row in front of the
-      // camera (its own row is wall/corridor) — clipped to floor tiles only
+
       var cam = (level.cameras || [])[0];
       if (cam && cam.t[1] + 1 < ROWS - 1) {
         var cr = cam.t[1] + 1,
@@ -1708,13 +1517,8 @@
       }
     }
   }
-  // lit doorway: cut into the wall tile adjoining the exit (above first, then
-  // below / left / right — whichever side is wall). A recessed dark opening
-  // with a 1px bright jamb on its three closed sides, a lit strip at the far
-  // end, two dim treads, and ONE baked radial light spill onto the exit tile —
-  // the doorway reads as where the op leads. Bakes once per level (zero per-frame cost).
   function bakeDoorway(b, ec, er) {
-    // on the bridge the exit opens into the strut (right), never over the water
+    // on the bridge the door opens into the strut on the right, never over the water
     var dirs =
         level.floor === 'bridge'
           ? [
@@ -1759,8 +1563,7 @@
       ox = d[0] < 0 ? wx + 4 : wx;
     }
     b.fillStyle = '#040a16';
-    b.fillRect(ox, oy, ow, oh); // recessed opening
-    // far-end light strip + two dim treads stepping toward the threshold
+    b.fillRect(ox, oy, ow, oh);
     b.fillStyle = 'rgba(184,198,214,0.55)';
     if (vert) b.fillRect(ox + 2, d[1] < 0 ? oy : oy + oh - 3, ow - 4, 3);
     else b.fillRect(d[0] < 0 ? ox : ox + ow - 3, oy + 2, 3, oh - 4);
@@ -1798,7 +1601,7 @@
       b.lineTo(x0 - 1, y1);
     }
     b.stroke();
-    // light spill onto the exit tile from the threshold (the shared edge), clipped to the tile
+
     var tx = px(ec) + (d[0] * TILE) / 2,
       ty = px(er) + (d[1] * TILE) / 2,
       sr = TILE * 1.1;
@@ -1814,14 +1617,12 @@
     b.fillRect(tx - sr, ty - sr, sr * 2, sr * 2);
     b.restore();
   }
-  // open-water rows: the dock's channel (row 11), the bridge's two edges (rows 0 and 11)
   function isWaterRow(r) {
     return (
       (level.floor === 'dock' && r === ROWS - 1) ||
       (level.floor === 'bridge' && (r === 0 || r === ROWS - 1))
     );
   }
-  // the bridge's inner 2x2 blocks are cargo crates (the outer ring is the struts / water)
   function isCrate(c, r) {
     return (
       level.floor === 'bridge' && c > 0 && c < COLS - 1 && r > 0 && r < ROWS - 1 && walls[r][c]
@@ -1836,7 +1637,6 @@
       top = r === 0;
     b.fillStyle = '#02060e';
     b.fillRect(x0, y0, w, TILE);
-    // long low swells (static; seaGlints drifts the bright ones per frame)
     b.fillStyle = 'rgba(143,166,192,0.05)';
     for (i = 0; i < 16; i++)
       b.fillRect(
@@ -1846,7 +1646,6 @@
         1,
       );
     if (level.floor === 'bridge') {
-      // handrail on the deck side: a paper-dim bar, posts every 2 tiles, the deck's shadow on the water
       var ry = top ? y0 + TILE - 4 : y0 + 2;
       b.fillStyle = 'rgba(0,0,0,0.45)';
       b.fillRect(x0, top ? y0 + TILE - 9 : y0 + 4, w, 5);
@@ -1859,7 +1658,6 @@
         b.fillRect(x - 1, top ? ry - 6 : ry + 7, 3, 1);
       }
     } else {
-      // the dock edge: a steel lip and a bollard every 4 tiles
       b.fillStyle = '#3a4658';
       b.fillRect(x0, y0, w, 3);
       b.fillStyle = 'rgba(0,0,0,0.5)';
@@ -1872,12 +1670,11 @@
       }
     }
   }
-  // cargo crates on the bridge: corrugated steel, a lid seam, corner castings, one stencil line
   function bakeCrates(b) {
     var r, c, i;
     for (r = 1; r < ROWS - 1; r++)
       for (c = 1; c < COLS - 1; c++) {
-        if (!isCrate(c, r) || isCrate(c - 1, r) || isCrate(c, r - 1)) continue; // top-left tile of a block
+        if (!isCrate(c, r) || isCrate(c - 1, r) || isCrate(c, r - 1)) continue;
         var bw = 0,
           bh = 0;
         while (isCrate(c + bw, r)) bw++;
@@ -1889,28 +1686,27 @@
           fh = 7,
           top = h - fh;
         b.fillStyle = 'rgba(0,0,0,0.42)';
-        b.fillRect(x0 + 2, y0 + h, w, 5); // drop shadow
+        b.fillRect(x0 + 2, y0 + h, w, 5);
         b.fillStyle = '#2a3546';
-        b.fillRect(x0, y0, w, top); // lid
+        b.fillRect(x0, y0, w, top);
         b.fillStyle = '#131b28';
-        b.fillRect(x0, y0 + top, w, fh); // front face
+        b.fillRect(x0, y0 + top, w, fh);
         b.fillStyle = 'rgba(0,0,0,0.35)';
-        for (i = 4; i < w; i += 4) b.fillRect(x0 + i, y0 + top, 1, fh); // ribs on the face
+        for (i = 4; i < w; i += 4) b.fillRect(x0 + i, y0 + top, 1, fh);
         for (i = 3; i < w - 2; i += 4) {
-          // corrugation on the lid
           b.fillStyle = 'rgba(0,0,0,0.26)';
           b.fillRect(x0 + i, y0 + 2, 1, top - 4);
           b.fillStyle = 'rgba(192,202,214,0.07)';
           b.fillRect(x0 + i + 1, y0 + 2, 1, top - 4);
         }
-        var sy = y0 + (top >> 1); // lid seam
+        var sy = y0 + (top >> 1);
         b.fillStyle = 'rgba(0,0,0,0.55)';
         b.fillRect(x0 + 1, sy, w - 2, 1);
         b.fillStyle = 'rgba(192,202,214,0.14)';
         b.fillRect(x0 + 1, sy + 1, w - 2, 1);
-        b.fillStyle = 'rgba(195,203,213,0.32)'; // stencil line
+        b.fillStyle = 'rgba(195,203,213,0.32)';
         for (i = 0; i < 5; i++) b.fillRect(x0 + 8 + i * 5, y0 + 7, 3, 2);
-        b.fillStyle = '#566478'; // corner castings
+        b.fillStyle = '#566478';
         b.fillRect(x0, y0, 4, 4);
         b.fillRect(x0 + w - 4, y0, 4, 4);
         b.fillRect(x0, y0 + top - 4, 4, 4);
@@ -1919,11 +1715,9 @@
         b.lineWidth = 1;
         b.strokeRect(x0 + 0.5, y0 + 0.5, w - 1, h - 1);
         b.fillStyle = 'rgba(184,198,214,0.22)';
-        b.fillRect(x0 + 1, y0, w - 2, 1); // lit top rim
+        b.fillRect(x0 + 1, y0, w - 2, 1);
       }
   }
-  // drifting glints for the water rows: a transparent strip (W + 8 by one tile), drawn
-  // once per water row per frame at a 1-2 px sine offset — one drawImage each
   function bakeSeaGlints() {
     seaGlints = null;
     if (level.floor !== 'dock' && level.floor !== 'bridge') return;
@@ -1954,7 +1748,7 @@
       x0,
       y0,
       fl = FLOORS[level.floor] || { a: C.floorA, b: C.floorB };
-    // floor: checker + 2px dither dots
+
     for (r = 0; r < ROWS; r++)
       for (c = 0; c < COLS; c++) {
         x0 = c * TILE;
@@ -1969,7 +1763,7 @@
       }
     bakeFloorIdentity(b);
     bakeSeaGlints();
-    // exit pad, baked (visible from spawn — chevron hatch + frame)
+
     var ec = level.exit[0],
       er = level.exit[1],
       ex0 = ec * TILE,
@@ -1990,7 +1784,7 @@
     b.strokeStyle = 'rgba(184,198,214,0.25)';
     b.lineWidth = 1;
     b.strokeRect(ex0 + 2.5, ey0 + 2.5, TILE - 5, TILE - 5);
-    // faint tile grid
+
     b.strokeStyle = C.grid;
     b.lineWidth = 1;
     b.beginPath();
@@ -2003,10 +1797,8 @@
       b.lineTo(W, y + 0.5);
     }
     b.stroke();
-    // open water instead of a wall block: the dock's channel (bottom row) and both
-    // edges of the bridge (top + bottom rows) — still impassable, drawn as night sea
+
     for (r = 0; r < ROWS; r++) if (isWaterRow(r)) bakeWaterRow(b, r);
-    // walls: neighbor-aware bevel + hatching + drop shadow
     for (r = 0; r < ROWS; r++)
       for (c = 0; c < COLS; c++) {
         if (!walls[r][c]) continue;
@@ -2020,7 +1812,7 @@
           oE = c < COLS - 1 && !walls[r][c + 1];
         b.fillStyle = C.wallFace;
         b.fillRect(x0, y0, TILE, TILE);
-        // diagonal hatch texture, clipped to tile
+
         b.save();
         b.beginPath();
         b.rect(x0, y0, TILE, TILE);
@@ -2034,8 +1826,7 @@
         }
         b.stroke();
         b.restore();
-        // bevel: lit top face + 1px rim highlight, raised-block south front face,
-        // shaded east side — walls read as extruded blocks, not flat tiles
+
         if (oN) {
           b.fillStyle = C.wallTop;
           b.fillRect(x0, y0, TILE, 3);
@@ -2048,17 +1839,17 @@
         }
         if (oS) {
           b.fillStyle = C.wallFront;
-          b.fillRect(x0, y0 + TILE - 7, TILE, 7); // front face (2.5D height)
+          b.fillRect(x0, y0 + TILE - 7, TILE, 7);
           b.fillStyle = 'rgba(0,0,0,0.28)';
-          b.fillRect(x0, y0 + TILE - 7, TILE, 1); // seam line
+          b.fillRect(x0, y0 + TILE - 7, TILE, 1);
           b.fillStyle = 'rgba(0,0,0,0.25)';
-          for (var vx = 6; vx < TILE; vx += 10) b.fillRect(x0 + vx, y0 + TILE - 7, 1, 7); // mortar joints
+          for (var vx = 6; vx < TILE; vx += 10) b.fillRect(x0 + vx, y0 + TILE - 7, 1, 7);
         }
         if (oE) {
           b.fillStyle = C.wallSide;
           b.fillRect(x0 + TILE - 3, y0, 3, TILE);
         }
-        // 1px outline only on open sides (avoids a grid-of-boxes look)
+
         b.strokeStyle = C.wallEdge;
         b.lineWidth = 1;
         b.beginPath();
@@ -2079,7 +1870,6 @@
           b.lineTo(x0 + TILE - 0.5, y0 + TILE);
         }
         b.stroke();
-        // drop shadow cast onto the floor below (depth cue)
         if (oS) {
           b.fillStyle = C.wallShadow;
           b.fillRect(x0, y0 + TILE, TILE, 5);
@@ -2087,15 +1877,14 @@
       }
     if (level.floor === 'bridge') bakeCrates(b);
     bakeDoorway(b, ec, er);
-    // baked ambient light: a faint moonlit bloom at center, dark corners (one-time cost)
+
     var lg = b.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, Math.max(W, H) * 0.62);
     lg.addColorStop(0, 'rgba(164,182,204,0.05)');
     lg.addColorStop(0.6, 'rgba(0,0,0,0)');
     lg.addColorStop(1, 'rgba(0,0,0,0.32)');
     b.fillStyle = lg;
     b.fillRect(0, 0, W, H);
-    // radar minimap: the wall layout at radar scale, baked once — drawRadar()
-    // blits it fixed in the box (one drawImage, no per-frame tile loop)
+
     var mw = Math.ceil(W * RADAR_SC),
       mh = Math.ceil(H * RADAR_SC),
       ts = TILE * RADAR_SC;
@@ -2121,7 +1910,6 @@
     return { c: tcol(player.x), r: trow(player.y) };
   }
 
-  /* ===================== per-frame update ===================== */
   function update(dt) {
     knockCD = Math.max(0, knockCD - dt);
     cqcCD = Math.max(0, cqcCD - dt);
@@ -2144,7 +1932,6 @@
         updateHud();
       }
     }
-    // reaching the exit wins the frame outright — even if a guard would grab you on the same tick
     if (intelGot && Math.hypot(player.x - exitPt.x, player.y - exitPt.y) < EXIT_R) {
       levelClear();
       return;
@@ -2163,7 +1950,6 @@
     for (var gi = 0; gi < guards.length; gi++) updateGuard(guards[gi], dt, roomAlert);
     for (var ci = 0; ci < cameras.length; ci++) updateCamera(cameras[ci], dt);
 
-    // ---- detection ----
     var losNow = false,
       fullSpot = false,
       k;
@@ -2206,7 +1992,6 @@
 
     phaseMachine(dt, losNow, fullSpot);
 
-    // ---- damage ----
     if (roomAlert) {
       var shot = false,
         grabbed = false;
@@ -2218,11 +2003,9 @@
       }
       if (grabbed) life = 0;
       else if (shot) {
-        // taking-fire feedback: render() draws tracers + a dark vignette while
-        // hitFlashT > 0, and a low hit beep fires a few times per second
         life = Math.max(0, life - SHOOT_RATE * dt);
         hitFlashT = 0.18;
-        if (!reduceMotion) shakeT = Math.max(shakeT, 0.12); // low rumble while under fire
+        if (!reduceMotion) shakeT = Math.max(shakeT, 0.12);
         if (hitBeepCD <= 0) {
           hitBeepCD = 0.3;
           beep(196, 0.06, 'sawtooth', 0.05);
@@ -2246,7 +2029,7 @@
     return 1.4 + (1 - Math.min(1, dist / range)) * 2.6;
   }
   function detect(d) {
-    if (boxed && !player.moving) return false; // a still box hides you; moving in it does not
+    if (boxed && !player.moving) return false;
     var dx = player.x - d.x,
       dy = player.y - d.y,
       dist = Math.hypot(dx, dy),
@@ -2297,7 +2080,6 @@
     lastKnown = playerTile();
     if (!reduceMotion) {
       shakeT = 0.35;
-      // a paper-white sting on the spot — the "!" alert moment
       flashEl.classList.remove('on');
       void flashEl.offsetWidth;
       flashEl.classList.add('on');
@@ -2310,7 +2092,7 @@
     }
   }
 
-  /* ===================== player + guards ===================== */
+  // player and guards
   function blocked(nx, ny) {
     if (circleHitsWall(nx, ny, PLAYER_R)) return true;
     for (var i = 0; i < guards.length; i++) {
@@ -2318,8 +2100,7 @@
       if (g.down) continue;
       var nd = Math.hypot(nx - g.x, ny - g.y);
       if (nd >= GUARD_R + PLAYER_R) continue;
-      // ignore a guard when the move INCREASES distance from him — a player a guard
-      // has walked onto can always back out (prevents the boxed-pin softlock)
+      // a move away from a guard is always allowed, so a player he has walked onto can back out
       if (nd >= Math.hypot(player.x - g.x, player.y - g.y)) continue;
       return true;
     }
@@ -2343,8 +2124,7 @@
       if (!blocked(player.x, ny)) player.y = ny;
       player.fx = ix / len;
       player.fy = iy / len;
-      // 'moving' = actual displacement, not raw input — a boxed player wedged
-      // against a wall looks motionless and must stay hidden
+      // moving means displaced, not key held: a boxed player pushing against a wall stays hidden
       player.moving = player.x !== ox || player.y !== oy;
       if (player.moving) walkPhase += spd * dt * 0.06;
       if (running && !boxed) {
@@ -2376,8 +2156,6 @@
     announce('Knocking to lure a guard.');
   }
   function doCQC() {
-    // CQC works in every alert phase — the only skill check is the rear-arc
-    // approach (a guard you're behind can't be seeing you, so no seeing check).
     if (cqcCD > 0) return;
     var best = null,
       bestd = CQC_R;
@@ -2406,7 +2184,7 @@
   function updateGuard(g, dt, roomAlert) {
     if (g.down) return;
     var ox = g.x,
-      oy = g.y; // for the walk-cycle flag below (visual only)
+      oy = g.y;
     var fovMul = 1,
       rangeMul = 1;
     if (alertPhase === 'caution') {
@@ -2437,13 +2215,10 @@
       g.behavior = 'patrol';
       patrolMove(g, dt);
     }
-    // walk animation state — pure presentation, no behavior change
     g.moving = g.x !== ox || g.y !== oy;
     if (g.moving) g.walk = (g.walk || 0) + dt * 9;
   }
-  // stopNearBox: while hunting, stop short of a hiding (boxed) player instead of
-  // parking on top of him — he can't be grabbed while boxed, and a guard standing
-  // on the box used to pin the player in place for the whole alert window.
+  // a boxed player cannot be grabbed, so a hunting guard stops beside the box, not on it
   function guardMoveOK(nx, ny, stopNearBox) {
     return !(
       stopNearBox &&
@@ -2463,7 +2238,7 @@
       g.facing = Math.atan2(cy - g.y, cx - g.x);
       var ax = d <= s ? cx : g.x + ((cx - g.x) / d) * s,
         ay = d <= s ? cy : g.y + ((cy - g.y) / d) * s;
-      if (!guardMoveOK(ax, ay, stopNearBox)) return true; // close enough — search here
+      if (!guardMoveOK(ax, ay, stopNearBox)) return true;
       g.x = ax;
       g.y = ay;
       return d <= s;
@@ -2501,7 +2276,7 @@
       }
       return;
     }
-    // path to the waypoint tile (wall-aware) so a guard returning from a hunt never straight-lines through walls
+    // routed like a hunt: a guard coming back from one may have walls between him and the waypoint
     var tgt = g.path[g.i];
     if (huntToward(g, tcol(tgt.x), trow(tgt.y), dt, 1)) {
       g.x = tgt.x;
@@ -2515,7 +2290,6 @@
     c.facing = c.base + Math.sin(elapsed * c.speed) * c.arc;
   }
 
-  // the one countdown readout (whole seconds, rounded up), shared by the DOM badge and the canvas window
   function phaseSecs() {
     return Math.ceil(Math.max(0, alertPhase === 'evasion' ? evasionTimer : cautionTimer));
   }
@@ -2530,14 +2304,12 @@
           : ph === 'caution'
             ? 'CAUTION ' + phaseSecs()
             : 'NORMAL';
-    // write the bar width only when the rounded value changes — render() reads
-    // canvas.clientWidth each frame, and a dirty style every frame would force a layout
+    // set only on change, or render()'s clientWidth read would force a layout every frame
     var lwid = (life * 100).toFixed(0) + '%';
     if (lwid !== lastLifeW) {
       lastLifeW = lwid;
       lifeFill.style.width = lwid;
     }
-    // healthy = steel blue; warning = cool grey; critical = paper (blinking)
     var lcol = life > 0.5 ? 'var(--mg-text)' : life > 0.25 ? 'var(--mg-pdim)' : 'var(--mg-paper)';
     if (lcol !== lastLifeC) {
       lastLifeC = lcol;
@@ -2557,23 +2329,17 @@
     }
   }
 
-  /* ===================== rendering =====================
-     Perf guardrails: never ctx.shadowBlur / ctx.filter — glow is radial-gradient
-     fills only; shake is one ctx.translate with sin(); sprites are pre-rendered
-     canvases (1 drawImage each); per-frame gradient budget ≤9. ===================== */
+  // rendering: no shadowBlur, no filter, and only the vision cones make a gradient each frame
   function drawShadow(x, y) {
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.beginPath();
     ctx.ellipse(x, y + 10, 9, 3.5, 0, 0, Math.PI * 2);
-    ctx.fill(); // sized to the one-tile sprites
+    ctx.fill();
   }
-  // 8-way facing snap keeps rotated pixel art crisp; vision cones keep the
-  // smooth unsnapped facing — classic 2D-stealth look, identical gameplay
+
+  // sprites turn in 45 degree steps, which keeps the pixel art crisp
   var STEP8 = Math.PI / 4;
-  // radar minimap geometry: a 90x54 bezelled rectangle in the top-left corner,
-  // the room's own 5:3 shape, so the whole room fills the box edge to edge
-  // (640x384 at 54/384 = 90x54, nothing wasted). The bezel ends at y 63, inside
-  // row 1; the RADAR label sits to the box's right, under the LIFE window.
+
   var RADAR_X = 6,
     RADAR_Y = 5,
     RADAR_W = 90,
@@ -2582,7 +2348,7 @@
   var RADAR_OX = RADAR_X + (RADAR_W - W * RADAR_SC) / 2,
     RADAR_OY = RADAR_Y + (RADAR_H - H * RADAR_SC) / 2;
   var DASH_CALM = [4, 3],
-    DASH_NONE = []; // hoisted — no per-frame arrays
+    DASH_NONE = [];
   function drawSpriteImg(img, x, y, angle, bobPhase) {
     ctx.save();
     ctx.translate(x, y);
@@ -2592,14 +2358,11 @@
     ctx.restore();
   }
   function drawCone(d, roomAlert) {
-    // calm = steel-blue light, dashed edge; suspicious / caution = cool grey; hostile =
-    // paper-white searchlight (no red: danger reads as hard white light)
     var rgb,
       edgeA,
       calm = false;
     if (roomAlert || d.seeing) {
       rgb = '233,231,226';
-      // edge strobes while this watcher has live eyes on the player
       edgeA = d.seeing && !reduceMotion ? 0.45 + 0.3 * Math.abs(Math.sin(elapsed * 9)) : 0.6;
     } else if ((d.spotTimer || 0) > 0 || alertPhase === 'caution') {
       rgb = '195,203,213';
@@ -2612,8 +2375,6 @@
     var half = (d.fov * (d.fovMul || 1)) / 2,
       range = d.range * (d.rangeMul || 1),
       STEPS = 20;
-    // hostile cones fill a little brighter so they read over the alarm vignette;
-    // the additive white is kept low so the floor under it never blows out
     var hot = roomAlert || d.seeing;
     var grad = ctx.createRadialGradient(d.x, d.y, 4, d.x, d.y, range);
     grad.addColorStop(0, 'rgba(' + rgb + (hot ? ',0.30)' : ',0.30)'));
@@ -2627,20 +2388,19 @@
       ctx.lineTo(h.x, h.y);
     }
     ctx.closePath();
-    // the cone is LIGHT: additive fill brightens whatever floor it falls on;
-    // two faint range arcs (50% / 100%) are clipped to the cone. State restored after.
+
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     ctx.fillStyle = grad;
     ctx.fill();
     ctx.restore();
-    // edge: dashed while the watcher is calm, solid once he is suspicious or hostile
+
     ctx.setLineDash(calm ? DASH_CALM : DASH_NONE);
     ctx.strokeStyle = 'rgba(' + rgb + ',' + edgeA + ')';
     ctx.lineWidth = 1;
     ctx.stroke();
     ctx.setLineDash(DASH_NONE);
-    // range arcs, clipped to the (still current) cone path
+
     ctx.save();
     ctx.clip();
     ctx.strokeStyle = 'rgba(' + rgb + ',0.14)';
@@ -2652,7 +2412,7 @@
     ctx.arc(d.x, d.y, range - 1.5, d.facing - half, d.facing + half);
     ctx.stroke();
     ctx.restore();
-    // hot center ray — the look direction reads instantly
+
     var hFar = rayHit(d.x, d.y, d.facing, range);
     ctx.strokeStyle = 'rgba(' + rgb + ',' + (d.seeing ? 0.5 : 0.15) + ')';
     ctx.lineWidth = 1;
@@ -2661,8 +2421,6 @@
     ctx.lineTo(hFar.x, hFar.y);
     ctx.stroke();
   }
-  // last-known-position marker — pure visualization of the existing lastKnown
-  // tile the guard AI already converges on during ALERT/EVASION
   function drawLastKnown() {
     if (!lastKnown) return;
     var x = px(lastKnown.c),
@@ -2696,7 +2454,7 @@
     var on = intelGot,
       p = reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(elapsed * 4);
     if (on) {
-      ctx.globalAlpha = 0.18 + 0.18 * p; // cached gradient, alpha does the breathing
+      ctx.globalAlpha = 0.18 + 0.18 * p;
       ctx.fillStyle = exitGlowGrad;
       ctx.fillRect(exitPt.x - 20, exitPt.y - 20, 40, 40);
       ctx.globalAlpha = 1;
@@ -2730,17 +2488,14 @@
     ctx.textBaseline = 'middle';
     ctx.fillText('EXIT', x, y);
   }
-  // intel = a steel-blue keycard (pre-rendered SPR.key) bobbing gently over its
-  // cached halo; the bright contact notch is the read, so no '!' glyph is needed
   function drawIntel() {
     if (!intel || intelGot) return;
     var p = reduceMotion ? 0.6 : 0.5 + 0.5 * Math.sin(elapsed * 3);
-    ctx.globalAlpha = 0.3 + 0.25 * p; // cached gradient, alpha does the pulsing
+    ctx.globalAlpha = 0.3 + 0.25 * p;
     ctx.fillStyle = intelHaloGrad;
     ctx.fillRect(intel.x - 18, intel.y - 18, 36, 36);
     ctx.globalAlpha = 1;
     var bob = reduceMotion ? 0 : Math.round(Math.sin(elapsed * 2.6) * 1.5);
-    // soft contact shadow under the card sells the hover
     ctx.fillStyle = 'rgba(0,0,0,0.30)';
     ctx.fillRect(intel.x - 7, intel.y + 5, 14, 3);
     ctx.drawImage(SPR.key, intel.x - SPR.key.width / 2, intel.y - SPR.key.height / 2 + bob);
@@ -2749,11 +2504,10 @@
     ctx.save();
     ctx.translate(c.x, c.y);
     ctx.fillStyle = C.wallSide;
-    ctx.fillRect(-2, -12, 4, 8); // stem
+    ctx.fillRect(-2, -12, 4, 8);
     ctx.fillStyle = C.wallEdge;
-    ctx.fillRect(-3, -13, 6, 2); // mount plate
+    ctx.fillRect(-3, -13, 6, 2);
     ctx.rotate(c.facing);
-    // hooded housing with a lens slit
     ctx.fillStyle = C.wallFront;
     ctx.strokeStyle = c.seeing ? C.paper : C.wallEdge;
     ctx.lineWidth = 1;
@@ -2768,7 +2522,7 @@
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = c.seeing ? C.paper : C.bright;
-    ctx.fillRect(6, -1.5, 2, 3); // lens slit
+    ctx.fillRect(6, -1.5, 2, 3);
     ctx.restore();
     var led = c.seeing || Math.sin(elapsed * 6) > 0;
     ctx.fillStyle = c.seeing ? C.paper : led ? C.line : 'rgba(143,166,192,0.25)';
@@ -2776,7 +2530,6 @@
   }
   function drawGuard(g, roomAlert) {
     if (g.down) {
-      // prone: the guard sprite turned 90 degrees off his facing, dimmed to ~70 %, a paper "zz"
       drawShadow(g.x, g.y);
       drawSpriteImg(SPR.guardDown, g.x, g.y, g.facing + Math.PI, null);
       ctx.font = 'bold 9px "Share Tech Mono",monospace';
@@ -2799,8 +2552,7 @@
       g.facing + Math.PI / 2,
       g.moving ? g.walk : null,
     );
-    // awareness gauge — the arc fills cool grey -> paper with spotTimer before the alarm trips
-    // (gauge + plate sit above the 36px sprite: half-height 18 + a 2–6px gap)
+
     if (!roomAlert && g.spotTimer > 0.05 && g.spotTimer < SPOT_FULL) {
       var t = g.spotTimer / SPOT_FULL;
       ctx.lineWidth = 3;
@@ -2822,10 +2574,6 @@
     }
     if (mark) drawAlertPlate(g.x, g.y - 20, mark, elapsed - (g.markSince || 0));
   }
-  // MGS alert plate. "!" = a paper plate, steel-blue 2px stroke, a sumi glyph (the site's
-  // own "!" over Raiden, in the game); "?" = a dim-paper plate, paper stroke, sumi glyph.
-  // Pops in from 2.6x (ease-out over 0.14s), holds large ~0.5s, then eases down
-  // to a small persistent plate. reduceMotion shows the small plate immediately.
   function drawAlertPlate(x, yBottom, mark, age) {
     var s, t;
     if (reduceMotion) s = 0.62;
@@ -2853,13 +2601,6 @@
     ctx.fillStyle = C.ink;
     ctx.fillText(mark, x, y0 + h / 2 + 1);
   }
-  // radar — MGS2's rectangular minimap: the level's wall layout (baked radarMap,
-  // one drawImage) showing the whole room, guards as steel-blue blips with their cone wedges
-  // (paper while one has eyes on you), cameras cool grey, exit bearing once the
-  // intel is in hand. JAMMED (alert/evasion, or forceJam on the game-over freeze)
-  // = steel-blue static stripes. No gradients here.
-  // radarFade: the box dims to 0.3 while Raiden or a standing guard is under it
-  // (MGS2 fades its HUD the same way), so nobody vanishes in the corner
   var radarFade = 1;
   function underRadar(px, py) {
     return (
@@ -2886,7 +2627,6 @@
     radarFade = reduceMotion ? fadeTo : radarFade + (fadeTo - radarFade) * 0.25;
     ctx.globalAlpha = radarFade;
     ctx.save();
-    // bezel + screen — translucent, so a sprite walking under the corner stays visible
     ctx.fillStyle = 'rgba(4,9,18,0.6)';
     ctx.fillRect(x - 4, y - 4, w + 8, h + 8);
     ctx.strokeStyle = 'rgba(143,166,192,0.18)';
@@ -2896,7 +2636,6 @@
     ctx.rect(x, y, w, h);
     ctx.clip();
     if (jam) {
-      // static: 2px bands whose brightness hashes off (row, frame) — no allocation
       var fr = reduceMotion ? 0 : Math.floor(elapsed * 16);
       for (i = 0; i < h; i += 2) {
         var v = Math.sin((i + fr * 7) * 12.9898) * 43758.5453;
@@ -2944,7 +2683,6 @@
         ctx.fillStyle = C.paperDim;
         ctx.fillRect(rx2 - 1.5, ry2 - 1.5, 3, 3);
       }
-      // exit waypoint once the intel is in hand
       if (intelGot) {
         var rex = ox + exitPt.x * sc,
           rey = oy + exitPt.y * sc;
@@ -2956,7 +2694,6 @@
           ctx.strokeRect(rex - 3.5, rey - 3.5, 7, 7);
         }
       }
-      // player dot + facing tick — bearing reads off the radar at a glance
       var pxr = ox + player.x * sc,
         pyr = oy + player.y * sc;
       ctx.fillStyle = C.bright;
@@ -2970,7 +2707,7 @@
       ctx.stroke();
     }
     ctx.restore();
-    // frame + corner ticks
+
     ctx.strokeStyle = jam ? 'rgba(184,198,214,0.7)' : 'rgba(143,166,192,0.5)';
     ctx.lineWidth = 1;
     ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
@@ -2989,7 +2726,6 @@
     ctx.lineTo(x - 4, y + h + 4);
     ctx.lineTo(x - 4, y + h - 4);
     ctx.stroke();
-    // the label only where it is legible (a phone scales the canvas to ~0.55: 8 px would be 4 px of noise)
     if (lastWide) {
       ctx.fillStyle = C.dim;
       ctx.font = '8px "Share Tech Mono",monospace';
@@ -2999,16 +2735,8 @@
     }
     ctx.globalAlpha = 1;
   }
-  /* ---- in-canvas MGS HUD windows — visual duplicates of the DOM strip (which
-     stays the accessible source of truth). Drawn after the radar, only when the
-     canvas is at least 520 CSS px wide (below that the DOM strip alone serves).
-     Every window sits inside the outer wall ring so no floor is covered:
-       LIFE gauge   top row, right of the radar   x 118–330, y 7–25
-       ALERT timer  top row                        x 340–470, y 7–25 (nothing when NORMAL)
-       WEAPON/ACTION window  bottom-left            x 8–104,  y 353–381
-       ITEM window  bottom-right                    x 536–632, y 353–381
-     fillRect / strokeRect / fillText / arc only — no gradients, so the per-frame
-     gradient budget is untouched. reduceMotion: no blinking, values only. ---- */
+
+  // HUD windows, drawn on the outer wall rows so they never cover floor
   var HUD_FONT = '8px "Share Tech Mono",monospace',
     HUD_PANEL = 'rgba(4,9,18,0.62)',
     HUD_EDGE = 'rgba(143,166,192,0.35)';
@@ -3019,7 +2747,6 @@
     ctx.lineWidth = 1;
     ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
   }
-  // cooldown ring: dim track; a dim-paper arc grows as the timer recharges; full steel-blue ring when ready
   function hudRing(x, y, cd, max) {
     ctx.lineWidth = 2;
     ctx.strokeStyle = 'rgba(143,166,192,0.22)';
@@ -3045,7 +2772,7 @@
       i;
     ctx.font = HUD_FONT;
     ctx.textBaseline = 'middle';
-    // (a) LIFE gauge — same thresholds as updateHud()
+
     hudPanel(118, 7, 212, 18);
     ctx.textAlign = 'left';
     ctx.fillStyle = C.dim;
@@ -3061,8 +2788,8 @@
       ctx.fillRect(151, 12, lw, 8);
     }
     ctx.fillStyle = 'rgba(4,9,18,0.75)';
-    for (i = 158; i < 325; i += 8) ctx.fillRect(i, 12, 1, 8); // segment ticks every 8px
-    // (d) alert-phase countdown — digits left-aligned at a fixed x so they never jitter
+    for (i = 158; i < 325; i += 8) ctx.fillRect(i, 12, 1, 8);
+
     if (alertPhase !== 'normal' && state === 'playing') {
       var ph = alertPhase,
         pc = ph === 'caution' ? C.paperDim : C.paper;
@@ -3073,15 +2800,14 @@
       if (ph === 'alert') {
         ctx.fillText('ALERT', 358, 16.5);
         if (blinkOn) ctx.fillText('!', 346, 16.5);
-      } // word stays, the ! blinks
-      else {
+      } else {
         ctx.fillText(ph === 'evasion' ? 'EVASION' : 'CAUTION', 346, 16.5);
         ctx.fillStyle = ph === 'caution' ? C.paperDim : C.paper;
         ctx.fillText(String(phaseSecs()), 404, 16.5);
       }
     }
-    if (coarsePointer) return; // the touch d-pad / action buttons overlay both bottom corners
-    // (c) WEAPON / ACTION window — CQC + KNOCK with their cooldown rings
+    if (coarsePointer) return; // the touch controls cover both bottom corners
+
     hudPanel(8, 353, 96, 28);
     hudRing(21, 367, cqcCD, CQC_CD);
     hudRing(63, 367, knockCD, KNOCK_CD);
@@ -3091,7 +2817,7 @@
     ctx.fillText('CHOKE', 31, 367.5);
     ctx.fillStyle = knockCD > 0 ? C.dim : C.line;
     ctx.fillText('KNOCK', 73, 367.5);
-    // (b) ITEM window — the box (mini SPR.box) when worn, an empty slot otherwise
+
     hudPanel(536, 353, 96, 28);
     ctx.fillStyle = C.dim;
     ctx.fillText('ITEM', 541, 367.5);
@@ -3101,7 +2827,7 @@
     ctx.lineWidth = 1;
     ctx.strokeRect(570.5, 356.5, 21, 21);
     if (boxed) {
-      ctx.drawImage(SPR.box, 572, 358, 18, 18); // exact 1:2 of the 2x sprite at an integer origin (no ragged rows)
+      ctx.drawImage(SPR.box, 572, 358, 18, 18);
       ctx.fillStyle = C.bright;
       ctx.fillText('BOX', 598, 367.5);
     } else {
@@ -3114,21 +2840,17 @@
       i;
     ctx.clearRect(0, 0, W, H);
     ctx.save();
-    // deterministic sin-based shake — no allocation, no Math.random
     if (shakeT > 0) {
       var shk = shakeT / 0.35;
       ctx.translate(Math.sin(elapsed * 87) * 3.5 * shk, Math.cos(elapsed * 61) * 2.5 * shk);
     }
-    // static world: one blit from the pre-rendered layer (vs 240 tile draws/frame)
     if (bgLayer) ctx.drawImage(bgLayer, 0, 0, W, H);
-    // the open water drifts: the glint strip, 1-2 px of sine sway, one drawImage per water row
     if (seaGlints) {
       var sway = reduceMotion ? -4 : -4 + Math.sin(elapsed * 0.9) * 2;
       for (i = 0; i < ROWS; i += ROWS - 1)
         if (isWaterRow(i)) ctx.drawImage(seaGlints, TILE + sway, i * TILE, W - 2 * TILE + 8, TILE);
     }
-    // player light pool — gives the eye a focal point on the dark floor
-    // (origin-built cached gradient drawn under a translate: zero per-frame allocation)
+
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     ctx.translate(player.x, player.y);
@@ -3146,12 +2868,11 @@
       ctx.arc(pg.x, pg.y, pg.r * t, 0, Math.PI * 2);
       ctx.stroke();
       ctx.strokeStyle = 'rgba(164,182,204,' + 0.3 * (1 - t) + ')';
-      ctx.lineWidth = 1; // trailing ring
+      ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.arc(pg.x, pg.y, pg.r * t * 0.65, 0, Math.PI * 2);
       ctx.stroke();
     }
-    // event pulses: steel-blue ring on a CQC takedown, paper ring on the intel grab
     for (i = 0; i < fxPulses.length; i++) {
       var fp = fxPulses[i],
         ft = fp.t / 0.45,
@@ -3182,7 +2903,6 @@
         player.moving ? walkPhase : null,
       );
     }
-    // taking-fire feedback: flickering tracers from every shooter (world space)
     if (hitFlashT > 0) {
       for (i = 0; i < guards.length; i++) {
         var tg = guards[i];
@@ -3197,13 +2917,12 @@
         ctx.lineTo(player.x, player.y);
         ctx.stroke();
         ctx.fillStyle = 'rgba(233,231,226,0.95)';
-        ctx.fillRect(tg.x - 2, tg.y - 2, 4, 4); // muzzle flash
+        ctx.fillRect(tg.x - 2, tg.y - 2, 4, 4);
       }
     }
     if (level.weather) drawSeaWeather(level.weather === 'sea');
     ctx.restore();
-    // dark vignette (screen space — must not shake): scales with taking-fire flash,
-    // and pulses slowly while life is critical so danger reads without the HUD bar
+
     var vigA = hitFlashT > 0 ? 0.38 * (hitFlashT / 0.18) : 0;
     if (life > 0 && life < 0.3 && state === 'playing')
       vigA = Math.max(vigA, reduceMotion ? 0.14 : 0.1 + 0.08 * Math.sin(elapsed * 5));
@@ -3213,23 +2932,17 @@
       ctx.fillRect(0, 0, W, H);
       ctx.globalAlpha = 1;
     }
-    // MGS HUD windows on wide canvases only (one clientWidth read per frame);
-    // narrow/phone layouts rely on the DOM strip alone
-    // gate on the RENDERED width: a height-capped frame letterboxes the canvas (object-fit: contain)
+
+    // the drawn width: object-fit:contain letterboxes the canvas when the frame is height-capped
     var wide = Math.min(canvas.clientWidth, (canvas.clientHeight * W) / H) >= 520;
     if (wide !== lastWide) {
       lastWide = wide;
       overlay.classList.toggle('mgsg-wide', wide);
-    } // hides the DOM badge + gauge
+    }
     drawRadar();
     if (wide) drawHudWindows();
   }
 
-  /* ---- night weather. Mist = the baked mistSprite drawn 5 times, drifting with
-     the wind (no gradient per frame). Spray (the open bridge only) = short
-     diagonal streaks on ONE wind vector, coming in gusts (the count swells and
-     falls), paper at .25, one stroked path (no Math.random, no allocation).
-     Reduced motion: the mist holds still and the spray is skipped. ---- */
   function drawSeaWeather(spray) {
     var t = reduceMotion ? 0 : elapsed,
       i,
@@ -3258,9 +2971,7 @@
     ctx.stroke();
   }
 
-  /* ===================== screens / transitions ===================== */
-  // gameplay messages go to the aria-live region AND (during play) to a visible
-  // codec-subtitle toast — sighted players get the same guidance as SR users
+  // screens
   function announce(m, ms) {
     if (srLive) srLive.textContent = m;
     if (!toastEl || state !== 'playing') return;
@@ -3279,7 +2990,6 @@
     }
     if (toastEl) toastEl.classList.remove('show');
   }
-  // typewriter reveal for codec briefings (visual only — announce() gets the full string)
   function typeText(el, str) {
     if (typeTimer) {
       clearInterval(typeTimer);
@@ -3300,7 +3010,6 @@
       }
     }, 16);
   }
-  // touch devices have no Enter key — swap the prompt for a tap hint
   function goText(t) {
     if (!coarsePointer || !t) return t;
     return t
@@ -3309,10 +3018,7 @@
       .replace('PRESS ENTER', 'TAP TO CONTINUE');
   }
   function showScreen(o) {
-    hideToast(); // a live gameplay toast (z above the screen) must not float over a menu
-    // every screen change stands the live-play chrome down: the DOM badge names the screen (never a stale
-    // "! ALERT" or "CAUTION 20" under it) and the alarm wash, hazard tape and paper LCD chip go;
-    // resumeGame() / the next run's updateHud() bring the live state back
+    hideToast();
     endChrome(
       o.cls === 'pause'
         ? 'PAUSED'
@@ -3323,10 +3029,8 @@
             : 'CLEAR',
     );
     screenEl.className = 'mgsg-screen show' + (o.cls ? ' ' + o.cls : '');
-    overlay.classList.add('mgsg-scr'); // phone: the screen also covers the control deck, which hides
-    // restart the codec wipe + beam on every screen change (the 'show' class may
-    // already be present, e.g. title -> briefing); inline animation:none + reflow
-    // restarts the keyframes without touching the opacity transition
+    overlay.classList.add('mgsg-scr');
+    // the show class may already be on, so restart the wipe: animation none, reflow, then clear it
     if (!reduceMotion) {
       screenEl.style.animation = 'none';
       beamEl.style.animation = 'none';
@@ -3339,15 +3043,13 @@
     scrTitle.textContent = o.title || '';
     scrSub.textContent = o.sub || '';
     scrGo.textContent = goText(o.go) || '';
-    // codec-call layout (title + briefing): Raiden | frequency strip | the Colonel,
-    // whose signal breaks up while the call is on screen
+
     var call = o.cls === 'title' || o.cls === 'brief';
     glitchColonel(call);
     if (call) {
       scrWhoThem.textContent = o.who || 'COLONEL';
       var fq = o.freq || '140.85',
         target = Math.max(1, Math.min(99, ((parseFloat(fq) - 140) / 2) * 100)).toFixed(1) + '%';
-      // needle: 140.00 .. 142.00 across the strip. On the title it sweeps in from 140.00 while the readout ticks up
       if (o.cls === 'title' && !reduceMotion) {
         scrNeedle.style.left = '1%';
         void scrNeedle.offsetWidth;
@@ -3398,7 +3100,6 @@
     }
     glitchColonel(false);
   }
-  // an LCD readout dials in: 140.00 -> f in 8 steps over 0.4 s (one timer per element)
   var tickTimers = [];
   function tickFreq(el, f) {
     var slot = el === freqEl ? 0 : 1;
@@ -3442,8 +3143,7 @@
     return 'C';
   }
 
-  /* ---- per-op best completion times (localStorage 'mgs-best': {op1:s,op2:s,op3:s,total:s}).
-     Flat schema, every read guarded — corrupt/foreign JSON degrades to "no best". ---- */
+  // best times in seconds: { op1, op2, op3, total }; an unreadable value counts as none
   var BEST_KEY = 'mgs-best';
   function readBest() {
     var b = null;
@@ -3456,7 +3156,6 @@
     var v = readBest()[key];
     return typeof v === 'number' && isFinite(v) && v > 0 ? v : null;
   }
-  // store secs under key if it beats (or first sets) the best; true = new record
   function noteBest(key, secs) {
     var prev = bestFor(key);
     if (prev !== null && prev <= secs) return false;
@@ -3468,8 +3167,6 @@
     return true;
   }
 
-  // title + briefings: a codec call from the Colonel on 140.85 — Raiden (the site's
-  // own ink, masked steel blue) on the left, the Colonel's breaking-up signal on the right
   function startTitle() {
     state = 'title';
     loadLevel(0);
@@ -3489,7 +3186,7 @@
     state = 'briefing';
     loadLevel(levelIdx);
     render();
-    var pb = bestFor('op' + (levelIdx + 1)); // personal best line — omitted until an op is cleared once
+    var pb = bestFor('op' + (levelIdx + 1));
     showScreen({
       cls: 'brief',
       caller: '▸ ' + level.caller,
@@ -3507,20 +3204,19 @@
     keys = Object.create(null);
     touchDir = { up: 0, down: 0, left: 0, right: 0 };
     running = false;
-    // CRT power-on sweep as gameplay starts
     if (!reduceMotion) {
       canvas.classList.remove('on');
       void canvas.offsetWidth;
       canvas.classList.add('on');
     }
     state = 'playing';
-    announce('Go.', 900); // a beat, not a banner
+    announce('Go.', 900);
   }
   function pauseGame() {
     if (state !== 'playing') return;
     state = 'paused';
     stopAlertMusic();
-    render(); // redraw the frame under the screen without the live phase window (drawHudWindows draws it only while playing)
+    render();
     showScreen({
       cls: 'pause',
       title: 'PAUSED',
@@ -3536,7 +3232,7 @@
     touchDir = { up: 0, down: 0, left: 0, right: 0 };
     running = false;
     state = 'playing';
-    updateHud(); // the badge and the alarm chrome return with the run
+    updateHud();
     if (alertPhase === 'alert' || alertPhase === 'evasion') startAlertMusic();
     announce('Resumed.', 900);
   }
@@ -3545,7 +3241,6 @@
     totalAlerts += alertsThisLevel;
     stopAlertMusic();
     sfxClear();
-    // op best is recorded on every clear (incl. op3) so its briefing shows a PB
     var opPrev = bestFor('op' + (levelIdx + 1));
     var opRec = noteBest('op' + (levelIdx + 1), elapsed);
     if (levelIdx + 1 < LEVELS.length) {
@@ -3568,7 +3263,6 @@
         go: 'PRESS ENTER TO CONTINUE',
       });
     } else {
-      // mission rank counts every op: total alerts + total time
       var mRank = rankFor(totalAlerts, totalTime, 165);
       var totPrev = bestFor('total');
       var totRec = noteBest('total', totalTime);
@@ -3592,8 +3286,6 @@
       });
     }
   }
-  // screens: the DOM state badge stops showing (or blinking) a stale phase, and the alarm
-  // chrome (hazard tape, paper LCD chip, the stage wash) stands down under the screen
   function endChrome(label) {
     stateBadge.className = 'mgsg-stbadge';
     stateBadge.textContent = label;
@@ -3604,15 +3296,14 @@
     stopAlertMusic();
     state = 'over';
     sfxOver();
-    updateHud(); // the death frame returns before update()'s HUD refresh — show the real (empty) life bar
+    updateHud();
     if (!reduceMotion) {
       flashEl.classList.remove('on');
       void flashEl.offsetWidth;
       flashEl.classList.add('on');
     }
     render();
-    // freeze frame: drain the colour out of the field and dim it (two flat fills,
-    // no gradient, no tint) and show the radar jammed — it stays under GAME OVER
+
     ctx.save();
     ctx.globalCompositeOperation = 'saturation';
     ctx.fillStyle = '#808080';
@@ -3651,7 +3342,7 @@
     }
   }
 
-  /* ===================== loop + input ===================== */
+  // loop and input
   function frameStep(now) {
     if (!open) return;
     rafId = requestAnimationFrame(frameStep);
@@ -3666,9 +3357,7 @@
     if (!open) return;
     var k = (e.key || '').toLowerCase();
     if (e.type === 'keydown') {
-      // never hijack browser shortcuts (Ctrl+R reload, Ctrl+F find, Cmd/Alt combos)
       if (e.ctrlKey || e.metaKey || e.altKey) return;
-      // let a focused SND/EXIT button receive its native Enter/Space activation
       if (
         (k === 'enter' || k === ' ' || k === 'spacebar') &&
         document.activeElement &&
@@ -3679,7 +3368,6 @@
       e.stopImmediatePropagation();
       unlockAudio();
       var isMove = k.indexOf('arrow') === 0 || k === 'w' || k === 'a' || k === 's' || k === 'd';
-      // swallow OS auto-repeat on action keys (movement is held state; shift is stateful)
       if (e.repeat && !isMove && k !== 'shift') {
         e.preventDefault();
         return;
@@ -3754,34 +3442,29 @@
     running = false;
     lastT = 0;
   }
-  // losing focus or visibility PAUSES the run (pauseGame self-guards on state):
-  // rAF keeps firing on an unfocused-but-visible window, so without this guards
-  // hunt a frozen player, and the setInterval alert music loops in a hidden tab.
   function onVisibility() {
     if (document.hidden) {
       resetInput();
       pauseGame();
     }
   }
+  // an unfocused window still gets animation frames but no keys, so losing focus pauses the run
   function onBlur() {
     resetInput();
     pauseGame();
   }
-  // browser zoom / monitor-DPI moves / window resizes change the target DPR mid-game —
-  // resize the backing stores (canvas + bgLayer) or the playfield stays blurry until reopened
   function onResize() {
     if (targetDpr() === dpr) return;
     sizeCanvas();
-    if (state !== 'playing') render(); // static screens won't re-render via the loop
+    if (state !== 'playing') render();
   }
 
-  /* ===================== open / close ===================== */
   function openGame() {
     build();
     if (open) return;
     open = true;
     sizeCanvas();
-    // the page's own pieces (js/sumi.js's loop) pause under the overlay
+    // js/sumi.js stops the page's frame loop on gameopen and starts it again on gameclose
     document.body.classList.add('game-open');
     window.dispatchEvent(new CustomEvent('gameopen'));
     overlay.classList.remove('out');
@@ -3793,7 +3476,6 @@
     running = false;
     boxed = false;
     prevFocus = document.activeElement;
-    // the page behind the dialog is inert while it is open: no screen reader browses it, nothing in it takes focus
     Array.prototype.forEach.call(
       document.querySelectorAll('body > header, body > main, body > footer, body > .skip'),
       function (el) {
@@ -3809,8 +3491,7 @@
     window.addEventListener('resize', onResize);
     requestAnimationFrame(function () {
       overlay.classList.add('in');
-    }); // the connect wipe (css)
-    // the LCD chip dials in: 140.00 -> 140.85 in 8 steps over 0.4 s (cleared on close)
+    });
     tickFreq(freqEl, 140.85);
     frame.focus();
     startTitle();
@@ -3821,7 +3502,7 @@
     if (!open) return;
     open = false;
     stopAlertMusic();
-    document.body.classList.remove('game-open'); // the page's loop (js/sumi.js) resumes
+    document.body.classList.remove('game-open');
     window.dispatchEvent(new CustomEvent('gameclose'));
     if (rafId) cancelAnimationFrame(rafId);
     rafId = null;
@@ -3832,7 +3513,7 @@
     window.removeEventListener('resize', onResize);
     overlay.classList.remove('in');
     overlay.classList.add('out');
-    document.body.style.overflow = ''; // the disconnect wipe (css)
+    document.body.style.overflow = '';
     hideToast();
     if (typeTimer) {
       clearInterval(typeTimer);
@@ -3842,7 +3523,7 @@
     stopTicks();
     freqEl.textContent = '140.85';
     resetInput();
-    boxed = false; // resetInput also clears touchDir — no stuck d-pad on reopen
+    boxed = false;
     Array.prototype.forEach.call(
       document.querySelectorAll('body > header, body > main, body > footer, body > .skip'),
       function (el) {
@@ -3858,7 +3539,7 @@
     }, 260);
   }
 
-  /* ---- dev sanity check (local hosts only): warn if an entity/waypoint/camera sits on a wall or is unreachable ---- */
+  // level data check, run on localhost only
   function validate() {
     try {
       LEVELS.forEach(function (lv, n) {
@@ -3885,7 +3566,6 @@
           if (wall(cm.t))
             console.warn('[MGSGame] L' + (n + 1) + ' camera ' + ci + ' on wall', cm.t);
         });
-        // reachability from start
         var seen = Array.from({ length: ROWS }, function () {
           return Array(COLS).fill(false);
         });
@@ -3922,7 +3602,7 @@
     } catch (e) {}
   }
 
-  if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) validate(); // dev only: a visitor never runs the BFS
+  if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) validate();
   window.MGSGame = {
     open: openGame,
     close: closeGame,
