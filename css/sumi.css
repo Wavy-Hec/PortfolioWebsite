@@ -2376,11 +2376,6 @@ body.game-open ascii-art {
     font-size: 5rem;
   }
 }
-html.dev-still *,
-html.dev-still *::before,
-html.dev-still *::after {
-  transition: none !important;
-}
 @media (prefers-reduced-motion: reduce) {
   .tag {
     opacity: 1;
