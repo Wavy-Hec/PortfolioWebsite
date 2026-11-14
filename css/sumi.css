@@ -556,22 +556,205 @@ body::after {
   flex-wrap: wrap;
 }
 
-/* ---------- 一 work: the plates are lit prints — the ink-on-paper plate on a paper card, a hairline, a hard offset shadow (deep sumi with a
-   hairline edge, so it reads on sumi); nothing is drawn over the ink. Hover / focus lifts the print a little. ---------- */
-.featured {
-  margin-top: 48px;
+/* work */
+.lead {
+  margin-top: 56px;
 }
-.featured li {
-  padding: 56px 0;
+.lead h3 {
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.15;
+}
+.lead-d {
+  max-width: 62ch;
+  margin-top: 14px;
+  text-wrap: pretty;
+}
+.lead .links {
+  margin-top: 26px;
+}
+
+.reel {
+  margin-top: 36px;
+}
+.screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--deep);
+  border: 1px solid var(--rule-strong);
+  overflow: hidden;
+}
+.screen video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.hold {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: none;
+  border: 0;
+  color: var(--paper);
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  text-shadow:
+    0 0 2px var(--deep),
+    0 0 10px var(--deep);
+}
+.reel.live .hold {
+  display: inline-flex;
+}
+.hold::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: var(--paper-55);
+}
+.hold:hover::before,
+.hold:focus-visible::before,
+.hold[aria-pressed='true']::before {
+  background: var(--paper);
+}
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0 28px;
+  margin-top: 20px;
+}
+.step {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 18px 0 8px;
+  background: none;
+  border: 0;
   border-top: 1px solid var(--rule);
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
 }
-.featured li:first-child {
-  border-top: 0;
-  padding-top: 0;
+/* the line over the playing step fills as its clip runs */
+.step::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 1px;
+  background: var(--paper);
+  transform: scaleX(var(--played, 0));
+  transform-origin: 0 0;
 }
-.featured + .rows {
+.step .name::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 10px 1px 0;
+  vertical-align: middle;
+  background: var(--paper-55);
+}
+.step:hover,
+.step:focus-visible,
+.step[aria-pressed='true'] {
+  color: var(--paper);
+}
+.step:hover .name::before,
+.step:focus-visible .name::before,
+.step[aria-pressed='true'] .name::before {
+  background: var(--paper);
+}
+.step[aria-pressed='true'] {
+  --played: 1;
+}
+.steps .cap {
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--dim);
+  text-wrap: pretty;
+}
+.reel figcaption {
+  margin-top: 24px;
+  color: var(--dim);
+  letter-spacing: 0.14em;
+  line-height: 1.8;
+}
+.reel figcaption .cl {
+  white-space: nowrap;
+}
+
+.grp {
+  margin-top: 96px;
+}
+.grp-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 22px;
+  padding-top: 28px;
+  margin-bottom: 48px;
+  border-top: 1px solid var(--rule-strong);
+}
+.grp-h h3 {
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.1;
+}
+.grp-h .mono {
+  color: var(--dim);
+  letter-spacing: 0.14em;
+}
+.feat + .rows,
+.band + .rows {
+  margin-top: 56px;
+}
+.feat-text {
+  max-width: 64ch;
+}
+.feat-text + .band {
+  margin-top: 24px;
+}
+.grp > .rows:first-of-type:not(.feat ~ .rows):not(.band ~ .rows) {
   margin-top: 0;
-} /* the last plate's own 56 px (40 on a phone) is the gap, the same as between the plates */
+}
+.clip {
+  max-width: 640px;
+  margin-top: 20px;
+  background: var(--deep);
+  border: 1px solid var(--rule-strong);
+}
+.clip video {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+button.link {
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.watch span {
+  display: inline-block;
+  margin-left: 0.6em;
+  transition: transform 0.2s ease;
+}
+.watch[aria-expanded='true'] span {
+  transform: rotate(90deg);
+}
 .feat img {
   width: 100%;
   height: auto;
@@ -588,26 +771,32 @@ body::after {
   margin-top: 36px;
   max-width: 64ch;
 }
-.feat .kicker {
+.kicker {
   color: var(--dim);
   margin-bottom: 14px;
 }
-.feat .kicker .tg {
+.kicker .tg {
   white-space: nowrap;
 }
-.feat .kicker .n {
+.kicker .n {
   color: var(--paper);
   letter-spacing: 0.22em;
   margin-right: 14px;
-} /* 01-03: the rows go on at 04 */
-.feat h3 {
+}
+.feat h4,
+.feat-text h4 {
   font-weight: 400;
   font-size: 26px;
   line-height: 1.2;
   text-wrap: balance;
 }
-.feat p {
+.feat p,
+.feat-text p {
   margin-top: 14px;
+}
+.feat .kicker,
+.feat-text .kicker {
+  margin-top: 0;
 }
 .feat .links {
   margin-top: 22px;
@@ -623,13 +812,14 @@ body::after {
   .feat > div {
     margin-top: 0;
   }
-  .feat:nth-child(2) {
+  .feat.flip {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
   }
-  .feat:nth-child(2) img {
+  .feat.flip img {
     order: 2;
   }
-  .feat h3 {
+  .feat h4,
+  .feat-text h4 {
     font-size: 24px;
   }
 }
@@ -776,6 +966,15 @@ body::after {
   color: var(--dim);
 }
 .after {
+  margin-top: 28px;
+}
+.fig-h {
+  margin-top: 88px;
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.2;
+}
+.fig-h + .rows {
   margin-top: 28px;
 }
 
@@ -969,12 +1168,24 @@ body::after {
     13px 13px 0 var(--rule);
   margin-right: 13px;
 }
+.mat {
+  position: relative;
+}
 .mat img {
   width: 440px;
   max-width: 100%;
   height: auto;
   margin: 0 auto;
-} /* a definite width: the print shrink-wraps it (fit-content), loaded or not */
+  mix-blend-mode: multiply;
+}
+.mat canvas {
+  position: absolute;
+  image-rendering: pixelated;
+}
+/* the image stays in the page for its alt text */
+.mat.printed img {
+  opacity: 0;
+}
 .print figcaption {
   margin-top: 18px;
   color: var(--dim);
@@ -1173,10 +1384,6 @@ body::after {
   .about-top .about-text {
     padding-top: 0;
   }
-  .about-top + .band {
-    margin-top: 40px;
-    padding-top: 24px;
-  } /* the Go2 follows the print as a second figure in the same chapter */
 }
 
 /* ---------- the pagoda: a breath between 四 About and the footer; nothing over it. autumn-pagoda-maples (js/ascii/pieces) in mono paper dots at
@@ -1489,8 +1696,19 @@ body.game-open ascii-art {
   .chapter h2 {
     font-size: 52px;
   }
-  .feat h3 {
+  .feat h4,
+  .feat-text h4 {
     font-size: 28px;
+  }
+  .lead h3,
+  .grp-h h3 {
+    font-size: 40px;
+  }
+  .fig-h {
+    font-size: 30px;
+  }
+  .steps .cap {
+    font-size: 16px;
   }
   .rows .t {
     font-size: 21px;
@@ -1607,12 +1825,12 @@ body.game-open ascii-art {
   .band {
     padding-left: calc(var(--gutter) + 96px);
   }
-  .about-top + .band {
-    margin-top: 48px;
-    padding-top: 24px;
-  }
-} /* the band's content starts on the chapters' edge; the Go2 stays close under the About text, as from 1100 */
+}
 @media (min-width: 721px) and (max-width: 960px) {
+  .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 18px;
+  }
   .rows li {
     grid-template-columns: 40px 160px minmax(0, 1fr);
     gap: 0 22px;
@@ -1856,35 +2074,78 @@ body.game-open ascii-art {
   .rows .d {
     font-size: 16px;
   }
-  .feat h3 {
+  .feat h4,
+  .feat-text h4 {
     font-size: 22px;
   }
   .feat > div {
     margin-top: 26px;
   }
-  .feat .kicker {
+  .kicker {
     display: flex;
     flex-wrap: wrap;
     column-gap: 1.7em;
     row-gap: 4px;
     line-height: 1.6;
   }
-  .feat .kicker .n {
+  .kicker .n {
     margin-right: 0;
   }
-  .feat .kicker .sep {
+  /* whole tags wrap, so no line ends on a separator */
+  .kicker .sep {
     position: absolute;
     width: 1px;
     height: 1px;
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
-  } /* whole tags wrap, no line ends on a separator; screen readers still hear it */
-  .featured {
-    margin-top: 48px;
   }
-  .featured li {
-    padding: 40px 0;
+  .lead {
+    margin-top: 40px;
+  }
+  .lead h3,
+  .grp-h h3 {
+    font-size: 28px;
+  }
+  .reel {
+    margin-top: 28px;
+  }
+  .steps {
+    grid-template-columns: 1fr;
+    margin-top: 12px;
+  }
+  .step {
+    padding: 16px 0 6px;
+  }
+  .steps .cap {
+    margin-bottom: 14px;
+    font-size: 15px;
+  }
+  .reel figcaption {
+    margin-top: 14px;
+    letter-spacing: 0.1em;
+  }
+  .reel figcaption .sep {
+    display: none;
+  }
+  .reel figcaption .cl {
+    display: block;
+    white-space: normal;
+  }
+  .grp {
+    margin-top: 64px;
+  }
+  .grp-h {
+    padding-top: 22px;
+    margin-bottom: 32px;
+  }
+  .feat + .rows,
+  .band + .rows {
+    margin-top: 40px;
+  }
+  .fig-h {
+    margin-top: 64px;
+    font-size: 22px;
   }
   .feat img,
   .rows .thumb,

@@ -204,8 +204,10 @@
       document.body.appendChild(s);
     };
     const pending = [
+      ['.reel', 'js/sumi-clips.js'],
       ['.stack', 'js/sumi-stack.js?v=15'],
       ['.xray', 'js/sumi-xray.js?v=15'],
+      ['.print', 'js/sumi-print.js'],
     ]
       .map(([sel, src]) => [document.querySelector(sel), src])
       .filter(([el]) => el);
