@@ -1,6 +1,6 @@
-// The fold's weather: a halftone moon, three layers of fog and six rows of pampas grass, moved by one
-// wind that rolls left to right. Runs in the page's loop only while the fold is on screen; under
-// reduced motion it draws one still frame.
+// The fold's weather: a halftone moon, three layers of fog and six rows of pampas grass, moved by
+// one wind that rolls left to right. Runs in the page's loop only while the fold is on screen;
+// under reduced motion it draws one still frame.
 (() => {
   'use strict';
   const hero = document.querySelector('.hero'),
@@ -16,7 +16,7 @@
   };
   const lerp = (a, b, t) => a + (b - a) * t;
 
-  // seeded random (mulberry32) and tileable value noise, so the field and the fog are the same on every visit
+  // mulberry32 and tileable value noise, seeded so every visit gets the same field and fog
   function rng(seed) {
     let a = seed >>> 0;
     return () => {
@@ -65,7 +65,7 @@
   const octaves = (r, cx, cy, k = 4) =>
     Array.from({ length: k }, (_, o) => lattice(cx << o, cy << o, r));
 
-  // the moon is printed like the robot's plate: paper through a Bayer 4 x 4 screen, at the plate's pitch
+  // the moon is printed like the robot's plate: a Bayer 4 x 4 screen at the plate's pitch
   const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
   const PLATE_H = 480; // img/go2-night.png; its 2x keeps the same screen
   const PAPER_RGBA = [233, 231, 226, 255];
@@ -78,8 +78,7 @@
   }
   function drawMoon() {
     freeMoon();
-    // the canvas covers whole device pixels and each dot is a whole number of them; nearest
-    // sampling copies it exactly where its box does not start on a device pixel, as at 125 %
+    // nearest sampling keeps the dots exact where the box does not start on a device pixel (125 %)
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
     const N = Math.round(moonC.getBoundingClientRect().width * dpr);
     if (!N) return;
@@ -102,8 +101,7 @@
       (0.55 * Math.sin(3 * a + ph[0]) +
         0.3 * Math.sin(5 * a + ph[1]) +
         0.15 * Math.sin(8 * a + ph[2])); // the limb, out of true by under a dot
-    // the screen's level falls off toward the limb, dips under four soft seas and fades out over the
-    // last 4 % of the radius; the jitter frays the steps between levels
+    // darker toward the limb and under four seas; the jitter frays the steps between levels
     const SEAS = [
       [-0.28, -0.22, 0.3, 1],
       [0.22, -0.02, 0.22, 0.8],
@@ -125,7 +123,8 @@
         const dx = x + 0.5 - c,
           dy = y + 0.5 - c,
           d = Math.hypot(dx, dy);
-        if (d > R + 1 || (d > R - 1 && d > R + wob(Math.atan2(dy, dx)))) continue; // atan2 only in the limb's ring
+        // atan2 only in the limb's ring
+        if (d > R + 1 || (d > R - 1 && d > R + wob(Math.atan2(dy, dx)))) continue;
         const u = dx / R,
           v = dy / R,
           r2 = u * u + v * v;
@@ -206,12 +205,12 @@
   function placeFog(dtWind) {
     for (const f of fogs) {
       f.off = (f.off + dtWind / f.period) % 1;
-      f.cv.style.transform = `translate3d(${((f.off - 1) * 50).toFixed(3)}%,0,0)`; // the canvas holds two tiles: -50 % to 0 moves one tile, then wraps
+      // the canvas holds two tiles: -50 % to 0 moves one tile, then wraps
+      f.cv.style.transform = `translate3d(${((f.off - 1) * 50).toFixed(3)}%,0,0)`;
     }
   }
 
-  // six rows of pampas: the far rows short and even, the near rows in clumps, many of them dark
-  // against the lit fog; the stand rises where the robot stands, with no plumes on its legs
+  // the stand rises where the robot stands, with no plumes on its legs
   const cvs = [scene.querySelector('canvas.g-far'), scene.querySelector('canvas.g-near')];
   const ROWS = [
     { d: 0, cv: 0, sp: 10 },
@@ -239,7 +238,8 @@
     H = Math.round(box.height);
     if (!W || !H) return false;
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    scale = Math.min(dpr, Math.sqrt(1.2e6 / (W * H))) * (slow ? 0.6 : 1); // at most ~1.2 Mpx per canvas
+    // at most ~1.2 Mpx per canvas
+    scale = Math.min(dpr, Math.sqrt(1.2e6 / (W * H))) * (slow ? 0.6 : 1);
     for (const c of cvs) {
       c.width = Math.round(W * scale);
       c.height = Math.round(H * scale);
@@ -355,8 +355,7 @@
     return true;
   }
 
-  // the wind: a long gust (about 10 s across the field) and a quicker ripple over a slow swell, plus
-  // a local push where the cursor moves through the grass; 0 is still air, about 1 a gust's crest
+  // 0 is still air, about 1 a gust's crest; a gust takes about 10 s to cross the field
   let windT = 0,
     push = 0,
     pushX = -1e4,
@@ -427,7 +426,6 @@
           P.quadraticCurveTo(cx + nx * 0.5, cy + ny * 0.5, it.x + nx, it.y + ny);
           P.closePath();
           if (it.plume) {
-            // a soft feather along a drooping axis, combed by a few fine filaments
             const pl = it.pl,
               ax = th * 1.2 + 0.1 + it.pa,
               droop = (0.32 + 0.25 * reach) * it.dr;
@@ -459,7 +457,6 @@
             }
           }
         } else {
-          // a leaf arches out and over, its tip falling downwind
           const a1 = th * 0.5,
             a2 = th * 1.32,
             L = it.h;
@@ -492,8 +489,7 @@
   }
 
   const STILL_T = 1.9; // a gust's crest a little left of centre
-  // a software rasteriser the renderer string does not name: if 30 ticks after a warm-up average
-  // over 45 ms, the grass goes light, once
+  // for a software renderer the probe misses: ticks averaging over 45 ms turn the grass light, once
   let tickAt = 0,
     tickSum = 0,
     tickCount = 0;
@@ -520,11 +516,13 @@
     push *= Math.exp(-dt / 0.9);
     sampleWind(windT);
     placeFog(dt * (0.75 + 0.5 * meanWind));
+    // light grass: the near rows at 15 fps, the far rows still
     if (!slow) drawGrass(windT);
-    else if (tickN++ & 1) drawGrass(windT, 2); // light: the near grass at 15 fps, the far grass still
+    else if (tickN++ & 1) drawGrass(windT, 2);
   }
   let ready = false;
-  const measure = () => hero.style.setProperty('--sh', scene.clientHeight + 'px'); // the stacked fold sizes the robot to the scene
+  // the stacked fold sizes the robot to the scene
+  const measure = () => hero.style.setProperty('--sh', scene.clientHeight + 'px');
   function paintScene() {
     ready = build();
     if (ready) firstGrass();
@@ -534,7 +532,7 @@
     sampleWind(windT);
     placeFog(0);
     drawGrass(windT);
-    // the renderer probe makes a throwaway WebGL context, a 50 ms task: keep it well clear of the fade-in
+    // the renderer probe's throwaway WebGL context is a 50 ms task: keep it clear of the fade-in
     if (!probed && !REDUCED) {
       probed = true;
       setTimeout(() => {
@@ -547,8 +545,7 @@
     drawMoon();
     paintScene();
   }
-  // with no GPU the grass costs about 250 ms of main thread a second: a software renderer, or no
-  // WebGL at all, gets the light grass
+  // without a GPU the grass costs about 250 ms of main thread a second, so it goes light
   function probe() {
     let r = '';
     try {
@@ -567,8 +564,7 @@
       if (build()) drawGrass(windT);
     }
   }
-  // the first frame is split into short tasks: the measurement in an animation frame, the field and
-  // its first grass in the tasks after it, the moon and the fog in idle time during the fade-in
+  // the first frame in short tasks, with the moon and the fog in idle time during the fade-in
   const idle = cb =>
     'requestIdleCallback' in window
       ? requestIdleCallback(cb, { timeout: 300 })
@@ -630,7 +626,6 @@
     { threshold: 0 },
   ).observe(hero);
   document.addEventListener('visibilitychange', sync);
-  // a fine pointer moving through the lower fold pushes a little gust through the grass
   if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
     let lx = 0,
       lt = 0;

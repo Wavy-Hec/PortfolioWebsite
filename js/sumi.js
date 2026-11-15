@@ -55,8 +55,7 @@
   addEventListener('gameopen', stop);
   addEventListener('gameclose', start);
 
-  // Drawings below the fold: each script loads when its element nears the screen, or four
-  // seconds after the page has loaded, whichever comes first.
+  // each script loads when its element nears the screen, or four seconds after the page loads
   const LAZY_SCRIPTS = [
     ['.reel', 'js/sumi-clips.js'],
     ['.results', 'js/sumi-results.js'],
@@ -95,8 +94,7 @@
     setTimeout(() => [...waiting.keys()].forEach(loadScriptFor), 4000),
   );
 
-  // A link to a section lands short when the web fonts arrive after the scroll and grow the
-  // chapters above it: put the section back at the top, unless the reader has moved.
+  // late web fonts grow the chapters above a linked section: put it back at the top if untouched
   const target = location.hash.length > 1 && document.getElementById(location.hash.slice(1));
   if (target && target !== document.body) {
     let moved = false;
@@ -112,8 +110,7 @@
     );
   }
 
-  // The "!" over the figure: hover, focus or a tap pops it for 1.2 s. Under keyboard focus the
-  // stylesheet holds it for as long as the figure has focus.
+  // the "!" over the figure pops for 1.2 s; under keyboard focus the stylesheet holds it
   const figure = document.querySelector('.hero .figure');
   const alertPlate = figure && figure.querySelector('.alert');
   if (alertPlate) {
@@ -135,7 +132,7 @@
     };
     const rearm = () => (armed = true);
 
-    // a swipe that starts on the figure fires pointerenter but never a click: on touch, only a tap pops it
+    // a swipe from the figure fires pointerenter but no click: on touch, only a tap pops it
     figure.addEventListener('pointerenter', e => {
       if (e.pointerType !== 'touch') pop();
     });
@@ -146,7 +143,7 @@
     figure.addEventListener('pointerleave', rearm);
     figure.addEventListener('blur', rearm);
 
-    // without overflow: clip the hero is overflow: hidden, which still scrolls to show the focused figure
+    // where overflow: clip is missing, the hero's overflow: hidden scrolls to the focused figure
     const hero = figure.closest('.hero');
     hero.addEventListener(
       'scroll',
@@ -157,9 +154,7 @@
       { passive: true },
     );
 
-    // Once a visit, after the fold has faded in, it pops by itself: the machine has seen you.
-    // Not if the reader has scrolled the head out of view or is already on the figure, nor over a
-    // robot too small to carry it (a window too short for the scene).
+    // once a visit it pops by itself, unless it is off screen, already hovered or too small
     const SEEN_KEY = 'fold-alert-seen';
     const MIN_ROBOT_PX = 120;
     const plate = figure.querySelector('img:last-of-type');
@@ -193,8 +188,7 @@
     }
   }
 
-  // The secret: the footer's 140.85 (clicked or typed) or the Konami code rings the codec and
-  // opens the game, which is fetched on the first call.
+  // the footer's 140.85, clicked or typed, or the Konami code rings the codec and opens the game
   const FREQUENCY = '140.85';
   const KONAMI = [
     'ArrowUp',
@@ -254,7 +248,7 @@
     if (gameRequested) return;
     gameRequested = true;
     const script = document.createElement('script');
-    script.src = 'js/game.js?v=24';
+    script.src = 'js/game.js?v=25';
     script.onload = () => window.MGSGame.open();
     script.onerror = () => {
       gameRequested = false;
@@ -312,6 +306,4 @@
       launchGame();
     }
   });
-
-  start();
 })();

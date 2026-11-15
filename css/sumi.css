@@ -46,8 +46,7 @@ h4,
 p,
 ol,
 ul,
-figure,
-blockquote {
+figure {
   margin: 0;
 }
 ol,
@@ -200,10 +199,8 @@ body::after {
 .nav .cv a:focus-visible {
   color: var(--paper);
 }
-/* the fold, back to front: the moon, the far fog, the Go2 (its shade plate under its paper plate), the far grass,
-   the fog bank, the near grass and the ground fog; the words over them. --hr is where the headline's longer line ends;
-   --fb holds the moon's top near 16 % of the fold. The plate is 534 x 480: across it the robot's near shoulder is at
-   4.5 %, its face at 17 %, its tail at 97.9 %, and its crown is 4.6 % down */
+/* the fold. --hr: where the headline's longer line ends; --fb: the moon's top, 16 % down the fold.
+   The Go2 plate is 534 x 480: shoulder 4.5 % across, face 17 %, tail 97.9 %, crown 4.6 % down */
 .hero {
   --F: calc(100vh - var(--nav));
   --fs: clamp(44px, min(5.6vw, 13.5vh), 200px);
@@ -376,8 +373,7 @@ body::after {
     opacity: 0;
   }
 }
-/* Times New Roman (Liberation Serif on Linux) set to Shippori Mincho's width, ascent and descent, so
-   the words hold their lines and places until the web font arrives */
+/* Shippori Mincho's metrics on Times New Roman, so nothing moves when the web font arrives */
 @font-face {
   font-family: 'Shippori Mincho fallback';
   src: local('Times New Roman'), local('Liberation Serif');
@@ -416,8 +412,7 @@ body::after {
   white-space: nowrap;
   pointer-events: auto;
 }
-/* the sub keeps the height of its five lines in Shippori Mincho, so nothing below it moves if a
-   fallback face sets fewer */
+/* the sub holds five lines' height, so nothing below moves if a fallback face sets fewer */
 .hero .sub {
   max-width: 28em;
   min-height: 8em;
@@ -579,6 +574,7 @@ body::after {
   font-weight: 400;
   font-size: 34px;
   line-height: 1.15;
+  text-wrap: balance;
 }
 .lead-d {
   max-width: 62ch;
@@ -609,6 +605,9 @@ body::after {
 .reel.live .still {
   display: none;
 }
+.reel:not(.live) video {
+  display: none;
+}
 .hold {
   position: absolute;
   right: 0;
@@ -635,7 +634,6 @@ body::after {
   height: 6px;
   background: var(--paper-55);
 }
-.hold:hover::before,
 .hold:focus-visible::before {
   background: var(--paper);
 }
@@ -687,18 +685,25 @@ body::after {
   vertical-align: middle;
   background: var(--paper-55);
 }
-.step:hover,
 .step:focus-visible,
 .step[aria-pressed='true'] {
   color: var(--paper);
 }
-.step:hover .name::before,
 .step:focus-visible .name::before,
 .step[aria-pressed='true'] .name::before {
   background: var(--paper);
 }
 .step[aria-pressed='true'] {
   --played: 1;
+}
+@media (hover: hover) {
+  .step:enabled:hover {
+    color: var(--paper);
+  }
+  .hold:hover::before,
+  .step:enabled:hover .name::before {
+    background: var(--paper);
+  }
 }
 .steps .cap {
   margin-top: 4px;
@@ -713,8 +718,12 @@ body::after {
   letter-spacing: 0.14em;
   line-height: 1.8;
 }
-.reel figcaption .cl {
-  white-space: nowrap;
+/* without scripting the steps cannot play anything: they read as labels */
+@media (scripting: none) {
+  .step .name::before,
+  .step::after {
+    display: none;
+  }
 }
 .grp {
   margin-top: 96px;
@@ -782,9 +791,6 @@ button.link {
   box-shadow:
     10px 10px 0 var(--deep),
     11px 11px 0 var(--rule);
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
 }
 .feat > div {
   margin-top: 36px;
@@ -817,7 +823,8 @@ button.link {
 .feat-text .kicker {
   margin-top: 0;
 }
-.feat .links {
+.feat .links,
+.feat-text .links {
   margin-top: 22px;
 }
 @media (min-width: 1100px) {
@@ -841,15 +848,566 @@ button.link {
     font-size: 24px;
   }
 }
-@media (prefers-reduced-motion: no-preference) and (hover: hover) {
-  .feat:hover img,
-  .feat:focus-within img,
-  .rows li:hover .thumb,
-  .rows li:focus-within .thumb {
-    transform: translate(-2px, -2px);
+/* the Go2 band: its content on the column, its ground out to the page's edges */
+.band {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  column-gap: 48px;
+  align-items: center;
+  margin-top: 96px;
+  padding: 48px 0 16px;
+}
+/* the ground spans the window from its left edge; .chapter clips what a scrollbar covers */
+.band::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * (var(--gutter) + 96px));
+  z-index: -1;
+  width: 100vw;
+  background: linear-gradient(
+    transparent,
+    var(--deep) 72px,
+    var(--deep) calc(100% - 72px),
+    transparent
+  );
+}
+.band .xray {
+  position: relative;
+  width: 100%;
+}
+/* the box holds the sketch's place; the script fits the canvas to what it draws inside it */
+.band .sketch {
+  position: relative;
+  aspect-ratio: 1 / 0.62;
+  min-height: 380px;
+  max-height: 560px;
+  -webkit-mask-image: linear-gradient(#000 84%, rgba(0, 0, 0, 0.55) 96%, rgba(0, 0, 0, 0.2) 100%);
+  mask-image: linear-gradient(#000 84%, rgba(0, 0, 0, 0.55) 96%, rgba(0, 0, 0, 0.2) 100%);
+}
+.band .sketch canvas {
+  position: absolute;
+}
+/* hidden until the script places it: the move would count as a layout shift */
+.band:not(.live) .sketch canvas {
+  display: none;
+}
+.tags {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tag,
+.band .interval button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 2px 0;
+  background: none;
+  border: 0;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--dim);
+  cursor: default;
+  transition: color 0.25s;
+}
+.tag::before,
+.band .interval button::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  background: var(--paper-55);
+  transition: background 0.25s;
+}
+.tag:focus-visible,
+.tag[aria-pressed='true'],
+.band .interval button:focus-visible,
+.band .interval button[aria-pressed='true'] {
+  color: var(--paper);
+}
+.tag:focus-visible::before,
+.tag[aria-pressed='true']::before,
+.band .interval button:focus-visible::before,
+.band .interval button[aria-pressed='true']::before {
+  background: var(--paper);
+}
+.tag:focus-visible,
+.band .interval button:focus-visible {
+  outline: 2px solid var(--paper);
+  outline-offset: 4px;
+}
+@media (hover: hover) {
+  .tag:hover,
+  .band .interval button:hover {
+    color: var(--paper);
+  }
+  .tag:hover::before,
+  .band .interval button:hover::before {
+    background: var(--paper);
+  }
+}
+.tag {
+  position: absolute;
+  pointer-events: auto;
+  opacity: 0;
+  transition:
+    color 0.25s,
+    opacity 0.3s;
+}
+.resolved .tag,
+.tag:focus-visible {
+  opacity: 1;
+}
+.resolved li:nth-child(2) .tag {
+  transition-delay: 0.06s;
+}
+.resolved li:nth-child(3) .tag {
+  transition-delay: 0.12s;
+}
+.resolved li:nth-child(4) .tag {
+  transition-delay: 0.18s;
+}
+.tag.l {
+  flex-direction: row-reverse;
+}
+.tag .tx {
+  display: block;
+  line-height: 1.5;
+}
+.tag.l .tx {
+  text-align: right;
+}
+.tag .sep {
+  display: none;
+}
+.tag .l2 {
+  display: block;
+}
+@media (pointer: coarse) and (min-width: 721px) {
+  .tag::after {
+    content: '';
+    position: absolute;
+    inset: -10px -4px;
+  }
+}
+.band-side {
+  display: grid;
+  align-items: start;
+  row-gap: 40px;
+  padding: 6px 0 6px 28px;
+  border-left: 1px solid var(--rule-strong);
+  letter-spacing: 0.14em;
+  line-height: 1.5;
+}
+.band-h {
+  margin-bottom: 18px;
+  letter-spacing: 0.22em;
+  color: var(--dim);
+}
+/* the controls show once the script is there to answer them */
+.band .cmd {
+  visibility: hidden;
+}
+.band.live .cmd {
+  visibility: visible;
+}
+.band .field p {
+  white-space: nowrap;
+}
+.band .field label,
+.band .interval p {
+  color: var(--dim);
+}
+.band .field .deg {
+  display: inline-block;
+  min-width: calc(5ch + 0.7em);
+}
+.band .field .next {
+  color: var(--paper-55);
+}
+/* the thumb is a 40 px target round a 10 px square: the input overhangs the column 15 px a side */
+.band .field input {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: calc(100% + 30px);
+  height: 40px;
+  margin: -4px -15px 4px;
+  background: none;
+  touch-action: pan-y;
+}
+.band .field input::-webkit-slider-runnable-track {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 15px,
+    var(--rule-strong) 0 calc(100% - 15px),
+    transparent 0
+  );
+}
+.band .field input::-moz-range-track {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 15px,
+    var(--rule-strong) 0 calc(100% - 15px),
+    transparent 0
+  );
+}
+.band .field input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  margin-top: -19.5px;
+  border: 15px solid transparent;
+  border-radius: 0;
+  background: var(--paper) padding-box;
+}
+.band .field input::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  border: 15px solid transparent;
+  border-radius: 0;
+  background: var(--paper) padding-box;
+}
+.band .field input:focus-visible {
+  outline: none;
+}
+.band .field input:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--paper);
+  outline-offset: -12px;
+}
+.band .field input:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--paper);
+  outline-offset: -12px;
+}
+.band .interval {
+  display: grid;
+  justify-items: start;
+}
+.band .interval p {
+  margin-bottom: 4px;
+}
+.band .interval button {
+  padding: 4px 0;
+}
+/* the ring sits 8 px inside the canvas: on the column's edge */
+.band .dial {
+  display: block;
+  width: 104px;
+  height: 104px;
+  margin: -8px 0 16px -8px;
+  pointer-events: none;
+}
+.band .stages li:not(:last-child)::after {
+  content: '↓';
+  content: '↓' / '';
+  display: block;
+  margin: 4px 0 4px 2px;
+  color: var(--paper-55);
+}
+.band .stages .rate {
+  display: block;
+  margin-top: -2px;
+  letter-spacing: 0.14em;
+  color: var(--dim);
+}
+/* the policy's lamp is always lit (it runs every step); the navigator's is lit by the script */
+.band .stages .policy .rate::before,
+.band .stages .lamp {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin: 0 8px 1px 0;
+  vertical-align: middle;
+  background: var(--paper);
+}
+.band .stages .policy .rate::before {
+  content: '';
+}
+.band .stages .lamp {
+  background: var(--paper-55);
+}
+.band-cap {
+  grid-column: 1 / -1;
+  margin-top: 28px;
+  text-wrap: balance;
+  letter-spacing: 0.14em;
+  line-height: 1.8;
+  color: var(--dim);
+}
+@media (min-width: 1600px) {
+  .band::before {
+    left: calc(480px - 50vw);
+  }
+}
+@media (min-width: 1920px) {
+  .band::before {
+    left: calc(560px - 50vw);
+  }
+}
+@media (max-width: 1180px) {
+  .band {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 32px;
+  }
+  .band-side {
+    grid-template-columns: minmax(0, 420px) auto;
+    justify-content: start;
+    column-gap: 56px;
+    padding: 24px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--rule-strong);
+  }
+  .band-cap .sep {
+    display: none;
+  }
+  .band-cap .cl {
+    display: block;
+  }
+}
+@media (max-width: 960px) {
+  .band::before {
+    left: calc(-1 * var(--gutter));
+  }
+}
+@media (max-width: 720px) {
+  .band {
+    margin-top: 72px;
+    padding: 32px 0;
+    row-gap: 24px;
+  }
+  .band .sketch {
+    aspect-ratio: 1 / 0.7;
+    min-height: 0;
+    max-height: none;
+    -webkit-mask-image: linear-gradient(#000 95%, rgba(0, 0, 0, 0.5) 100%);
+    mask-image: linear-gradient(#000 95%, rgba(0, 0, 0, 0.5) 100%);
+  }
+  .tags {
+    position: static;
+    display: grid;
+    margin-top: 4px;
+  }
+  .tag {
+    position: static;
+    align-items: flex-start;
+    min-width: 40px;
+    padding: 12px 0;
+    line-height: 1.5;
+    white-space: normal;
+    opacity: 1;
+  }
+  .tag::before {
+    margin-top: 5px;
+  }
+  .tag .sep,
+  .tag .l2 {
+    display: inline;
+  }
+  .band-side {
+    grid-template-columns: minmax(0, 420px);
+    row-gap: 32px;
+    padding-top: 20px;
+  }
+  .band-cap {
+    margin-top: 8px;
+  }
+}
+@media (max-width: 400px) {
+  .tag .sep {
+    display: none;
+  }
+  .tag .l2 {
+    display: block;
+  }
+}
+@media (pointer: coarse) {
+  .band .interval button {
+    padding: 12px 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tag {
+    opacity: 1;
+  }
+}
+@media (scripting: none) {
+  .band .xray,
+  .band .cmd,
+  .band-cap,
+  .needs-js {
+    display: none;
+  }
+}
+/* the FlowCount plate, live (js/sumi-track.js): the still plate shows until the canvas has drawn */
+.track {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  column-gap: 28px;
+}
+.track .plate {
+  position: relative;
+  flex: 1 0 100%;
+  margin-bottom: 28px;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  box-shadow:
+    10px 10px 0 var(--deep),
+    11px 11px 0 var(--rule);
+}
+.track .plate img {
+  width: 100%;
+  height: auto;
+  border: 0;
+  box-shadow: none;
+}
+.track canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.track canvas,
+.track button,
+.track figcaption {
+  visibility: hidden;
+}
+.track.live canvas,
+.track.live button,
+.track.live figcaption {
+  visibility: visible;
+}
+.track button,
+.track figcaption {
+  color: var(--dim);
+  letter-spacing: 0.14em;
+  line-height: 20px;
+}
+.track button {
+  padding: 14px 0;
+  margin: -14px 0;
+  background: none;
+  border: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.25s;
+}
+.track .raw {
+  margin-right: auto;
+}
+/* the label's baseline comes from its text, not the square, so it sits on the caption's line */
+.track button span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  line-height: normal;
+}
+.track button span::before {
+  content: '';
+  align-self: center;
+  width: 6px;
+  height: 6px;
+  background: var(--paper-55);
+  transition: background 0.25s;
+}
+.track button:focus-visible,
+.track .raw[aria-pressed='true'] {
+  color: var(--paper);
+}
+.track button:focus-visible span::before,
+.track .raw[aria-pressed='true'] span::before {
+  background: var(--paper);
+}
+@media (hover: hover) {
+  .track button:hover {
+    color: var(--paper);
+  }
+  .track button:hover span::before {
+    background: var(--paper);
+  }
+}
+.track button:focus-visible {
+  outline: none;
+}
+.track button:focus-visible span {
+  outline: 2px solid var(--paper);
+  outline-offset: 5px;
+}
+.track figcaption .cl {
+  white-space: nowrap;
+}
+/* the text centres on the plate alone: the plate's 28 px margin and its 20 px control row */
+@media (min-width: 1100px) {
+  .feat:has(> .track) > div {
+    margin-bottom: 48px;
+  }
+}
+/* too narrow for the caption beside both buttons: it takes its own line, as on a phone */
+@media (min-width: 1100px) and (max-width: 1189px) and (prefers-reduced-motion: no-preference) {
+  .track figcaption {
+    flex-basis: 100%;
+    margin-top: 8px;
+  }
+  .feat:has(> .track) > div {
+    margin-bottom: 76px;
+  }
+}
+@media (max-width: 720px) {
+  .track .plate {
     box-shadow:
-      13px 13px 0 var(--deep),
-      14px 14px 0 var(--rule);
+      7px 7px 0 var(--deep),
+      8px 8px 0 var(--rule);
+  }
+  .track figcaption {
+    flex-basis: 100%;
+    margin-top: 8px;
+  }
+}
+@media (min-width: 1920px) {
+  .track button {
+    font-size: 12.5px;
+  }
+}
+@media (forced-colors: active) {
+  .track button span::before {
+    forced-color-adjust: none;
+    background: GrayText;
+  }
+  .track .raw[aria-pressed='true'] span::before {
+    background: CanvasText;
+  }
+}
+/* under reduced motion the plate holds its first frame */
+@media (prefers-reduced-motion: reduce) {
+  .track .pause {
+    display: none;
+  }
+}
+@media (scripting: none) {
+  .track .plate {
+    margin-bottom: 0;
+  }
+  .track button,
+  .track figcaption {
+    display: none;
+  }
+  .feat:has(> .track) > div {
+    margin-bottom: 0;
   }
 }
 /* project rows and publications */
@@ -857,8 +1415,7 @@ button.link {
   margin-top: 64px;
   border-top: 1px solid var(--rule);
 }
-.rows:not(.pubs) li:last-child,
-.jobs li:last-child {
+.rows:not(.pubs) li:last-child {
   border-bottom: 0;
 }
 .rows li {
@@ -878,15 +1435,6 @@ button.link {
   box-shadow:
     6px 6px 0 var(--deep),
     7px 7px 0 var(--rule);
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
-}
-.rows li:hover .thumb,
-.rows li:focus-within .thumb {
-  box-shadow:
-    8px 8px 0 var(--deep),
-    9px 9px 0 var(--rule);
 }
 .rows .idx {
   font-family: var(--mono);
@@ -900,6 +1448,7 @@ button.link {
   font-size: 19px;
   line-height: 1.35;
   color: var(--paper);
+  text-wrap: balance;
 }
 .rows .d {
   color: var(--dim);
@@ -921,7 +1470,7 @@ button.link {
 .pubs .venue {
   font-family: var(--mono);
   font-size: 11px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--dim);
 }
@@ -932,6 +1481,10 @@ button.link {
 .pubs .t > a {
   padding: 8px;
   margin: -8px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+  text-decoration-color: var(--rule-strong);
 }
 .pubs .t > a:focus-visible {
   outline-offset: -5px;
@@ -947,7 +1500,7 @@ button.link {
   margin-top: 6px;
   padding: 0;
   font-size: 11px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
 }
 .pubs .idx a {
@@ -979,7 +1532,7 @@ button.link {
   margin-top: 6px;
   font-family: var(--mono);
   font-size: 11px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   color: var(--dim);
 }
 .after {
@@ -990,6 +1543,7 @@ button.link {
   font-weight: 400;
   font-size: 26px;
   line-height: 1.2;
+  text-wrap: balance;
 }
 .fig-h + .rows {
   margin-top: 28px;
@@ -1015,6 +1569,7 @@ button.link {
   font-weight: 400;
   font-size: 24px;
   line-height: 1.2;
+  text-wrap: balance;
 }
 .jobs .org {
   color: var(--dim);
@@ -1082,16 +1637,22 @@ button.link {
   height: 1px;
   transition: background 0.25s;
 }
-.res-tabs button:hover,
 .res-tabs button:focus-visible,
 .res-tabs [aria-selected='true'] {
   color: var(--paper);
 }
-.res-tabs button:hover span::before,
 .res-tabs button:focus-visible span::before,
 .res-tabs [aria-selected='true'] span::before,
 .res-tabs [aria-selected='true']::after {
   background: var(--paper);
+}
+@media (hover: hover) {
+  .res-tabs button:hover {
+    color: var(--paper);
+  }
+  .res-tabs button:hover span::before {
+    background: var(--paper);
+  }
 }
 .res-tabs button:focus-visible {
   outline: none;
@@ -1293,6 +1854,12 @@ button.link {
   }
 }
 @media (max-width: 540px) {
+  .results {
+    --pitch: 5px;
+  }
+  .res-plot {
+    margin: 50px 0 46px 32px;
+  }
   .res-tabs {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1302,6 +1869,19 @@ button.link {
   .res-tabs button {
     border-bottom: 1px solid var(--rule);
     text-align: left;
+  }
+}
+@media (scripting: none) {
+  .res-tabs,
+  .res-legend,
+  .res-plots {
+    display: none;
+  }
+  .res-table:not(.sr-only) {
+    position: static;
+  }
+  .res-note {
+    margin-top: 14px;
   }
 }
 @media (forced-colors: active) {
@@ -1318,7 +1898,6 @@ button.link {
     background: CanvasText;
   }
 }
-
 @media (max-width: 359px) {
   .res-legend {
     flex-direction: column;
@@ -1326,7 +1905,6 @@ button.link {
     gap: 4px;
   }
 }
-
 .search {
   scroll-margin-top: 56px;
 }
@@ -1429,10 +2007,14 @@ button.link {
   background: var(--paper-55);
   transition: background 0.25s;
 }
-.search-act button:hover span::before,
 .search-act button:focus-visible span::before,
 .search-act button:active span::before {
   background: var(--paper);
+}
+@media (hover: hover) {
+  .search-act button:hover span::before {
+    background: var(--paper);
+  }
 }
 .search-act button:focus-visible {
   outline: none;
@@ -1470,6 +2052,17 @@ button.link {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0 clamp(18px, 3cqw, 32px);
   }
+  /* in a row the counters sit right above it: the line is only read out */
+  .search-result {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    min-height: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 /* stacked on a short screen, such as a phone held sideways, a room and its counters fit on it */
 @container (max-width: 639px) {
@@ -1493,6 +2086,11 @@ button.link {
     margin-top: 28px;
   }
 }
+@media (scripting: none) {
+  .search figure {
+    display: none;
+  }
+}
 @media (forced-colors: active) {
   .search-act span::before {
     forced-color-adjust: none;
@@ -1505,7 +2103,6 @@ button.link {
     background: CanvasText;
   }
 }
-
 /* about */
 .print {
   margin-top: 56px;
@@ -1513,6 +2110,7 @@ button.link {
   max-width: 100%;
 }
 .mat {
+  position: relative;
   background: var(--paper);
   padding: clamp(16px, 3vw, 36px);
   border: 1px solid var(--rule-strong);
@@ -1520,9 +2118,6 @@ button.link {
     12px 12px 0 var(--deep),
     13px 13px 0 var(--rule);
   margin-right: 13px;
-}
-.mat {
-  position: relative;
 }
 .mat img {
   width: 440px;
@@ -1535,12 +2130,17 @@ button.link {
   position: absolute;
   image-rendering: pixelated;
 }
+/* hidden until printed: placing it would count as a layout shift */
+.mat:not(.printed) canvas {
+  display: none;
+}
 .mat.printed img {
   opacity: 0;
 }
 .print figcaption {
   margin-top: 18px;
   color: var(--dim);
+  letter-spacing: 0.14em;
 }
 .about-text {
   padding-top: 64px;
@@ -1848,10 +2448,8 @@ main:has(> .ridge:last-child) + .foot .sign {
     font-size: clamp(12.5px, calc(var(--fs) * 0.1), 14px);
   }
 }
-/* tall windows: the head drops below the headline, the robot stands right of the sub and is sized from
-   the height. Over the first ~90 px of --d32 (the distance from 3:2) the floor and the moon ease into the
-   wide fold's, so a resize does not jump. Here and below, the moon is never wider than --mroom, which
-   keeps its disc 24 px clear of the headline (to --hb) and of the sub and status under it (to --sb) */
+/* tall windows: the robot right of the sub, sized from the height. The floor and moon ease in over
+   the first ~90 px of --d32 (the distance from 3:2); --mroom keeps the moon 24 px off the words */
 @media (min-width: 721px) and (max-aspect-ratio: 3/2) {
   .hero {
     --d32: calc(150vh - 100vw);
@@ -1898,7 +2496,7 @@ main:has(> .ridge:last-child) + .foot .sign {
     display: block;
   }
 }
-/* near square: a larger moon, higher, fills the sky over the robot; it grows in from 23:20 (--d23) */
+/* near square: a larger, higher moon fills the sky over the robot, growing in from 23:20 (--d23) */
 @media (min-width: 721px) and (max-aspect-ratio: 23/20) {
   .hero {
     --d23: calc(115vh - 100vw);
@@ -1907,7 +2505,7 @@ main:has(> .ridge:last-child) + .foot .sign {
     --mcy: calc(var(--fh) * 0.92 + clamp(0px, var(--d23), var(--fh) * 0.2));
   }
 }
-/* portrait windows: the robot stands below the links (--cb, the bottom of the words) and may reach under them */
+/* portrait: the robot stands below the links (--cb, the bottom of the words) and may reach under */
 @media (min-width: 961px) and (max-aspect-ratio: 1/1) {
   .hero {
     --cb: calc(10vh + 2.42 * var(--fs) + 242px);
@@ -1918,7 +2516,7 @@ main:has(> .ridge:last-child) + .foot .sign {
     );
   }
 }
-/* the tallest: the moon settles behind the robot's back, clear of the ends of the words, from 4:5 (--d45) */
+/* the tallest: from 4:5 (--d45) the moon settles behind the robot's back, clear of the words */
 @media (min-width: 961px) and (max-aspect-ratio: 4/5) {
   .hero {
     --d45: calc(80vh - 100vw);
@@ -1927,10 +2525,8 @@ main:has(> .ridge:last-child) + .foot .sign {
     --mcy: calc(var(--fh) * 1.12 - clamp(0px, var(--d45) * 2, var(--fh) * 0.16));
   }
 }
-/* stacked, on phones held upright, on narrow windows taller than wide and on windows too narrow for
-   the robot beside the headline: the words, then the scene filling the rest of the first screen (--sh,
-   set by js/sumi-fold.js), which holds the moon over the robot and, on short screens, the "!" over
-   its head. When the words leave less than --smin, a small robot stands below them */
+/* stacked: the words, then the scene filling the rest of the screen (--sh, from js/sumi-fold.js);
+   when the words leave less than --smin, a small robot stands below them */
 @media (max-width: 720px) and (max-aspect-ratio: 5/4),
   (max-width: 960px) and (max-aspect-ratio: 1/1),
   (max-width: 560px) {
@@ -2212,17 +2808,36 @@ main:has(> .ridge:last-child) + .foot .sign {
     margin-bottom: 14px;
     font-size: 15px;
   }
+  /* steps in one row, every caption in one cell under it: the reel fits a phone at one height */
+  @media (scripting: enabled) {
+    .steps {
+      grid-template-columns: repeat(4, auto);
+      justify-content: space-between;
+      column-gap: 12px;
+    }
+    .steps li {
+      display: contents;
+    }
+    .step {
+      grid-row: 1;
+      width: auto;
+    }
+    .steps .cap {
+      grid-row: 2;
+      grid-column: 1 / -1;
+      margin: 10px 0 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .step[aria-pressed='true'] + .cap {
+      opacity: 1;
+      pointer-events: auto;
+      transition: opacity 0.3s ease;
+    }
+  }
   .reel figcaption {
     margin-top: 14px;
     letter-spacing: 0.1em;
-  }
-  .reel figcaption .sep {
-    display: none;
-  }
-  .reel figcaption .cl {
-    display: block;
-    white-space: normal;
-    text-wrap: balance;
   }
   .grp {
     margin-top: 64px;
@@ -2292,6 +2907,26 @@ main:has(> .ridge:last-child) + .foot .sign {
   }
   .rows .t {
     font-size: 17px;
+  }
+  /* under 540 px the column beside the plate is too narrow to read: only the title stays there */
+  @media (max-width: 539px) {
+    .rows:not(.pubs) li {
+      row-gap: 0;
+    }
+    .rows:not(.pubs) li > div {
+      display: contents;
+    }
+    .rows:not(.pubs) .t {
+      grid-column: 2;
+      grid-row: 2;
+      margin-top: 6px;
+    }
+    .rows:not(.pubs) :is(.d, .links, .clip) {
+      grid-column: 1 / -1;
+    }
+    .rows:not(.pubs) .d {
+      margin-top: 14px;
+    }
   }
   .pubs li {
     gap: 6px 0;
@@ -2378,15 +3013,15 @@ main:has(> .ridge:last-child) + .foot .sign {
     margin-top: 14px;
   }
 }
-/* the shortest phones turned sideways: the sub runs wider, in two lines, so the links stay on screen */
+/* the shortest phones sideways: the sub runs wider, in two lines, so the links stay on screen */
 @media (max-width: 720px) and (max-height: 340px) {
   .hero .sub {
     max-width: 28em;
     min-height: 3.1em;
   }
 }
-/* phones turned sideways and short desktop windows: the same, and the sub ends where it does on a
-   phone; under 580 px the full words would push the robot's feet off the first screen */
+/* phones sideways and short desktop windows: under 580 px the full sub would push the robot's feet
+   off the first screen */
 @media (min-width: 721px) and (max-width: 960px) and (max-height: 500px),
   (min-width: 961px) and (max-height: 579px) {
   .hero .copy {
@@ -2418,558 +3053,5 @@ main:has(> .ridge:last-child) + .foot .sign {
   *::after {
     transition: none !important;
     animation: none !important;
-  }
-}
-
-/* the Go2 band */
-.band {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 860px) 280px;
-  column-gap: 48px;
-  align-items: center;
-  justify-content: center;
-  width: 100vw;
-  margin: 96px 0 0 calc(-1 * (var(--gutter) + 96px));
-  padding: 48px var(--gutter) 16px;
-  background: linear-gradient(
-    transparent,
-    var(--deep) 72px,
-    var(--deep) calc(100% - 72px),
-    transparent
-  );
-}
-.band .xray {
-  position: relative;
-  width: 100%;
-  max-width: 860px;
-}
-/* the box holds the sketch's place; the script fits the canvas to what it draws inside it */
-.band .sketch {
-  position: relative;
-  aspect-ratio: 1 / 0.62;
-  min-height: 380px;
-  max-height: 560px;
-  -webkit-mask-image: linear-gradient(#000 84%, rgba(0, 0, 0, 0.55) 96%, rgba(0, 0, 0, 0.2) 100%);
-  mask-image: linear-gradient(#000 84%, rgba(0, 0, 0, 0.55) 96%, rgba(0, 0, 0, 0.2) 100%);
-}
-.band .sketch canvas {
-  position: absolute;
-}
-
-.tags {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.tag,
-.band .interval button {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-  padding: 2px 0;
-  background: none;
-  border: 0;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  text-align: left;
-  white-space: nowrap;
-  color: var(--dim);
-  cursor: default;
-  transition: color 0.25s;
-}
-.tag::before,
-.band .interval button::before {
-  content: '';
-  flex: none;
-  width: 6px;
-  height: 6px;
-  background: var(--paper-55);
-  transition: background 0.25s;
-}
-.tag:focus-visible,
-.tag[aria-pressed='true'],
-.band .interval button:focus-visible,
-.band .interval button[aria-pressed='true'] {
-  color: var(--paper);
-}
-.tag:focus-visible::before,
-.tag[aria-pressed='true']::before,
-.band .interval button:focus-visible::before,
-.band .interval button[aria-pressed='true']::before {
-  background: var(--paper);
-}
-.tag:focus-visible,
-.band .interval button:focus-visible {
-  outline: 2px solid var(--paper);
-  outline-offset: 4px;
-}
-@media (hover: hover) {
-  .tag:hover,
-  .band .interval button:hover {
-    color: var(--paper);
-  }
-  .tag:hover::before,
-  .band .interval button:hover::before {
-    background: var(--paper);
-  }
-}
-.tag {
-  position: absolute;
-  pointer-events: auto;
-  opacity: 0;
-  transition:
-    color 0.25s,
-    opacity 0.3s;
-}
-.resolved .tag,
-.tag:focus-visible {
-  opacity: 1;
-}
-.resolved li:nth-child(2) .tag {
-  transition-delay: 0.06s;
-}
-.resolved li:nth-child(3) .tag {
-  transition-delay: 0.12s;
-}
-.resolved li:nth-child(4) .tag {
-  transition-delay: 0.18s;
-}
-.tag.l {
-  flex-direction: row-reverse;
-}
-.tag .tx {
-  display: block;
-  line-height: 1.5;
-}
-.tag.l .tx {
-  text-align: right;
-}
-.tag .sep {
-  display: none;
-}
-.tag .l2 {
-  display: block;
-}
-@media (pointer: coarse) and (min-width: 721px) {
-  .tag::after {
-    content: '';
-    position: absolute;
-    inset: -10px -4px;
-  }
-}
-
-.band-side {
-  display: grid;
-  align-items: start;
-  row-gap: 40px;
-  padding: 6px 0 6px 28px;
-  border-left: 1px solid var(--rule-strong);
-  letter-spacing: 0.14em;
-  line-height: 1.5;
-}
-.band-h {
-  margin-bottom: 18px;
-  letter-spacing: 0.22em;
-  color: var(--dim);
-}
-/* the controls show once the script is there to answer them */
-.band .cmd {
-  visibility: hidden;
-}
-.band.live .cmd {
-  visibility: visible;
-}
-.band .field p {
-  white-space: nowrap;
-}
-.band .field label,
-.band .interval p {
-  color: var(--dim);
-}
-.band .field .deg {
-  display: inline-block;
-  min-width: calc(5ch + 0.7em);
-}
-.band .field .next {
-  color: var(--paper-55);
-}
-/* the thumb is a 40 px target round a 10 px square: the input overhangs the column 15 px a side */
-.band .field input {
-  -webkit-appearance: none;
-  appearance: none;
-  display: block;
-  width: calc(100% + 30px);
-  height: 40px;
-  margin: -4px -15px 4px;
-  background: none;
-  touch-action: pan-y;
-}
-.band .field input::-webkit-slider-runnable-track {
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 15px,
-    var(--rule-strong) 0 calc(100% - 15px),
-    transparent 0
-  );
-}
-.band .field input::-moz-range-track {
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 15px,
-    var(--rule-strong) 0 calc(100% - 15px),
-    transparent 0
-  );
-}
-.band .field input::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  box-sizing: border-box;
-  width: 40px;
-  height: 40px;
-  margin-top: -19.5px;
-  border: 15px solid transparent;
-  border-radius: 0;
-  background: var(--paper) padding-box;
-}
-.band .field input::-moz-range-thumb {
-  box-sizing: border-box;
-  width: 40px;
-  height: 40px;
-  border: 15px solid transparent;
-  border-radius: 0;
-  background: var(--paper) padding-box;
-}
-.band .field input:focus-visible {
-  outline: none;
-}
-.band .field input:focus-visible::-webkit-slider-thumb {
-  outline: 2px solid var(--paper);
-  outline-offset: -12px;
-}
-.band .field input:focus-visible::-moz-range-thumb {
-  outline: 2px solid var(--paper);
-  outline-offset: -12px;
-}
-.band .interval {
-  display: grid;
-  justify-items: start;
-}
-.band .interval p {
-  margin-bottom: 4px;
-}
-.band .interval button {
-  padding: 4px 0;
-}
-/* the ring sits 8 px inside the canvas: on the column's edge */
-.band .dial {
-  display: block;
-  width: 104px;
-  height: 104px;
-  margin: -8px 0 16px -8px;
-  pointer-events: none;
-}
-
-.band .stages li:not(:last-child)::after {
-  content: '↓';
-  content: '↓' / '';
-  display: block;
-  margin: 4px 0 4px 2px;
-  color: var(--paper-55);
-}
-.band .stages .rate {
-  display: block;
-  margin-top: -2px;
-  letter-spacing: 0.1em;
-  color: var(--dim);
-}
-/* the policy's lamp is always lit (it runs every step); the navigator's is lit by the script */
-.band .stages .policy .rate::before,
-.band .stages .lamp {
-  display: inline-block;
-  width: 4px;
-  height: 4px;
-  margin: 0 8px 1px 0;
-  vertical-align: middle;
-  background: var(--paper);
-}
-.band .stages .policy .rate::before {
-  content: '';
-}
-.band .stages .lamp {
-  background: var(--paper-55);
-}
-
-.band-cap {
-  grid-column: 1 / -1;
-  justify-self: center;
-  margin-top: 28px;
-  text-align: center;
-  text-wrap: balance;
-  letter-spacing: 0.14em;
-  line-height: 1.8;
-  color: var(--dim);
-}
-
-@media (min-width: 1600px) {
-  .band {
-    margin-left: calc(480px - 50vw);
-  }
-}
-@media (min-width: 1920px) {
-  .band {
-    margin-left: calc(560px - 50vw);
-  }
-}
-@media (min-width: 721px) and (max-width: 1180px) {
-  .band {
-    padding-left: calc(var(--gutter) + 96px);
-  }
-}
-@media (max-width: 1180px) {
-  .band {
-    grid-template-columns: 1fr;
-    row-gap: 32px;
-  }
-  .band .xray {
-    max-width: none;
-  }
-  .band-side {
-    grid-template-columns: minmax(0, 420px) auto;
-    justify-content: start;
-    column-gap: 56px;
-    padding: 24px 0 0;
-    border-left: 0;
-    border-top: 1px solid var(--rule-strong);
-  }
-  .band-cap {
-    justify-self: start;
-    text-align: left;
-  }
-  .band-cap .sep {
-    display: none;
-  }
-  .band-cap .cl {
-    display: block;
-  }
-}
-@media (max-width: 960px) {
-  .band {
-    margin-left: calc(-1 * var(--gutter));
-    padding-left: var(--gutter);
-  }
-}
-@media (max-width: 720px) {
-  .band {
-    width: auto;
-    margin: 72px calc(-1 * var(--gutter)) 0;
-    padding: 32px var(--gutter);
-    row-gap: 24px;
-  }
-  .band .sketch {
-    aspect-ratio: 1 / 0.7;
-    min-height: 0;
-    max-height: none;
-    -webkit-mask-image: linear-gradient(#000 95%, rgba(0, 0, 0, 0.5) 100%);
-    mask-image: linear-gradient(#000 95%, rgba(0, 0, 0, 0.5) 100%);
-  }
-  .tags {
-    position: static;
-    display: grid;
-    margin-top: 4px;
-  }
-  .tag {
-    position: static;
-    align-items: flex-start;
-    min-width: 40px;
-    padding: 12px 0;
-    line-height: 1.5;
-    white-space: normal;
-    opacity: 1;
-  }
-  .tag::before {
-    margin-top: 5px;
-  }
-  .tag .sep,
-  .tag .l2 {
-    display: inline;
-  }
-  .band-side {
-    grid-template-columns: minmax(0, 420px);
-    row-gap: 32px;
-    padding-top: 20px;
-  }
-  .band-cap {
-    margin-top: 8px;
-  }
-}
-@media (max-width: 400px) {
-  .tag .sep {
-    display: none;
-  }
-  .tag .l2 {
-    display: block;
-  }
-}
-@media (pointer: coarse) {
-  .band .interval button {
-    padding: 12px 0;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .tag {
-    opacity: 1;
-  }
-}
-
-/* the FlowCount plate, live (js/sumi-track.js): the still plate shows until the canvas has drawn */
-.track {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  column-gap: 28px;
-}
-.track .plate {
-  position: relative;
-  flex: 1 0 100%;
-  margin-bottom: 28px;
-  background: var(--paper);
-  border: 1px solid var(--rule-strong);
-  box-shadow:
-    10px 10px 0 var(--deep),
-    11px 11px 0 var(--rule);
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
-}
-.track .plate img {
-  width: 100%;
-  height: auto;
-  border: 0;
-  box-shadow: none;
-  transform: none;
-  transition: none;
-}
-.track canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
-}
-.track canvas,
-.track .raw,
-.track figcaption {
-  visibility: hidden;
-}
-.track.live canvas,
-.track.live .raw,
-.track.live figcaption {
-  visibility: visible;
-}
-.track .raw,
-.track figcaption {
-  color: var(--dim);
-  letter-spacing: 0.14em;
-  line-height: 20px;
-}
-.track .raw {
-  padding: 14px 0;
-  margin: -14px 0;
-  background: none;
-  border: 0;
-  font-family: var(--mono);
-  font-size: 11px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color 0.25s;
-}
-/* the label's baseline comes from its text, not from the square, so it sits on the caption's line */
-.track .raw span {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 10px;
-  line-height: normal;
-}
-.track .raw span::before {
-  content: '';
-  align-self: center;
-  width: 6px;
-  height: 6px;
-  background: var(--paper-55);
-  transition: background 0.25s;
-}
-.track .raw:hover,
-.track .raw:focus-visible,
-.track .raw[aria-pressed='true'] {
-  color: var(--paper);
-}
-.track .raw:hover span::before,
-.track .raw:focus-visible span::before,
-.track .raw[aria-pressed='true'] span::before {
-  background: var(--paper);
-}
-.track .raw:focus-visible {
-  outline: none;
-}
-.track .raw:focus-visible span {
-  outline: 2px solid var(--paper);
-  outline-offset: 5px;
-}
-.track figcaption .cl {
-  white-space: nowrap;
-}
-@media (prefers-reduced-motion: no-preference) and (hover: hover) {
-  .feat:is(:hover, :has(:focus-visible)) .plate {
-    transform: translate(-2px, -2px);
-    box-shadow:
-      13px 13px 0 var(--deep),
-      14px 14px 0 var(--rule);
-  }
-}
-/* the text centres on the plate alone: the plate's 28 px margin and its 20 px control row */
-@media (min-width: 1100px) {
-  .feat:has(> .track) > div {
-    margin-bottom: 48px;
-  }
-}
-@media (max-width: 720px) {
-  .track .plate {
-    box-shadow:
-      7px 7px 0 var(--deep),
-      8px 8px 0 var(--rule);
-  }
-  .track figcaption {
-    flex-basis: 100%;
-    margin-top: 8px;
-  }
-}
-@media (min-width: 1920px) {
-  .track .raw {
-    font-size: 12.5px;
-  }
-}
-@media (forced-colors: active) {
-  .track .raw span::before {
-    forced-color-adjust: none;
-    background: GrayText;
-  }
-  .track .raw[aria-pressed='true'] span::before {
-    background: CanvasText;
-  }
-}
-@media (prefers-reduced-motion: reduce), (scripting: none) {
-  .track .plate {
-    margin-bottom: 0;
-  }
-  .track .raw,
-  .track figcaption {
-    display: none;
-  }
-  .feat:has(> .track) > div {
-    margin-bottom: 0;
   }
 }

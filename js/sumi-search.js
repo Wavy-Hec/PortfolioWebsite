@@ -39,8 +39,7 @@
   const PRESETS = [cellOf(31, 13), cellOf(34, 29), cellOf(34, 14), cellOf(23, 27)];
   const SEED = 281;
 
-  // a robot keeps two cells clear of furniture and walls; a line of sight keeps 0.4 m clear of
-  // furniture, room for the robot to walk along it, so no floor dot is drawn inside that margin
+  // a robot stays two cells from walls and furniture; a line of sight stays 0.4 m from furniture
   const CLEARANCE_CELLS = 2;
   const SIGHT_MARGIN_M = 0.4;
   const WALL_M = CLEARANCE_CELLS * CELL_M;
@@ -65,8 +64,8 @@
   const NEVER_REVISED = 1;
   const REVISED = 2;
 
-  // on screen: two simulated seconds a second
-  const SIM_SPEED = 2;
+  // on screen: three simulated seconds a second
+  const SIM_SPEED = 3;
   const PAUSE_S = 1.2;
   const SLIDE_S = 0.8;
   // after the chair lands, a beat for the eye to come back to the robots
@@ -87,8 +86,7 @@
   const LIT_R = 0.2;
   const LIT_ALPHA = 0.55;
   const HATCH_PX = 3.5;
-  // a Go2 from above: half its 0.3762 m trunk, never under TRUNK_MIN_PX; then in pixels the trunk's
-  // half width, how far out its feet stand and their radius
+  // a Go2 from above: half its 0.3762 m trunk, at least TRUNK_MIN_PX; the rest in pixels
   const TRUNK_M = 0.3762 / 2;
   const TRUNK_MIN_PX = 4.5;
   const TRUNK_HALF_W_PX = 1.6;
@@ -179,8 +177,7 @@
     return enter < leave ? enter : 1;
   }
 
-  // the furniture as a camera at (x, y) sees it: grown by the sight margin, or by as much of it as
-  // the camera has
+  // furniture grown by the sight margin, but never over the camera itself
   function viewFrom(x, y, heading) {
     return {
       x,
@@ -384,8 +381,7 @@
     if (robot.hop < 1e-6) robot.sweep = TAU;
   }
 
-  // with memory: first to where the chair was last seen, then the nearest region not yet looked at;
-  // a never-revised belief pulls it back after every region, a revised one is dropped on sight
+  // last sighting first, then the nearest unseen region; a belief never revised pulls it back
   function searchFromMemory(robot, view) {
     if (robot.lastSeen >= 0) {
       const x = cellX(robot.lastSeen);
@@ -492,9 +488,7 @@
     while (!settled) step();
   }
 
-  // a robot still searching keeps its count and its memory; the others start a new search, unless
-  // none of them loses sight of the chair: then the last search stays in the counters and on the
-  // drawing. The blind walk is seeded by the spot, so a move always plays out the same way
+  // the blind walk is seeded by the spot, so a move always plays out the same way
   function moveChair(cell) {
     const resting = robots.filter(robot => robot.found || robot.spent);
     const inSight = robot =>
@@ -551,7 +545,6 @@
     return best;
   }
 
-  // the chair can stand on any walkable cell: a click goes to the one nearest it
   function cellNear(x, y) {
     let best = chair;
     let bestDistance = Infinity;
@@ -584,8 +577,7 @@
       painted: new Uint8Array(CELLS),
       steps,
       stale,
-      // whether the robot has given up its belief (struck it out, or found the chair elsewhere),
-      // and how many seconds ago
+      // gave up its belief (struck out, or the chair found elsewhere), and seconds since
       gaveUp: false,
       age: MARK_S,
     };
@@ -735,8 +727,6 @@
     ];
   }
 
-  // the belief: a hollow square where the chair was last seen, a dashed line to it from the robot's
-  // ring, and once revised a stroke through it, drawn corner to corner
   function drawBelief(ctx, cell, x, y, alpha, lineAlpha, strike) {
     const cx = xPx(cellX(cell));
     const cy = yPx(cellY(cell));
@@ -769,8 +759,7 @@
     ctx.stroke();
   }
 
-  // live while it searches; once given up, room 3 keeps its belief struck out and room 2 keeps the
-  // belief it never dropped, both dimmer, until a move takes the chair out of some robot's sight
+  // a belief given up stays on the drawing, dimmer, until the chair next leaves a robot's sight
   function drawMemory(room, x, y) {
     const { ctx, robot, age } = room;
     if (robot.struck >= 0) {
@@ -796,7 +785,6 @@
     ctx.globalAlpha = 1;
     ctx.drawImage(room.floor, 0, 0, width, height);
 
-    // a little brighter while the chair is in view
     const view = viewFrom(x, y, heading);
     const [chairX, chairY] = chairAt();
     ctx.save();
@@ -835,7 +823,6 @@
     ctx.globalAlpha = 1;
     ctx.fillRect(xPx(chairX) - side / 2, yPx(chairY) - side / 2, side, side);
 
-    // the headings it has faced, as a ring of 24 ticks fixed to the room
     const outer = inner + Math.max(2, 0.12 * scale);
     const faced = new Path2D();
     const unfaced = new Path2D();
@@ -850,7 +837,6 @@
     ctx.globalAlpha = 1;
     ctx.stroke(faced);
 
-    // the robot: a trunk and four feet, and its heading as a long tick on the ring
     const half = Math.max(TRUNK_M * scale, TRUNK_MIN_PX);
     ctx.save();
     ctx.translate(xPx(x), yPx(y));
@@ -908,10 +894,7 @@
     );
   }
 
-  // the hint goes in the first room, or in the last when they are stacked (where the eye is as the
-  // story ends): at the free spot nearest the chair, clear of the furniture, the robot, its belief
-  // and its trail; failing that straight above or below the chair, over the trail. The floor is
-  // cleared under it, as a map clears the grid under a label
+  // the free spot nearest the chair; failing that, straight above or below it, over the trail
   function placeHint() {
     const { robot } = hintRoom;
     const w = hint.offsetWidth;
@@ -975,12 +958,11 @@
   let pause = PAUSE_S;
   let hold = 0;
 
-  // after every step: the counters, the floor, a belief given up, and the result once all rest
   function sync() {
     for (const room of rooms) {
       const { robot } = room;
       paintSeen(room);
-      setText(room.steps, robot.spent ? '–' : String(robot.steps));
+      setText(room.steps, robot.spent ? `${SEARCH_CAP_STEPS}+` : String(robot.steps));
       setText(room.stale, robot.memory === NO_MEMORY ? '–' : String(robot.staleRevisits));
       const gaveUp = robot.struck >= 0 || (robot.found && robot.held >= 0);
       if (gaveUp !== room.gaveUp) {
@@ -1065,6 +1047,8 @@
     began = true;
     hint.classList.remove('on');
     hintBox = null;
+    // animated, read out from the reader's first move on, not during the run nobody started
+    if (!S.REDUCED) result.setAttribute('role', 'status');
   }
 
   function place(cell) {
@@ -1083,7 +1067,6 @@
     paint();
   }
 
-  // a click or a press slides the chair to its cell; under reduced motion it is simply there
   function moveTo(cell) {
     if (S.REDUCED) place(cell);
     else startSlide(cell);
@@ -1149,8 +1132,7 @@
     return Math.hypot(x - cx, y - cy) * scale <= GRAB_PX;
   }
 
-  // a press on the chair becomes a drag once the pointer has moved; a press that ends on the
-  // chair moves nothing, and one that ends on the floor sends the chair there
+  // a press on the chair drags it once moved; a press that ends on the floor sends it there
   let press = null;
   for (const room of rooms) {
     const { canvas } = room;
@@ -1222,9 +1204,7 @@
   root.classList.add('ready');
   size();
 
-  // the story starts once the last room is whole on screen (on an upright phone the two rooms that
-  // carry the claim are then both in view), or fills a screen too short to hold it; it runs while
-  // any of the rooms is on screen
+  // the story starts once the last room is whole on screen, or fills a screen too short for it
   const watcher = new IntersectionObserver(
     entries => {
       for (const entry of entries) {
@@ -1240,16 +1220,15 @@
       if (onScreen) wake();
       else sleep();
     },
-    // 0.99, not 1: a canvas's height is fractional, so flush with the screen's edge it is a
-    // fraction of a pixel short of whole
+    // 0.99, not 1: a canvas's height is fractional
     { threshold: [0, 0.9, 0.99] },
   );
 
   // the reduced still is a whole search, so it gets a task of its own after the script's arrival
   setTimeout(() => {
     restart();
-    // a live region only from here, so the still's first sentence is not read out on arrival
-    result.setAttribute('role', 'status');
+    // reduced, a press writes the line at once: the region has to be there before it
+    if (S.REDUCED) result.setAttribute('role', 'status');
     watcher.observe(roomsEl);
     watcher.observe(rooms[2].canvas);
   });
@@ -1267,7 +1246,11 @@
     'resize',
     () => {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(layout, 150);
+      // a phone's toolbar resizes the window, not the rooms
+      resizeTimer = setTimeout(() => {
+        const { canvas } = rooms[0];
+        if (canvas.clientWidth !== width || canvas.clientHeight !== height) layout();
+      }, 150);
     },
     { passive: true },
   );

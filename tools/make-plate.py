@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Draw img/proj-humanoid-ink.png and its -2x twin: a Unitree G1 walking, in dry brush ink.
+"""Draw two project plates in dry brush ink, each with its -2x twin: img/proj-humanoid-ink.png,
+a Unitree G1 walking, and img/proj-rl-isaaclab-ink.png, Go2s training side by side.
 
     pip install numpy pillow
     python tools/make-plate.py
 
-Proportions and joint positions come from the G1 model in MuJoCo Menagerie, posed mid-stride
-and seen from the side.
+Proportions and joint positions come from the G1 and Go2 models in MuJoCo Menagerie. The G1 is
+posed mid-stride and seen from the side; the Go2s trot, one to a cell, and a few have fallen.
 """
 import pathlib
 
@@ -17,7 +18,34 @@ W, H = 1280, 720
 STEP = 0.5
 PAPER = (233, 231, 226)
 INK = (17, 17, 20)
-SEED = 11
+
+# Go2 sizes in metres, from unitree_go2 in MuJoCo Menagerie, and the trunk height of its trot
+TRUNK = np.array([0.3762, 0.0935, 0.114])
+HIP = np.array([0.1934, 0.0465, 0.0])
+THIGH_OUT = 0.0955
+LEG = 0.213
+LEGS = {"FL": (1, 1), "FR": (1, -1), "RL": (-1, 1), "RR": (-1, -1)}
+STAND = 0.32
+
+# three that fell or are falling, by (column, row): trunk height, turn, pitch and roll, then
+# the thigh, calf and splay joint angles of the FL, FR, RL and RR legs
+FALLEN = {
+    # on its back
+    (1, 1): (
+        (0.075, 0.5, 0.06, np.pi - 0.2),
+        [(0.35, -1.1, 0.35), (0.9, -1.5, 0.2), (0.6, -1.7, 0.3), (0.15, -1.2, 0.45)],
+    ),
+    # face down
+    (4, 2): (
+        (0.2, -0.25, 0.62, 0.12),
+        [(2.0, -2.6, 0.25), (1.8, -2.5, 0.35), (0.15, -0.55, 0.1), (-0.1, -0.6, 0.1)],
+    ),
+    # a front knee giving way
+    (3, 0): (
+        (0.21, 0.2, 0.33, 0.15),
+        [(1.45, -2.6, 0.1), (-0.35, -0.55, 0.15), (0.55, -1.05, 0.0), (0.75, -1.2, 0.05)],
+    ),
+}
 
 
 def even(a):
@@ -209,7 +237,7 @@ def hand(sheet, wrist, tip, size, load=1.0):
     )
 
 
-def draw(sheet):
+def draw_humanoid(sheet):
     # ground: lands just ahead of the planted foot and runs off the edge
     sheet.blot(352, 628, 13, squash=0.62)
     sheet.stroke(
@@ -316,6 +344,206 @@ def draw(sheet):
     hand(sheet, (524, 310), (482, 348), 13.8)
 
 
+def rotation(yaw, pitch, roll):
+    """body to world, x ahead, y left, z up: pitch tips the nose down, roll lifts the left side"""
+    cy, sy = np.cos(yaw), np.sin(yaw)
+    cp, sp = np.cos(pitch), np.sin(pitch)
+    cr, sr = np.cos(roll), np.sin(roll)
+    return (
+        np.array([[cy, -sy, 0], [sy, cy, 0], [0, 0, 1]])
+        @ np.array([[cp, 0, sp], [0, 1, 0], [-sp, 0, cp]])
+        @ np.array([[1, 0, 0], [0, cr, -sr], [0, sr, cr]])
+    )
+
+
+class Camera:
+    """a pinhole camera over the ground, which is the plane z = 0"""
+
+    def __init__(self, eye, target, focal):
+        self.eye = np.asarray(eye, float)
+        ahead = np.subtract(target, eye)
+        self.ahead = ahead / np.linalg.norm(ahead)
+        right = np.cross(self.ahead, (0, 0, 1))
+        self.right = right / np.linalg.norm(right)
+        self.up = np.cross(self.right, self.ahead)
+        self.focal = focal
+
+    def __call__(self, point):
+        """where a point lands on the sheet, and how many pixels a metre spans there"""
+        d = np.asarray(point, float) - self.eye
+        depth = d @ self.ahead
+        x = W / 2 + self.focal * (d @ self.right) / depth
+        y = H / 2 - self.focal * (d @ self.up) / depth
+        return np.array([x, y]), self.focal / depth
+
+
+def leg_joints(name, thigh, calf, splay=0.0):
+    """hip, top of the thigh, knee and foot of one leg, in the body frame"""
+    fore, side = LEGS[name]
+    out = rotation(0, 0, side * splay)
+    hip = HIP * (fore, side, 1)
+    top = hip + out @ (0, side * THIGH_OUT, 0)
+    knee = top + out @ (-LEG * np.sin(thigh), 0, -LEG * np.cos(thigh))
+    foot = knee + out @ (-LEG * np.sin(thigh + calf), 0, -LEG * np.cos(thigh + calf))
+    return hip, top, knee, foot
+
+
+def trot(phase):
+    """thigh and calf joint angles at one moment of a trot, diagonal pairs half a cycle apart"""
+    stride, lift, stance = 0.12, 0.07, 0.55
+    angles = {}
+    for name, offset in (("FL", 0), ("RR", 0), ("FR", 0.5), ("RL", 0.5)):
+        t = (phase + offset) % 1
+        if t < stance:
+            x = stride * (1 - 2 * t / stance)
+            z = -STAND
+        else:
+            s = (t - stance) / (1 - stance)
+            x = stride * (2 * s * s * (3 - 2 * s) - 1)
+            z = -STAND + lift * np.sin(np.pi * s)
+        # thigh and calf are the same length, so the knee splits the angle evenly
+        half = np.arccos(np.hypot(x, z) / (2 * LEG))
+        angles[name] = (np.arctan2(-x, -z) + half, -2 * half)
+    return angles
+
+
+def go2(sheet, camera, at, yaw, legs, load, pitch=0.0, roll=0.0):
+    """a Go2 with its trunk centre at `at`, cut out of whatever lies behind it: the far legs,
+    then the trunk and head, then the near legs"""
+    body = rotation(yaw, pitch, roll)
+    _, scale = camera(at)
+    # the farther, smaller robots get finer nicks along the brush edge
+    bite = min(0.8, 0.2 + 0.003 * scale)
+    upright = body[2, 2] > 0.9
+
+    def seen(point):
+        return camera(at + body @ point)[0]
+
+    def size(metres, least=1.0):
+        return max(least, metres * scale)
+
+    joints = {name: leg_joints(name, *angles) for name, angles in legs.items()}
+    order = sorted(LEGS, key=lambda n: np.linalg.norm(at + body @ joints[n][1] - camera.eye))
+    near, far = order[:2], order[2:]
+
+    def leg(name, wet, lift=False, margin=0.0):
+        _, top, knee, foot = (seen(p) for p in joints[name])
+        sheet.stroke(
+            [top, knee],
+            [size(0.04) + margin, size(0.044) + margin, size(0.03) + margin, size(0.022) + margin],
+            load=(wet, wet, 0.85 * wet),
+            lift=lift,
+            bias=0 if lift else 0.25,
+            bite=bite,
+            feather=0.25,
+        )
+        sheet.stroke(
+            [knee, foot],
+            [
+                size(0.022) + margin,
+                size(0.019) + margin,
+                size(0.013, 0.9) + margin,
+                size(0.016, 0.9) + margin,
+            ],
+            load=(0.95 * wet, 0.85 * wet),
+            lift=lift,
+            bite=bite,
+            feather=0.25,
+        )
+
+    # the trunk runs a little past the hips, as the brush does in the vlm plate
+    half = TRUNK / 2
+    rear = seen((-half[0] - 0.045, 0, 0))
+    front = seen((half[0] + 0.045, 0, 0))
+    along = (front - rear) / np.hypot(*(front - rear))
+    across = np.array([-along[1], along[0]])
+    spread = [
+        (seen(half * (x, y, z)) - rear) @ across for x in (-1, 1) for y in (-1, 1) for z in (-1, 1)
+    ]
+    shift = across * (max(spread) + min(spread)) / 2
+    rear, front = rear + shift, front + shift
+    thick = 0.36 * (max(spread) - min(spread))
+    head = seen((0.25, 0, -0.005))
+
+    for name in near:
+        leg(name, 1.3, lift=True, margin=2)
+    sheet.stroke(
+        [rear, front], [thick + 3, thick + 3], load=(1.3, 1.3), lift=True, feather=0.15, bite=0.2
+    )
+    sheet.blot(*head, size(0.05) + 3, lift=True)
+
+    for name in far:
+        leg(name, 0.85 * load)
+    # `across` is the stroke's normal, so this sign dries its lower edge, the belly
+    sheet.stroke(
+        [rear, (rear + front) / 2, front],
+        [0.85 * thick, thick, thick, 0.95 * thick],
+        load=(0.75 * load, 1.15 * load, 1.1 * load, 1.05 * load),
+        bias=0.3 * np.sign(across[1]),
+        feather=0.15,
+        bite=bite,
+        attack=1,
+    )
+    if upright:
+        back = -np.sign(across[1]) * across * 0.42 * thick
+        sheet.stroke(
+            [rear + back + 0.08 * (front - rear), front + back - 0.12 * (front - rear)],
+            [0.6, max(0.9, 0.06 * thick), max(0.9, 0.06 * thick), 0.5],
+            load=(1.3, 1.3),
+            lift=True,
+            feather=0.2,
+            bite=0.3,
+        )
+    sheet.blot(*head, size(0.05), squash=0.85, angle=np.arctan2(along[1], along[0]))
+    sheet.blot(*seen((0.285, 0, -0.045)), size(0.034), rough=0.1)
+    for name in near:
+        leg(name, 1.1 * load)
+    if upright:
+        for name in near:
+            fore, side = LEGS[name]
+            r = size(0.042, 1.5)
+            joint(sheet, *seen(HIP * (fore, side, 1) + (0, side * 0.075, 0)), r, pivot=0.2 * r)
+
+
+def floor(sheet, camera, columns, rows, cell):
+    """rule the ground into one cell per robot, the lines running past the field and drying out"""
+    xs = (np.arange(columns + 1) - columns / 2) * cell[0]
+    ys = (np.arange(rows + 1) - 0.5) * cell[1]
+    lines = [((x, ys[0] - 0.3 * cell[1]), (x, ys[-1] + 0.3 * cell[1])) for x in xs]
+    lines += [((xs[0] - 0.3 * cell[0], y), (xs[-1] + 0.3 * cell[0], y)) for y in ys]
+    for start, end in lines:
+        a, scale_a = camera((*start, 0))
+        b, scale_b = camera((*end, 0))
+        sheet.stroke(
+            [a, b],
+            [max(1.1, 0.0065 * scale_a), max(1.1, 0.0065 * scale_b)],
+            load=(0.2, 0.85, 0.85, 0.2),
+            bias=0.15,
+            feather=0.3,
+            bite=0.3,
+        )
+
+
+def draw_isaaclab(sheet):
+    camera = Camera(eye=(0, -4.3, 2.9), target=(0, 1.2, 0), focal=1200)
+    columns, rows, cell = 5, 3, (1.0, 1.15)
+    floor(sheet, camera, columns, rows, cell)
+    rng = sheet.rng
+    for row in reversed(range(rows)):
+        for column in range(columns):
+            x = (column - (columns - 1) / 2) * cell[0] + 0.1 * rng.standard_normal()
+            y = row * cell[1] + 0.1 * rng.standard_normal()
+            yaw = np.radians(186) + 0.04 * rng.standard_normal()
+            phase = rng.random()
+            load = 1 - 0.3 * row / (rows - 1)
+            if (column, row) in FALLEN:
+                (height, turn, pitch, roll), angles = FALLEN[column, row]
+                legs = dict(zip(LEGS, angles))
+                go2(sheet, camera, (x, y, height), yaw + turn, legs, load, pitch, roll)
+            else:
+                go2(sheet, camera, (x, y, STAND), yaw, trot(phase), load)
+
+
 def save(ink, name):
     plate = Image.fromarray(ink.astype(np.uint8), "P")
     plate.putpalette(PAPER + INK)
@@ -324,16 +552,20 @@ def save(ink, name):
 
 
 def main():
-    sheet = Sheet(SEED)
-    draw(sheet)
-    save(sheet.ink, "proj-humanoid-ink-2x.png")
-    grey = Image.fromarray(np.where(sheet.ink, 0, 255).astype(np.uint8)).resize(
-        (W // 2, H // 2), Image.BOX
-    )
-    save(
-        np.asarray(grey.convert("1", dither=Image.Dither.FLOYDSTEINBERG)) == 0,
-        "proj-humanoid-ink.png",
-    )
+    for name, draw, seed in (
+        ("proj-humanoid-ink", draw_humanoid, 11),
+        ("proj-rl-isaaclab-ink", draw_isaaclab, 12),
+    ):
+        sheet = Sheet(seed)
+        draw(sheet)
+        save(sheet.ink, f"{name}-2x.png")
+        grey = Image.fromarray(np.where(sheet.ink, 0, 255).astype(np.uint8)).resize(
+            (W // 2, H // 2), Image.BOX
+        )
+        save(
+            np.asarray(grey.convert("1", dither=Image.Dither.FLOYDSTEINBERG)) == 0,
+            f"{name}.png",
+        )
 
 
 if __name__ == "__main__":

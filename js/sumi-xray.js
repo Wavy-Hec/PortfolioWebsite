@@ -19,7 +19,7 @@
   const tickButtons = [...band.querySelectorAll('.interval button')];
   const lamp = band.querySelector('.lamp');
   const lampCtx = lamp.getContext('2d');
-  const rateText = lamp.nextSibling; // the navigator's rate, after its lamp
+  const rateText = lamp.nextSibling;
   const status = band.querySelector('[role="status"]');
 
   const PAPER = '#e9e7e2';
@@ -27,8 +27,7 @@
   const DPR = Math.min(2, devicePixelRatio || 1);
   const HOVER = matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-  // metres; x runs to the rear, y down, the robot faces left. BODY_L, BODY_W, HIP_X, LEG_Y, THIGH
-  // and CALF are the go2_description URDF's, the rest is drawing
+  // metres, x to the rear, y down; BODY_L, BODY_W, HIP_X, LEG_Y, THIGH and CALF: go2_description
   const BODY_L = 0.3762;
   const BODY_W = 0.0935;
   const BODY_H = 0.095;
@@ -72,8 +71,7 @@
     return `${Math.abs(h)} degrees to the ${h > 0 ? 'right' : 'left'}`;
   };
 
-  // in the order the sketch draws them: front near, rear near, front far, rear far; the far pair
-  // sits a little behind the near one so that both read
+  // front near, rear near, front far, rear far; the far pair sits a little behind so both read
   const makeLeg = (hipX, near, offset) => ({
     hipX,
     near,
@@ -91,8 +89,7 @@
   ];
   const [FRONT_NEAR, REAR_NEAR] = LEGS;
 
-  // the hardware tags, in the order of the buttons: where the square sits, in metres from the
-  // figure's centre, and the point on the robot its leader runs to
+  // per tag button: where its square sits, in metres from the centre, and where its leader ends
   const TAGS = [
     { left: true, at: [-0.4, -0.19], anchor: () => px(-BODY_L / 2 - 0.05, trunkY - 0.04) },
     { left: false, at: [0.1, -0.19], anchor: () => px(0.02, trunkY - 0.01) },
@@ -173,14 +170,10 @@
       }
       return;
     }
-    // no tag starts left of the chapter's content edge
-    const content = band.closest('.chapter').querySelector('.in');
-    const edge = content.getBoundingClientRect().left - wrap.getBoundingClientRect().left;
-    const minX = Math.max(0, Math.round(edge));
     for (const tag of TAGS) {
       const w = tag.el.offsetWidth;
       const maxX = W - 8 - w;
-      const x = clamp(cx + tag.at[0] * scale - (tag.left ? w : 0), Math.min(minX, maxX), maxX);
+      const x = clamp(cx + tag.at[0] * scale - (tag.left ? w : 0), 0, maxX);
       const y = cy + tag.at[1] * scale;
       tag.from = [tag.left ? x + w + 3 : x - 3, y + tag.el.offsetHeight / 2];
       tag.el.style.left = x + 'px';
@@ -189,7 +182,6 @@
     }
   }
 
-  // the canvas covers only what is drawn: the ground line and its ticks, the robot, the leaders
   function fitCanvas() {
     const ground = cy + GROUND * scale;
     const ends = phone ? [] : TAGS.map(tag => tag.from);
@@ -330,7 +322,6 @@
     ctx.beginPath();
     ctx.moveTo(cx - groundHalf * scale, y);
     ctx.lineTo(cx + groundHalf * scale, y);
-    // a tick every quarter metre, every fourth one longer; they pass at walking speed
     const first = Math.ceil((-groundHalf - travel) / TICK_M);
     for (let k = first; k * TICK_M + travel < groundHalf; k++) {
       const x = cx + (k * TICK_M + travel) * scale;
@@ -375,7 +366,6 @@
       stroke(tone, 1);
     }
 
-    // the camera on the head's face, the LiDAR's arc over it, the IMU at the trunk's centre
     const camera = px(-BODY_L / 2 - 0.068, trunkY - 0.012);
     const lidar = px(-BODY_L / 2 - 0.04, trunkY - 0.045);
     ctx.beginPath();
@@ -394,7 +384,6 @@
     ctx.fill();
   }
 
-  // links as lines, joints as circles; on entry it draws itself hip to foot, leg by leg
   function drawSkeleton() {
     ctx.beginPath();
     line(px(-HIP_X, trunkY), px(HIP_X, trunkY), ramp(age, 0, 0.12));
@@ -443,14 +432,12 @@
     drawLeaders();
   }
 
-  // the dial: straight ahead is up. The robot seen from above turns toward the heading marked on
-  // the ring; a heading still waiting for its tick is marked hollow
+  // straight ahead is up; a heading still waiting for its tick is marked hollow
   function drawDial() {
     const g = dialCtx;
     const c = Math.floor(dialSize / 2) + 0.5;
     const r = c - 8;
-    // px per metre: the rear knees, the robot's farthest point from its centre, reach 0.72 of the
-    // ring, and the needles start just beyond them
+    // px per metre: the rear knees, the farthest point from the centre, reach 0.72 of the ring
     const u = (0.72 * r) / Math.hypot(HIP_X + KNEE_BACK, LEG_Y);
     const needle = r * 0.76;
     const spoke = (deg, from, to) => {
@@ -488,7 +475,6 @@
       g.strokeRect(x + 0.5, y + 0.5, 6, 6);
     }
 
-    // the trunk, the legs out to the thigh joints and back to the knees, the head filled
     g.save();
     g.translate(c, c);
     g.rotate((yaw * Math.PI) / 180);
@@ -626,7 +612,6 @@
     S.remove(frame);
   }
 
-  // reduced motion: everything takes its final state at once, in one still frame
   function still() {
     Object.assign(held, wanted);
     showCommand();
@@ -647,8 +632,7 @@
   speedInput.addEventListener('input', onCommand);
   headingInput.addEventListener('input', onCommand);
 
-  // a touch jumps the slider to the finger at once; if it turns out to be a page scroll, the slider
-  // and the command go back to where they were
+  // a touch that turns out to be a scroll puts the slider and the command back
   for (const input of [speedInput, headingInput]) {
     let before = null;
     input.addEventListener('pointerdown', e => {

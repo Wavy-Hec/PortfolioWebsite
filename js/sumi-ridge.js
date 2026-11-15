@@ -47,7 +47,6 @@
   const SPUR_FALL = 0.45;
   const LEAN = { from: 0.7, over: 1.2 };
   const HAZE = { from: 1, over: 0.6 };
-  const LOWEST_CREST = 0.875; // the near ridge's lowest point, so mist never meets the band's foot
   // at is a share of the band's width; the left face is lit, the right in shade
   const SUMMIT = { at: 0.64, rise: 0.25, left: 0.55, right: 0.38, cone: 0.5 };
   const FACE = { lit: 3, shade: 2.2, slope: 0.6, wander: 0.08 };
@@ -97,37 +96,16 @@
     return (h & 1023) / 1023 - 0.5;
   };
 
-  // data-profiles: one array of elevations in metres per hike, nearest first
-  const profiles = JSON.parse(band.dataset.profiles || '[]');
-  const climbs = profiles.map(metres => metres.slice(0, metres.indexOf(Math.max(...metres)) + 1));
-  const largestClimb = Math.max(1, ...climbs.map(m => Math.max(...m) - Math.min(...m)));
-  RIDGES.forEach((ridge, i) => {
+  for (const ridge of RIDGES) {
     ridge.knots = Float32Array.from({ length: 1024 }, mulberry32(ridge.seed));
-    const climb = i > 0 && climbs[NEAREST - i];
-    if (climb && climb.length > 1) {
-      const low = Math.min(...climb);
-      ridge.climb = climb.map(m => (m - low) / largestClimb);
-    }
-  });
-  function climbAt(climb, across) {
-    const at = Math.min(1, Math.max(0, across)) * (climb.length - 1);
-    const i = Math.min(climb.length - 2, Math.floor(at));
-    return climb[i] + (climb[i + 1] - climb[i]) * (at - i);
   }
 
   const flankAt = u => Math.exp(-Math.abs(u) / (u < 0 ? SUMMIT.left : SUMMIT.right));
 
-  // u in band heights right of the summit, across as a share of the band's width
-  function crestOf(i, u, across, octaves) {
+  // u in band heights right of the summit
+  function crestOf(i, u, octaves) {
     const ridge = RIDGES[i];
-    const along = u / ridge.span + 300;
-    if (ridge.climb) {
-      // the noise's finest octaves, so a ridge drawn from data keeps the print's grain
-      const grain = 0.1 * ridged(ridge.knots, 10 * along, ridge.rough, 2);
-      const foot = Math.min(ridge.foot, LOWEST_CREST);
-      return foot - ridge.rise * (climbAt(ridge.climb, across) + grain);
-    }
-    const height = ridged(ridge.knots, along, ridge.rough, octaves);
+    const height = ridged(ridge.knots, u / ridge.span + 300, ridge.rough, octaves);
     let foot = ridge.foot;
     if (ridge.lean) {
       foot += ridge.lean * Math.sign(u) * smooth((Math.abs(u) - LEAN.from) / LEAN.over);
@@ -158,7 +136,7 @@
     let peakX = summitCol;
     let peakY = rows;
     for (let x = 0; x < cols; x++) {
-      const y = rows * crestOf(0, (x - summitCol) / rows, x / cols, OCTAVES);
+      const y = rows * crestOf(0, (x - summitCol) / rows, OCTAVES);
       if (y < peakY) {
         peakX = x;
         peakY = y;
@@ -175,8 +153,8 @@
     function column(x) {
       const u = (x - summitCol) / rows;
       for (let i = 0; i <= NEAREST; i++) {
-        crest[i] = rows * crestOf(i, u, x / cols, OCTAVES);
-        shape[i] = rows * crestOf(i, u, x / cols, 2);
+        crest[i] = rows * crestOf(i, u, OCTAVES);
+        shape[i] = rows * crestOf(i, u, 2);
       }
       nearCrest[x] = crest[NEAREST];
       let floor = rows;

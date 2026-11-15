@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild the résumé page from the PDF: img/resume-page1.png and the link hotspots in resume.html.
+"""Rebuild the résumé page from the PDF: its 1x and 2x images and the link hotspots in resume.html.
 
 Run it whenever the PDF changes:
 
@@ -19,6 +19,7 @@ from PIL import Image
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 PDF = ROOT / "Hector_Lugo_Fall_Resume.pdf"
 IMG = ROOT / "img/resume-page1.png"
+IMG_2X = ROOT / "img/resume-page1-2x.png"
 VIEW = ROOT / "resume.html"
 ZOOM = 2.0
 PALETTE = 128
@@ -49,6 +50,16 @@ def label_for(uri):
         if needle in uri:
             return label
     return uri
+
+
+def render(page, zoom, path):
+    page.get_pixmap(matrix=pymupdf.Matrix(zoom, zoom)).save(path)
+    image = Image.open(path).convert("RGB")
+    image.quantize(colors=PALETTE, method=Image.MEDIANCUT, dither=Image.NONE).save(path, optimize=True)
+    if oxipng := shutil.which("oxipng"):
+        subprocess.run([oxipng, "-o", "4", "--strip", "safe", str(path)], check=False)
+    print(f"{path.name}: {image.width}x{image.height}, {path.stat().st_size:,} bytes")
+    return image.size
 
 
 def neighbours(rects):
@@ -91,12 +102,8 @@ def main():
         return 1
 
     page = pymupdf.open(PDF)[0]
-    page.get_pixmap(matrix=pymupdf.Matrix(ZOOM, ZOOM)).save(IMG)
-    image = Image.open(IMG).convert("RGB")
-    image.quantize(colors=PALETTE, method=Image.MEDIANCUT, dither=Image.NONE).save(IMG, optimize=True)
-    if oxipng := shutil.which("oxipng"):
-        subprocess.run([oxipng, "-o", "4", "--strip", "safe", str(IMG)], check=False)
-    print(f"{IMG.name}: {image.width}x{image.height}, {IMG.stat().st_size:,} bytes")
+    width, height = render(page, ZOOM, IMG)
+    render(page, ZOOM * 2, IMG_2X)
 
     links = [(link["uri"], link["from"]) for link in page.get_links() if link.get("uri")]
     marks = neighbours([rect for _, rect in links])
@@ -114,11 +121,11 @@ def main():
         return 1
     markup = re.sub(
         r'(<img src="img/resume-page1\.png[^>]*?) width="\d+" height="\d+"',
-        rf'\1 width="{image.width}" height="{image.height}"',
+        rf'\1 width="{width}" height="{height}"',
         markup,
     )
     VIEW.write_text(markup, encoding="utf-8")
-    print(f"{VIEW.name}: {len(rows)} hotspots (bump the image's ?v= if the PNG changed)")
+    print(f"{VIEW.name}: {len(rows)} hotspots (bump both images' ?v= if the PNGs changed)")
     return 0
 
 

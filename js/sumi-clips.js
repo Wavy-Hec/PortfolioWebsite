@@ -26,7 +26,12 @@
       hold.textContent = held ? 'Play' : 'Pause';
       if (onScreen && !held) {
         if (!video.src) load(current);
-        video.play().catch(() => {});
+        // pause and a new clip reject a pending play() too; only refused autoplay holds the reel
+        video.play().catch(error => {
+          if (error.name !== 'NotAllowedError') return;
+          held = true;
+          sync();
+        });
         S.add(trackProgress);
       } else {
         video.pause();

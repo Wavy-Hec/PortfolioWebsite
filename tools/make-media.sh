@@ -15,14 +15,15 @@ mkdir -p "$out"
 tone="format=gray,format=gbrp,colorchannelmixer=rr=0.914:gg=0.906:bb=0.886,format=yuv420p"
 h264=(-an -c:v libx264 -preset veryslow -profile:v high -pix_fmt yuv420p -movflags +faststart -loglevel error -y)
 
+# 1120 x 630 is the reel's screen at its largest, from 1920 px up
 ffmpeg -ss 10 -t 9 -i "$demo" \
-  -vf "crop=1200:676:0:0,scale=832:468:flags=lanczos,hqdn3d=2:2:6:6,fps=20,$tone" \
+  -vf "crop=1200:676:0:0,scale=1120:630:flags=lanczos,hqdn3d=1:1:3:3,fps=20,$tone" \
   -crf 33 "${h264[@]}" "$out/drone-search.mp4"
 ffmpeg -i "$drone/docs/media/detection.gif" \
-  -vf "hqdn3d=3:3:8:8,scale=640:506:flags=lanczos,$tone" \
+  -vf "crop=640:506:1:1,hqdn3d=3:3:8:8,$tone" \
   -crf 33 "${h264[@]}" "$out/drone-detect.mp4"
 ffmpeg -i "$drone/docs/media/hero.gif" \
-  -vf "hqdn3d=1.5:1.5:5:5,scale=792:720:flags=lanczos,$tone" \
+  -vf "crop=936:850:0:0,hqdn3d=1.5:1.5:5:5,$tone" \
   -crf 30 "${h264[@]}" "$out/drone-map.mp4"
 ffmpeg -i "$drone/docs/media/finale.gif" \
   -vf "hqdn3d=1.5:1.5:5:5,scale=884:496:flags=lanczos,$tone" \

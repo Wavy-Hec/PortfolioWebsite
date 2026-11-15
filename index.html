@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#141416">
   <title>Hector Lugo — Machine Learning Researcher</title>
-  <meta name="description" content="Hector Lugo, M.S. Computer Science student at UTRGV. Reinforcement-learning and vision systems: legged robots at UTRGV, multi-camera video with the Air Force Research Laboratory, smart-grid signals at Idaho National Laboratory.">
+  <meta name="description" content="M.S. Computer Science student at UTRGV. Reinforcement learning and vision: legged robots, multi-camera video at AFRL, smart-grid signals at INL.">
   <link rel="canonical" href="https://wavy-hec.github.io/PortfolioWebsite/">
   <meta property="og:title" content="Hector Lugo — Machine Learning Researcher">
   <meta property="og:description" content="Reinforcement-learning and vision systems: legged robots, multi-camera video, smart-grid signals.">
@@ -30,7 +30,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&family=Share+Tech+Mono&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&family=Share+Tech+Mono&display=swap"></noscript>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&text=%E4%B8%80%E4%BA%8C%E4%B8%89%E5%9B%9B%E7%AC%AC%E7%AB%A0&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&text=%E4%B8%80%E4%BA%8C%E4%B8%89%E5%9B%9B%E7%AC%AC%E7%AB%A0&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400&text=%E4%B8%80%E4%BA%8C%E4%B8%89%E5%9B%9B%E7%AC%AC%E7%AB%A0&display=swap"></noscript>
   <link rel="stylesheet" href="css/sumi.css?v=24">
   <script src="js/sumi.js?v=22" defer></script>
   <script src="js/sumi-fold.js?v=18" defer></script>
@@ -42,7 +43,6 @@
     "url": "https://wavy-hec.github.io/PortfolioWebsite/",
     "image": "https://wavy-hec.github.io/PortfolioWebsite/img/og-card.png",
     "description": "M.S. Computer Science student at UTRGV working on reinforcement learning and vision systems for robots.",
-    "jobTitle": "Machine Learning Researcher",
     "worksFor": { "@type": "Organization", "name": "The University of Texas Rio Grande Valley" },
     "alumniOf": { "@type": "CollegeOrUniversity", "name": "The University of Texas Rio Grande Valley" },
     "email": "mailto:hlugo576@gmail.com",
@@ -106,44 +106,44 @@
       </div>
       <div class="in">
         <h2 id="h-work">Selected work</h2>
-        <p class="intro">One system that closes the whole loop, then the rest by what the machine has to do: see, decide, move.</p>
+        <p class="intro">One system that closes the whole loop, then the rest by what the machine has to do: see, decide, move. Three more were built for fun.</p>
 
         <article class="lead" aria-labelledby="p-drone">
           <p class="kicker mono">
             <span class="n">01</span>
             <span class="tg">PPO</span><span class="sep"> · </span>
             <span class="tg">Isaac Sim</span><span class="sep"> · </span>
-            <span class="tg">YOLO26n</span><span class="sep"> · </span>
+            <span class="tg nc">YOLO26n</span><span class="sep"> · </span>
             <span class="tg">A*</span>
           </p>
-          <h3 id="p-drone">Drone Search &amp; Rescue</h3>
+          <h3 id="p-drone">Drone Search &amp;&nbsp;Rescue</h3>
           <p class="lead-d">A reinforcement-learning pilot flies a drone over a simulated disaster site. A ground station maps the site as it is uncovered and pins every person the drone finds. Then a four-legged robot walks the rubble to reach one of them.</p>
 
           <figure class="reel">
             <div class="screen">
-              <img class="still" src="media/drone-search.jpg" width="832" height="468" loading="lazy" decoding="async" alt="">
-              <video muted playsinline preload="none" width="832" height="468" aria-label="Chase view in Isaac Sim: the drone flies a survey line over a stepped mound of concrete blocks, its mapping rays dotted on the ground"></video>
+              <img class="still" src="media/drone-search.jpg" width="1120" height="630" loading="lazy" decoding="async" alt="">
+              <video muted playsinline preload="none" width="1120" height="630" aria-label="Chase view in Isaac Sim: the drone flies a survey line over a stepped mound of concrete blocks, its mapping rays dotted on the ground"></video>
               <button type="button" class="hold mono">Pause</button>
             </div>
             <ol class="steps">
               <li>
-                <button type="button" class="step" aria-pressed="true" disabled data-clip="drone-search" data-w="832" data-h="468" data-label="Chase view in Isaac Sim: the drone flies a survey line over a stepped mound of concrete blocks, its mapping rays dotted on the ground"><span class="name">Search</span></button>
-                <p class="cap">A PPO policy trained only to reach a point and hover follows the survey line: 428&nbsp;m in about six minutes, landing 7&nbsp;mm from the centre of its pad.</p>
+                <button type="button" class="step" aria-pressed="true" disabled data-clip="drone-search" data-w="1120" data-h="630" data-label="Chase view in Isaac Sim: the drone flies a survey line over a stepped mound of concrete blocks, its mapping rays dotted on the ground"><span class="name">Search</span></button>
+                <p class="cap">A PPO policy trained only to reach a point and hover follows the survey line: 428&nbsp;m in about six minutes, landing 7&nbsp;mm from the center of its pad.</p>
               </li>
               <li>
-                <button type="button" class="step" aria-pressed="false" disabled data-clip="drone-detect" data-w="640" data-h="506" data-label="The drone’s camera in the ground station: the detector boxes people, a forklift and barrels, each with its map coordinates"><span class="name">Detect</span></button>
-                <p class="cap">A YOLO26n detector fine-tuned on auto-labelled simulator images finds 255 of 256 people on seven sites it never saw. The stock COCO model finds 107.</p>
+                <button type="button" class="step" aria-pressed="false" disabled data-clip="drone-detect" data-w="640" data-h="506" data-label="The drone’s camera in the ground station: the detector boxes people, a forklift, and barrels, each with its map coordinates"><span class="name">Detect</span></button>
+                <p class="cap">A YOLO26n detector fine-tuned on auto-labeled simulator images finds 255 of 256 people on seven sites it never saw. The stock COCO model finds 107.</p>
               </li>
               <li>
-                <button type="button" class="step" aria-pressed="false" disabled data-clip="drone-map" data-w="792" data-h="720" data-label="The ground station’s map filling in during the mission: the height map, the flown path and a pin on every person and object found"><span class="name">Map</span></button>
-                <p class="cap">The ground station builds the height map live and pins what the drone sees: 10 of 10 people, no false alarms, pins 4&nbsp;cm from the truth on average.</p>
+                <button type="button" class="step" aria-pressed="false" disabled data-clip="drone-map" data-w="936" data-h="850" data-label="The ground station’s map filling in during the mission: the height map, the flown path, and a pin on every person and object found"><span class="name">Map</span></button>
+                <p class="cap">The ground station builds the height map live and pins what the drone sees, 4&nbsp;cm from the truth on average. All 10 people in the survey area, no false alarms.</p>
               </li>
               <li>
                 <button type="button" class="step" aria-pressed="false" disabled data-clip="drone-rescue" data-w="884" data-h="496" data-label="The custom quadruped walks the route planned on the drone’s map down into a crater and stops beside the person lying there"><span class="name">Rescue</span></button>
-                <p class="cap">A custom quadruped plans a route across the drone’s map with A* and walks it. 32 of 32 runs reached the person, with no falls.</p>
+                <p class="cap">A custom quadruped plans a route across the drone’s map with A* and walks it. 32 of 32 robots reached the person, with no falls.</p>
               </li>
             </ol>
-            <figcaption class="mono">recorded in Isaac Sim<span class="sep"> · </span><span class="cl">every figure scored against the site’s ground truth</span></figcaption>
+            <figcaption class="mono">recorded in Isaac Sim</figcaption>
           </figure>
 
           <p class="links">
@@ -160,10 +160,11 @@
           <article class="feat">
             <figure class="track">
               <div class="plate">
-                <img src="img/proj-yolo-ink.png?v=2" srcset="img/proj-yolo-ink.png?v=2 640w, img/proj-yolo-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) calc(100vw - 32px), (max-width: 1099px) 960px, 540px" width="640" height="360" loading="lazy" decoding="async" alt="Ink drawing: cars in tracking boxes on a road, a counting line across it">
+                <img src="img/proj-yolo-ink.png?v=3" srcset="img/proj-yolo-ink.png?v=3 640w, img/proj-yolo-ink-2x.png?v=3 1280w" sizes="(max-width: 720px) calc(100vw - 32px), (max-width: 1099px) 960px, 540px" width="640" height="360" loading="lazy" decoding="async" alt="Ink drawing of a four-lane road under an overpass, seen from above: a truck and cars in tracking boxes, and a counting line with a count for each direction">
                 <canvas aria-hidden="true"></canvas>
                 <p class="sr-only" hidden>FlowCount’s tracker following synthetic traffic, two lanes each way. Vehicles pass under an overpass, where the detector cannot see them and the tracker keeps their numbers. A line across the road counts each direction and flags a car driving the wrong way. With raw detections on, the detector’s own boxes show under the tracks: they shift from frame to frame and vanish under the overpass, where the tracks carry on. <span class="totals"></span></p>
               </div>
+              <button type="button" class="pause"><span>Pause</span></button>
               <button type="button" class="raw" aria-pressed="false"><span>Raw detections</span></button>
               <figcaption class="mono"><span class="cl">Real tracker</span><span class="sep"> · </span><span class="cl">synthetic traffic</span></figcaption>
             </figure>
@@ -174,7 +175,7 @@
                 <span class="tg">ByteTrack</span><span class="sep"> · </span>
                 <span class="tg">Docker</span>
               </p>
-              <h4>FlowCount: <span class="nw">Real-Time</span> Traffic Analytics</h4>
+              <h4>FlowCount: <span class="nw">real-time</span> traffic analytics</h4>
               <p>YOLO11 detections feed a ByteTrack-style tracker (Kalman filter + Hungarian matching) for line counts, wrong-way alerts, zone occupancy, and heatmaps from webcam, video, or RTSP input. Web dashboard, Docker deploy, CI.</p>
               <p class="links">
                 <a class="link" href="https://github.com/Wavy-Hec/ObjectDetection" rel="noopener">GitHub<span class="sr-only">: FlowCount</span><span aria-hidden="true"> ↗</span></a>
@@ -187,7 +188,7 @@
               <span class="idx">03</span>
               <img class="thumb" src="img/proj-fft-denoise-ink.png?v=2" srcset="img/proj-fft-denoise-ink.png?v=2 640w, img/proj-fft-denoise-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt="">
               <div>
-                <h4 class="t">Signal Denoising at Idaho National Laboratory</h4>
+                <h4 class="t">Signal denoising at Idaho National Laboratory</h4>
                 <p class="d">The model behind the INL internship: a ResNet autoencoder that cleans noisy smart-grid sensor signals so anomalies stand out.</p>
               </div>
             </li>
@@ -195,8 +196,8 @@
               <span class="idx">04</span>
               <img class="thumb" src="img/proj-rl-compression-ink.png?v=2" srcset="img/proj-rl-compression-ink.png?v=2 640w, img/proj-rl-compression-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt="">
               <div>
-                <h4 class="t">Senior Project: Autoencoder State Compression for RL</h4>
-                <p class="d">Compressing the observations a PPO agent sees with an autoencoder, and measuring how compression affects RL performance, for efficient deployment in <span class="nw">resource-constrained</span> environments.</p>
+                <h4 class="t">Senior project: autoencoder state compression for RL</h4>
+                <p class="d">Compressing the observations a PPO agent sees with an autoencoder, and measuring how the compression affects its performance.</p>
                 <p class="links">
                   <a class="link" href="https://github.com/Wavy-Hec/Senior_AEproject" rel="noopener">GitHub<span class="sr-only">: senior project</span><span aria-hidden="true"> ↗</span></a>
                 </p>
@@ -206,7 +207,7 @@
               <span class="idx">05</span>
               <img class="thumb" src="img/proj-railway-ink.png?v=2" srcset="img/proj-railway-ink.png?v=2 640w, img/proj-railway-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt="">
               <div>
-                <h4 class="t">Railway Crossing Accidents at UC Riverside</h4>
+                <h4 class="t">Railway crossing accidents at UC Riverside</h4>
                 <p class="d">The open-source code behind the ASME JRC 2024 paper: spectral clustering over USDOT railway crossing accident records.</p>
                 <p class="links">
                   <a class="link" href="https://github.com/Wavy-Hec/railway-accident-clustering" rel="noopener">GitHub<span class="sr-only">: railway crossing accidents</span><span aria-hidden="true"> ↗</span></a>
@@ -219,7 +220,7 @@
         <section class="grp" aria-labelledby="g-decide">
           <header class="grp-h">
             <h3 id="g-decide">Decide</h3>
-            <p class="mono">navigation<span class="sep"> · </span>planning<span class="sep"> · </span>games</p>
+            <p class="mono">navigation<span class="sep"> · </span>planning</p>
           </header>
 
           <article class="feat flip">
@@ -232,9 +233,9 @@
                 <span class="tg">Qwen3.5-9B</span><span class="sep"> · </span>
                 <span class="tg">PPO</span>
               </p>
-              <h4>VLM-Guided Quadruped Navigation</h4>
-              <p>A frozen vision-language model steers and a PPO policy walks: a Unitree Go2 in MuJoCo with one RGB camera. The VLM could point at a target to within about 2.5°. It could not judge distance: asked when to stop, it was right 8 to 14% of the time, and reading the bottom edge of its bounding box instead reached 79 to 86%. Accepted at IEEE ICMLA 2026.</p>
-              <p>The paper assumes the target stays in view. The follow-up gives the navigator a memory it can revise, so it can search for a target it has lost.</p>
+              <h4>VLM-guided quadruped navigation</h4>
+              <p>A frozen vision-language model steers and a PPO policy walks: a Unitree Go2 in MuJoCo with one RGB camera. On synthetic images of a red disk, the VLM found the heading to within about 2.5°. It struggles to estimate distance: a stop rule read from its bounding box beat asking it when to stop by 68&nbsp;to&nbsp;78 percentage points. Accepted at IEEE ICMLA 2026.</p>
+              <p>In the paper the target starts in view, and the robot stops if it loses sight of it. The follow-up gives the navigator a memory it can revise, so it can search for a target it has lost.</p>
               <p class="links">
                 <a class="link" href="#results">What it found<span aria-hidden="true"> →</span></a>
                 <a class="link" href="#search">The follow-up<span aria-hidden="true"> →</span></a>
@@ -246,35 +247,9 @@
           <ol class="rows" start="7">
             <li>
               <span class="idx">07</span>
-              <img class="thumb" src="img/proj-poker-ink.png?v=2" srcset="img/proj-poker-ink.png?v=2 640w, img/proj-poker-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt="">
-              <div>
-                <h4 class="t">Poker RL: 6-Max No-Limit Hold’em Self-Play Agent</h4>
-                <p class="d">A MaskablePPO self-play agent trained against a pool of frozen policy snapshots in RLCard 6-max No-Limit Hold’em, evaluated in mbb/hand with 95% CIs. It runs as a real-time browser poker table over FastAPI + WebSockets, with CI and tests.</p>
-                <p class="links">
-                  <button type="button" class="link watch" aria-expanded="false" aria-controls="clip-poker" hidden>Watch a hand<span aria-hidden="true">▸</span></button>
-                  <a class="link" href="https://github.com/Wavy-Hec/poker-rl" rel="noopener">GitHub<span class="sr-only">: Poker RL</span><span aria-hidden="true"> ↗</span></a>
-                </p>
-                <div class="clip" id="clip-poker" hidden>
-                  <video muted playsinline loop preload="none" width="880" height="618" data-poster="media/poker-table.jpg" data-src="media/poker-table.mp4" aria-label="The browser poker table: one human seat and five seats played by the trained agent, a hand in progress"></video>
-                </div>
-              </div>
-            </li>
-            <li>
-              <span class="idx">08</span>
-              <img class="thumb" src="img/proj-chess-ink.png?v=2" srcset="img/proj-chess-ink.png?v=2 640w, img/proj-chess-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt="">
-              <div>
-                <h4 class="t">Chess-AlphaGO</h4>
-                <p class="d">AlphaZero-style self-play for Gardner chess (5 × 5) built on Pgx, with batched, JIT-compiled GPU rollouts in JAX and MCTS via Gumbel MuZero.</p>
-                <p class="links">
-                  <a class="link" href="https://github.com/Wavy-Hec/Chess-AlphaGO" rel="noopener">GitHub<span class="sr-only">: Chess-AlphaGO</span><span aria-hidden="true"> ↗</span></a>
-                </p>
-              </div>
-            </li>
-            <li>
-              <span class="idx">09</span>
               <img class="thumb" src="img/proj-chemo-ink.png?v=2" srcset="img/proj-chemo-ink.png?v=2 640w, img/proj-chemo-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt="">
               <div>
-                <h4 class="t">Personalized Chemotherapy Dosing</h4>
+                <h4 class="t">Personalized chemotherapy dosing</h4>
                 <p class="d">A Decision Transformer learns personalized dosing from offline patient data, framing treatment planning as offline RL. Published at ICICT 2025.</p>
                 <p class="links">
                   <a class="link" href="https://link.springer.com/chapter/10.1007/978-981-96-6429-0_39" rel="noopener">Paper<span class="sr-only">: chemotherapy dosing</span><span aria-hidden="true"> ↗</span></a>
@@ -292,13 +267,16 @@
 
           <div class="feat-text">
             <p class="kicker mono">
-              <span class="n">10</span>
+              <span class="n">08</span>
               <span class="tg">PPO</span><span class="sep"> · </span>
               <span class="tg">MuJoCo</span><span class="sep"> · </span>
               <span class="tg">Isaac Sim</span>
             </p>
-            <h4>Go2 Locomotion</h4>
-            <p>PPO policies that turn a speed and a heading into joint torques for the Go2’s twelve motors, trained in MuJoCo and Isaac Sim, with state autoencoders that cut compute cost and sped up training. The sketch below takes the same two commands.</p>
+            <h4>Go2 locomotion</h4>
+            <p>PPO policies that turn a speed and a heading into joint torques for the Go2’s twelve motors, trained in MuJoCo and Isaac Sim.<span class="needs-js"> The sketch below takes the same two commands.</span></p>
+            <p class="links">
+              <a class="link" href="https://github.com/Wavy-Hec/VLM/tree/main/vlmrl/rl" rel="noopener">GitHub<span class="sr-only">: Go2 locomotion</span><span aria-hidden="true"> ↗</span></a>
+            </p>
           </div>
 
           <div class="band">
@@ -338,9 +316,9 @@
               <div role="group" aria-labelledby="go2-stack">
                 <p class="band-h" id="go2-stack">control stack</p>
                 <ol class="stages">
-                  <li>camera / video</li>
+                  <li>RGB frame (336 × 336)</li>
                   <li class="navigator">VLM navigator (Qwen3.5-9B) <span class="rate"><canvas class="lamp" aria-hidden="true"></canvas>every 20 steps</span></li>
-                  <li>velocity command</li>
+                  <li>speed and heading</li>
                   <li class="policy">PPO locomotion policy <span class="rate">every step</span></li>
                   <li>joint torques</li>
                   <li>motors</li>
@@ -349,30 +327,30 @@
             </div>
 
             <div class="band-cap mono">
-              <p><span class="cl">you are the navigator</span><span class="sep"> · </span><span class="cl">your command reaches the policy at the next tick, then holds, as in the ICMLA paper</span></p>
-              <p><span class="cl">Unitree Go2</span><span class="sep"> · </span><span class="cl">a kinematic sketch, not the trained policy’s gait</span><span class="sep"> · </span><span class="cl"><span class="nw">leg lengths</span> from the <span class="nc">go2_description</span> URDF</span></p>
+              <p><span class="cl">you are the navigator</span><span class="sep"> · </span><span class="cl">your command takes effect at the next tick, as in the ICMLA paper</span></p>
+              <p><span class="cl">Unitree Go2</span><span class="sep"> · </span><span class="cl">a kinematic sketch, <span class="nw">not the trained policy’s gait</span></span><span class="sep"> · </span><span class="cl"><span class="nw">leg lengths</span> from the <span class="nc">go2_description</span> URDF</span></p>
             </div>
             <p class="sr-only" role="status"></p>
           </div>
 
-          <ol class="rows" start="11">
+          <ol class="rows" start="9">
             <li>
-              <span class="idx">11</span>
-              <img class="thumb" src="img/proj-humanoid-ink.png" srcset="img/proj-humanoid-ink.png 640w, img/proj-humanoid-ink-2x.png 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt="">
-              <div>
-                <h4 class="t">Unitree G1 Humanoid</h4>
-                <p class="d">My own project with a Unitree G1 humanoid. Just starting.</p>
-              </div>
-            </li>
-            <li>
-              <span class="idx">12</span>
-              <img class="thumb" src="img/proj-rl-isaaclab-ink.png?v=2" srcset="img/proj-rl-isaaclab-ink.png?v=2 640w, img/proj-rl-isaaclab-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt="">
+              <span class="idx">09</span>
+              <img class="thumb" src="img/proj-rl-isaaclab-ink.png?v=3" srcset="img/proj-rl-isaaclab-ink.png?v=3 640w, img/proj-rl-isaaclab-ink-2x.png?v=3 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt="">
               <div>
                 <h4 class="t">RL in Isaac Lab</h4>
-                <p class="d">My fork of Isaac Lab for robotic simulation and training: multi-agent systems and legged locomotion in physics-based environments, with LocoMuJoCo for imitation and benchmarking.</p>
+                <p class="d">A fork of Isaac Lab for multi-agent systems and legged locomotion, with LocoMuJoCo for imitation and benchmarking.</p>
                 <p class="links">
                   <a class="link" href="https://github.com/Wavy-Hec/RL_IsaacLab" rel="noopener">GitHub<span class="sr-only">: RL in Isaac Lab</span><span aria-hidden="true"> ↗</span></a>
                 </p>
+              </div>
+            </li>
+            <li>
+              <span class="idx">10</span>
+              <img class="thumb" src="img/proj-humanoid-ink.png" srcset="img/proj-humanoid-ink.png 640w, img/proj-humanoid-ink-2x.png 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt="">
+              <div>
+                <h4 class="t">Unitree G1 humanoid</h4>
+                <p class="d">My own project, just starting.</p>
               </div>
             </li>
           </ol>
@@ -384,7 +362,33 @@
             <p class="mono">built for fun</p>
           </header>
 
-          <ol class="rows" start="13">
+          <ol class="rows" start="11">
+            <li>
+              <span class="idx">11</span>
+              <img class="thumb" src="img/proj-poker-ink.png?v=2" srcset="img/proj-poker-ink.png?v=2 640w, img/proj-poker-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt="">
+              <div>
+                <h4 class="t">Poker RL: 6-max no-limit hold’em</h4>
+                <p class="d">A MaskablePPO self-play agent trained against a pool of frozen policy snapshots in RLCard, evaluated in mbb/hand with 95% CIs. It runs as a real-time browser poker table over FastAPI + WebSockets, with CI and tests.</p>
+                <p class="links">
+                  <button type="button" class="link watch" aria-expanded="false" aria-controls="clip-poker" hidden>Watch a hand<span aria-hidden="true">▸</span></button>
+                  <a class="link" href="https://github.com/Wavy-Hec/poker-rl" rel="noopener">GitHub<span class="sr-only">: Poker RL</span><span aria-hidden="true"> ↗</span></a>
+                </p>
+                <div class="clip" id="clip-poker" hidden>
+                  <video muted playsinline loop preload="none" width="880" height="618" data-poster="media/poker-table.jpg" data-src="media/poker-table.mp4" aria-label="The browser poker table: one human seat and five seats played by the trained agent, a hand in progress"></video>
+                </div>
+              </div>
+            </li>
+            <li>
+              <span class="idx">12</span>
+              <img class="thumb" src="img/proj-chess-ink.png?v=2" srcset="img/proj-chess-ink.png?v=2 640w, img/proj-chess-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt="">
+              <div>
+                <h4 class="t">Chess-AlphaGO</h4>
+                <p class="d">AlphaZero-style self-play for Gardner chess (5 × 5) built on Pgx, with batched, JIT-compiled GPU rollouts in JAX and MCTS via Gumbel MuZero.</p>
+                <p class="links">
+                  <a class="link" href="https://github.com/Wavy-Hec/Chess-AlphaGO" rel="noopener">GitHub<span class="sr-only">: Chess-AlphaGO</span><span aria-hidden="true"> ↗</span></a>
+                </p>
+              </div>
+            </li>
             <li>
               <span class="idx">13</span>
               <img class="thumb" src="img/proj-neon-grid-ink.png?v=2" srcset="img/proj-neon-grid-ink.png?v=2 640w, img/proj-neon-grid-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt="">
@@ -456,6 +460,9 @@
             </div>
           </li>
         </ol>
+        <p class="after">
+          <a class="link" href="resume.html">Full résumé<span aria-hidden="true"> →</span></a>
+        </p>
       </div>
     </section>
 
@@ -467,8 +474,8 @@
         <span class="word">Research</span>
       </div>
       <div class="in">
-        <h2 id="h-research">Research &amp; publications</h2>
-        <p class="lede">Two threads. The first is hierarchical control for legged robots: a vision-language model navigates and a PPO policy walks. The second, begun during my Air Force Research Laboratory internship and still in progress, asks when fusing multi-camera video actually helps a vision-language model.</p>
+        <h2 id="h-research">Research &amp;&nbsp;publications</h2>
+        <p class="lede">Two threads. The first is navigation for legged robots: the ICMLA paper, then a follow-up on search and memory. The second, begun at the Air Force Research Laboratory, asks when fusing the views of several cameras helps a vision-language model.</p>
 
         <div class="results" id="results">
           <h3 class="fig-h" id="h-results">What the paper found</h3>
@@ -481,7 +488,7 @@
             </div>
             <div class="res-panel" id="res-panel" role="tabpanel" aria-labelledby="res-tab-stop" tabindex="0">
               <div class="res-finding" aria-hidden="true">
-                <p class="on"><span>Asked directly when to stop, the VLM was right 8&nbsp;to&nbsp;14% of the time.</span> <span>Reading the bottom edge of its bounding box: 79&nbsp;to&nbsp;86%.</span></p>
+                <p class="on"><span>Asked directly when to stop, the VLM stopped in the right place in 8&nbsp;to&nbsp;14% of runs.</span> <span>Reading the bottom edge of its bounding box: 79&nbsp;to&nbsp;86%.</span></p>
                 <p><span>A continuous heading beat five discrete&nbsp;choices,</span> <span>most of all in the hard scenarios.</span></p>
                 <p><span>Three sub-prompts steer a little better.</span> <span>One prompt stops a little better.</span></p>
                 <p><span>Asking the VLM every 20&nbsp;steps, not 50, barely changes steering.</span> <span>Stopping in the hard scenarios rises from 43.8&nbsp;to&nbsp;51.7%.</span></p>
@@ -497,7 +504,7 @@
                 </div>
                 <div class="res-table">
                   <table>
-                    <caption>Asked directly when to stop, the VLM was right 8 to 14% of the time. Reading the bottom edge of its bounding box: 79 to 86%.</caption>
+                    <caption>Asked directly when to stop, the VLM stopped in the right place in 8 to 14% of runs. Reading the bottom edge of its bounding box: 79 to 86%.</caption>
                     <thead>
                       <tr><th scope="col">Scenarios</th><th scope="col">Stopping success, bounding box</th><th scope="col">Stopping success, direct</th></tr>
                     </thead>
@@ -512,7 +519,7 @@
               <div class="res-note mono">
                 <p class="on">Success: the robot stops within 2&nbsp;<span class="nc">m</span> of the target without hitting it</p>
                 <p>Success: the robot gets within 3&nbsp;<span class="nc">m</span> of the target without hitting another object</p>
-                <p>Multi-pass: three <span class="nw">sub-prompts</span>, for scene understanding, steering and stop</p>
+                <p>Multi-pass: three <span class="nw">sub-prompts</span>, for scene understanding, steering, and stop</p>
                 <p>Stopping success here averages both stop rules, so it sits below the bounding box alone</p>
               </div>
             </div>
@@ -526,7 +533,7 @@
 
         <div class="search" id="search">
           <h3 class="fig-h" id="h-search">A memory that can be revised</h3>
-          <p class="search-d">Three robots search the same room for the same chair, and only their memory differs. Move the chair where none of them can see it.</p>
+          <p class="search-d">A toy version of the follow-up: three robots search the same room for the same chair, and only their memory differs. Once the chair is moved out of sight, the robot that never revises its memory keeps returning to the empty spot.</p>
           <figure>
             <div class="search-rooms">
               <div class="search-room">
@@ -560,8 +567,8 @@
               <button type="button" class="search-reset"><span>Reset</span></button>
             </div>
             <p class="search-result mono"></p>
-            <p class="sr-only">Three plans of the same room, each with one robot and one chair. The robots walk to the chair and stop, then the chair moves out of their sight. The robot with no memory turns in circles and wanders until it comes across the chair. The one whose memory is never revised keeps walking back to where the chair used to be. The one that revises its memory checks that spot once, strikes it out and searches the rest of the room. The line under the rooms gives the steps each one took.</p>
-            <figcaption class="mono"><span class="cl">a toy: rays stand in for the camera, a <span class="nw">hand-written</span> rule for the vision-language model</span><span class="sep"> · </span><span class="cl">the real system writes this memory, as text, into a frozen model’s prompt</span><span class="sep"> · </span><span class="cl">the guards in the footer’s hidden game search where they last saw you, then give up</span></figcaption>
+            <p class="sr-only">Three plans of the same room, each with one robot and one chair. The robots walk to the chair and stop, then the chair moves out of their sight. The robot with no memory turns in circles and wanders, and may never come across the chair. The one whose memory is never revised keeps walking back to where the chair used to be. The one that revises its memory checks that spot once, strikes it out, and searches the rest of the room. The line under the rooms gives the steps each one took.</p>
+            <figcaption class="mono"><span class="cl">a toy: rays stand in for the camera, a <span class="nw">hand-written</span> rule for the model</span><span class="sep"> · </span><span class="cl">the real system writes this memory, as text, into a frozen model’s prompt</span><span class="sep"> · </span><span class="cl">the guards in the footer’s hidden game search where they last saw you, then give up</span></figcaption>
           </figure>
         </div>
 
@@ -571,7 +578,7 @@
             <span class="venue">IEEE ICMLA 2026</span>
             <p class="t">
               <a href="papers/lugo-icmla-2026.pdf" rel="noopener">Vision–Language Guided Quadruped Navigation with Reinforcement Learning Control</a>
-              <span class="idx">accepted</span>
+              <span class="idx">accepted · co-author</span>
               <span class="doi">DOI 10.1109/ICMLA69890.2026.00094<span class="sep"> · </span><span class="nw">© 2026 IEEE</span></span>
             </p>
           </li>

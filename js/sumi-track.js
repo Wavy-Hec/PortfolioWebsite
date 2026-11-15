@@ -1,15 +1,16 @@
 // The FlowCount plate, live: FlowCount's tracker (flowcount/tracker.py) and line counter
 // (flowcount/analytics/line_counter.py), ported, following synthetic traffic under an overpass.
-// Under reduced motion, and until its first frame is drawn, the still plate shows instead.
+// The still plate shows until the first frame is drawn; under reduced motion that frame holds.
 (() => {
   'use strict';
 
   const S = window.SUMI;
   const root = document.querySelector('.track');
   const canvas = root && root.querySelector('canvas');
-  if (!canvas || S.REDUCED) return;
+  if (!canvas) return;
 
   const img = root.querySelector('img');
+  const pause = root.querySelector('.pause');
   const toggle = root.querySelector('.raw');
   const summary = root.querySelector('.sr-only');
   const totals = summary.querySelector('.totals');
@@ -26,7 +27,6 @@
   const FRAME_S = 1 / 15;
   const PREROLL_FRAMES = 120;
 
-  // two lanes west over two lanes east; an overpass crosses them, its shadow on the road
   const ROAD_TOP = 86;
   const ROAD_BOTTOM = 274;
   const LANE_LINES = [130, 230];
@@ -34,8 +34,7 @@
   const DECK = [176, 240];
   const SHADOW = [240, 262];
   const COUNT_X = 472;
-  // brush widths: the deck's edges, and the count line, which doubles for an alert as FlowCount's
-  // own line does; the count line runs a little past the road's edges
+  // brush widths
   const DECK_EDGE = 4.6;
   const COUNT_LINE = 4.6;
   const COUNT_REACH = 16;
@@ -47,7 +46,6 @@
   ];
   const SIZE = { car: [42, 21], truck: [74, 25] };
   const FOLLOWING_GAP = 100;
-  // each lane takes a new vehicle every 70 to 150 frames
   const SPAWN_MIN_FRAMES = 70;
   const SPAWN_SPREAD_FRAMES = 80;
 
@@ -59,8 +57,7 @@
   const LANE_CLEAR_FRAMES = 125;
   const LANE_PASS_FRAMES = 130;
 
-  // the detector: each vehicle's box, padded and jittered; much more jitter and the tracker starts
-  // to lose an entering vehicle now and then
+  // much more jitter and the tracker starts to lose vehicles as they enter
   const BOX_PAD = 6;
   const JITTER = 2.5;
 
@@ -98,8 +95,7 @@
     return [x - w / 2, y - h / 2, x + w / 2, y + h / 2];
   }
 
-  // the update's working space, shared by every track, each matrix row by row: [S | I] for
-  // Gauss-Jordan, the gain K, the residual z - Hx, and (I - KH) P
+  // the update's working space, shared by every track: [S | I], K, z - Hx and (I - KH) P
   const augmented = new Float64Array(4 * 8);
   const gain = new Float64Array(7 * 4);
   const residual = new Float64Array(4);
@@ -107,9 +103,7 @@
 
   let nextTrackId = 0;
 
-  // KalmanBoxTracker: SORT's constant-velocity filter over [x, y, s, r, vx, vy, vs] (the box's
-  // centre, area and aspect ratio, and their rates), P row by row. F adds each rate to its value and
-  // H reads the first four states, so products with them are written out term by term, as filterpy
+  // SORT's KalmanBoxTracker over [x, y, s, r, vx, vy, vs]; products with F and H written out
   class KalmanBoxTracker {
     constructor(detection) {
       this.x = new Float64Array(7);
@@ -175,8 +169,7 @@
         x[i] += correction;
       }
 
-      // Joseph form, as filterpy writes it: (I - KH) P (I - KH)' + K R K', where I - KH is the
-      // identity less K in its first four columns
+      // Joseph form, as filterpy writes it
       for (let i = 0; i < 7; i++) {
         for (let j = 0; j < 7; j++) {
           let sum = 0;
@@ -214,8 +207,7 @@
 
   const transpose = m => m[0].map((_, j) => m.map(row => row[j]));
 
-  // scipy's linear_sum_assignment: the Hungarian method with potentials, rows into columns,
-  // run on the transpose when there are more rows than columns
+  // scipy's linear_sum_assignment: the Hungarian method with potentials
   function linearSumAssignment(cost) {
     if (cost.length > cost[0].length) {
       return linearSumAssignment(transpose(cost)).map(([j, i]) => [i, j]);
@@ -272,8 +264,7 @@
     return pairs;
   }
 
-  // Tracker, with config.yaml's settings except output_coast, which is long enough to keep
-  // drawing a track while its vehicle is under the overpass
+  // config.yaml's settings, except an output_coast long enough to cover the overpass
   const MAX_AGE = 30;
   const MIN_HITS = 3;
   const IOU_THRESHOLD = 0.3;
@@ -304,7 +295,6 @@
       const second = this.match(low, first.unmatchedTracks);
       for (const [d, t] of second.matches) this.trackers[t].update(low[d]);
 
-      // new tracks come only from unmatched high-confidence detections
       for (const d of first.unmatchedDetections) {
         this.trackers.push(new KalmanBoxTracker(high[d]));
       }
@@ -423,12 +413,10 @@
     }
   }
 
-  // one line per carriageway, its ends ordered so that legal traffic crosses it "in", the way
-  // the CLI takes two --count-line arguments and --expect-direction in
+  // each line's ends are ordered so that legal traffic crosses it "in" (--expect-direction in)
   const westbound = new LineCrossingCounter([COUNT_X, ROAD_TOP], [COUNT_X, MEDIAN_Y], 'in');
   const eastbound = new LineCrossingCounter([COUNT_X, ROAD_BOTTOM], [COUNT_X, MEDIAN_Y], 'in');
 
-  // the traffic: vehicles keep their lane and their own speed, slowing only behind another
   const VARIANTS = 2;
   const vehicles = [];
   const nextSpawn = LANES.map(() => 0);
@@ -442,7 +430,6 @@
     vehicles.push({ kind, lane, heading, length, width, speed, x, prevX: x, variant, missed: 0 });
   }
 
-  // that lane takes no new traffic from shortly before each wrong-way car until it has gone
   function laneHeldForWrongWay(lane) {
     if (lane !== WRONG_WAY_LANE) return false;
     const passes = Math.ceil((frame - WRONG_WAY_FIRST - LANE_PASS_FRAMES) / WRONG_WAY_EVERY);
@@ -494,8 +481,6 @@
 
   const overlap = (a1, a2, b1, b2) => Math.max(0, Math.min(a2, b2) - Math.max(a1, b1));
 
-  // the synthetic detector: blind under the deck and for a few frames now and then; unsure in the
-  // deck's shadow, at its edges, and now and then anywhere
   function detect() {
     const detections = [];
     for (const v of vehicles) {
@@ -538,8 +523,7 @@
   let west = 0;
   let east = 0;
 
-  // a tag trails its vehicle, on a side set once the track has moved far enough to show its
-  // heading: early velocities are unreliable while a box is still cut by the plate's edge
+  // early velocities are unreliable while a box is still cut by the plate's edge
   const HEADING_DISTANCE = 12;
   const firstSeenX = new Map();
   const headings = new Map();
@@ -580,7 +564,7 @@
     }
   }
 
-  // drawing, in device pixels with every edge on a whole pixel, so the plate stays ink and paper
+  // every edge on a whole device pixel, so the plate stays ink and paper
   let scale = 1;
   let bareIds = false;
   let labelPx = 11;
@@ -596,8 +580,7 @@
   const at = value => Math.round(value * scale);
   const lerp = (a, b, f) => a + (b - a) * f;
 
-  // a dry-brush stroke in plate units, stamped in whole-pixel squares: bristles side by side, each
-  // wandering a little, breaking up over the last part of the stroke; a row of stamps is one fill
+  // a dry-brush stroke, in plate units, stamped in whole-pixel squares
   function brush(g, random, x1, y1, x2, y2, width, dry) {
     const length = Math.hypot(x2 - x1, y2 - y1);
     const ux = (x2 - x1) / length;
@@ -645,9 +628,7 @@
     return g;
   }
 
-  // vertical strokes at plate x, printed into a strip of their own: the strip goes down with the
-  // road, and again over the tags' paper so that no tag cuts it. Its ink is kept row by row, as
-  // [from, to) spans in canvas x, for the letters that cross it
+  // a stroke in a strip of its own, drawn with the road and again over the tags so no tag cuts it
   function paintStrip(x, width, seed, runs) {
     const half = at(width / 2 + 3);
     const g = offscreen(2 * half, canvas.height);
@@ -669,7 +650,6 @@
     return { image: g.canvas, left, ink };
   }
 
-  // a strip's ink inside a rectangle, added to a path as rows one pixel high
   function addInk(path, strip, x, top, width, height) {
     for (let row = top; row < top + height; row++) {
       const spans = strip.ink[row];
@@ -695,7 +675,6 @@
     alertStrip = paintStrip(COUNT_X, 2 * COUNT_LINE, 9, count);
   }
 
-  // the road and the overpass, printed once for each size of the plate
   function paintRoad() {
     const g = offscreen(canvas.width, canvas.height);
     const random = mulberry32(3);
@@ -718,7 +697,6 @@
       at(ROAD_BOTTOM) - at(ROAD_TOP),
     );
     g.clip();
-    // the shadow's hatching at 45 degrees, each stroke only across the strip
     const rise = ROAD_BOTTOM - ROAD_TOP;
     for (let foot = SHADOW[0] - rise; foot < SHADOW[1]; foot += 6.5) {
       const from = Math.max(0, SHADOW[0] - 1 - foot);
@@ -736,8 +714,7 @@
     background = g.canvas;
   }
 
-  // a vehicle is one dab of the brush from its front, so the dry end trails; a truck is two,
-  // the cab and the trailer
+  // one dab from the vehicle's front, so the dry end trails; a truck is two
   function paintVehicle(kind, heading, seed) {
     const [length, width] = SIZE[kind];
     const margin = Math.ceil(2 * scale);
@@ -756,8 +733,7 @@
     return { image: g.canvas, margin };
   }
 
-  // the plate's type, one-bit: each glyph set from a whole pixel and its coverage cut at 40 %, as a
-  // cut at half loses the thin bars of a T or a 7 at small sizes; cut once per size, in ink and paper
+  // glyph coverage cut at 40 %: a cut at half loses the thin bars of a T or a 7
   const GLYPHS = '·0123456789ACGKNORTUWY';
   const COVERAGE_CUT = 0.4 * 255;
 
@@ -788,7 +764,6 @@
     return { size, step, baseline, height, middle, ink: sheet(INK), paper: sheet(PAPER) };
   }
 
-  // a line of text, glyph by glyph from one of its type's sheets
   function print(type, sheet, text, x, top) {
     const { step, height } = type;
     for (let i = 0; i < text.length; i++) {
@@ -798,7 +773,6 @@
     }
   }
 
-  // a small arrow from whole pixels, its tip at x, pointing left (-1) or right (1)
   function arrow(path, x, y, direction, length, head, thickness) {
     for (let i = 0; i < head; i++) {
       path.rect(direction < 0 ? x + i : x - 1 - i, y - i, 1, 2 * i + 1);
@@ -807,8 +781,7 @@
     path.rect(direction < 0 ? x : x - length, shaftTop, length, thickness);
   }
 
-  // a new width: the canvas, its scale and the labels' size; false if unchanged. The backing
-  // store takes the box's fractional size, which the stylesheet maps pixel for pixel
+  // the backing store takes the box's fractional size, which the stylesheet maps pixel for pixel
   function resize() {
     const { width, height } = canvas.getBoundingClientRect();
     if (width === laidOutWidth) return false;
@@ -816,7 +789,6 @@
     canvas.width = Math.round(width * DPR);
     canvas.height = Math.round(height * DPR);
     scale = canvas.width / PLATE_W;
-    // a phone's plate: bare numbers
     bareIds = width < 400;
     // labels at the site's 11 css px, growing to 12 on the largest plates
     labelPx = Math.round(Math.min(12, Math.max(11, width / 48)) * DPR);
@@ -839,7 +811,6 @@
     }
   }
 
-  // a rectangle as one solid run, or as dashes of on and off along its long side
   function dashes(path, x, y, w, h, on, off) {
     const horizontal = w >= h;
     const length = horizontal ? w : h;
@@ -862,7 +833,6 @@
     const hairline = Math.max(1, Math.round(DPR));
     ctx.drawImage(background, 0, 0);
 
-    // the detector's own boxes in square dots: close set when it is sure, sparse when it is not
     if (showRaw) {
       const dot = 2 * hairline;
       const raw = new Path2D();
@@ -877,15 +847,13 @@
       ctx.fill(raw);
     }
 
-    // each track's box, and its tag trailing it: the tag's paper goes down before the vehicles, so
-    // it never covers one, and its ink after the boxes
+    // tag paper goes down before the vehicles, so it never covers one, and its ink after the boxes
     const pad = 2 * hairline;
     const half = Math.round(labelPx * 0.4);
     const solid = new Path2D();
     const coasting = new Path2D();
     const tags = [];
 
-    // a tag shows only when all of it, with its paper, is on the plate
     const place = (text, box, heading) => {
       const width = text.length * tagType.step;
       const x = heading < 0 ? box[2] + 2 * pad : box[0] - 2 * pad - width;
@@ -894,13 +862,11 @@
     };
 
     for (const track of tracks) {
-      // the detector loses a vehicle once half of it is off the plate, so a coasting box whose
-      // centre is off the plate follows a vehicle that has gone
+      // the detector has lost a vehicle half off the plate, so a coasting box there follows nothing
       const centre = (track.bbox[0] + track.bbox[2]) / 2;
       if (track.timeSinceUpdate > 0 && (centre < 0 || centre > PLATE_W)) continue;
       const before = previousBoxes.get(track.id);
       const box = track.bbox.map((value, i) => at(before ? lerp(before[i], value, alpha) : value));
-      // a car flagged for driving the wrong way keeps a heavier box
       const weight = flagged.has(track.id) ? 2 * hairline : hairline;
       if (track.timeSinceUpdate === 0) outline(solid, box, weight, Infinity, 0);
       else outline(coasting, box, weight, 4 * hairline, 3 * hairline);
@@ -908,7 +874,6 @@
       const heading = headings.get(track.id);
       if (!heading) continue;
       const name = bareIds ? String(track.id) : `${track.classLabel} ${track.id}`.toUpperCase();
-      // a flagged car's tag takes the flag as soon as there is room for it
       const flag = flagged.has(track.id) && place(`${name} · WRONG WAY`, box, heading);
       const tag = flag || place(name, box, heading);
       if (tag) tags.push(tag);
@@ -921,7 +886,6 @@
     const structure = alerting ? [...strips, alertStrip] : strips;
     for (const strip of structure) ctx.drawImage(strip.image, strip.left, 0);
 
-    // nothing shows under the deck: a vehicle is printed only on either side of it
     const deckLeft = at(DECK[0] - 2);
     const deckRight = at(DECK[1] + 2);
     for (const v of vehicles) {
@@ -945,8 +909,7 @@
     ctx.fill(coasting);
     for (const { text, x, y } of tags) print(tagType, tagType.ink, text, x, y - tagType.middle);
 
-    // where a tag crosses a deck edge or the count line, its letters print in paper on the stroke's
-    // ink: the paper glyphs go down through a clip of that ink
+    // where a tag crosses a stroke, its letters print in paper through a clip of the stroke's ink
     const crossing = [];
     const onInk = new Path2D();
     for (const tag of tags) {
@@ -965,7 +928,6 @@
       ctx.restore();
     }
 
-    // the totals by direction of travel, at the two ends of the count line
     const { size } = totalType;
     const arrows = new Path2D();
     const shaft = Math.round(size * 0.7);
@@ -1001,7 +963,6 @@
 
   const nextTask = () => new Promise(resolve => setTimeout(resolve));
 
-  // what a new size repaints, in order
   const repaint = [cutTypes, paintStrips, paintRoad, paintVehicles];
 
   // the size, each part and the first frame in a task of their own, so none is long
@@ -1022,13 +983,26 @@
       draw(acc / FRAME_S);
     });
 
+    let onScreen = false;
+    let held = false;
     let running = false;
-    new IntersectionObserver(entries => {
-      const onScreen = entries[entries.length - 1].isIntersecting;
-      if (onScreen && !running) S.add(tick);
-      if (!onScreen && running) S.remove(tick);
-      running = onScreen;
-    }).observe(canvas);
+    const run = () => {
+      const wanted = onScreen && !held;
+      if (wanted && !running) S.add(tick);
+      if (!wanted && running) S.remove(tick);
+      running = wanted;
+    };
+    pause.addEventListener('click', () => {
+      held = !held;
+      pause.firstElementChild.textContent = held ? 'Play' : 'Pause';
+      run();
+    });
+    if (!S.REDUCED) {
+      new IntersectionObserver(entries => {
+        onScreen = entries[entries.length - 1].isIntersecting;
+        run();
+      }).observe(canvas);
+    }
 
     let resizeTimer = 0;
     addEventListener(
@@ -1046,8 +1020,7 @@
     );
   }
 
-  // the plate opens on traffic already under way: the first frames run ahead in short slices,
-  // so no one task is long
+  // the plate opens on traffic already under way, run ahead in short slices so no task is long
   function preroll(frames) {
     const slice = Math.min(10, frames);
     for (let i = 0; i < slice; i++) step();
