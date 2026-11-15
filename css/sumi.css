@@ -1401,7 +1401,7 @@ button.link {
 main:has(> .breath:last-child) + .foot {
   border-top: 0;
 }
-main:has(> .breath:last-child) + .foot .harakiri {
+main:has(> .breath:last-child) + .foot .sign {
   padding-top: 16px;
 }
 .breath .frame {
@@ -1517,16 +1517,16 @@ body.game-open ascii-art {
   border-top: 1px solid var(--rule);
   padding: 0 var(--gutter) 40px;
 }
-.harakiri {
+.sign {
   padding: 88px 0 0;
 }
-.harakiri h2 {
+.sign h2 {
   font-weight: 400;
   font-size: 44px;
   line-height: 1.05;
   letter-spacing: 0.01em;
 }
-.harakiri small {
+.sign small {
   display: block;
   font-family: var(--mono);
   font-size: 11px;
@@ -1723,7 +1723,7 @@ body.game-open ascii-art {
     padding-left: calc(50% - 656px);
     padding-right: calc(50% - 656px);
   }
-  .harakiri h2 {
+  .sign h2 {
     font-size: 52px;
   }
   .cols .brand,
@@ -1737,7 +1737,7 @@ body.game-open ascii-art {
   .pubs .idx,
   .pubs .doi,
   .cols h3,
-  .harakiri small,
+  .sign small,
   .tag,
   .chain li,
   .pl .name,
@@ -2053,7 +2053,7 @@ body.game-open ascii-art {
   }
 
   .chapter h2,
-  .harakiri h2 {
+  .sign h2 {
     font-size: 32px;
   }
   body,
@@ -2341,20 +2341,20 @@ body.game-open ascii-art {
   .about-text {
     padding-top: 48px;
   }
-  .harakiri {
+  .sign {
     padding-top: 64px;
   }
-  .harakiri small {
+  .sign small {
     font-size: 11px;
     letter-spacing: 0.14em;
   }
-  .harakiri small .sep {
+  .sign small .sep {
     display: none;
   }
-  .harakiri small .cl {
+  .sign small .cl {
     display: block;
   }
-  main:has(> .breath:last-child) + .foot .harakiri {
+  main:has(> .breath:last-child) + .foot .sign {
     padding-top: 32px;
   }
   .cols {
