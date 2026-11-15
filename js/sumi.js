@@ -155,7 +155,8 @@
 
     // once a visit it pops by itself, unless it is off screen, already hovered or too small
     const SEEN_KEY = 'fold-alert-seen';
-    const MIN_ROBOT_PX = 120;
+    // his head is a quarter of his plate: on a shorter plate it is smaller than the "!"
+    const MIN_PLATE_PX = 200;
     const plate = figure.querySelector('img:last-of-type');
     let seen = false;
     try {
@@ -170,7 +171,7 @@
       }
       const box = alertPlate.getBoundingClientRect();
       const onScreen = box.top >= 0 && box.bottom <= innerHeight;
-      const tooSmall = plate.clientHeight < MIN_ROBOT_PX;
+      const tooSmall = plate.clientHeight < MIN_PLATE_PX;
       if (!onScreen || tooSmall || figure.matches(':hover, :focus')) return;
       try {
         sessionStorage.setItem(SEEN_KEY, '1');

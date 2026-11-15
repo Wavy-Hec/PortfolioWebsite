@@ -199,24 +199,20 @@ body::after {
 .nav .cv a:focus-visible {
   color: var(--paper);
 }
-/* the fold. --hr: where the headline's longer line ends; --fb: the moon's top, 16 % down the fold.
-   The Go2 plate is 534 x 480: shoulder 4.5 % across, face 17 %, tail 97.9 %, crown 4.6 % down */
+/* the fold. --hr: where the headline's longer line ends. Raiden's plate is 640 x 1016, at most
+   1.7x: his hair starts 5 % across, his feet are 78.7 % down; tools/make-night.py knows the moon */
 .hero {
   --F: calc(100vh - var(--nav));
   --fs: clamp(44px, min(5.6vw, 13.5vh), 200px);
   --hr: calc(var(--gutter) + 9.36 * var(--fs));
-  --gap: max(85px, calc(var(--F) * 0.12));
-  --fh: min(calc(var(--F) * 0.68), calc((100vw - var(--hr) - var(--gap) - 24px) / 0.9), 816px);
-  --fw: calc(var(--fh) * 1.1125);
-  --fl: calc(100vw - 24px - var(--fw) * 0.979);
-  --fb: clamp(
-    calc(var(--F) * -0.04),
-    calc(var(--F) * 0.84 - var(--fh) * 1.38),
-    calc(var(--F) * 0.06)
-  );
-  --md: calc(var(--fh) * 0.8);
-  --mcx: calc(var(--fw) * 0.46);
-  --mcy: calc(var(--fh) * 0.98);
+  --gap: calc(2.4vw + 36px);
+  --fh: min(calc(var(--F) * 1.22), calc((100vw - var(--hr) - var(--gap)) * 1.9), 1727px);
+  --fw: calc(var(--fh) * 0.63);
+  --fl: calc(var(--hr) + var(--gap) - var(--fw) * 0.05);
+  --fb: calc(var(--F) * 0.015 - var(--fh) * 0.213);
+  --md: calc(var(--fh) * 0.315);
+  --mx: 0.345;
+  --my: 0.19;
   --gh: 34%;
   --sf: clamp(16px, calc(var(--fs) * 0.18), 28px);
   --af: clamp(2.4rem, calc(var(--F) * 0.052), 6rem);
@@ -272,8 +268,8 @@ body::after {
   display: block;
 }
 .scene .moon {
-  left: calc(var(--fl) + var(--mcx) - var(--md) / 2);
-  bottom: calc(var(--fb) + var(--mcy) - var(--md) / 2);
+  left: calc(var(--fl) + var(--fw) * var(--mx) - var(--md) / 2);
+  bottom: calc(var(--fb) + var(--fh) * (1 - var(--my)) - var(--md) / 2);
   width: var(--md);
   height: var(--md);
 }
@@ -325,15 +321,21 @@ body::after {
   height: var(--fh);
   max-width: none;
 }
+/* his paper dissolves into the grass in the plate itself; his shade runs on under it, then fades */
+.hero .figure img:first-child {
+  -webkit-mask-image: linear-gradient(#000 80%, transparent 90%);
+  mask-image: linear-gradient(#000 80%, transparent 90%);
+}
 .hero .figure:focus-visible {
   outline: none;
 }
-/* the "!" over the robot's head, popped by js/sumi.js; never closer than 24 px to the nav's rule */
+/* the "!" right over his crown (52 % across, 8 % down), popped by js/sumi.js; never closer than
+   24 px to the nav's rule */
 .hero .alert {
   position: absolute;
   z-index: 3;
-  left: 27%;
-  top: max(calc(var(--fh) * 0.046 - 1.12em - 16px), calc(24px + var(--fh) + var(--fb) - var(--F)));
+  left: 52%;
+  top: max(calc(var(--fh) * 0.08 - 1.12em - 16px), calc(24px + var(--fh) + var(--fb) - var(--F)));
   transform: translateX(-50%);
   font: 700 var(--af)/1 var(--mono);
   color: var(--paper);
@@ -2441,6 +2443,7 @@ main:has(> .ridge:last-child) + .foot .sign {
 @media (max-width: 1279px) {
   .hero {
     --fs: clamp(44px, 5.2vw, 84px);
+    --fh: min(calc(var(--F) * 1.1), calc((100vw - var(--hr) - var(--gap)) * 1.9));
   }
   .hero .status .sep {
     display: none;
@@ -2459,106 +2462,17 @@ main:has(> .ridge:last-child) + .foot .sign {
     font-size: clamp(12.5px, calc(var(--fs) * 0.1), 14px);
   }
 }
-/* tall windows: the robot right of the sub, sized from the height. The floor and moon ease in over
-   the first ~90 px of --d32 (the distance from 3:2); --mroom keeps the moon 24 px off the words */
-@media (min-width: 721px) and (max-aspect-ratio: 3/2) {
-  .hero {
-    --d32: calc(150vh - 100vw);
-    --hb: calc(10vh + 2.08 * var(--fs));
-    --sb: calc(var(--hb) + 0.34 * var(--fs) + 8 * var(--sf) + 62px);
-    --fh: min(
-      calc((100vw - var(--gutter) - 28 * var(--sf) - 88px) / 1.039),
-      calc((var(--F) * 0.97 - var(--hb) - 1.12 * var(--af) - 64px) / 0.954),
-      816px
-    );
-    --fl: calc(100vw - 24px - var(--fw) * 0.979);
-    --fb: calc(
-      var(--F) * 0.03 +
-        clamp(
-          0px,
-          min(var(--F) * 0.81 - var(--fh) * 1.38, var(--F) * 0.03) - var(--d32),
-          var(--F) * 0.03
-        )
-    );
-    --mox: calc(var(--fl) + var(--mcx));
-    --moy: calc(var(--F) - var(--fb) - var(--mcy));
-    --mroom: calc(
-      2 *
-        min(
-          hypot(max(0px, var(--mox) - var(--hr)), max(0px, var(--moy) - var(--hb))),
-          hypot(
-            max(0px, var(--mox) - var(--gutter) - 28 * var(--sf)),
-            max(0px, var(--moy) - var(--sb))
-          )
-        ) -
-        48px
-    );
-    --md: min(
-      calc(var(--fh) * 0.62 + clamp(0px, var(--fh) * 0.18 - var(--d32), var(--fh) * 0.18)),
-      var(--mroom)
-    );
-    --mcx: calc(var(--fw) * 0.62 - clamp(0px, var(--fw) * 0.16 - var(--d32), var(--fw) * 0.16));
-    --mcy: calc(var(--fh) * 0.92 + clamp(0px, var(--fh) * 0.06 - var(--d32), var(--fh) * 0.06));
-  }
-  .hero .status .sep {
-    display: none;
-  }
-  .hero .status .cl {
-    display: block;
-  }
-}
-/* near square: a larger, higher moon fills the sky over the robot, growing in from 23:20 (--d23) */
-@media (min-width: 721px) and (max-aspect-ratio: 23/20) {
-  .hero {
-    --d23: calc(115vh - 100vw);
-    --md: min(calc(var(--fh) * 0.62 + clamp(0px, var(--d23), var(--fh) * 0.13)), var(--mroom));
-    --mcx: calc(var(--fw) * 0.62 - clamp(0px, var(--d23), var(--fw) * 0.07));
-    --mcy: calc(var(--fh) * 0.92 + clamp(0px, var(--d23), var(--fh) * 0.2));
-  }
-}
-/* portrait: the robot stands below the links (--cb, the bottom of the words) and may reach under */
-@media (min-width: 961px) and (max-aspect-ratio: 1/1) {
-  .hero {
-    --cb: calc(10vh + 2.42 * var(--fs) + 242px);
-    --fh: min(
-      calc((100vw - 64px) / 1.065),
-      calc((var(--F) * 0.97 - var(--cb) - 1.12 * var(--af) - 40px) / 0.954),
-      816px
-    );
-  }
-}
-/* the tallest: from 4:5 (--d45) the moon settles behind the robot's back, clear of the words */
-@media (min-width: 961px) and (max-aspect-ratio: 4/5) {
-  .hero {
-    --d45: calc(80vh - 100vw);
-    --md: min(calc(var(--fh) * 0.75 - clamp(0px, var(--d45) * 2, var(--fh) * 0.09)), var(--mroom));
-    --mcx: calc(var(--fw) * 0.55 + clamp(0px, var(--d45) * 2, var(--fw) * 0.05));
-    --mcy: calc(var(--fh) * 1.12 - clamp(0px, var(--d45) * 2, var(--fh) * 0.16));
-  }
-}
-/* stacked: the words, then the scene filling the rest of the screen (--sh, from js/sumi-fold.js);
-   when the words leave less than --smin, a small robot stands below them */
-@media (max-width: 720px) and (max-aspect-ratio: 5/4),
-  (max-width: 960px) and (max-aspect-ratio: 1/1),
-  (max-width: 560px) {
+/* stacked: the words, then the scene in flow under them. Raiden is sized to the scene (--sh, from
+   js/sumi-fold.js), so the moon's top sits 24 px or more under the links */
+@media (max-width: 960px) {
   .hero {
     display: flex;
     flex-direction: column;
     --fs: clamp(40px, 6.4vw, 60px);
-    --smin: 140px;
-    --sh0: calc(var(--F) - 336px - 2.08 * var(--fs));
-    --sc: max(var(--smin), var(--sh, var(--sh0)));
-    --fh: min(
-      calc((var(--sc) - 24px) / 1.22),
-      calc((var(--sc) - 76px) / 0.924),
-      calc((100vw - 16px) / 1.065),
-      640px
-    );
-    --fl: calc((100% - var(--fw)) / 2);
-    --fb: calc(var(--fh) * -0.03);
-    --md: calc(var(--fh) * 0.7);
-    --mcx: calc(var(--fw) * 0.46);
-    --mcy: calc(var(--fh) * 0.9);
+    --sh0: max(420px, calc(var(--F) - 336px - 2.08 * var(--fs)));
+    --fh: min(calc((var(--sh, var(--sh0)) - 24px) * 1.25), calc(100vw * 1.55), 820px);
+    --fl: calc(100% - var(--fw) * 0.92);
+    --fb: calc(var(--fh) * -0.17);
     --gh: 36%;
   }
   .hero .copy {
@@ -2572,22 +2486,21 @@ main:has(> .ridge:last-child) + .foot .sign {
     position: relative;
     inset: auto;
     flex: 1 0 auto;
-    min-height: var(--smin);
+    min-height: 420px;
     margin: 8px calc(-1 * var(--gutter)) 0;
   }
   .hero .alert {
-    top: calc(var(--fh) * 0.046 - 1.12em - 14px);
+    top: calc(var(--fh) * 0.08 - 1.12em - 14px);
     font-size: 3rem;
     border-width: 3px;
   }
 }
-@media (min-width: 721px) and (max-width: 960px) and (max-aspect-ratio: 1/1) {
+@media (min-width: 721px) and (max-width: 960px) {
   .hero {
-    --fl: calc(100% - var(--fw) - var(--gutter));
+    --fh: min(calc((var(--sh, var(--sh0)) - 24px) * 1.25), calc(100vw * 1.55), 900px);
+    --fl: calc(100% - var(--fw) * 1.08);
     --gh: 42%;
   }
-}
-@media (min-width: 721px) and (max-width: 960px) {
   .steps {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     row-gap: 18px;
@@ -2723,9 +2636,15 @@ main:has(> .ridge:last-child) + .foot .sign {
       margin-left: 0;
     }
   }
+  /* phones: Raiden stands 24 px lower, so the "!" over his head clears the links above it */
   .hero {
     --fs: clamp(28px, 8.8vw, 40px);
-    --sh0: calc(var(--F) - 282.5px - 2.2 * var(--fs));
+    --sh0: max(340px, calc(var(--F) - 282.5px - 2.2 * var(--fs)));
+    --fb: calc(var(--fh) * -0.17 - 24px);
+  }
+  /* under the larger screens' 420 px, so a 740 px phone still holds the whole scene */
+  .scene {
+    min-height: 340px;
   }
   .hero .copy {
     padding: 36px 0 0;
@@ -3011,11 +2930,8 @@ main:has(> .ridge:last-child) + .foot .sign {
     font-size: 5rem;
   }
 }
-/* short phones: the status line gives way to the robot (the footer carries the same two facts) */
+/* short phones: the status line gives way to Raiden (the footer carries the same two facts) */
 @media (max-width: 720px) and (max-height: 600px) {
-  .hero {
-    --sh0: calc(var(--F) - 215px - 2.2 * var(--fs));
-  }
   .hero .status {
     display: none;
   }
@@ -3030,8 +2946,8 @@ main:has(> .ridge:last-child) + .foot .sign {
     min-height: 3.1em;
   }
 }
-/* phones sideways and short desktop windows: under 580 px the full sub would push the robot's feet
-   off the first screen */
+/* phones sideways and short desktop windows: under 580 px the full words would push the links or
+   his feet off the first screen */
 @media (min-width: 721px) and (max-width: 960px) and (max-height: 500px),
   (min-width: 961px) and (max-height: 579px) {
   .hero .copy {

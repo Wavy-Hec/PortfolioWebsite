@@ -65,9 +65,9 @@
   const octaves = (r, cx, cy, k = 4) =>
     Array.from({ length: k }, (_, o) => lattice(cx << o, cy << o, r));
 
-  // the moon is printed like the robot's plate: a Bayer 4 x 4 screen at the plate's pitch
+  // the moon is printed like Raiden's plate: a Bayer 4 x 4 screen at the plate's pitch
   const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-  const PLATE_H = 480; // img/go2-night.png; its 2x keeps the same screen
+  const PLATE_H = 1016; // img/raiden-night.png
   const PAPER_RGBA = [233, 231, 226, 255];
   const moonC = scene.querySelector('canvas.moon');
   // back to the stylesheet's size, which a resize follows (blurred) until the moon is drawn again
@@ -210,7 +210,7 @@
     }
   }
 
-  // the stand rises where the robot stands, with no plumes on its legs
+  // six rows of pampas: tall stems before his thigh, the plumes lit under the moon round his legs
   const cvs = [scene.querySelector('canvas.g-far'), scene.querySelector('canvas.g-near')];
   const ROWS = [
     { d: 0, cv: 0, sp: 10 },
@@ -220,7 +220,7 @@
     { d: 0.83, cv: 1, sp: 40 },
     { d: 1, cv: 1, sp: 54 },
   ];
-  const LIGHT = [0.42, 0.62, 0.85, 1.08]; // the plumes catch the light only near the moon
+  const LIGHT = [0.42, 0.62, 0.85, 1.08];
   let W = 0;
   let H = 0;
   let scale = 1;
@@ -247,19 +247,19 @@
     const mb = moonC.getBoundingClientRect();
     moonX = mb.left + mb.width / 2 - sb.left;
     const pb = scene.querySelector('.figure img:last-of-type').getBoundingClientRect();
-    // the robot's feet are 6 to 88 % across its plate
-    const standL = pb.left - sb.left + pb.width * 0.06;
-    const standR = pb.left - sb.left + pb.width * 0.88;
-    const pad = Math.max(40, (standR - standL) * 0.18);
-    const rise = x => smooth(standL - pad, standL, x) * (1 - smooth(standR, standR + pad, x));
+    const thighX = pb.left - sb.left + pb.width * 0.4;
+    // on a phone his coat fills the grass's height: no pale plume tips on it
+    const coatL = pb.left - sb.left + pb.width * 0.08;
+    const coatR = pb.left - sb.left + pb.width * 0.95;
     const narrow = W < 720;
     const r = rng(8085);
     const swell = octaves(rng(77), 5, 1, 3); // the stand's density and height along x
     const sky = octaves(rng(31), 3, 1, 2); // the field's top edge swells and dips
     const skyAt = x =>
       Math.max(-1, Math.min(1, (fbm(sky, ((x / W) * 0.9 + 1) % 1, 0.5) - 0.5) / 0.16));
+    const litX = (moonX + thighX) / 2;
     const lightAt = x => {
-      const L = Math.max(0, 1 - Math.abs(x - moonX) / Math.max(160, W * 0.2));
+      const L = Math.max(0, 1 - Math.abs(x - litX) / Math.max(160, W * 0.2));
       if (L > 0.7) return 3;
       if (L > 0.45) return 2;
       if (L > 0.15) return 1;
@@ -288,15 +288,14 @@
               lerp(0.24, 0.82, Math.pow(d, 1.05)) *
               (0.55 + 0.7 * smooth(0.25, 0.75, sw)) *
               (0.75 + 0.4 * r()) +
-            H * 0.12 * k0 * (0.4 + 0.6 * d) +
-            H * (near ? 0.16 : 0.1) * rise(x);
+            H * 0.12 * k0 * (0.4 + 0.6 * d);
           if (tall) sh = H * (0.74 + 0.12 * r());
           sh = Math.max(H * 0.08, Math.min(y0 * 0.8, sh)); // the plume stays on the canvas
           const nStems = near ? 1 + (r() < 0.25 ? 1 : 0) : 1;
           for (let k = 0; k < nStems; k++) {
             // a dark stem carries no plume: against the fog a dark plume reads as a bird
             let plume = !dark && r() < (tall ? 0.5 : lerp(0.55, 0.92, d) * (near ? 0.3 : 0.33));
-            if (rise(xc) > 0.2) plume = false;
+            if (narrow && xc > coatL && xc < coatR) plume = false;
             items.push({
               stem: true,
               x: xc + (r() - 0.5) * sp * 0.2,
@@ -345,10 +344,13 @@
         for (let x = -sp * r(); x < W + sp;) {
           const sw = fbm(swell, ((x / W) * 0.8 + d * 0.37 + 1) % 1, 0.5);
           const n = 3 + Math.floor(r() * 5);
-          if (!(sw < 0.34 && r() < 0.5) || rise(x) > 0.5) clump(x, n, false);
+          if (!(sw < 0.34 && r() < 0.5)) clump(x, n, false);
           x += sp * (n * 0.2 + 1.3 + 1.6 * r());
         }
-        if (d === 1) clump(W * 0.035 + 6, 2, true);
+        if (d === 1) {
+          clump(thighX, 3, true);
+          clump(W * 0.035 + 6, 2, true);
+        }
       }
       const a = lerp(0.1, 0.28, d);
       return {
@@ -528,7 +530,7 @@
     else if (tickN++ & 1) drawGrass(windT, 2);
   }
   let ready = false;
-  // the stacked fold sizes the robot to the scene
+  // the stacked fold sizes Raiden to the scene
   const measure = () => hero.style.setProperty('--sh', scene.clientHeight + 'px');
   function paintScene() {
     ready = build();
@@ -602,7 +604,7 @@
     if (w === lastW && h === lastH) return;
     lastW = w;
     lastH = h;
-    // the robot is resized before the next paint, the drawings once the resize settles
+    // Raiden is resized before the next paint, the drawings once the resize settles
     measure();
     freeMoon();
     clearTimeout(rt);

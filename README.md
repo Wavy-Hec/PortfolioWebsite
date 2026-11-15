@@ -21,7 +21,7 @@ dependencies.
 | `js/sumi-search.js`                                     | The search toy: one room, three memories                                                                                       |
 | `js/sumi-ridge.js`                                      | The mountains before the footer                                                                                                |
 | `js/game.js`                                            | A hidden game, fetched only when someone finds it                                                                              |
-| `img/`                                                  | The fold's Go2, the project plates, the About photograph, the résumé page, the game's codec portrait and the link-preview card |
+| `img/`                                                  | The fold's Raiden (also the game's codec), the project plates, the About photograph, the résumé page and the link-preview card |
 | `media/`                                                | The drone reel's four clips and the poker clip, each with its poster                                                           |
 | `papers/`                                               | The ICMLA 2026 paper, the accepted version with IEEE's notice                                                                  |
 | `resume.html`                                           | The résumé as an image with its links laid over it                                                                             |
@@ -45,12 +45,12 @@ Then open http://localhost:8000. The page also works opened straight from disk.
 
 Each one says at the top how to run it.
 
-- `make-go2.py`: the Go2 plates in the fold, rendered from MuJoCo Menagerie's model and printed in two colors.
+- `make-night.py`: Raiden in the fold, cut from Yoji Shinkawa's ink as two plates: `img/raiden-night.png`, also the
+  hidden game's codec portrait, and the shade under it, `img/raiden-shade.png`.
 - `make-plate.py`: the G1, RL in Isaac Lab and planet.txt project plates.
 - `make-media.sh`: the clips in `media/`, from the drone and poker repositories.
 - `make-about-photo.py`: the About photograph, in grayscale, from the original.
 - `build-resume-view.py`: `resume.html`'s two images and its links, from the PDF.
-- `make-night.py`: the hidden game's codec portrait, `img/raiden-night.png`.
 - `og-card.html`: the link-preview card, a still of the fold.
 
 ## Deploy
