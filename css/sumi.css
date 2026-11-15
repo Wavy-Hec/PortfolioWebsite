@@ -2678,3 +2678,153 @@ main:has(> .ridge:last-child) + .foot .sign {
     opacity: 1;
   }
 }
+
+/* the FlowCount plate, live (js/sumi-track.js): the still plate shows until the canvas has drawn */
+.track {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  column-gap: 28px;
+}
+.track .plate {
+  position: relative;
+  flex: 1 0 100%;
+  margin-bottom: 28px;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  box-shadow:
+    10px 10px 0 var(--deep),
+    11px 11px 0 var(--rule);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+.track .plate img {
+  width: 100%;
+  height: auto;
+  border: 0;
+  box-shadow: none;
+  transform: none;
+  transition: none;
+}
+.track canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.track canvas,
+.track .raw,
+.track figcaption {
+  visibility: hidden;
+}
+.track.live canvas,
+.track.live .raw,
+.track.live figcaption {
+  visibility: visible;
+}
+.track .raw,
+.track figcaption {
+  color: var(--dim);
+  letter-spacing: 0.14em;
+  line-height: 20px;
+}
+.track .raw {
+  padding: 14px 0;
+  margin: -14px 0;
+  background: none;
+  border: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.25s;
+}
+/* the label's baseline comes from its text, not from the square, so it sits on the caption's line */
+.track .raw span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  line-height: normal;
+}
+.track .raw span::before {
+  content: '';
+  align-self: center;
+  width: 6px;
+  height: 6px;
+  background: var(--paper-55);
+  transition: background 0.25s;
+}
+.track .raw:hover,
+.track .raw:focus-visible,
+.track .raw[aria-pressed='true'] {
+  color: var(--paper);
+}
+.track .raw:hover span::before,
+.track .raw:focus-visible span::before,
+.track .raw[aria-pressed='true'] span::before {
+  background: var(--paper);
+}
+.track .raw:focus-visible {
+  outline: none;
+}
+.track .raw:focus-visible span {
+  outline: 2px solid var(--paper);
+  outline-offset: 5px;
+}
+.track figcaption .cl {
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .feat:is(:hover, :has(:focus-visible)) .plate {
+    transform: translate(-2px, -2px);
+    box-shadow:
+      13px 13px 0 var(--deep),
+      14px 14px 0 var(--rule);
+  }
+}
+/* the text centres on the plate alone: the plate's 28 px margin and its 20 px control row */
+@media (min-width: 1100px) {
+  .feat:has(> .track) > div {
+    margin-bottom: 48px;
+  }
+}
+@media (max-width: 720px) {
+  .track .plate {
+    box-shadow:
+      7px 7px 0 var(--deep),
+      8px 8px 0 var(--rule);
+  }
+  .track figcaption {
+    flex-basis: 100%;
+    margin-top: 8px;
+  }
+}
+@media (min-width: 1920px) {
+  .track .raw {
+    font-size: 12.5px;
+  }
+}
+@media (forced-colors: active) {
+  .track .raw span::before {
+    forced-color-adjust: none;
+    background: GrayText;
+  }
+  .track .raw[aria-pressed='true'] span::before {
+    background: CanvasText;
+  }
+}
+@media (prefers-reduced-motion: reduce), (scripting: none) {
+  .track .plate {
+    margin-bottom: 0;
+  }
+  .track .raw,
+  .track figcaption {
+    display: none;
+  }
+  .feat:has(> .track) > div {
+    margin-bottom: 0;
+  }
+}

@@ -158,7 +158,15 @@
           </header>
 
           <article class="feat">
-            <img src="img/proj-yolo-ink.png?v=2" srcset="img/proj-yolo-ink.png?v=2 640w, img/proj-yolo-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) calc(100vw - 32px), (max-width: 1099px) 960px, 540px" width="640" height="360" loading="lazy" decoding="async" alt="Ink drawing: cars in tracking boxes on a road, a counting line across it">
+            <figure class="track">
+              <div class="plate">
+                <img src="img/proj-yolo-ink.png?v=2" srcset="img/proj-yolo-ink.png?v=2 640w, img/proj-yolo-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) calc(100vw - 32px), (max-width: 1099px) 960px, 540px" width="640" height="360" loading="lazy" decoding="async" alt="Ink drawing: cars in tracking boxes on a road, a counting line across it">
+                <canvas aria-hidden="true"></canvas>
+                <p class="sr-only" hidden>FlowCount’s tracker following synthetic traffic, two lanes each way. Vehicles pass under an overpass, where the detector cannot see them and the tracker keeps their numbers. A line across the road counts each direction and flags a car driving the wrong way. With raw detections on, the detector’s own boxes show under the tracks: they shift from frame to frame and vanish under the overpass, where the tracks carry on. <span class="totals"></span></p>
+              </div>
+              <button type="button" class="raw" aria-pressed="false"><span>Raw detections</span></button>
+              <figcaption class="mono"><span class="cl">Real tracker</span><span class="sep"> · </span><span class="cl">synthetic traffic</span></figcaption>
+            </figure>
             <div>
               <p class="kicker mono">
                 <span class="n">02</span>
@@ -166,7 +174,7 @@
                 <span class="tg">ByteTrack</span><span class="sep"> · </span>
                 <span class="tg">Docker</span>
               </p>
-              <h4>FlowCount: Real-Time Traffic Analytics</h4>
+              <h4>FlowCount: <span class="nw">Real-Time</span> Traffic Analytics</h4>
               <p>YOLO11 detections feed a ByteTrack-style tracker (Kalman filter + Hungarian matching) for line counts, wrong-way alerts, zone occupancy, and heatmaps from webcam, video, or RTSP input. Web dashboard, Docker deploy, CI.</p>
               <p class="links">
                 <a class="link" href="https://github.com/Wavy-Hec/ObjectDetection" rel="noopener">GitHub<span class="sr-only">: FlowCount</span><span aria-hidden="true"> ↗</span></a>
