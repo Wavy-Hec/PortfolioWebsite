@@ -4,43 +4,51 @@
 (function () {
   'use strict';
 
-  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
 
-  var COLS = 20,
-    ROWS = 12,
-    TILE = 32,
-    W = COLS * TILE,
-    H = ROWS * TILE;
-  var PLAYER_R = 9,
-    GUARD_R = 9,
-    SCALE = 2;
-  var WALK_SPEED = 92,
-    RUN_SPEED = 152,
-    BOX_SPEED = 58;
-  var LOS_STEP = 6,
-    SCAN_TIME = 1.05,
-    SCAN_ARC = 0.7;
-  var SPOT_FULL = 1.0;
-  var ALERT_GRACE = 2.2,
-    EVASION_TIME = 16,
-    CAUTION_TIME = 20,
-    SEARCH_TIME = 4;
-  var SHOOT_RATE = 0.33,
-    REGEN = 0.05,
-    GRAB_DIST = 14;
-  var RUN_NOISE_R = 96,
-    KNOCK_R = 150,
-    NOISE_INT = 0.3,
-    KNOCK_CD = 1.1;
-  var CQC_R = 24,
-    CQC_REAR = 2.4,
-    CQC_CD = 0.8,
-    PICKUP_R = 15,
-    EXIT_R = 16;
+  const COLS = 20;
+  const ROWS = 12;
+  const TILE = 32;
+  const W = COLS * TILE;
+  const H = ROWS * TILE;
+  const PLAYER_R = 9;
+  const GUARD_R = 9;
+  const SCALE = 2;
+  const WALK_SPEED = 92;
+  const RUN_SPEED = 152;
+  const BOX_SPEED = 58;
+  const LOS_STEP = 6;
+  const SCAN_TIME = 1.05;
+  const SCAN_ARC = 0.7;
+  const SPOT_FULL = 1.0;
+  const ALERT_GRACE = 2.2;
+  const EVASION_TIME = 16;
+  const CAUTION_TIME = 20;
+  const SEARCH_TIME = 4;
+  const SHOOT_RATE = 0.33;
+  const REGEN = 0.05;
+  const GRAB_DIST = 14;
+  const RUN_NOISE_R = 96;
+  const KNOCK_R = 150;
+  const NOISE_INTERVAL_S = 0.3;
+  const KNOCK_COOLDOWN_S = 1.1;
+  const CQC_R = 24;
+  const CQC_REAR = 2.4;
+  const CQC_COOLDOWN_S = 0.8;
+  const PICKUP_R = 15;
+  const EXIT_R = 16;
+
+  const RADAR_X = 6;
+  const RADAR_Y = 5;
+  const RADAR_W = 90;
+  const RADAR_H = 54;
+  const RADAR_SC = 54 / 384;
+  const RADAR_OX = RADAR_X + (RADAR_W - W * RADAR_SC) / 2;
+  const RADAR_OY = RADAR_Y + (RADAR_H - H * RADAR_SC) / 2;
 
   // steel blue on navy; danger is paper, caution a cool grey, and nothing is red or amber
-  var C = {
+  const C = {
     bg: '#0b1220',
     panel: '#0e1726',
     floorA: '#0c1422',
@@ -61,14 +69,14 @@
     paperDim: '#c3cbd5',
     ink: '#141416',
   };
-  var FLOORS = {
+  const FLOORS = {
     dock: { a: '#0d1523', b: '#0f1826' },
     bridge: { a: '#060c18', b: '#07101c' },
     core: { a: '#0c1422', b: '#0f1827' },
   };
 
   // the figures face up and are rotated to their heading when drawn
-  var PLAYER = [
+  const PLAYER = [
     '.......WW.......',
     '.......gg.......',
     '......BggB......',
@@ -86,7 +94,7 @@
     '.....SB..BS.....',
     '.....BB..BB.....',
   ];
-  var GUARD = [
+  const GUARD = [
     '.......WW.......',
     '.......gg.......',
     '.......gg.......',
@@ -104,7 +112,7 @@
     '...SBB....BBS...',
     '....BB....BB....',
   ];
-  var BOX = [
+  const BOX = [
     '................',
     '.KKKKKKKKKKKKKK.',
     '.KWWWWWWKWWWWWK.',
@@ -122,11 +130,11 @@
     '.KKKKKKKKKKKKKK.',
     '................',
   ];
-  var KEYCARD = ['.AAAAAA.', 'ALLLLLWA', 'AAAAAAAA', 'AAAAAAAA', 'ADDAAAAA', '.AAAAAA.'];
-  var WALK_B_ROWS = ['....KSBKKBSK....', '.....KK..KK.....'];
-  var PLAYER_B = PLAYER.slice(0, 14).concat(['......SBBS......', '......BB.BB.....']);
-  var GUARD_B = GUARD.slice(0, 14).concat(WALK_B_ROWS);
-  var PAL_PLAYER = {
+  const KEYCARD = ['.AAAAAA.', 'ALLLLLWA', 'AAAAAAAA', 'AAAAAAAA', 'ADDAAAAA', '.AAAAAA.'];
+  const WALK_B_ROWS = ['....KSBKKBSK....', '.....KK..KK.....'];
+  const PLAYER_B = PLAYER.slice(0, 14).concat(['......SBBS......', '......BB.BB.....']);
+  const GUARD_B = GUARD.slice(0, 14).concat(WALK_B_ROWS);
+  const PAL_PLAYER = {
     K: '#060a12',
     S: '#5d708a',
     L: '#8496b0',
@@ -136,7 +144,7 @@
     g: '#262f3e',
     W: '#b8c6d6',
   };
-  var PAL_GUARD = {
+  const PAL_GUARD = {
     K: '#050912',
     S: '#566478',
     H: '#a3adba',
@@ -146,7 +154,7 @@
     W: '#a9b6c6',
     V: '#9fb4cc',
   };
-  var PAL_GUARD_HOT = {
+  const PAL_GUARD_HOT = {
     K: '#050912',
     S: '#8e9bac',
     H: '#d0d6de',
@@ -156,7 +164,7 @@
     W: '#e9e7e2',
     V: '#e9e7e2',
   };
-  var PAL_GUARD_DOWN = {
+  const PAL_GUARD_DOWN = {
     K: '#04070e',
     S: '#3c475a',
     H: '#7c8594',
@@ -166,25 +174,25 @@
     W: '#767f8e',
     V: '#5a6b80',
   };
-  var PAL_BOX = { K: '#262b33', B: '#7d8796', W: '#a7b0bc', D: '#565f6d' };
-  var PAL_KEY = { A: '#6f86a3', L: '#b8c6d6', W: '#e9e7e2', D: '#2c3d55' };
+  const PAL_BOX = { K: '#262b33', B: '#7d8796', W: '#a7b0bc', D: '#565f6d' };
+  const PAL_KEY = { A: '#6f86a3', L: '#b8c6d6', W: '#e9e7e2', D: '#2c3d55' };
 
-  var SPR = null;
+  let SPR = null;
   function makeSprite(grid, pal, outline) {
-    var rows = grid.length,
-      cols = grid[0].length,
-      pad = 1;
-    var cv = document.createElement('canvas');
+    const rows = grid.length;
+    const cols = grid[0].length;
+    const pad = 1;
+    const cv = document.createElement('canvas');
     cv.width = (cols + 2 * pad) * SCALE;
     cv.height = (rows + 2 * pad) * SCALE;
-    var g = cv.getContext('2d');
+    const g = cv.getContext('2d');
     function solid(r, c) {
       if (r < 0 || c < 0 || r >= rows || c >= cols) return false;
-      var ch = grid[r].charAt(c);
+      const ch = grid[r].charAt(c);
       return ch !== '.' && !!pal[ch];
     }
-    for (var r = 0; r < rows; r++)
-      for (var c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r++)
+      for (let c = 0; c < cols; c++) {
         if (solid(r, c)) {
           g.fillStyle = pal[grid[r].charAt(c)];
           g.fillRect((c + pad) * SCALE, (r + pad) * SCALE, SCALE, SCALE);
@@ -199,7 +207,7 @@
     return cv;
   }
   function buildSprites() {
-    var outline = 'rgba(3,6,12,0.9)';
+    const outline = 'rgba(3,6,12,0.9)';
     SPR = {
       player: [makeSprite(PLAYER, PAL_PLAYER, outline), makeSprite(PLAYER_B, PAL_PLAYER, outline)],
       guard: [makeSprite(GUARD, PAL_GUARD, outline), makeSprite(GUARD_B, PAL_GUARD, outline)],
@@ -214,7 +222,7 @@
   }
 
   // no patrol may see the start tile [1, 10] at first, hence the short routes in ops 2 and 3
-  var LEVELS = [
+  const LEVELS = [
     {
       name: 'STRUT A DEEP SEA DOCK',
       caller: 'COLONEL',
@@ -363,7 +371,7 @@
     },
   ];
 
-  var CHROME = {
+  const CHROME = {
     bg: '#0b1220',
     panel: '#0e1726',
     line: '#1b2638',
@@ -381,7 +389,7 @@
     paper: '#e9e7e2',
     pdim: '#c3cbd5',
   };
-  var CHROME_VARS = {
+  const CHROME_VARS = {
     bg: '--mg-bg',
     panel: '--mg-panel',
     line: '--mg-line',
@@ -400,13 +408,13 @@
     pdim: '--mg-pdim',
   };
   function chromeVarsCSS(p) {
-    var s = '',
-      k;
+    let s = '';
+    let k;
     for (k in CHROME_VARS) s += CHROME_VARS[k] + ':' + p[k] + ';';
     return s;
   }
 
-  var CSS =
+  const CSS =
     '' +
     '.mgsg-overlay{' +
     chromeVarsCSS(CHROME) +
@@ -629,88 +637,97 @@
     '@keyframes mgsgPowerOn{0%{transform:scaleY(.005) scaleX(1.1);opacity:.4}60%{transform:scaleY(1.04)}100%{transform:none;opacity:1}}' +
     '@keyframes mgsgStatIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1}}';
 
-  var built = false,
-    open = false;
-  var overlay,
-    frame,
-    stage,
-    canvas,
-    ctx,
-    dpr = 1;
-  var stateBadge, lifeFill, hudIntel, hudLevel, hudTime;
-  var lastLifeW = '',
-    lastLifeC = '';
-  var screenEl,
-    scrCaller,
-    scrTitle,
-    scrBody,
-    scrSub,
-    scrGo,
-    scrRank,
-    scrStats,
-    scrRec,
-    scrRetry,
-    flashEl,
-    srLive,
-    muteBtn;
-  var scrPortThem, scrWhoThem, scrFnum, scrNeedle, beamEl, freqEl;
-  var toastEl = null,
-    toastTimer = null,
-    typeTimer = null;
-  var radarMap = null;
-  var seaGlints = null;
-  var lastWide = null;
-  var mistSprite = null;
-  var colCtx = null,
-    colBase = null,
-    colTimer = null,
-    colFrame = 0;
-  var rafId = null,
-    lastT = 0,
-    muted = false,
-    audioCtx = null,
-    prevFocus = null,
-    alertLoop = null;
-  var bgLayer = null;
-  var shakeT = 0;
-  var hitFlashT = 0;
-  var hitBeepCD = 0;
-  var fxPulses = [];
-  var poolGrad = null,
-    vigGrad = null,
-    exitGlowGrad = null,
-    intelHaloGrad = null;
+  let built = false;
+  let open = false;
+  let overlay;
+  let frame;
+  let stage;
+  let canvas;
+  let ctx;
+  let dpr = 1;
+  let stateBadge;
+  let lifeFill;
+  let hudIntel;
+  let hudLevel;
+  let hudTime;
+  let lastLifeW = '';
+  let lastLifeC = '';
+  let screenEl;
+  let scrCaller;
+  let scrTitle;
+  let scrBody;
+  let scrSub;
+  let scrGo;
+  let scrRank;
+  let scrStats;
+  let scrRec;
+  let scrRetry;
+  let flashEl;
+  let srLive;
+  let muteBtn;
+  let scrPortThem;
+  let scrWhoThem;
+  let scrFnum;
+  let scrNeedle;
+  let beamEl;
+  let freqEl;
+  let toastEl = null;
+  let toastTimer = null;
+  let typeTimer = null;
+  let radarMap = null;
+  let seaGlints = null;
+  let lastWide = null;
+  let mistSprite = null;
+  let colCtx = null;
+  let colBase = null;
+  let colTimer = null;
+  let colFrame = 0;
+  let rafId = null;
+  let lastT = 0;
+  let muted = false;
+  let audioCtx = null;
+  let prevFocus = null;
+  let alertLoop = null;
+  let bgLayer = null;
+  let shakeT = 0;
+  let hitFlashT = 0;
+  let hitBeepCD = 0;
+  const fxPulses = [];
+  let poolGrad = null;
+  let vigGrad = null;
+  let exitGlowGrad = null;
+  let intelHaloGrad = null;
 
-  var state = 'title'; // title | briefing | playing | paused | clear | complete | over
-  var levelIdx = 0,
-    level = null,
-    walls = null;
-  var player = null,
-    guards = [],
-    cameras = [],
-    intel = null,
-    exitPt = null;
-  var alertPhase = 'normal',
-    alertGrace = 0,
-    evasionTimer = 0,
-    cautionTimer = 0;
-  var lastKnown = null,
-    alertsThisLevel = 0,
-    totalAlerts = 0;
-  var life = 1,
-    elapsed = 0,
-    totalTime = 0,
-    intelGot = false;
-  var boxed = false,
-    running = false,
-    noiseAccum = 0,
-    knockCD = 0,
-    cqcCD = 0,
-    walkPhase = 0,
-    noisePings = [],
-    boxHinted = false;
-  var keys = Object.create(null);
-  var touchDir = { up: 0, down: 0, left: 0, right: 0 };
+  let state = 'title'; // title | briefing | playing | paused | clear | complete | over
+  let levelIdx = 0;
+  let level = null;
+  let walls = null;
+  let player = null;
+  let guards = [];
+  let cameras = [];
+  let intel = null;
+  let exitPt = null;
+  let alertPhase = 'normal';
+  let alertGrace = 0;
+  let evasionTimer = 0;
+  let cautionTimer = 0;
+  let lastKnown = null;
+  let alertsThisLevel = 0;
+  let totalAlerts = 0;
+  let life = 1;
+  let elapsed = 0;
+  let totalTime = 0;
+  let intelGot = false;
+  let boxed = false;
+  let running = false;
+  let noiseAccum = 0;
+  let knockCD = 0;
+  let cqcCD = 0;
+  let walkPhase = 0;
+  let noisePings = [];
+  let boxHinted = false;
+  let keys = Object.create(null);
+  let touchDir = { up: 0, down: 0, left: 0, right: 0 };
 
   function $(sel) {
     return overlay.querySelector(sel);
@@ -720,7 +737,7 @@
     if (built) return;
     built = true;
 
-    var style = document.createElement('style');
+    const style = document.createElement('style');
     style.id = 'mgsg-styles';
     style.textContent = CSS;
     document.head.appendChild(style);
@@ -848,8 +865,8 @@
     Array.prototype.forEach.call(
       overlay.querySelectorAll('.mgsg-pad button[data-dir]'),
       function (b) {
-        var dir = b.getAttribute('data-dir');
-        var set = function (v) {
+        const dir = b.getAttribute('data-dir');
+        const set = function (v) {
           return function (e) {
             e.preventDefault();
             if (v) unlockAudio();
@@ -867,8 +884,8 @@
     Array.prototype.forEach.call(
       overlay.querySelectorAll('.mgsg-acts button,.mgsg-pad button[data-act2]'),
       function (b) {
-        var a = b.getAttribute('data-act2');
-        var press = function (e) {
+        const a = b.getAttribute('data-act2');
+        const press = function (e) {
           e.preventDefault();
           unlockAudio();
           if (state === 'playing') {
@@ -882,7 +899,7 @@
         b.addEventListener('touchstart', press, { passive: false });
         b.addEventListener('mousedown', press);
         if (a === 'run') {
-          var rel = function (e) {
+          const rel = function (e) {
             e.preventDefault();
             running = false;
           };
@@ -897,10 +914,10 @@
 
   // enough device pixels for the stage at its CSS size: 0.92 and 1080 mirror .mgsg-frame's width
   function targetDpr() {
-    var r = window.devicePixelRatio || 1,
-      vw = window.innerWidth || W,
-      vh = window.innerHeight || H;
-    var css = Math.min(vw * 0.92, 1080, (Math.max(200, vh - 140) * W) / H);
+    const r = window.devicePixelRatio || 1;
+    const vw = window.innerWidth || W;
+    const vh = window.innerHeight || H;
+    const css = Math.min(vw * 0.92, 1080, (Math.max(200, vh - 140) * W) / H);
     return Math.round(Math.min(2, Math.max(r, (css * r) / W)) * 4) / 4;
   }
   function sizeCanvas() {
@@ -922,9 +939,9 @@
     mistSprite = document.createElement('canvas');
     mistSprite.width = 192;
     mistSprite.height = 64;
-    var m = mistSprite.getContext('2d');
+    const m = mistSprite.getContext('2d');
     m.setTransform(1, 0, 0, 1 / 3, 0, 0);
-    var mg = m.createRadialGradient(96, 96, 4, 96, 96, 94);
+    const mg = m.createRadialGradient(96, 96, 4, 96, 96, 94);
     mg.addColorStop(0, 'rgba(208,214,222,0.9)');
     mg.addColorStop(0.55, 'rgba(208,214,222,0.35)');
     mg.addColorStop(1, 'rgba(208,214,222,0)');
@@ -932,26 +949,26 @@
     m.fillRect(0, 0, 192, 192);
   }
 
-  var BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
   function buildColonel() {
-    var S = 48,
-      cv = document.createElement('canvas');
+    const S = 48;
+    const cv = document.createElement('canvas');
     cv.width = cv.height = S;
-    var g = cv.getContext('2d'),
-      img = g.createImageData(S, S),
-      d = img.data,
-      x,
-      y;
+    const g = cv.getContext('2d');
+    const img = g.createImageData(S, S);
+    const d = img.data;
+    let x;
+    let y;
     for (y = 0; y < S; y++)
       for (x = 0; x < S; x++) {
-        var hx = (x - 24) / 9.5,
-          hy = (y - 19) / 12,
-          inHead = hx * hx + hy * hy <= 1;
-        var sx = (x - 24) / 23,
-          sy = (y - 52) / 17,
-          inBody = y > 34 && sx * sx + sy * sy <= 1;
-        var inNeck = y >= 28 && y <= 38 && Math.abs(x - 24) <= 5;
-        var lum;
+        const hx = (x - 24) / 9.5;
+        const hy = (y - 19) / 12;
+        const inHead = hx * hx + hy * hy <= 1;
+        const sx = (x - 24) / 23;
+        const sy = (y - 52) / 17;
+        const inBody = y > 34 && sx * sx + sy * sy <= 1;
+        const inNeck = y >= 28 && y <= 38 && Math.abs(x - 24) <= 5;
+        let lum;
         if (inHead) {
           lum = 0.98 - 0.6 * Math.hypot((x - 19) / 12, (y - 14) / 14);
           if (y < 11) lum *= 0.5;
@@ -964,8 +981,8 @@
             0.5 * Math.hypot((x - 14) / 30, (y - 38) / 18) -
             (Math.abs(x - 24) < 3 && y < 44 ? 0.3 : 0);
         else lum = 0;
-        var on = lum * 16 > BAYER4[(y & 3) * 4 + (x & 3)] + 0.5,
-          i = (y * S + x) * 4;
+        const on = lum * 16 > BAYER4[(y & 3) * 4 + (x & 3)] + 0.5;
+        const i = (y * S + x) * 4;
         d[i] = on ? 143 : 8;
         d[i + 1] = on ? 166 : 14;
         d[i + 2] = on ? 192 : 26;
@@ -975,27 +992,28 @@
     return cv;
   }
   function drawColonel(heavy) {
-    var g = colCtx,
-      S = 48,
-      i,
-      n;
+    const g = colCtx;
+    const S = 48;
+    let i;
+    let n;
     if (!g) return;
     g.drawImage(colBase, 0, 0);
     if (reduceMotion) return;
-    n = heavy ? 6 : Math.random() < 0.55 ? 1 : 2;
+    if (heavy) n = 6;
+    else n = Math.random() < 0.55 ? 1 : 2;
     for (i = 0; i < n; i++) {
-      var y = (Math.random() * S) | 0,
-        h = 1 + ((Math.random() * (heavy ? 6 : 3)) | 0),
-        dx = ((Math.random() - 0.5) * (heavy ? 20 : 6)) | 0;
+      const y = (Math.random() * S) | 0;
+      const h = 1 + ((Math.random() * (heavy ? 6 : 3)) | 0);
+      const dx = ((Math.random() - 0.5) * (heavy ? 20 : 6)) | 0;
       g.fillStyle = '#08101c';
       g.fillRect(0, y, S, h);
       g.drawImage(colBase, 0, y, S, h, dx, y, S, h);
     }
     n = heavy ? 16 : 3;
     for (i = 0; i < n; i++) {
-      var ry = (Math.random() * S) | 0;
+      const ry = (Math.random() * S) | 0;
       g.fillStyle = 'rgba(184,198,214,' + (0.15 + Math.random() * 0.5).toFixed(2) + ')';
-      for (var sx2 = 0; sx2 < S; sx2 += 2) if (Math.random() < 0.5) g.fillRect(sx2, ry, 2, 1);
+      for (let sx2 = 0; sx2 < S; sx2 += 2) if (Math.random() < 0.5) g.fillRect(sx2, ry, 2, 1);
     }
   }
   function glitchColonel(on) {
@@ -1024,9 +1042,9 @@
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
-      var t = audioCtx.currentTime,
-        osc = audioCtx.createOscillator(),
-        g = audioCtx.createGain();
+      const t = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
       osc.type = type || 'square';
       osc.frequency.value = freq;
       g.gain.setValueAtTime(vol || 0.04, t);
@@ -1073,7 +1091,7 @@
   }
   function startAlertMusic() {
     if (alertLoop || muted) return;
-    var step = 0;
+    let step = 0;
     alertLoop = setInterval(function () {
       if (!open || muted) return;
       beep(step % 2 ? 330 : 247, 0.13, 'sawtooth', 0.05);
@@ -1103,42 +1121,42 @@
   }
   function circleHitsWall(cx, cy, r) {
     if (cx - r < 0 || cy - r < 0 || cx + r >= W || cy + r >= H) return true;
-    var c0 = Math.max(0, ((cx - r) / TILE) | 0),
-      c1 = Math.min(COLS - 1, ((cx + r) / TILE) | 0);
-    var r0 = Math.max(0, ((cy - r) / TILE) | 0),
-      r1 = Math.min(ROWS - 1, ((cy + r) / TILE) | 0);
-    for (var rr = r0; rr <= r1; rr++)
-      for (var cc = c0; cc <= c1; cc++) {
+    const c0 = Math.max(0, ((cx - r) / TILE) | 0);
+    const c1 = Math.min(COLS - 1, ((cx + r) / TILE) | 0);
+    const r0 = Math.max(0, ((cy - r) / TILE) | 0);
+    const r1 = Math.min(ROWS - 1, ((cy + r) / TILE) | 0);
+    for (let rr = r0; rr <= r1; rr++)
+      for (let cc = c0; cc <= c1; cc++) {
         if (!walls[rr][cc]) continue;
-        var nx = Math.max(cc * TILE, Math.min(cx, cc * TILE + TILE));
-        var ny = Math.max(rr * TILE, Math.min(cy, rr * TILE + TILE));
-        var dx = cx - nx,
-          dy = cy - ny;
+        const nx = Math.max(cc * TILE, Math.min(cx, cc * TILE + TILE));
+        const ny = Math.max(rr * TILE, Math.min(cy, rr * TILE + TILE));
+        const dx = cx - nx;
+        const dy = cy - ny;
         if (dx * dx + dy * dy < r * r) return true;
       }
     return false;
   }
   function losClear(x0, y0, x1, y1) {
-    var dx = x1 - x0,
-      dy = y1 - y0,
-      dist = Math.hypot(dx, dy);
-    var steps = Math.max(1, Math.ceil(dist / LOS_STEP));
-    for (var s = 1; s <= steps; s++) {
-      var t = s / steps;
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const dist = Math.hypot(dx, dy);
+    const steps = Math.max(1, Math.ceil(dist / LOS_STEP));
+    for (let s = 1; s <= steps; s++) {
+      const t = s / steps;
       if (isWallPx(x0 + dx * t, y0 + dy * t)) return false;
     }
     return true;
   }
   function angDiff(a, b) {
-    var d = a - b;
+    let d = a - b;
     while (d > Math.PI) d -= 2 * Math.PI;
     while (d < -Math.PI) d += 2 * Math.PI;
     return d;
   }
   function rayHit(x, y, a, maxd) {
-    var cs = Math.cos(a),
-      sn = Math.sin(a);
-    for (var d = LOS_STEP; d <= maxd; d += LOS_STEP)
+    const cs = Math.cos(a);
+    const sn = Math.sin(a);
+    for (let d = LOS_STEP; d <= maxd; d += LOS_STEP)
       if (isWallPx(x + cs * d, y + sn * d))
         return { x: x + cs * (d - LOS_STEP), y: y + sn * (d - LOS_STEP) };
     return { x: x + cs * maxd, y: y + sn * maxd };
@@ -1146,29 +1164,29 @@
   function bfsStep(sc, sr, gc, gr) {
     if (sc === gc && sr === gr) return null;
     if (gc < 0 || gr < 0 || gc >= COLS || gr >= ROWS || walls[gr][gc]) return null;
-    var N = COLS * ROWS,
-      vis = new Uint8Array(N),
-      prev = new Int32Array(N),
-      q = new Int32Array(N);
-    var head = 0,
-      tail = 0,
-      startK = sr * COLS + sc,
-      goalK = gr * COLS + gc;
+    const N = COLS * ROWS;
+    const vis = new Uint8Array(N);
+    const prev = new Int32Array(N);
+    const q = new Int32Array(N);
+    let head = 0;
+    let tail = 0;
+    const startK = sr * COLS + sc;
+    const goalK = gr * COLS + gc;
     q[head++] = startK;
     vis[startK] = 1;
     prev[startK] = -1;
-    var dc = [1, -1, 0, 0],
-      dr = [0, 0, 1, -1];
+    const dc = [1, -1, 0, 0];
+    const dr = [0, 0, 1, -1];
     while (tail < head) {
-      var cur = q[tail++],
-        cc = cur % COLS,
-        cr = (cur / COLS) | 0;
+      const cur = q[tail++];
+      const cc = cur % COLS;
+      const cr = (cur / COLS) | 0;
       if (cur === goalK) break;
-      for (var i = 0; i < 4; i++) {
-        var nc = cc + dc[i],
-          nr = cr + dr[i];
+      for (let i = 0; i < 4; i++) {
+        const nc = cc + dc[i];
+        const nr = cr + dr[i];
         if (nc < 0 || nr < 0 || nc >= COLS || nr >= ROWS || walls[nr][nc]) continue;
-        var k = nr * COLS + nc;
+        const k = nr * COLS + nc;
         if (vis[k]) continue;
         vis[k] = 1;
         prev[k] = cur;
@@ -1176,15 +1194,15 @@
       }
     }
     if (!vis[goalK]) return null;
-    var c2 = goalK;
+    let c2 = goalK;
     while (prev[c2] !== -1 && prev[c2] !== startK) c2 = prev[c2];
     return { dc: (c2 % COLS) - sc, dr: ((c2 / COLS) | 0) - sr };
   }
   function emitNoise(x, y, radius) {
     noisePings.push({ x: x, y: y, r: radius, t: 0 });
     if (alertPhase === 'alert' || alertPhase === 'evasion') return;
-    for (var i = 0; i < guards.length; i++) {
-      var g = guards[i];
+    for (let i = 0; i < guards.length; i++) {
+      const g = guards[i];
       if (g.down) continue;
       if (g.behavior === 'investigate' && g.invTimer > 0) continue;
       if (Math.hypot(g.x - x, g.y - y) <= radius) {
@@ -1221,12 +1239,12 @@
     } else intelHaloGrad = null;
 
     guards = level.guards.map(function (g) {
-      var path = g.path.map(function (p) {
+      const path = g.path.map(function (p) {
         return { x: px(p[0]), y: px(p[1]) };
       });
-      var a = path[0],
-        b = path[1 % path.length],
-        off = g.offset || 0;
+      const a = path[0];
+      const b = path[1 % path.length];
+      const off = g.offset || 0;
       return {
         path: path,
         speed: g.speed,
@@ -1303,14 +1321,14 @@
 
   // a fixed hash, not Math.random, so every rebuild bakes the same floor
   function hash01(n) {
-    var v = Math.sin(n * 12.9898 + 78.233) * 43758.5453;
+    const v = Math.sin(n * 12.9898 + 78.233) * 43758.5453;
     return v - Math.floor(v);
   }
   function bakeFloorIdentity(b) {
-    var kind = level.floor,
-      i,
-      x,
-      y;
+    const kind = level.floor;
+    let i;
+    let x;
+    let y;
     if (kind === 'dock') {
       b.lineWidth = 1;
       b.beginPath();
@@ -1353,20 +1371,20 @@
       for (i = 0; i < 14; i++) {
         x = hash01(500 + i * 2) * W;
         y = hash01(501 + i * 2) * H;
-        var len = 70 + hash01(700 + i) * 110;
+        const len = 70 + hash01(700 + i) * 110;
         b.moveTo(x, y);
         b.lineTo(x + len, y + len * 0.12);
       }
       b.stroke();
 
-      var drains = [
+      const drains = [
         [6, 7],
         [13, 1],
         [15, 10],
       ];
       for (i = 0; i < drains.length; i++) {
-        var dx0 = drains[i][0] * TILE + 6,
-          dy0 = drains[i][1] * TILE + 10;
+        const dx0 = drains[i][0] * TILE + 6;
+        const dy0 = drains[i][1] * TILE + 10;
         b.fillStyle = '#030710';
         b.fillRect(dx0, dy0, 20, 12);
         b.fillStyle = 'rgba(143,166,192,0.14)';
@@ -1378,7 +1396,7 @@
         b.strokeRect(dx0 + 0.5, dy0 + 0.5, 19, 11);
       }
 
-      var hy = (ROWS - 1) * TILE - 5;
+      const hy = (ROWS - 1) * TILE - 5;
       b.save();
       b.beginPath();
       b.rect(TILE, hy, W - TILE * 2, 5);
@@ -1395,13 +1413,13 @@
       b.stroke();
       b.restore();
 
-      var pools = [
+      const pools = [
         [px(4), TILE, 110],
         [px(15), H - TILE, 100],
         [W - TILE, px(6), 80],
       ];
       for (i = 0; i < pools.length; i++) {
-        var fl = b.createRadialGradient(
+        const fl = b.createRadialGradient(
           pools[i][0],
           pools[i][1],
           4,
@@ -1485,14 +1503,14 @@
       for (x = TILE * 2; x < W; x += TILE * 2)
         for (y = TILE * 2; y < H; y += TILE * 2) b.fillRect(x - 1, y - 1, 3, 3);
 
-      var cam = (level.cameras || [])[0];
+      const cam = (level.cameras || [])[0];
       if (cam && cam.t[1] + 1 < ROWS - 1) {
-        var cr = cam.t[1] + 1,
-          c0 = Math.max(1, cam.t[0] - 3),
-          c1 = Math.min(COLS - 2, cam.t[0] + 3),
-          yb = cr * TILE,
-          cc,
-          any = false;
+        const cr = cam.t[1] + 1;
+        const c0 = Math.max(1, cam.t[0] - 3);
+        const c1 = Math.min(COLS - 2, cam.t[0] + 3);
+        const yb = cr * TILE;
+        let cc;
+        let any = false;
         b.save();
         b.beginPath();
         for (cc = c0; cc <= c1; cc++)
@@ -1518,38 +1536,38 @@
   }
   function bakeDoorway(b, ec, er) {
     // on the bridge the door opens into the strut on the right, never over the water
-    var dirs =
-        level.floor === 'bridge'
-          ? [
-              [1, 0],
-              [-1, 0],
-              [0, -1],
-              [0, 1],
-            ]
-          : [
-              [0, -1],
-              [0, 1],
-              [-1, 0],
-              [1, 0],
-            ],
-      d = null,
-      i;
+    const dirs =
+      level.floor === 'bridge'
+        ? [
+            [1, 0],
+            [-1, 0],
+            [0, -1],
+            [0, 1],
+          ]
+        : [
+            [0, -1],
+            [0, 1],
+            [-1, 0],
+            [1, 0],
+          ];
+    let d = null;
+    let i;
     for (i = 0; i < dirs.length; i++) {
-      var nc = ec + dirs[i][0],
-        nr = er + dirs[i][1];
+      const nc = ec + dirs[i][0];
+      const nr = er + dirs[i][1];
       if (nc >= 0 && nr >= 0 && nc < COLS && nr < ROWS && walls[nr][nc]) {
         d = dirs[i];
         break;
       }
     }
     if (!d) return;
-    var wx = (ec + d[0]) * TILE,
-      wy = (er + d[1]) * TILE,
-      vert = d[1] !== 0,
-      ox,
-      oy,
-      ow,
-      oh;
+    const wx = (ec + d[0]) * TILE;
+    const wy = (er + d[1]) * TILE;
+    const vert = d[1] !== 0;
+    let ox;
+    let oy;
+    let ow;
+    let oh;
     if (vert) {
       ox = wx + 8;
       ow = TILE - 16;
@@ -1571,10 +1589,10 @@
       if (vert) b.fillRect(ox + 3, d[1] < 0 ? oy + 3 + i * 8 : oy + oh - 4 - i * 8, ow - 6, 1);
       else b.fillRect(d[0] < 0 ? ox + 3 + i * 8 : ox + ow - 4 - i * 8, oy + 3, 1, oh - 6);
     }
-    var x0 = ox + 0.5,
-      y0 = oy + 0.5,
-      x1 = ox + ow - 0.5,
-      y1 = oy + oh - 0.5;
+    const x0 = ox + 0.5;
+    const y0 = oy + 0.5;
+    const x1 = ox + ow - 0.5;
+    const y1 = oy + oh - 0.5;
     b.strokeStyle = 'rgba(184,198,214,0.7)';
     b.lineWidth = 1;
     b.beginPath();
@@ -1601,10 +1619,10 @@
     }
     b.stroke();
 
-    var tx = px(ec) + (d[0] * TILE) / 2,
-      ty = px(er) + (d[1] * TILE) / 2,
-      sr = TILE * 1.1;
-    var sp = b.createRadialGradient(tx, ty, 2, tx, ty, sr);
+    const tx = px(ec) + (d[0] * TILE) / 2;
+    const ty = px(er) + (d[1] * TILE) / 2;
+    const sr = TILE * 1.1;
+    const sp = b.createRadialGradient(tx, ty, 2, tx, ty, sr);
     sp.addColorStop(0, 'rgba(184,198,214,0.42)');
     sp.addColorStop(0.55, 'rgba(184,198,214,0.13)');
     sp.addColorStop(1, 'rgba(184,198,214,0)');
@@ -1628,12 +1646,12 @@
     );
   }
   function bakeWaterRow(b, r) {
-    var y0 = r * TILE,
-      x0 = TILE,
-      w = W - 2 * TILE,
-      x,
-      i,
-      top = r === 0;
+    const y0 = r * TILE;
+    const x0 = TILE;
+    const w = W - 2 * TILE;
+    let x;
+    let i;
+    const top = r === 0;
     b.fillStyle = '#02060e';
     b.fillRect(x0, y0, w, TILE);
     b.fillStyle = 'rgba(143,166,192,0.05)';
@@ -1645,7 +1663,7 @@
         1,
       );
     if (level.floor === 'bridge') {
-      var ry = top ? y0 + TILE - 4 : y0 + 2;
+      const ry = top ? y0 + TILE - 4 : y0 + 2;
       b.fillStyle = 'rgba(0,0,0,0.45)';
       b.fillRect(x0, top ? y0 + TILE - 9 : y0 + 4, w, 5);
       b.fillStyle = 'rgba(195,203,213,0.42)';
@@ -1670,20 +1688,22 @@
     }
   }
   function bakeCrates(b) {
-    var r, c, i;
+    let r;
+    let c;
+    let i;
     for (r = 1; r < ROWS - 1; r++)
       for (c = 1; c < COLS - 1; c++) {
         if (!isCrate(c, r) || isCrate(c - 1, r) || isCrate(c, r - 1)) continue;
-        var bw = 0,
-          bh = 0;
+        let bw = 0;
+        let bh = 0;
         while (isCrate(c + bw, r)) bw++;
         while (isCrate(c, r + bh)) bh++;
-        var x0 = c * TILE,
-          y0 = r * TILE,
-          w = bw * TILE,
-          h = bh * TILE,
-          fh = 7,
-          top = h - fh;
+        const x0 = c * TILE;
+        const y0 = r * TILE;
+        const w = bw * TILE;
+        const h = bh * TILE;
+        const fh = 7;
+        const top = h - fh;
         b.fillStyle = 'rgba(0,0,0,0.42)';
         b.fillRect(x0 + 2, y0 + h, w, 5);
         b.fillStyle = '#2a3546';
@@ -1698,7 +1718,7 @@
           b.fillStyle = 'rgba(192,202,214,0.07)';
           b.fillRect(x0 + i + 1, y0 + 2, 1, top - 4);
         }
-        var sy = y0 + (top >> 1);
+        const sy = y0 + (top >> 1);
         b.fillStyle = 'rgba(0,0,0,0.55)';
         b.fillRect(x0 + 1, sy, w - 2, 1);
         b.fillStyle = 'rgba(192,202,214,0.14)';
@@ -1723,8 +1743,8 @@
     seaGlints = document.createElement('canvas');
     seaGlints.width = Math.ceil((W + 8) * dpr);
     seaGlints.height = Math.ceil(TILE * dpr);
-    var g = seaGlints.getContext('2d'),
-      i;
+    const g = seaGlints.getContext('2d');
+    let i;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     for (i = 0; i < 26; i++) {
       g.fillStyle = 'rgba(184,198,214,' + (0.1 + hash01(i * 7 + 3) * 0.16).toFixed(3) + ')';
@@ -1740,13 +1760,13 @@
     bgLayer = document.createElement('canvas');
     bgLayer.width = W * dpr;
     bgLayer.height = H * dpr;
-    var b = bgLayer.getContext('2d');
+    const b = bgLayer.getContext('2d');
     b.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var r,
-      c,
-      x0,
-      y0,
-      fl = FLOORS[level.floor] || { a: C.floorA, b: C.floorB };
+    let r;
+    let c;
+    let x0;
+    let y0;
+    const fl = FLOORS[level.floor] || { a: C.floorA, b: C.floorB };
 
     for (r = 0; r < ROWS; r++)
       for (c = 0; c < COLS; c++) {
@@ -1756,17 +1776,17 @@
         b.fillRect(x0, y0, TILE, TILE);
         if (!walls[r][c]) {
           b.fillStyle = C.floorDot;
-          for (var dy = c & 1 ? 5 : 13; dy < TILE; dy += 16)
-            for (var dx = r & 1 ? 5 : 13; dx < TILE; dx += 16) b.fillRect(x0 + dx, y0 + dy, 2, 2);
+          for (let dy = c & 1 ? 5 : 13; dy < TILE; dy += 16)
+            for (let dx = r & 1 ? 5 : 13; dx < TILE; dx += 16) b.fillRect(x0 + dx, y0 + dy, 2, 2);
         }
       }
     bakeFloorIdentity(b);
     bakeSeaGlints();
 
-    var ec = level.exit[0],
-      er = level.exit[1],
-      ex0 = ec * TILE,
-      ey0 = er * TILE;
+    const ec = level.exit[0];
+    const er = level.exit[1];
+    const ex0 = ec * TILE;
+    const ey0 = er * TILE;
     b.save();
     b.beginPath();
     b.rect(ex0 + 2, ey0 + 2, TILE - 4, TILE - 4);
@@ -1774,7 +1794,7 @@
     b.strokeStyle = 'rgba(184,198,214,0.14)';
     b.lineWidth = 3;
     b.beginPath();
-    for (var sD = -TILE; sD < TILE; sD += 8) {
+    for (let sD = -TILE; sD < TILE; sD += 8) {
       b.moveTo(ex0 + sD, ey0 + TILE);
       b.lineTo(ex0 + sD + TILE, ey0);
     }
@@ -1787,11 +1807,11 @@
     b.strokeStyle = C.grid;
     b.lineWidth = 1;
     b.beginPath();
-    for (var x = TILE; x < W; x += TILE) {
+    for (let x = TILE; x < W; x += TILE) {
       b.moveTo(x + 0.5, 0);
       b.lineTo(x + 0.5, H);
     }
-    for (var y = TILE; y < H; y += TILE) {
+    for (let y = TILE; y < H; y += TILE) {
       b.moveTo(0, y + 0.5);
       b.lineTo(W, y + 0.5);
     }
@@ -1805,10 +1825,10 @@
         if (isCrate(c, r)) continue;
         x0 = c * TILE;
         y0 = r * TILE;
-        var oN = r > 0 && !walls[r - 1][c],
-          oS = r < ROWS - 1 && !walls[r + 1][c];
-        var oW = c > 0 && !walls[r][c - 1],
-          oE = c < COLS - 1 && !walls[r][c + 1];
+        const oN = r > 0 && !walls[r - 1][c];
+        const oS = r < ROWS - 1 && !walls[r + 1][c];
+        const oW = c > 0 && !walls[r][c - 1];
+        const oE = c < COLS - 1 && !walls[r][c + 1];
         b.fillStyle = C.wallFace;
         b.fillRect(x0, y0, TILE, TILE);
 
@@ -1819,7 +1839,7 @@
         b.strokeStyle = 'rgba(0,0,0,0.16)';
         b.lineWidth = 1;
         b.beginPath();
-        for (var h = -TILE; h < TILE; h += 6) {
+        for (let h = -TILE; h < TILE; h += 6) {
           b.moveTo(x0 + h, y0 + TILE);
           b.lineTo(x0 + h + TILE, y0);
         }
@@ -1842,7 +1862,7 @@
           b.fillStyle = 'rgba(0,0,0,0.28)';
           b.fillRect(x0, y0 + TILE - 7, TILE, 1);
           b.fillStyle = 'rgba(0,0,0,0.25)';
-          for (var vx = 6; vx < TILE; vx += 10) b.fillRect(x0 + vx, y0 + TILE - 7, 1, 7);
+          for (let vx = 6; vx < TILE; vx += 10) b.fillRect(x0 + vx, y0 + TILE - 7, 1, 7);
         }
         if (oE) {
           b.fillStyle = C.wallSide;
@@ -1877,20 +1897,20 @@
     if (level.floor === 'bridge') bakeCrates(b);
     bakeDoorway(b, ec, er);
 
-    var lg = b.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, Math.max(W, H) * 0.62);
+    const lg = b.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, Math.max(W, H) * 0.62);
     lg.addColorStop(0, 'rgba(164,182,204,0.05)');
     lg.addColorStop(0.6, 'rgba(0,0,0,0)');
     lg.addColorStop(1, 'rgba(0,0,0,0.32)');
     b.fillStyle = lg;
     b.fillRect(0, 0, W, H);
 
-    var mw = Math.ceil(W * RADAR_SC),
-      mh = Math.ceil(H * RADAR_SC),
-      ts = TILE * RADAR_SC;
+    const mw = Math.ceil(W * RADAR_SC);
+    const mh = Math.ceil(H * RADAR_SC);
+    const ts = TILE * RADAR_SC;
     radarMap = document.createElement('canvas');
     radarMap.width = Math.ceil(mw * dpr);
     radarMap.height = Math.ceil(mh * dpr);
-    var m = radarMap.getContext('2d');
+    const m = radarMap.getContext('2d');
     m.setTransform(dpr, 0, 0, dpr, 0, 0);
     m.fillStyle = 'rgba(8,16,30,0.72)';
     m.fillRect(0, 0, mw, mh);
@@ -1936,29 +1956,29 @@
       return;
     }
 
-    for (var n = noisePings.length - 1; n >= 0; n--) {
+    for (let n = noisePings.length - 1; n >= 0; n--) {
       noisePings[n].t += dt;
       if (noisePings[n].t > 0.6) noisePings.splice(n, 1);
     }
-    for (n = fxPulses.length - 1; n >= 0; n--) {
+    for (let n = fxPulses.length - 1; n >= 0; n--) {
       fxPulses[n].t += dt;
       if (fxPulses[n].t > 0.45) fxPulses.splice(n, 1);
     }
 
-    var roomAlert = alertPhase === 'alert' || alertPhase === 'evasion';
-    for (var gi = 0; gi < guards.length; gi++) updateGuard(guards[gi], dt, roomAlert);
-    for (var ci = 0; ci < cameras.length; ci++) updateCamera(cameras[ci]);
+    const roomAlert = alertPhase === 'alert' || alertPhase === 'evasion';
+    for (let gi = 0; gi < guards.length; gi++) updateGuard(guards[gi], dt, roomAlert);
+    for (let ci = 0; ci < cameras.length; ci++) updateCamera(cameras[ci]);
 
-    var losNow = false,
-      fullSpot = false,
-      k;
+    let losNow = false;
+    let fullSpot = false;
+    let k;
     for (k = 0; k < guards.length; k++) {
-      var g = guards[k];
+      const g = guards[k];
       if (g.down) {
         g.seeing = false;
         continue;
       }
-      var see = detect(g);
+      const see = detect(g);
       if (see) {
         losNow = true;
         g.spotTimer = Math.min(SPOT_FULL, g.spotTimer + spotSpeed(g) * dt);
@@ -1979,8 +1999,8 @@
       g._was = see;
     }
     for (k = 0; k < cameras.length; k++) {
-      var cam = cameras[k],
-        cs = detect(cam);
+      const cam = cameras[k];
+      const cs = detect(cam);
       if (cs) {
         losNow = true;
         cam.spotTimer = Math.min(SPOT_FULL, cam.spotTimer + spotSpeed(cam) * dt);
@@ -1992,10 +2012,10 @@
     phaseMachine(dt, losNow, fullSpot);
 
     if (roomAlert) {
-      var shot = false,
-        grabbed = false;
+      let shot = false;
+      let grabbed = false;
       for (k = 0; k < guards.length; k++) {
-        var gg = guards[k];
+        const gg = guards[k];
         if (gg.down) continue;
         if (gg.seeing) shot = true;
         if (!boxed && Math.hypot(gg.x - player.x, gg.y - player.y) < GRAB_DIST) grabbed = true;
@@ -2023,16 +2043,16 @@
   }
 
   function spotSpeed(d) {
-    var dist = Math.hypot(player.x - d.x, player.y - d.y),
-      range = d.range * (d.rangeMul || 1);
+    const dist = Math.hypot(player.x - d.x, player.y - d.y);
+    const range = d.range * (d.rangeMul || 1);
     return 1.4 + (1 - Math.min(1, dist / range)) * 2.6;
   }
   function detect(d) {
     if (boxed && !player.moving) return false;
-    var dx = player.x - d.x,
-      dy = player.y - d.y,
-      dist = Math.hypot(dx, dy),
-      range = d.range * (d.rangeMul || 1);
+    const dx = player.x - d.x;
+    const dy = player.y - d.y;
+    const dist = Math.hypot(dx, dy);
+    const range = d.range * (d.rangeMul || 1);
     if (dist > range || dist < 0.001) return false;
     if (Math.abs(angDiff(Math.atan2(dy, dx), d.facing)) > (d.fov * (d.fovMul || 1)) / 2)
       return false;
@@ -2085,7 +2105,7 @@
     }
     sfxSpot();
     startAlertMusic();
-    for (var i = 0; i < guards.length; i++) {
+    for (let i = 0; i < guards.length; i++) {
       guards[i].behavior = 'patrol';
       guards[i].scanning = false;
     }
@@ -2094,10 +2114,10 @@
   // player and guards
   function blocked(nx, ny) {
     if (circleHitsWall(nx, ny, PLAYER_R)) return true;
-    for (var i = 0; i < guards.length; i++) {
-      var g = guards[i];
+    for (let i = 0; i < guards.length; i++) {
+      const g = guards[i];
       if (g.down) continue;
-      var nd = Math.hypot(nx - g.x, ny - g.y);
+      const nd = Math.hypot(nx - g.x, ny - g.y);
       if (nd >= GUARD_R + PLAYER_R) continue;
       // a move away from a guard is always allowed, so a player he has walked onto can back out
       if (nd >= Math.hypot(player.x - g.x, player.y - g.y)) continue;
@@ -2106,20 +2126,22 @@
     return false;
   }
   function updatePlayer(dt) {
-    var ix =
+    const ix =
       (keys['arrowright'] || keys['d'] || touchDir.right ? 1 : 0) -
       (keys['arrowleft'] || keys['a'] || touchDir.left ? 1 : 0);
-    var iy =
+    const iy =
       (keys['arrowdown'] || keys['s'] || touchDir.down ? 1 : 0) -
       (keys['arrowup'] || keys['w'] || touchDir.up ? 1 : 0);
-    var ox = player.x,
-      oy = player.y;
+    const ox = player.x;
+    const oy = player.y;
     if (ix || iy) {
-      var len = Math.hypot(ix, iy),
-        spd = boxed ? BOX_SPEED : running ? RUN_SPEED : WALK_SPEED;
-      var nx = player.x + (ix / len) * spd * dt;
+      const len = Math.hypot(ix, iy);
+      let spd = WALK_SPEED;
+      if (boxed) spd = BOX_SPEED;
+      else if (running) spd = RUN_SPEED;
+      const nx = player.x + (ix / len) * spd * dt;
       if (!blocked(nx, player.y)) player.x = nx;
-      var ny = player.y + (iy / len) * spd * dt;
+      const ny = player.y + (iy / len) * spd * dt;
       if (!blocked(player.x, ny)) player.y = ny;
       player.fx = ix / len;
       player.fy = iy / len;
@@ -2128,7 +2150,7 @@
       if (player.moving) walkPhase += spd * dt * 0.06;
       if (running && !boxed) {
         noiseAccum += dt;
-        if (noiseAccum >= NOISE_INT) {
+        if (noiseAccum >= NOISE_INTERVAL_S) {
           noiseAccum = 0;
           emitNoise(player.x, player.y, RUN_NOISE_R);
         }
@@ -2149,28 +2171,28 @@
       announce('No use: already alerted.');
       return;
     }
-    knockCD = KNOCK_CD;
+    knockCD = KNOCK_COOLDOWN_S;
     emitNoise(player.x, player.y, KNOCK_R);
     sfxKnock();
     announce('Knocking to lure a guard.');
   }
   function doCQC() {
     if (cqcCD > 0) return;
-    var best = null,
-      bestd = CQC_R;
-    for (var i = 0; i < guards.length; i++) {
-      var g = guards[i];
+    let best = null;
+    let bestd = CQC_R;
+    for (let i = 0; i < guards.length; i++) {
+      const g = guards[i];
       if (g.down) continue;
-      var d = Math.hypot(g.x - player.x, g.y - player.y);
+      const d = Math.hypot(g.x - player.x, g.y - player.y);
       if (d > CQC_R) continue;
-      var ang = Math.atan2(player.y - g.y, player.x - g.x);
+      const ang = Math.atan2(player.y - g.y, player.x - g.x);
       if (Math.abs(angDiff(ang, g.facing)) >= CQC_REAR && d < bestd) {
         bestd = d;
         best = g;
       }
     }
     if (best) {
-      cqcCD = CQC_CD;
+      cqcCD = CQC_COOLDOWN_S;
       best.down = true;
       best.seeing = false;
       best.spotTimer = 0;
@@ -2182,10 +2204,10 @@
 
   function updateGuard(g, dt, roomAlert) {
     if (g.down) return;
-    var ox = g.x,
-      oy = g.y;
-    var fovMul = 1,
-      rangeMul = 1;
+    const ox = g.x;
+    const oy = g.y;
+    let fovMul = 1;
+    let rangeMul = 1;
     if (alertPhase === 'caution') {
       fovMul = 1.25;
       rangeMul = 1.12;
@@ -2197,8 +2219,8 @@
     g.fovMul = fovMul;
     g.rangeMul = rangeMul;
     if (roomAlert) {
-      var tc = lastKnown ? lastKnown.c : tcol(g.x),
-        tr = lastKnown ? lastKnown.r : trow(g.y);
+      const tc = lastKnown ? lastKnown.c : tcol(g.x);
+      const tr = lastKnown ? lastKnown.r : trow(g.y);
       if (huntToward(g, tc, tr, dt, 1.35, true)) doSearch(g, dt);
       else g.scanning = false;
     } else if (g.behavior === 'investigate' && g.invTimer > 0) {
@@ -2226,31 +2248,31 @@
     );
   }
   function huntToward(g, tc, tr, dt, mul, stopNearBox) {
-    var gc = tcol(g.x),
-      gr = trow(g.y);
+    const gc = tcol(g.x);
+    const gr = trow(g.y);
     if (gc === tc && gr === tr) {
-      var cx = px(tc),
-        cy = px(tr),
-        d = Math.hypot(cx - g.x, cy - g.y);
+      const cx = px(tc);
+      const cy = px(tr);
+      const d = Math.hypot(cx - g.x, cy - g.y);
       if (d < 2) return true;
-      var s = g.speed * mul * dt;
+      const s = g.speed * mul * dt;
       g.facing = Math.atan2(cy - g.y, cx - g.x);
-      var ax = d <= s ? cx : g.x + ((cx - g.x) / d) * s,
-        ay = d <= s ? cy : g.y + ((cy - g.y) / d) * s;
+      const ax = d <= s ? cx : g.x + ((cx - g.x) / d) * s;
+      const ay = d <= s ? cy : g.y + ((cy - g.y) / d) * s;
       if (!guardMoveOK(ax, ay, stopNearBox)) return true;
       g.x = ax;
       g.y = ay;
       return d <= s;
     }
-    var step = bfsStep(gc, gr, tc, tr);
+    const step = bfsStep(gc, gr, tc, tr);
     if (!step) return true;
-    var nx = px(gc + step.dc),
-      ny = px(gr + step.dr),
-      d2 = Math.hypot(nx - g.x, ny - g.y),
-      s2 = g.speed * mul * dt;
+    const nx = px(gc + step.dc);
+    const ny = px(gr + step.dr);
+    const d2 = Math.hypot(nx - g.x, ny - g.y);
+    const s2 = g.speed * mul * dt;
     g.facing = Math.atan2(ny - g.y, nx - g.x);
-    var bx = d2 <= s2 ? nx : g.x + ((nx - g.x) / d2) * s2,
-      by = d2 <= s2 ? ny : g.y + ((ny - g.y) / d2) * s2;
+    const bx = d2 <= s2 ? nx : g.x + ((nx - g.x) / d2) * s2;
+    const by = d2 <= s2 ? ny : g.y + ((ny - g.y) / d2) * s2;
     if (!guardMoveOK(bx, by, stopNearBox)) return true;
     g.x = bx;
     g.y = by;
@@ -2276,7 +2298,7 @@
       return;
     }
     // routed like a hunt: a guard coming back from one may have walls between him and the waypoint
-    var tgt = g.path[g.i];
+    const tgt = g.path[g.i];
     if (huntToward(g, tcol(tgt.x), trow(tgt.y), dt, 1)) {
       g.x = tgt.x;
       g.y = tgt.y;
@@ -2293,30 +2315,29 @@
     return Math.ceil(Math.max(0, alertPhase === 'evasion' ? evasionTimer : cautionTimer));
   }
   function updateHud() {
-    var ph = alertPhase;
+    const ph = alertPhase;
     stateBadge.className = 'mgsg-stbadge' + (ph !== 'normal' ? ' ' + ph : '');
-    stateBadge.textContent =
-      ph === 'alert'
-        ? '! ALERT'
-        : ph === 'evasion'
-          ? 'EVASION ' + phaseSecs()
-          : ph === 'caution'
-            ? 'CAUTION ' + phaseSecs()
-            : 'NORMAL';
+    if (ph === 'alert') stateBadge.textContent = '! ALERT';
+    else if (ph === 'evasion') stateBadge.textContent = 'EVASION ' + phaseSecs();
+    else if (ph === 'caution') stateBadge.textContent = 'CAUTION ' + phaseSecs();
+    else stateBadge.textContent = 'NORMAL';
     // set only on change, or render()'s clientWidth read would force a layout every frame
-    var lwid = (life * 100).toFixed(0) + '%';
+    const lwid = (life * 100).toFixed(0) + '%';
     if (lwid !== lastLifeW) {
       lastLifeW = lwid;
       lifeFill.style.width = lwid;
     }
-    var lcol = life > 0.5 ? 'var(--mg-text)' : life > 0.25 ? 'var(--mg-pdim)' : 'var(--mg-paper)';
+    let lcol = 'var(--mg-paper)';
+    if (life > 0.5) lcol = 'var(--mg-text)';
+    else if (life > 0.25) lcol = 'var(--mg-pdim)';
     if (lcol !== lastLifeC) {
       lastLifeC = lcol;
       lifeFill.style.background = lcol;
     }
     lifeFill.parentNode.classList.toggle('low', life < 0.25);
-    hudIntel.textContent = intel ? (intelGot ? '[OK]' : '[ ]') : '[--]';
-    var s = Math.floor(elapsed);
+    if (!intel) hudIntel.textContent = '[--]';
+    else hudIntel.textContent = intelGot ? '[OK]' : '[ ]';
+    const s = Math.floor(elapsed);
     hudTime.textContent = Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
     if (stage) {
       stage.classList.toggle('alarm', ph === 'alert' || ph === 'evasion');
@@ -2337,17 +2358,10 @@
   }
 
   // sprites turn in 45 degree steps, which keeps the pixel art crisp
-  var STEP8 = Math.PI / 4;
+  const STEP8 = Math.PI / 4;
 
-  var RADAR_X = 6,
-    RADAR_Y = 5,
-    RADAR_W = 90,
-    RADAR_H = 54,
-    RADAR_SC = 54 / 384;
-  var RADAR_OX = RADAR_X + (RADAR_W - W * RADAR_SC) / 2,
-    RADAR_OY = RADAR_Y + (RADAR_H - H * RADAR_SC) / 2;
-  var DASH_CALM = [4, 3],
-    DASH_NONE = [];
+  const DASH_CALM = [4, 3];
+  const DASH_NONE = [];
   function drawSpriteImg(img, x, y, angle, bobPhase) {
     ctx.save();
     ctx.translate(x, y);
@@ -2357,9 +2371,9 @@
     ctx.restore();
   }
   function drawCone(d, roomAlert) {
-    var rgb,
-      edgeA,
-      calm = false;
+    let rgb;
+    let edgeA;
+    let calm = false;
     if (roomAlert || d.seeing) {
       rgb = '233,231,226';
       edgeA = d.seeing && !reduceMotion ? 0.45 + 0.3 * Math.abs(Math.sin(elapsed * 9)) : 0.6;
@@ -2371,19 +2385,19 @@
       edgeA = 0.3;
       calm = true;
     }
-    var half = (d.fov * (d.fovMul || 1)) / 2,
-      range = d.range * (d.rangeMul || 1),
-      STEPS = 20;
-    var hot = roomAlert || d.seeing;
-    var grad = ctx.createRadialGradient(d.x, d.y, 4, d.x, d.y, range);
+    const half = (d.fov * (d.fovMul || 1)) / 2;
+    const range = d.range * (d.rangeMul || 1);
+    const STEPS = 20;
+    const hot = roomAlert || d.seeing;
+    const grad = ctx.createRadialGradient(d.x, d.y, 4, d.x, d.y, range);
     grad.addColorStop(0, 'rgba(' + rgb + ',0.30)');
     grad.addColorStop(0.5, 'rgba(' + rgb + (hot ? ',0.11)' : ',0.09)'));
     grad.addColorStop(1, 'rgba(' + rgb + ',0)');
     ctx.beginPath();
     ctx.moveTo(d.x, d.y);
-    for (var s = 0; s <= STEPS; s++) {
-      var a = d.facing - half + half * 2 * (s / STEPS);
-      var h = rayHit(d.x, d.y, a, range);
+    for (let s = 0; s <= STEPS; s++) {
+      const a = d.facing - half + half * 2 * (s / STEPS);
+      const h = rayHit(d.x, d.y, a, range);
       ctx.lineTo(h.x, h.y);
     }
     ctx.closePath();
@@ -2412,7 +2426,7 @@
     ctx.stroke();
     ctx.restore();
 
-    var hFar = rayHit(d.x, d.y, d.facing, range);
+    const hFar = rayHit(d.x, d.y, d.facing, range);
     ctx.strokeStyle = 'rgba(' + rgb + ',' + (d.seeing ? 0.5 : 0.15) + ')';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -2422,11 +2436,11 @@
   }
   function drawLastKnown() {
     if (!lastKnown) return;
-    var x = px(lastKnown.c),
-      y = px(lastKnown.r);
-    var p = reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(elapsed * 5);
-    var s = reduceMotion ? 9 : 9 + (1 - p) * 3,
-      a = 4;
+    const x = px(lastKnown.c);
+    const y = px(lastKnown.r);
+    const p = reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(elapsed * 5);
+    const s = reduceMotion ? 9 : 9 + (1 - p) * 3;
+    const a = 4;
     ctx.strokeStyle = 'rgba(233,231,226,' + (0.3 + 0.35 * p).toFixed(3) + ')';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -2450,19 +2464,19 @@
     ctx.fillText('!?', x, y);
   }
   function drawExit() {
-    var on = intelGot,
-      p = reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(elapsed * 4);
+    const on = intelGot;
+    const p = reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(elapsed * 4);
     if (on) {
       ctx.globalAlpha = 0.18 + 0.18 * p;
       ctx.fillStyle = exitGlowGrad;
       ctx.fillRect(exitPt.x - 20, exitPt.y - 20, 40, 40);
       ctx.globalAlpha = 1;
     }
-    var col = on ? C.bright : C.dim,
-      x = exitPt.x,
-      y = exitPt.y,
-      h = 13 + (on && !reduceMotion ? Math.sin(elapsed * 4) * 1.5 : 0),
-      a = 6;
+    const col = on ? C.bright : C.dim;
+    const x = exitPt.x;
+    const y = exitPt.y;
+    const h = 13 + (on && !reduceMotion ? Math.sin(elapsed * 4) * 1.5 : 0);
+    const a = 6;
     ctx.strokeStyle = col;
     ctx.lineWidth = 2;
     ctx.globalAlpha = on ? 1 : 0.7;
@@ -2489,12 +2503,12 @@
   }
   function drawIntel() {
     if (!intel || intelGot) return;
-    var p = reduceMotion ? 0.6 : 0.5 + 0.5 * Math.sin(elapsed * 3);
+    const p = reduceMotion ? 0.6 : 0.5 + 0.5 * Math.sin(elapsed * 3);
     ctx.globalAlpha = 0.3 + 0.25 * p;
     ctx.fillStyle = intelHaloGrad;
     ctx.fillRect(intel.x - 18, intel.y - 18, 36, 36);
     ctx.globalAlpha = 1;
-    var bob = reduceMotion ? 0 : Math.round(Math.sin(elapsed * 2.6) * 1.5);
+    const bob = reduceMotion ? 0 : Math.round(Math.sin(elapsed * 2.6) * 1.5);
     ctx.fillStyle = 'rgba(0,0,0,0.30)';
     ctx.fillRect(intel.x - 7, intel.y + 5, 14, 3);
     ctx.drawImage(SPR.key, intel.x - SPR.key.width / 2, intel.y - SPR.key.height / 2 + bob);
@@ -2523,8 +2537,9 @@
     ctx.fillStyle = c.seeing ? C.paper : C.bright;
     ctx.fillRect(6, -1.5, 2, 3);
     ctx.restore();
-    var led = c.seeing || Math.sin(elapsed * 6) > 0;
-    ctx.fillStyle = c.seeing ? C.paper : led ? C.line : 'rgba(143,166,192,0.25)';
+    const led = c.seeing || Math.sin(elapsed * 6) > 0;
+    if (c.seeing) ctx.fillStyle = C.paper;
+    else ctx.fillStyle = led ? C.line : 'rgba(143,166,192,0.25)';
     ctx.fillRect(c.x - 1, c.y - 11, 2, 2);
   }
   function drawGuard(g, roomAlert) {
@@ -2534,7 +2549,7 @@
       ctx.font = 'bold 9px "Share Tech Mono",monospace';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';
-      var zb = reduceMotion ? 0 : Math.round(Math.sin(elapsed * 2.2) * 1.5);
+      const zb = reduceMotion ? 0 : Math.round(Math.sin(elapsed * 2.2) * 1.5);
       ctx.fillStyle = 'rgba(4,9,18,0.7)';
       ctx.fillRect(g.x + 6, g.y - 21 + zb, 15, 10);
       ctx.fillStyle = C.paperDim;
@@ -2553,7 +2568,7 @@
     );
 
     if (!roomAlert && g.spotTimer > 0.05 && g.spotTimer < SPOT_FULL) {
-      var t = g.spotTimer / SPOT_FULL;
+      const t = g.spotTimer / SPOT_FULL;
       ctx.lineWidth = 3;
       ctx.strokeStyle = 'rgba(4,9,18,0.65)';
       ctx.beginPath();
@@ -2564,7 +2579,7 @@
       ctx.arc(g.x, g.y - 24, 7, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * t);
       ctx.stroke();
     }
-    var mark = null;
+    let mark = null;
     if (roomAlert) mark = '!';
     else if (g.behavior === 'investigate' && !g.seeing) mark = '?';
     if (mark !== g.lastMark) {
@@ -2574,7 +2589,8 @@
     if (mark) drawAlertPlate(g.x, g.y - 20, mark, elapsed - (g.markSince || 0));
   }
   function drawAlertPlate(x, yBottom, mark, age) {
-    var s, t;
+    let s;
+    let t;
     if (reduceMotion) s = 0.62;
     else if (age < 0.14) {
       t = 1 - age / 0.14;
@@ -2584,11 +2600,11 @@
       t = 1 - (age - 0.64) / 0.2;
       s = 0.62 + 0.38 * t * t;
     } else s = 0.62;
-    var w = 14 * s,
-      h = 18 * s,
-      x0 = x - w / 2,
-      y0 = yBottom - h;
-    var bang = mark === '!';
+    const w = 14 * s;
+    const h = 18 * s;
+    const x0 = x - w / 2;
+    const y0 = yBottom - h;
+    const bang = mark === '!';
     ctx.fillStyle = bang ? C.paper : C.paperDim;
     ctx.fillRect(x0, y0, w, h);
     ctx.lineWidth = s < 0.8 ? 1.5 : 2;
@@ -2600,7 +2616,7 @@
     ctx.fillStyle = C.ink;
     ctx.fillText(mark, x, y0 + h / 2 + 1);
   }
-  var radarFade = 1;
+  let radarFade = 1;
   function underRadar(px, py) {
     return (
       px > RADAR_X - 12 &&
@@ -2610,19 +2626,19 @@
     );
   }
   function drawRadar(forceJam) {
-    var x = RADAR_X,
-      y = RADAR_Y,
-      w = RADAR_W,
-      h = RADAR_H,
-      cx = x + w / 2,
-      cy = y + h / 2,
-      sc = RADAR_SC,
-      i;
-    var jam = forceJam || alertPhase === 'alert' || alertPhase === 'evasion';
-    var hid = underRadar(player.x, player.y);
+    const x = RADAR_X;
+    const y = RADAR_Y;
+    const w = RADAR_W;
+    const h = RADAR_H;
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    const sc = RADAR_SC;
+    let i;
+    const jam = forceJam || alertPhase === 'alert' || alertPhase === 'evasion';
+    let hid = underRadar(player.x, player.y);
     for (i = 0; !hid && i < guards.length; i++)
       if (!guards[i].down && underRadar(guards[i].x, guards[i].y)) hid = true;
-    var fadeTo = hid ? 0.3 : 1;
+    const fadeTo = hid ? 0.3 : 1;
     radarFade = reduceMotion ? fadeTo : radarFade + (fadeTo - radarFade) * 0.25;
     ctx.globalAlpha = radarFade;
     ctx.save();
@@ -2635,9 +2651,9 @@
     ctx.rect(x, y, w, h);
     ctx.clip();
     if (jam) {
-      var fr = reduceMotion ? 0 : Math.floor(elapsed * 16);
+      const fr = reduceMotion ? 0 : Math.floor(elapsed * 16);
       for (i = 0; i < h; i += 2) {
-        var v = Math.sin((i + fr * 7) * 12.9898) * 43758.5453;
+        let v = Math.sin((i + fr * 7) * 12.9898) * 43758.5453;
         v -= Math.floor(v);
         ctx.fillStyle = 'rgba(143,166,192,' + (0.04 + v * 0.2).toFixed(2) + ')';
         ctx.fillRect(x, y + i, w, 2);
@@ -2650,15 +2666,15 @@
       ctx.textBaseline = 'middle';
       ctx.fillText('JAMMED', cx, cy + 0.5);
     } else {
-      var ox = RADAR_OX,
-        oy = RADAR_OY;
+      const ox = RADAR_OX;
+      const oy = RADAR_OY;
       if (radarMap) ctx.drawImage(radarMap, ox, oy, W * sc, H * sc);
       for (i = 0; i < guards.length; i++) {
-        var g = guards[i];
+        const g = guards[i];
         if (g.down) continue;
-        var rx = ox + g.x * sc,
-          ry = oy + g.y * sc;
-        var hf = (g.fov * (g.fovMul || 1)) / 2;
+        const rx = ox + g.x * sc;
+        const ry = oy + g.y * sc;
+        const hf = (g.fov * (g.fovMul || 1)) / 2;
         ctx.fillStyle = g.seeing ? 'rgba(233,231,226,0.28)' : 'rgba(143,166,192,0.22)';
         ctx.beginPath();
         ctx.moveTo(rx, ry);
@@ -2669,10 +2685,10 @@
         ctx.fillRect(rx - 1.5, ry - 1.5, 3, 3);
       }
       for (i = 0; i < cameras.length; i++) {
-        var cm = cameras[i],
-          rx2 = ox + cm.x * sc,
-          ry2 = oy + cm.y * sc;
-        var hf2 = cm.fov / 2;
+        const cm = cameras[i];
+        const rx2 = ox + cm.x * sc;
+        const ry2 = oy + cm.y * sc;
+        const hf2 = cm.fov / 2;
         ctx.fillStyle = 'rgba(195,203,213,0.16)';
         ctx.beginPath();
         ctx.moveTo(rx2, ry2);
@@ -2683,8 +2699,8 @@
         ctx.fillRect(rx2 - 1.5, ry2 - 1.5, 3, 3);
       }
       if (intelGot) {
-        var rex = ox + exitPt.x * sc,
-          rey = oy + exitPt.y * sc;
+        const rex = ox + exitPt.x * sc;
+        const rey = oy + exitPt.y * sc;
         if (reduceMotion || Math.sin(elapsed * 6) > -0.3) {
           ctx.fillStyle = C.bright;
           ctx.fillRect(rex - 1.5, rey - 1.5, 3, 3);
@@ -2693,11 +2709,11 @@
           ctx.strokeRect(rex - 3.5, rey - 3.5, 7, 7);
         }
       }
-      var pxr = ox + player.x * sc,
-        pyr = oy + player.y * sc;
+      const pxr = ox + player.x * sc;
+      const pyr = oy + player.y * sc;
       ctx.fillStyle = C.bright;
       ctx.fillRect(pxr - 1.5, pyr - 1.5, 3, 3);
-      var pfa = Math.atan2(player.fy, player.fx);
+      const pfa = Math.atan2(player.fy, player.fx);
       ctx.strokeStyle = C.bright;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -2736,9 +2752,9 @@
   }
 
   // HUD windows, drawn on the outer wall rows so they never cover floor
-  var HUD_FONT = '8px "Share Tech Mono",monospace',
-    HUD_PANEL = 'rgba(4,9,18,0.62)',
-    HUD_EDGE = 'rgba(143,166,192,0.35)';
+  const HUD_FONT = '8px "Share Tech Mono",monospace';
+  const HUD_PANEL = 'rgba(4,9,18,0.62)';
+  const HUD_EDGE = 'rgba(143,166,192,0.35)';
   function hudPanel(x, y, w, h, edge) {
     ctx.fillStyle = HUD_PANEL;
     ctx.fillRect(x, y, w, h);
@@ -2767,8 +2783,8 @@
     }
   }
   function drawHudWindows() {
-    var blinkOn = reduceMotion || Math.sin(elapsed * 10) > 0,
-      i;
+    const blinkOn = reduceMotion || Math.sin(elapsed * 10) > 0;
+    let i;
     ctx.font = HUD_FONT;
     ctx.textBaseline = 'middle';
 
@@ -2781,18 +2797,20 @@
     ctx.strokeStyle = 'rgba(143,166,192,0.55)';
     ctx.lineWidth = 1;
     ctx.strokeRect(150.5, 11.5, 175, 9);
-    var lw = Math.round(174 * Math.max(0, Math.min(1, life)));
+    const lw = Math.round(174 * Math.max(0, Math.min(1, life)));
     if (lw > 0 && (life >= 0.25 || blinkOn)) {
-      ctx.fillStyle = life > 0.5 ? C.line : life > 0.25 ? C.paperDim : C.paper;
+      if (life > 0.5) ctx.fillStyle = C.line;
+      else if (life > 0.25) ctx.fillStyle = C.paperDim;
+      else ctx.fillStyle = C.paper;
       ctx.fillRect(151, 12, lw, 8);
     }
     ctx.fillStyle = 'rgba(4,9,18,0.75)';
     for (i = 158; i < 325; i += 8) ctx.fillRect(i, 12, 1, 8);
 
     if (alertPhase !== 'normal' && state === 'playing') {
-      var ph = alertPhase,
-        pc = ph === 'caution' ? C.paperDim : C.paper;
-      var pe = ph === 'caution' ? 'rgba(195,203,213,0.45)' : 'rgba(233,231,226,0.6)';
+      const ph = alertPhase;
+      const pc = ph === 'caution' ? C.paperDim : C.paper;
+      const pe = ph === 'caution' ? 'rgba(195,203,213,0.45)' : 'rgba(233,231,226,0.6)';
       hudPanel(340, 7, 130, 18, pe);
       ctx.textAlign = 'left';
       ctx.fillStyle = pc;
@@ -2808,8 +2826,8 @@
     if (coarsePointer) return; // the touch controls cover both bottom corners
 
     hudPanel(8, 353, 96, 28);
-    hudRing(21, 367, cqcCD, CQC_CD);
-    hudRing(63, 367, knockCD, KNOCK_CD);
+    hudRing(21, 367, cqcCD, CQC_COOLDOWN_S);
+    hudRing(63, 367, knockCD, KNOCK_COOLDOWN_S);
     ctx.textAlign = 'left';
     ctx.font = HUD_FONT;
     ctx.fillStyle = cqcCD > 0 ? C.dim : C.line;
@@ -2835,17 +2853,17 @@
     }
   }
   function render() {
-    var roomAlert = alertPhase === 'alert' || alertPhase === 'evasion',
-      i;
+    const roomAlert = alertPhase === 'alert' || alertPhase === 'evasion';
+    let i;
     ctx.clearRect(0, 0, W, H);
     ctx.save();
     if (shakeT > 0) {
-      var shk = shakeT / 0.35;
+      const shk = shakeT / 0.35;
       ctx.translate(Math.sin(elapsed * 87) * 3.5 * shk, Math.cos(elapsed * 61) * 2.5 * shk);
     }
     if (bgLayer) ctx.drawImage(bgLayer, 0, 0, W, H);
     if (seaGlints) {
-      var sway = reduceMotion ? -4 : -4 + Math.sin(elapsed * 0.9) * 2;
+      const sway = reduceMotion ? -4 : -4 + Math.sin(elapsed * 0.9) * 2;
       for (i = 0; i < ROWS; i += ROWS - 1)
         if (isWaterRow(i)) ctx.drawImage(seaGlints, TILE + sway, i * TILE, W - 2 * TILE + 8, TILE);
     }
@@ -2859,8 +2877,8 @@
     drawExit();
     drawIntel();
     for (i = 0; i < noisePings.length; i++) {
-      var pg = noisePings[i],
-        t = pg.t / 0.6;
+      const pg = noisePings[i];
+      const t = pg.t / 0.6;
       ctx.strokeStyle = 'rgba(164,182,204,' + 0.5 * (1 - t) + ')';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -2873,9 +2891,9 @@
       ctx.stroke();
     }
     for (i = 0; i < fxPulses.length; i++) {
-      var fp = fxPulses[i],
-        ft = fp.t / 0.45,
-        fr = reduceMotion ? 13 : 5 + ft * 15;
+      const fp = fxPulses[i];
+      const ft = fp.t / 0.45;
+      const fr = reduceMotion ? 13 : 5 + ft * 15;
       ctx.strokeStyle = 'rgba(' + fp.c + ',' + (0.75 * (1 - ft)).toFixed(3) + ')';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -2904,7 +2922,7 @@
     }
     if (hitFlashT > 0) {
       for (i = 0; i < guards.length; i++) {
-        var tg = guards[i];
+        const tg = guards[i];
         if (tg.down || !tg.seeing) continue;
         ctx.strokeStyle =
           'rgba(233,231,226,' +
@@ -2922,7 +2940,7 @@
     if (level.weather) drawSeaWeather(level.weather === 'sea');
     ctx.restore();
 
-    var vigA = hitFlashT > 0 ? 0.38 * (hitFlashT / 0.18) : 0;
+    let vigA = hitFlashT > 0 ? 0.38 * (hitFlashT / 0.18) : 0;
     if (life > 0 && life < 0.3 && state === 'playing')
       vigA = Math.max(vigA, reduceMotion ? 0.14 : 0.1 + 0.08 * Math.sin(elapsed * 5));
     if (vigA > 0) {
@@ -2933,7 +2951,7 @@
     }
 
     // the drawn width: object-fit:contain letterboxes the canvas when the frame is height-capped
-    var wide = Math.min(canvas.clientWidth, (canvas.clientHeight * W) / H) >= 520;
+    const wide = Math.min(canvas.clientWidth, (canvas.clientHeight * W) / H) >= 520;
     if (wide !== lastWide) {
       lastWide = wide;
       overlay.classList.toggle('mgsg-wide', wide);
@@ -2943,27 +2961,27 @@
   }
 
   function drawSeaWeather(spray) {
-    var t = reduceMotion ? 0 : elapsed,
-      i,
-      span = W + 300;
+    const t = reduceMotion ? 0 : elapsed;
+    let i;
+    const span = W + 300;
     for (i = 0; i < 5; i++) {
-      var mx = ((i * 211 + t * (10 + i * 4)) % span) - 260,
-        my = 18 + i * 74 + Math.sin(t * 0.35 + i * 1.7) * 10;
+      const mx = ((i * 211 + t * (10 + i * 4)) % span) - 260;
+      const my = 18 + i * 74 + Math.sin(t * 0.35 + i * 1.7) * 10;
       ctx.globalAlpha = 0.1 + (i % 2) * 0.04;
       ctx.drawImage(mistSprite, mx, my, 320, 96);
     }
     ctx.globalAlpha = 1;
     if (reduceMotion || !spray) return;
-    var gust = 0.5 + 0.5 * Math.sin(t * 0.55),
-      n = 8 + Math.round(gust * gust * 34);
+    const gust = 0.5 + 0.5 * Math.sin(t * 0.55);
+    const n = 8 + Math.round(gust * gust * 34);
     ctx.strokeStyle = 'rgba(233,231,226,0.25)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     for (i = 0; i < n; i++) {
-      var sp = 260 + (i % 5) * 40,
-        len = 5 + (i % 3) * 3;
-      var sx = ((i * 97.3 + t * sp) % (W + 60)) - 30,
-        sy = ((i * 53.7 + t * sp * 0.3) % (H + 20)) - 10;
+      const sp = 260 + (i % 5) * 40;
+      const len = 5 + (i % 3) * 3;
+      const sx = ((i * 97.3 + t * sp) % (W + 60)) - 30;
+      const sy = ((i * 53.7 + t * sp * 0.3) % (H + 20)) - 10;
       ctx.moveTo(sx, sy);
       ctx.lineTo(sx + len, sy + len * 0.3);
     }
@@ -2999,7 +3017,7 @@
       return;
     }
     el.textContent = '';
-    var i = 0;
+    let i = 0;
     typeTimer = setInterval(function () {
       i += 2;
       el.textContent = str.slice(0, i);
@@ -3018,15 +3036,11 @@
   }
   function showScreen(o) {
     hideToast();
-    endChrome(
-      o.cls === 'pause'
-        ? 'PAUSED'
-        : o.cls === 'fail'
-          ? 'NO SIGNAL'
-          : o.cls === 'title' || o.cls === 'brief'
-            ? 'NORMAL'
-            : 'CLEAR',
-    );
+    let label = 'CLEAR';
+    if (o.cls === 'pause') label = 'PAUSED';
+    else if (o.cls === 'fail') label = 'NO SIGNAL';
+    else if (o.cls === 'title' || o.cls === 'brief') label = 'NORMAL';
+    endChrome(label);
     screenEl.className = 'mgsg-screen show' + (o.cls ? ' ' + o.cls : '');
     overlay.classList.add('mgsg-scr');
     // the show class may already be on, so restart the wipe: animation none, reflow, then clear it
@@ -3043,12 +3057,12 @@
     scrSub.textContent = o.sub || '';
     scrGo.textContent = goText(o.go) || '';
 
-    var call = o.cls === 'title' || o.cls === 'brief';
+    const call = o.cls === 'title' || o.cls === 'brief';
     glitchColonel(call);
     if (call) {
       scrWhoThem.textContent = o.who || 'COLONEL';
-      var fq = o.freq || '140.85',
-        target = Math.max(1, Math.min(99, ((parseFloat(fq) - 140) / 2) * 100)).toFixed(1) + '%';
+      const fq = o.freq || '140.85';
+      const target = Math.max(1, Math.min(99, ((parseFloat(fq) - 140) / 2) * 100)).toFixed(1) + '%';
       if (o.cls === 'title' && !reduceMotion) {
         scrNeedle.style.left = '1%';
         void scrNeedle.offsetWidth;
@@ -3075,9 +3089,9 @@
     scrStats.innerHTML = '';
     if (o.stats) {
       o.stats.forEach(function (rw) {
-        var a = document.createElement('span');
+        const a = document.createElement('span');
         a.textContent = rw[0];
-        var v = document.createElement('span');
+        const v = document.createElement('span');
         v.textContent = rw[1];
         scrStats.appendChild(a);
         scrStats.appendChild(v);
@@ -3099,9 +3113,9 @@
     }
     glitchColonel(false);
   }
-  var tickTimers = [];
+  const tickTimers = [];
   function tickFreq(el, f) {
-    var slot = el === freqEl ? 0 : 1;
+    const slot = el === freqEl ? 0 : 1;
     if (tickTimers[slot]) {
       clearInterval(tickTimers[slot]);
       tickTimers[slot] = null;
@@ -3110,7 +3124,7 @@
       el.textContent = f.toFixed(2);
       return;
     }
-    var n = 0;
+    let n = 0;
     el.textContent = '140.00';
     tickTimers[slot] = setInterval(function () {
       n++;
@@ -3122,7 +3136,7 @@
     }, 50);
   }
   function stopTicks() {
-    for (var i = 0; i < tickTimers.length; i++)
+    for (let i = 0; i < tickTimers.length; i++)
       if (tickTimers[i]) {
         clearInterval(tickTimers[i]);
         tickTimers[i] = null;
@@ -3143,22 +3157,22 @@
   }
 
   // best times in seconds: { op1, op2, op3, total }; an unreadable value counts as none
-  var BEST_KEY = 'mgs-best';
+  const BEST_KEY = 'mgs-best';
   function readBest() {
-    var b = null;
+    let b = null;
     try {
       b = JSON.parse(localStorage.getItem(BEST_KEY));
     } catch (e) {}
     return b && typeof b === 'object' && !Array.isArray(b) ? b : {};
   }
   function bestFor(key) {
-    var v = readBest()[key];
+    const v = readBest()[key];
     return typeof v === 'number' && isFinite(v) && v > 0 ? v : null;
   }
   function noteBest(key, secs) {
-    var prev = bestFor(key);
+    const prev = bestFor(key);
     if (prev !== null && prev <= secs) return false;
-    var b = readBest();
+    const b = readBest();
     b[key] = Math.round(secs * 100) / 100;
     try {
       localStorage.setItem(BEST_KEY, JSON.stringify(b));
@@ -3185,7 +3199,7 @@
     state = 'briefing';
     loadLevel(levelIdx);
     render();
-    var pb = bestFor('op' + (levelIdx + 1));
+    const pb = bestFor('op' + (levelIdx + 1));
     showScreen({
       cls: 'brief',
       caller: '▸ ' + level.caller,
@@ -3240,11 +3254,11 @@
     totalAlerts += alertsThisLevel;
     stopAlertMusic();
     sfxClear();
-    var opPrev = bestFor('op' + (levelIdx + 1));
-    var opRec = noteBest('op' + (levelIdx + 1), elapsed);
+    const opPrev = bestFor('op' + (levelIdx + 1));
+    const opRec = noteBest('op' + (levelIdx + 1), elapsed);
     if (levelIdx + 1 < LEVELS.length) {
-      var rank = rankFor(alertsThisLevel, elapsed);
-      var stats = [
+      const rank = rankFor(alertsThisLevel, elapsed);
+      const stats = [
         ['TIME', fmt(elapsed)],
         ['ALERTS', String(alertsThisLevel)],
       ];
@@ -3262,10 +3276,10 @@
         go: 'PRESS ENTER TO CONTINUE',
       });
     } else {
-      var mRank = rankFor(totalAlerts, totalTime, 165);
-      var totPrev = bestFor('total');
-      var totRec = noteBest('total', totalTime);
-      var mStats = [
+      const mRank = rankFor(totalAlerts, totalTime, 165);
+      const totPrev = bestFor('total');
+      const totRec = noteBest('total', totalTime);
+      const mStats = [
         ['TOTAL TIME', fmt(totalTime)],
         ['TOTAL ALERTS', String(totalAlerts)],
       ];
@@ -3345,7 +3359,7 @@
   function frameStep(now) {
     if (!open) return;
     rafId = requestAnimationFrame(frameStep);
-    var dt = lastT ? Math.min(0.05, (now - lastT) / 1000) : 0;
+    const dt = lastT ? Math.min(0.05, (now - lastT) / 1000) : 0;
     lastT = now;
     if (state === 'playing') {
       update(dt);
@@ -3354,7 +3368,7 @@
   }
   function onKey(e) {
     if (!open) return;
-    var k = (e.key || '').toLowerCase();
+    const k = (e.key || '').toLowerCase();
     if (e.type === 'keydown') {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (
@@ -3366,7 +3380,7 @@
         return;
       e.stopImmediatePropagation();
       unlockAudio();
-      var isMove = k.indexOf('arrow') === 0 || k === 'w' || k === 'a' || k === 's' || k === 'd';
+      const isMove = k.indexOf('arrow') === 0 || k === 'w' || k === 'a' || k === 's' || k === 'd';
       if (e.repeat && !isMove && k !== 'shift') {
         e.preventDefault();
         return;
@@ -3379,7 +3393,7 @@
       }
       if (k === 'tab') {
         e.preventDefault();
-        var f = Array.prototype.filter.call(
+        const f = Array.prototype.filter.call(
           overlay.querySelectorAll('button:not([tabindex="-1"])'),
           function (el) {
             return el.offsetParent !== null;
@@ -3389,8 +3403,10 @@
           frame.focus();
           return;
         }
-        var ci = f.indexOf(document.activeElement),
-          ni = e.shiftKey ? (ci <= 0 ? f.length - 1 : ci - 1) : ci >= f.length - 1 ? 0 : ci + 1;
+        const ci = f.indexOf(document.activeElement);
+        let ni;
+        if (e.shiftKey) ni = ci <= 0 ? f.length - 1 : ci - 1;
+        else ni = ci >= f.length - 1 ? 0 : ci + 1;
         f[ni].focus();
         return;
       }

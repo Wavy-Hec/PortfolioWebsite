@@ -3,8 +3,8 @@
 // under reduced motion it draws one still frame.
 (() => {
   'use strict';
-  const hero = document.querySelector('.hero'),
-    scene = hero && hero.querySelector('.scene');
+  const hero = document.querySelector('.hero');
+  const scene = hero && hero.querySelector('.scene');
   if (!scene) return;
   const S = window.SUMI;
   const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -34,27 +34,27 @@
   }
   function vnoise(L, x, y) {
     // x and y in lattice cells, both wrapping
-    const xi = Math.floor(x),
-      yi = Math.floor(y),
-      fx = x - xi,
-      fy = y - yi;
-    const x0 = ((xi % L.nx) + L.nx) % L.nx,
-      x1 = (x0 + 1) % L.nx,
-      y0 = ((yi % L.ny) + L.ny) % L.ny,
-      y1 = (y0 + 1) % L.ny;
-    const sx = fx * fx * (3 - 2 * fx),
-      sy = fy * fy * (3 - 2 * fy);
-    const a = L.a[y0 * L.nx + x0],
-      b = L.a[y0 * L.nx + x1],
-      c = L.a[y1 * L.nx + x0],
-      d = L.a[y1 * L.nx + x1];
+    const xi = Math.floor(x);
+    const yi = Math.floor(y);
+    const fx = x - xi;
+    const fy = y - yi;
+    const x0 = ((xi % L.nx) + L.nx) % L.nx;
+    const x1 = (x0 + 1) % L.nx;
+    const y0 = ((yi % L.ny) + L.ny) % L.ny;
+    const y1 = (y0 + 1) % L.ny;
+    const sx = fx * fx * (3 - 2 * fx);
+    const sy = fy * fy * (3 - 2 * fy);
+    const a = L.a[y0 * L.nx + x0];
+    const b = L.a[y0 * L.nx + x1];
+    const c = L.a[y1 * L.nx + x0];
+    const d = L.a[y1 * L.nx + x1];
     return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
   }
   function fbm(octs, u, v) {
     // u and v in 0..1 of the tile
-    let n = 0,
-      amp = 0.5,
-      norm = 0;
+    let n = 0;
+    let amp = 0.5;
+    let norm = 0;
     for (const L of octs) {
       n += amp * vnoise(L, u * L.nx, v * L.ny);
       norm += amp;
@@ -89,13 +89,13 @@
     moonC.style.imageRendering = 'pixelated';
     const plateH = scene.querySelector('.figure img').clientHeight;
     const DOT = Math.max(1, Math.round((plateH / PLATE_H) * dpr));
-    const g = moonC.getContext('2d'),
-      im = g.createImageData(N, N),
-      px = im.data;
-    const c = N / DOT / 2,
-      R = c - 1;
-    const r0 = rng(1985),
-      ph = [r0() * TAU, r0() * TAU, r0() * TAU];
+    const g = moonC.getContext('2d');
+    const im = g.createImageData(N, N);
+    const px = im.data;
+    const c = N / DOT / 2;
+    const R = c - 1;
+    const r0 = rng(1985);
+    const ph = [r0() * TAU, r0() * TAU, r0() * TAU];
     const wob = a =>
       0.7 *
       (0.55 * Math.sin(3 * a + ph[0]) +
@@ -120,14 +120,14 @@
     };
     for (let y = 0; y < N / DOT; y++)
       for (let x = 0; x < N / DOT; x++) {
-        const dx = x + 0.5 - c,
-          dy = y + 0.5 - c,
-          d = Math.hypot(dx, dy);
+        const dx = x + 0.5 - c;
+        const dy = y + 0.5 - c;
+        const d = Math.hypot(dx, dy);
         // atan2 only in the limb's ring
         if (d > R + 1 || (d > R - 1 && d > R + wob(Math.atan2(dy, dx)))) continue;
-        const u = dx / R,
-          v = dy / R,
-          r2 = u * u + v * v;
+        const u = dx / R;
+        const v = dy / R;
+        const r2 = u * u + v * v;
         let sea = 0;
         for (const [sx, sy, sg, w] of SEAS)
           sea += w * Math.exp(-((u - sx) * (u - sx) + (v - sy) * (v - sy)) / (2 * sg * sg));
@@ -169,20 +169,20 @@
     })
     .filter(f => f.cv && f.cfg);
   function drawFog(f) {
-    const TW = 384,
-      TH = 72,
-      { cells, cut, str, prof } = f.cfg;
-    const r = rng(f.seed),
-      oc = octaves(r, cells[0], cells[1], 4),
-      warp = octaves(r, 3, 2, 2);
+    const TW = 384;
+    const TH = 72;
+    const { cells, cut, str, prof } = f.cfg;
+    const r = rng(f.seed);
+    const oc = octaves(r, cells[0], cells[1], 4);
+    const warp = octaves(r, 3, 2, 2);
     f.cv.width = TW * 2;
     f.cv.height = TH;
-    const g = f.cv.getContext('2d'),
-      im = g.createImageData(TW, TH),
-      px = im.data;
+    const g = f.cv.getContext('2d');
+    const im = g.createImageData(TW, TH);
+    const px = im.data;
     for (let y = 0; y < TH; y++) {
-      const v = y / (TH - 1),
-        p = prof(v);
+      const v = y / (TH - 1);
+      const p = prof(v);
       for (let x = 0; x < TW; x++) {
         const u = x / TW;
         const w = fbm(warp, u, v) - 0.5; // a little domain warp: wisps, not blobs
@@ -221,19 +221,19 @@
     { d: 1, cv: 1, sp: 54 },
   ];
   const LIGHT = [0.42, 0.62, 0.85, 1.08]; // the plumes catch the light only near the moon
-  let W = 0,
-    H = 0,
-    scale = 1,
-    field = [],
-    moonX = 0,
-    slow = false,
-    probed = false,
-    tickN = 0;
+  let W = 0;
+  let H = 0;
+  let scale = 1;
+  let field = [];
+  let moonX = 0;
+  let slow = false;
+  let probed = false;
+  let tickN = 0;
   const GRID = 64;
   const windGrid = new Float32Array(GRID + 2);
   function build() {
-    const box = cvs[0].getBoundingClientRect(),
-      sb = scene.getBoundingClientRect();
+    const box = cvs[0].getBoundingClientRect();
+    const sb = scene.getBoundingClientRect();
     W = Math.round(box.width);
     H = Math.round(box.height);
     if (!W || !H) return false;
@@ -248,8 +248,8 @@
     moonX = mb.left + mb.width / 2 - sb.left;
     const pb = scene.querySelector('.figure img:last-of-type').getBoundingClientRect();
     // the robot's feet are 6 to 88 % across its plate
-    const standL = pb.left - sb.left + pb.width * 0.06,
-      standR = pb.left - sb.left + pb.width * 0.88;
+    const standL = pb.left - sb.left + pb.width * 0.06;
+    const standR = pb.left - sb.left + pb.width * 0.88;
     const pad = Math.max(40, (standR - standL) * 0.18);
     const rise = x => smooth(standL - pad, standL, x) * (1 - smooth(standR, standR + pad, x));
     const narrow = W < 720;
@@ -260,22 +260,28 @@
       Math.max(-1, Math.min(1, (fbm(sky, ((x / W) * 0.9 + 1) % 1, 0.5) - 0.5) / 0.16));
     const lightAt = x => {
       const L = Math.max(0, 1 - Math.abs(x - moonX) / Math.max(160, W * 0.2));
-      return L > 0.7 ? 3 : L > 0.45 ? 2 : L > 0.15 ? 1 : 0;
+      if (L > 0.7) return 3;
+      if (L > 0.45) return 2;
+      if (L > 0.15) return 1;
+      return 0;
     };
     field = ROWS.map(row => {
-      const d = row.d,
-        sp = row.sp * (narrow ? 0.78 : 1),
-        near = d >= 0.6;
+      const d = row.d;
+      const sp = row.sp * (narrow ? 0.78 : 1);
+      const near = d >= 0.6;
       const baseY = H * (0.62 + 0.4 * d);
       const items = [];
       function clump(x, n, tall) {
         const sw = fbm(swell, ((x / W) * 0.8 + d * 0.37 + 1) % 1, 0.5);
         const cw = sp * (near ? 0.22 + 0.14 * r() : 0.3);
-        const k0 = skyAt(x),
-          bucket = lightAt(x);
+        const k0 = skyAt(x);
+        const bucket = lightAt(x);
         for (let c = 0; c < n; c++) {
           const xc = x + (c - (n - 1) / 2) * cw + (r() - 0.5) * cw * 0.7;
-          const dark = near && r() < (tall ? 0.6 : d >= 0.8 ? 0.5 : 0.22);
+          let darkShare = 0.22;
+          if (tall) darkShare = 0.6;
+          else if (d >= 0.8) darkShare = 0.5;
+          const dark = near && r() < darkShare;
           const y0 = baseY + (r() - 0.5) * H * 0.05;
           let sh =
             H *
@@ -356,10 +362,10 @@
   }
 
   // 0 is still air, about 1 a gust's crest; a gust takes about 10 s to cross the field
-  let windT = 0,
-    push = 0,
-    pushX = -1e4,
-    meanWind = 0.4;
+  let windT = 0;
+  let push = 0;
+  let pushX = -1e4;
+  let meanWind = 0.4;
   function gust(u, t) {
     const swell = 0.5 + 0.5 * Math.sin((TAU * t) / 23);
     const w1 = Math.pow(0.5 + 0.5 * Math.sin(TAU * (u / 0.95 - t / 9.5)), 3);
@@ -378,15 +384,15 @@
     meanWind = sum / (GRID + 2);
   }
   const windAt = x => {
-    const f = Math.min(GRID, Math.max(0, (x / W) * GRID)),
-      i = f | 0;
+    const f = Math.min(GRID, Math.max(0, (x / W) * GRID));
+    const i = f | 0;
     return windGrid[i] + (windGrid[i + 1] - windGrid[i]) * (f - i);
   };
 
   function drawGrass(t, which = 3) {
     // which: a bit mask of the canvases to redraw (1 the far, 2 the near)
-    const g0 = cvs[0].getContext('2d'),
-      g1 = cvs[1].getContext('2d');
+    const g0 = cvs[0].getContext('2d');
+    const g1 = cvs[1].getContext('2d');
     for (const g of [g0, g1]) {
       if (!(which & (g === g0 ? 1 : 2))) continue;
       g.setTransform(1, 0, 0, 1, 0, 0);
@@ -397,10 +403,10 @@
     for (const row of field) {
       if (!(which & (row.cv ? 2 : 1))) continue;
       const g = row.cv ? g1 : g0;
-      const body = LIGHT.map(() => new Path2D()),
-        dark = new Path2D(),
-        plumes = LIGHT.map(() => new Path2D()),
-        tufts = LIGHT.map(() => new Path2D());
+      const body = LIGHT.map(() => new Path2D());
+      const dark = new Path2D();
+      const plumes = LIGHT.map(() => new Path2D());
+      const tufts = LIGHT.map(() => new Path2D());
       const reach = 0.55 + 0.45 * row.d;
       for (const it of row.items) {
         const u = windAt(it.x);
@@ -410,34 +416,35 @@
           : it.lean + it.flex * reach * (0.06 + 0.5 * u) * (it.lean < 0 ? 0.8 : 1) + flut * 1.5;
         th = Math.max(-1.35, Math.min(1.35, th));
         const P = it.dark ? dark : body[it.bucket];
-        let tx, ty;
+        let tx;
+        let ty;
         if (it.stem) {
-          const a1 = th * 0.3,
-            a2 = th * 0.88,
-            L = it.h;
-          const cx = it.x + L * 0.52 * Math.sin(a1),
-            cy = it.y - L * 0.52 * Math.cos(a1);
+          const a1 = th * 0.3;
+          const a2 = th * 0.88;
+          const L = it.h;
+          const cx = it.x + L * 0.52 * Math.sin(a1);
+          const cy = it.y - L * 0.52 * Math.cos(a1);
           tx = it.x + L * Math.sin(a2);
           ty = it.y - L * 0.97 * Math.cos(a2);
-          const nx = Math.cos(a1) * it.w * 0.5,
-            ny = Math.sin(a1) * it.w * 0.5;
+          const nx = Math.cos(a1) * it.w * 0.5;
+          const ny = Math.sin(a1) * it.w * 0.5;
           P.moveTo(it.x - nx, it.y - ny);
           P.quadraticCurveTo(cx - nx * 0.5, cy - ny * 0.5, tx, ty);
           P.quadraticCurveTo(cx + nx * 0.5, cy + ny * 0.5, it.x + nx, it.y + ny);
           P.closePath();
           if (it.plume) {
-            const pl = it.pl,
-              ax = th * 1.2 + 0.1 + it.pa,
-              droop = (0.32 + 0.25 * reach) * it.dr;
-            const bx = tx - Math.sin(a2) * pl * 0.45,
-              by = ty + Math.cos(a2) * pl * 0.45;
-            const cx2 = bx + pl * 0.55 * Math.sin(ax),
-              cy2 = by - pl * 0.55 * Math.cos(ax);
-            const ex = bx + pl * Math.sin(ax + droop),
-              ey = by - pl * Math.cos(ax + droop);
-            const wv = pl * (0.1 + 0.05 * reach),
-              nx2 = Math.cos(ax) * wv,
-              ny2 = Math.sin(ax) * wv;
+            const pl = it.pl;
+            const ax = th * 1.2 + 0.1 + it.pa;
+            const droop = (0.32 + 0.25 * reach) * it.dr;
+            const bx = tx - Math.sin(a2) * pl * 0.45;
+            const by = ty + Math.cos(a2) * pl * 0.45;
+            const cx2 = bx + pl * 0.55 * Math.sin(ax);
+            const cy2 = by - pl * 0.55 * Math.cos(ax);
+            const ex = bx + pl * Math.sin(ax + droop);
+            const ey = by - pl * Math.cos(ax + droop);
+            const wv = pl * (0.1 + 0.05 * reach);
+            const nx2 = Math.cos(ax) * wv;
+            const ny2 = Math.sin(ax) * wv;
             const T = tufts[it.bucket];
             T.moveTo(bx, by);
             T.quadraticCurveTo(cx2 - nx2, cy2 - ny2, ex, ey);
@@ -445,8 +452,8 @@
             T.closePath();
             const Q = plumes[it.bucket];
             for (let j = 0; j < it.nf; j++) {
-              const o = (j / Math.max(1, it.nf - 1) - 0.5) * 1.5,
-                k = 1 - 0.18 * Math.abs(o);
+              const o = (j / Math.max(1, it.nf - 1) - 0.5) * 1.5;
+              const k = 1 - 0.18 * Math.abs(o);
               Q.moveTo(bx, by);
               Q.quadraticCurveTo(
                 cx2 + nx2 * o,
@@ -457,15 +464,15 @@
             }
           }
         } else {
-          const a1 = th * 0.5,
-            a2 = th * 1.32,
-            L = it.h;
-          const cx = it.x + L * 0.62 * Math.sin(a1),
-            cy = it.y - L * 0.62 * Math.cos(a1);
+          const a1 = th * 0.5;
+          const a2 = th * 1.32;
+          const L = it.h;
+          const cx = it.x + L * 0.62 * Math.sin(a1);
+          const cy = it.y - L * 0.62 * Math.cos(a1);
           tx = it.x + L * Math.sin(a2);
           ty = it.y - L * 0.86 * Math.cos(a2);
-          const nx = Math.cos(a1) * it.w * 0.5,
-            ny = Math.sin(a1) * it.w * 0.5;
+          const nx = Math.cos(a1) * it.w * 0.5;
+          const ny = Math.sin(a1) * it.w * 0.5;
           P.moveTo(it.x - nx, it.y - ny);
           P.quadraticCurveTo(cx - nx * 0.45, cy - ny * 0.45, tx, ty);
           P.quadraticCurveTo(cx + nx * 0.45, cy + ny * 0.45, it.x + nx, it.y + ny);
@@ -490,9 +497,9 @@
 
   const STILL_T = 1.9; // a gust's crest a little left of centre
   // for a software renderer the probe misses: ticks averaging over 45 ms turn the grass light, once
-  let tickAt = 0,
-    tickSum = 0,
-    tickCount = 0;
+  let tickAt = 0;
+  let tickSum = 0;
+  let tickCount = 0;
   function watch() {
     if (slow || tickCount < 0) return;
     const now = performance.now();
@@ -570,9 +577,9 @@
       ? requestIdleCallback(cb, { timeout: 300 })
       : setTimeout(cb, 50);
   fogs.forEach(f => idle(() => drawFog(f)));
-  let rt = 0,
-    lastW = -1,
-    lastH = -1;
+  let rt = 0;
+  let lastW = -1;
+  let lastH = -1;
   const first = () => {
     lastW = scene.clientWidth;
     lastH = scene.clientHeight;
@@ -590,8 +597,8 @@
   // the observer's first call reports the size first() laid out, and is ignored
   new ResizeObserver(() => {
     if (lastW < 0) return;
-    const w = scene.clientWidth,
-      h = scene.clientHeight;
+    const w = scene.clientWidth;
+    const h = scene.clientHeight;
     if (w === lastW && h === lastH) return;
     lastW = w;
     lastH = h;
@@ -603,8 +610,8 @@
   }).observe(scene);
   if (REDUCED) return;
 
-  let onScreen = false,
-    running = false;
+  let onScreen = false;
+  let running = false;
   const tick = dt => {
     if (ready) frame(dt);
   };
@@ -627,17 +634,17 @@
   ).observe(hero);
   document.addEventListener('visibilitychange', sync);
   if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
-    let lx = 0,
-      lt = 0;
+    let lx = 0;
+    let lt = 0;
     hero.addEventListener(
       'pointermove',
       e => {
-        const sb = scene.getBoundingClientRect(),
-          y = e.clientY - sb.top;
+        const sb = scene.getBoundingClientRect();
+        const y = e.clientY - sb.top;
         if (y < sb.height * 0.45) return;
-        const now = performance.now(),
-          x = e.clientX - sb.left,
-          v = Math.abs(x - lx) / Math.max(16, now - lt);
+        const now = performance.now();
+        const x = e.clientX - sb.left;
+        const v = Math.abs(x - lx) / Math.max(16, now - lt);
         lx = x;
         lt = now;
         pushX = x;
