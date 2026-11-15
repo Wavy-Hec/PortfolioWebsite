@@ -775,6 +775,15 @@ button.link {
   border: 0;
   cursor: pointer;
 }
+/* the button waits in its place for the script that answers it */
+.watch[hidden] {
+  visibility: hidden;
+}
+@media (scripting: none) {
+  .watch {
+    display: none;
+  }
+}
 .watch span {
   display: inline-block;
   margin-left: 0.6em;
@@ -818,6 +827,7 @@ button.link {
 .feat p,
 .feat-text p {
   margin-top: 14px;
+  text-wrap: pretty;
 }
 .feat .kicker,
 .feat-text .kicker {
@@ -856,7 +866,6 @@ button.link {
   grid-template-columns: minmax(0, 1fr) 280px;
   column-gap: 48px;
   align-items: center;
-  margin-top: 96px;
   padding: 48px 0 16px;
 }
 /* the ground spans the window from its left edge; .chapter clips what a scrollbar covers */
@@ -1118,7 +1127,6 @@ button.link {
 .band .stages .rate {
   display: block;
   margin-top: -2px;
-  letter-spacing: 0.14em;
   color: var(--dim);
 }
 /* the policy's lamp is always lit (it runs every step); the navigator's is lit by the script */
@@ -1182,7 +1190,6 @@ button.link {
 }
 @media (max-width: 720px) {
   .band {
-    margin-top: 72px;
     padding: 32px 0;
     row-gap: 24px;
   }
@@ -1247,6 +1254,21 @@ button.link {
   .band-cap,
   .needs-js {
     display: none;
+  }
+}
+@media (forced-colors: active) {
+  .tag::before,
+  .tag:hover::before,
+  .tag:focus-visible::before,
+  .band .interval button::before,
+  .band .interval button:hover::before,
+  .band .interval button:focus-visible::before {
+    forced-color-adjust: none;
+    background: GrayText;
+  }
+  .tag[aria-pressed='true']::before,
+  .band .interval button[aria-pressed='true']::before {
+    background: CanvasText;
   }
 }
 /* the FlowCount plate, live (js/sumi-track.js): the still plate shows until the canvas has drawn */
@@ -1500,7 +1522,6 @@ button.link {
   margin-top: 6px;
   padding: 0;
   font-size: 11px;
-  letter-spacing: 0.22em;
   text-transform: uppercase;
 }
 .pubs .idx a {
@@ -1941,7 +1962,7 @@ button.link {
 }
 .search-count {
   display: grid;
-  grid-template-columns: max-content 4ch;
+  grid-template-columns: max-content calc(4ch + 0.56em);
   column-gap: 18px;
   margin: 4px 0 0;
   color: var(--dim);
@@ -2837,7 +2858,6 @@ main:has(> .ridge:last-child) + .foot .sign {
   }
   .reel figcaption {
     margin-top: 14px;
-    letter-spacing: 0.1em;
   }
   .grp {
     margin-top: 64px;

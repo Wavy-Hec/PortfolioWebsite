@@ -51,7 +51,7 @@ Each one says at the top how to run it.
 - `make-plate.py`: the G1 and RL in Isaac Lab project plates.
 - `make-media.sh`: the clips in `media/`, from the drone and poker repositories.
 - `make-about-photo.py`: the grayscale photograph that the About print is made from.
-- `build-resume-view.py`: `resume.html`'s image and links, from the PDF.
+- `build-resume-view.py`: `resume.html`'s two images and its links, from the PDF.
 - `make-night.py`: the hidden game's codec portrait, `img/raiden-night.png`.
 - `og-card.html`: the link-preview card, a still of the fold.
 
@@ -59,4 +59,5 @@ Each one says at the top how to run it.
 
 GitHub Pages builds `main` with Jekyll, which copies the pages unchanged and leaves out `tools/` and this README
 (`_config.yml`). After changing a file, add or bump the `?v=` where it is loaded: in `index.html` for the stylesheet,
-`js/sumi.js`, `js/sumi-fold.js` and the images; in `js/sumi.js` for the scripts in `LAZY_SCRIPTS` and for `js/game.js`.
+`js/sumi.js`, `js/sumi-fold.js` and the images; in `resume.html` for its two images and the PDF; in `js/sumi.js` for
+the scripts in `LAZY_SCRIPTS` and for `js/game.js`; in `js/game.js` for the codec portrait.

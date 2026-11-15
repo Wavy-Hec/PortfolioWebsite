@@ -136,7 +136,7 @@
               </li>
               <li>
                 <button type="button" class="step" aria-pressed="false" disabled data-clip="drone-map" data-w="936" data-h="850" data-label="The ground station’s map filling in during the mission: the height map, the flown path, and a pin on every person and object found"><span class="name">Map</span></button>
-                <p class="cap">The ground station builds the height map live and pins what the drone sees, 4&nbsp;cm from the truth on average. All 10 people in the survey area, no false alarms.</p>
+                <p class="cap">The ground station builds the height map live and pins what the drone sees, 4&nbsp;cm from the truth on average: all 10 people in the survey area, no false alarms.</p>
               </li>
               <li>
                 <button type="button" class="step" aria-pressed="false" disabled data-clip="drone-rescue" data-w="884" data-h="496" data-label="The custom quadruped walks the route planned on the drone’s map down into a crater and stops beside the person lying there"><span class="name">Rescue</span></button>
@@ -189,7 +189,7 @@
               <img class="thumb" src="img/proj-fft-denoise-ink.png?v=2" srcset="img/proj-fft-denoise-ink.png?v=2 640w, img/proj-fft-denoise-ink-2x.png?v=2 1280w" sizes="(max-width: 720px) 104px, 240px" width="640" height="360" loading="lazy" decoding="async" alt="">
               <div>
                 <h4 class="t">Signal denoising at Idaho National Laboratory</h4>
-                <p class="d">The model behind the INL internship: a ResNet autoencoder that cleans noisy smart-grid sensor signals so anomalies stand out.</p>
+                <p class="d">A ResNet autoencoder that cleans noisy smart-grid sensor signals so anomalies stand out.</p>
               </div>
             </li>
             <li>
@@ -488,7 +488,7 @@
             </div>
             <div class="res-panel" id="res-panel" role="tabpanel" aria-labelledby="res-tab-stop" tabindex="0">
               <div class="res-finding" aria-hidden="true">
-                <p class="on"><span>Asked directly when to stop, the VLM stopped in the right place in 8&nbsp;to&nbsp;14% of runs.</span> <span>Reading the bottom edge of its bounding box: 79&nbsp;to&nbsp;86%.</span></p>
+                <p class="on"><span>Asked directly when to stop, the VLM succeeded in 8&nbsp;to&nbsp;14% of runs.</span> <span>Reading the bottom edge of its bounding box: 79&nbsp;to&nbsp;86%.</span></p>
                 <p><span>A continuous heading beat five discrete&nbsp;choices,</span> <span>most of all in the hard scenarios.</span></p>
                 <p><span>Three sub-prompts steer a little better.</span> <span>One prompt stops a little better.</span></p>
                 <p><span>Asking the VLM every 20&nbsp;steps, not 50, barely changes steering.</span> <span>Stopping in the hard scenarios rises from 43.8&nbsp;to&nbsp;51.7%.</span></p>
@@ -504,7 +504,7 @@
                 </div>
                 <div class="res-table">
                   <table>
-                    <caption>Asked directly when to stop, the VLM stopped in the right place in 8 to 14% of runs. Reading the bottom edge of its bounding box: 79 to 86%.</caption>
+                    <caption>Asked directly when to stop, the VLM succeeded in 8 to 14% of runs. Reading the bottom edge of its bounding box: 79 to 86%.</caption>
                     <thead>
                       <tr><th scope="col">Scenarios</th><th scope="col">Stopping success, bounding box</th><th scope="col">Stopping success, direct</th></tr>
                     </thead>

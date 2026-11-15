@@ -26,6 +26,7 @@
   const DOTTED = [1.5, 3.5];
   const DPR = Math.min(2, devicePixelRatio || 1);
   const HOVER = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const forcedColors = matchMedia('(forced-colors: active)');
 
   // metres, x to the rear, y down; BODY_L, BODY_W, HIP_X, LEG_Y, THIGH and CALF: go2_description
   const BODY_L = 0.3762;
@@ -120,6 +121,7 @@
   let cx = 0;
   let cy = 0;
   let groundHalf = 0;
+  let ink = PAPER;
   let groundInk = null;
   let inked = null;
   let dialSize = 0;
@@ -139,6 +141,8 @@
 
   function layout() {
     phone = matchMedia('(max-width: 720px)').matches;
+    // forced colors repaint the page but not a canvas: the drawing takes the system's text color
+    ink = forcedColors.matches ? getComputedStyle(band).color : PAPER;
     const box = sketch.getBoundingClientRect();
     W = Math.round(box.width);
     H = Math.round(box.height);
@@ -155,8 +159,9 @@
     dial.width = Math.round(dialSize * DPR);
     dial.height = Math.round(dialSize * DPR);
     dialCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    dialCtx.strokeStyle = PAPER;
-    dialCtx.fillStyle = PAPER;
+    dialCtx.strokeStyle = ink;
+    dialCtx.fillStyle = ink;
+    lampCtx.fillStyle = ink;
     dialCtx.lineCap = 'round';
     dialStale = true;
   }
@@ -204,11 +209,11 @@
     ctx.setTransform(DPR, 0, 0, DPR, -x * DPR, -y * DPR);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.fillStyle = PAPER;
+    ctx.fillStyle = ink;
     groundInk = ctx.createLinearGradient(cx - groundHalf * scale, 0, cx + groundHalf * scale, 0);
     groundInk.addColorStop(0, 'rgba(233, 231, 226, 0)');
-    groundInk.addColorStop(0.12, PAPER);
-    groundInk.addColorStop(0.88, PAPER);
+    groundInk.addColorStop(0.12, ink);
+    groundInk.addColorStop(0.88, ink);
     groundInk.addColorStop(1, 'rgba(233, 231, 226, 0)');
   }
 
@@ -330,7 +335,7 @@
     }
     ctx.strokeStyle = groundInk;
     stroke(0.3 * shown, 1);
-    ctx.strokeStyle = PAPER;
+    ctx.strokeStyle = ink;
   }
 
   function drawSilhouette(shown) {
@@ -682,13 +687,12 @@
     });
   }
 
+  lamp.width = Math.round(4 * DPR);
+  lamp.height = Math.round(4 * DPR);
   layout();
   // the browser may have restored the sliders from history
   describeSliders();
   showCommand();
-  lamp.width = Math.round(4 * DPR);
-  lamp.height = Math.round(4 * DPR);
-  lampCtx.fillStyle = PAPER;
   band.classList.add('live');
   if (S.REDUCED) {
     age = 2;
@@ -721,6 +725,11 @@
       { threshold: [0, 0.15] },
     ).observe(sketch);
   }
+
+  forcedColors.addEventListener('change', () => {
+    layout();
+    draw();
+  });
 
   // the tags are placed by their width: again once the web font is in
   document.fonts.ready.then(() => {

@@ -34,7 +34,7 @@
   const DECK = [176, 240];
   const SHADOW = [240, 262];
   const COUNT_X = 472;
-  // brush widths
+  // brush widths, and how far the count line runs past the road's edges
   const DECK_EDGE = 4.6;
   const COUNT_LINE = 4.6;
   const COUNT_REACH = 16;
