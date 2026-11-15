@@ -5,6 +5,8 @@
   const S = window.SUMI;
   const saveData = navigator.connection && navigator.connection.saveData;
   const autoplay = !S.REDUCED && !saveData;
+  // a link to a later section smooth-scrolls past the reel: it must stay on screen this long to start
+  const DWELL_MS = 300;
 
   function setUpReel(reel) {
     const video = reel.querySelector('video');
@@ -13,17 +15,16 @@
     let current = 0;
     let held = !autoplay;
     let onScreen = false;
+    let dwellTimer = 0;
 
-    // under reduced motion the line over the current step stays whole instead of filling
     function trackProgress() {
       const played = video.duration ? video.currentTime / video.duration : 0;
       steps[current].style.setProperty('--played', played.toFixed(3));
     }
 
     function sync() {
-      const shouldPlay = onScreen && !held;
       hold.textContent = held ? 'Play' : 'Pause';
-      if (shouldPlay) {
+      if (onScreen && !held) {
         if (!video.src) load(current);
         video.play().catch(() => {});
         S.add(trackProgress);
@@ -51,7 +52,10 @@
       sync();
     }
 
-    steps.forEach((step, index) => step.addEventListener('click', () => show(index)));
+    steps.forEach((step, index) => {
+      step.disabled = false;
+      step.addEventListener('click', () => show(index));
+    });
     video.addEventListener('ended', () => show((current + 1) % steps.length));
     hold.addEventListener('click', () => {
       held = !held;
@@ -60,32 +64,50 @@
 
     new IntersectionObserver(
       entries => {
-        onScreen = entries[entries.length - 1].isIntersecting;
-        sync();
+        clearTimeout(dwellTimer);
+        if (entries[entries.length - 1].isIntersecting) {
+          dwellTimer = setTimeout(() => {
+            onScreen = true;
+            sync();
+          }, DWELL_MS);
+        } else {
+          onScreen = false;
+          sync();
+        }
       },
       { threshold: 0.35 },
     ).observe(reel.querySelector('.screen'));
 
-    reel.classList.add('live');
+    video.poster = `media/${steps[0].dataset.clip}.jpg`;
     hold.textContent = held ? 'Play' : 'Pause';
+    reel.classList.add('live');
   }
 
+  // a clip opened on request plays even under reduced motion: the reader asked for it
   function setUpWatch(button) {
     const clip = document.getElementById(button.getAttribute('aria-controls'));
     const video = clip.querySelector('video');
-    if (!autoplay) video.controls = true;
 
+    function play() {
+      if (!video.src) {
+        video.poster = video.dataset.poster;
+        video.src = video.dataset.src;
+      }
+      video.play().catch(() => {});
+    }
+
+    button.hidden = false;
     button.addEventListener('click', () => {
       const open = button.getAttribute('aria-expanded') !== 'true';
       button.setAttribute('aria-expanded', String(open));
       clip.hidden = !open;
-      if (open && autoplay) video.play().catch(() => {});
-      if (!open) video.pause();
+      if (open) play();
+      else video.pause();
     });
 
     new IntersectionObserver(entries => {
       if (!entries[entries.length - 1].isIntersecting) video.pause();
-      else if (!clip.hidden && autoplay) video.play().catch(() => {});
+      else if (!clip.hidden) play();
     }).observe(clip);
   }
 

@@ -120,24 +120,25 @@
 
           <figure class="reel">
             <div class="screen">
-              <video muted playsinline preload="none" width="832" height="468" poster="media/drone-search.jpg" aria-label="Chase view in Isaac Sim: the drone flies a survey line over a stepped mound of concrete blocks, its mapping rays dotted on the ground"></video>
-              <button type="button" class="hold mono" aria-pressed="false">Pause</button>
+              <img class="still" src="media/drone-search.jpg" width="832" height="468" loading="lazy" decoding="async" alt="">
+              <video muted playsinline preload="none" width="832" height="468" aria-label="Chase view in Isaac Sim: the drone flies a survey line over a stepped mound of concrete blocks, its mapping rays dotted on the ground"></video>
+              <button type="button" class="hold mono">Pause</button>
             </div>
             <ol class="steps">
               <li>
-                <button type="button" class="step" aria-pressed="true" data-clip="drone-search" data-w="832" data-h="468" data-label="Chase view in Isaac Sim: the drone flies a survey line over a stepped mound of concrete blocks, its mapping rays dotted on the ground"><span class="name">Search</span></button>
+                <button type="button" class="step" aria-pressed="true" disabled data-clip="drone-search" data-w="832" data-h="468" data-label="Chase view in Isaac Sim: the drone flies a survey line over a stepped mound of concrete blocks, its mapping rays dotted on the ground"><span class="name">Search</span></button>
                 <p class="cap">A PPO policy trained only to reach a point and hover follows the survey line: 428&nbsp;m in about six minutes, landing 7&nbsp;mm from the centre of its pad.</p>
               </li>
               <li>
-                <button type="button" class="step" aria-pressed="false" data-clip="drone-detect" data-w="640" data-h="506" data-label="The drone’s camera in the ground station: the detector boxes people, a forklift and barrels, each with its map coordinates"><span class="name">Detect</span></button>
+                <button type="button" class="step" aria-pressed="false" disabled data-clip="drone-detect" data-w="640" data-h="506" data-label="The drone’s camera in the ground station: the detector boxes people, a forklift and barrels, each with its map coordinates"><span class="name">Detect</span></button>
                 <p class="cap">A YOLO26n detector fine-tuned on auto-labelled simulator images finds 255 of 256 people on seven sites it never saw. The stock COCO model finds 107.</p>
               </li>
               <li>
-                <button type="button" class="step" aria-pressed="false" data-clip="drone-map" data-w="792" data-h="720" data-label="The ground station’s map filling in during the mission: the height map, the flown path and a pin on every person and object found"><span class="name">Map</span></button>
+                <button type="button" class="step" aria-pressed="false" disabled data-clip="drone-map" data-w="792" data-h="720" data-label="The ground station’s map filling in during the mission: the height map, the flown path and a pin on every person and object found"><span class="name">Map</span></button>
                 <p class="cap">The ground station builds the height map live and pins what the drone sees: 10 of 10 people, no false alarms, pins 4&nbsp;cm from the truth on average.</p>
               </li>
               <li>
-                <button type="button" class="step" aria-pressed="false" data-clip="drone-rescue" data-w="884" data-h="496" data-label="The custom quadruped walks the route planned on the drone’s map down into a crater and stops beside the person lying there"><span class="name">Rescue</span></button>
+                <button type="button" class="step" aria-pressed="false" disabled data-clip="drone-rescue" data-w="884" data-h="496" data-label="The custom quadruped walks the route planned on the drone’s map down into a crater and stops beside the person lying there"><span class="name">Rescue</span></button>
                 <p class="cap">A custom quadruped plans a route across the drone’s map with A* and walks it. 32 of 32 runs reached the person, with no falls.</p>
               </li>
             </ol>
@@ -241,11 +242,11 @@
                 <h4 class="t">Poker RL: 6-Max No-Limit Hold’em Self-Play Agent</h4>
                 <p class="d">A MaskablePPO self-play agent trained against a pool of frozen policy snapshots in RLCard 6-max No-Limit Hold’em, evaluated in mbb/hand with 95% CIs. It runs as a real-time browser poker table over FastAPI + WebSockets, with CI and tests.</p>
                 <p class="links">
-                  <button type="button" class="link watch" aria-expanded="false" aria-controls="clip-poker">Watch a hand<span aria-hidden="true">▸</span></button>
+                  <button type="button" class="link watch" aria-expanded="false" aria-controls="clip-poker" hidden>Watch a hand<span aria-hidden="true">▸</span></button>
                   <a class="link" href="https://github.com/Wavy-Hec/poker-rl" rel="noopener">GitHub<span class="sr-only">: Poker RL</span><span aria-hidden="true"> ↗</span></a>
                 </p>
                 <div class="clip" id="clip-poker" hidden>
-                  <video muted playsinline loop preload="none" width="880" height="618" poster="media/poker-table.jpg" src="media/poker-table.mp4" aria-label="The browser poker table: one human seat and five seats played by the trained agent, a hand in progress"></video>
+                  <video muted playsinline loop preload="none" width="880" height="618" data-poster="media/poker-table.jpg" data-src="media/poker-table.mp4" aria-label="The browser poker table: one human seat and five seats played by the trained agent, a hand in progress"></video>
                 </div>
               </div>
             </li>

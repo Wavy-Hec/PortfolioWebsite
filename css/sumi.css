@@ -581,12 +581,16 @@ body::after {
   border: 1px solid var(--rule-strong);
   overflow: hidden;
 }
+.screen .still,
 .screen video {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+.reel.live .still {
+  display: none;
 }
 .hold {
   position: absolute;
@@ -615,8 +619,7 @@ body::after {
   background: var(--paper-55);
 }
 .hold:hover::before,
-.hold:focus-visible::before,
-.hold[aria-pressed='true']::before {
+.hold:focus-visible::before {
   background: var(--paper);
 }
 .steps {
@@ -643,7 +646,10 @@ body::after {
   text-align: left;
   cursor: pointer;
 }
-
+.step:disabled {
+  cursor: default;
+}
+/* the line over the playing step fills as its clip runs */
 .step::after {
   content: '';
   position: absolute;
@@ -2112,6 +2118,7 @@ body.game-open ascii-art {
   .reel figcaption .cl {
     display: block;
     white-space: normal;
+    text-wrap: balance;
   }
   .grp {
     margin-top: 64px;
