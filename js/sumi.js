@@ -120,15 +120,18 @@
     let armed = true;
     let hideTimer = 0;
 
-    const pop = () => {
-      if (!armed) return;
-      armed = false;
+    const show = () => {
       alertPlate.classList.remove('on');
       // a reflow between the two, so the animation starts over
       void alertPlate.offsetWidth;
       alertPlate.classList.add('on');
       clearTimeout(hideTimer);
       hideTimer = setTimeout(() => alertPlate.classList.remove('on'), 1200);
+    };
+    const pop = () => {
+      if (!armed) return;
+      armed = false;
+      show();
     };
     const rearm = () => (armed = true);
 
@@ -153,6 +156,41 @@
       },
       { passive: true },
     );
+
+    // Once a visit, after the fold has faded in, it pops by itself: the machine has seen you.
+    // Not if the reader has scrolled the head out of view or is already on the figure, nor over a
+    // robot too small to carry it (a window too short for the scene).
+    const SEEN_KEY = 'fold-alert-seen';
+    const MIN_ROBOT_PX = 120;
+    const plate = figure.querySelector('img:last-of-type');
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem(SEEN_KEY) === '1';
+    } catch (e) {}
+
+    const arrive = () => {
+      if (document.hidden) {
+        const later = () => setTimeout(arrive, 600);
+        document.addEventListener('visibilitychange', later, { once: true });
+        return;
+      }
+      const box = alertPlate.getBoundingClientRect();
+      const onScreen = box.top >= 0 && box.bottom <= innerHeight;
+      const tooSmall = plate.clientHeight < MIN_ROBOT_PX;
+      if (!onScreen || tooSmall || figure.matches(':hover, :focus')) return;
+      try {
+        sessionStorage.setItem(SEEN_KEY, '1');
+      } catch (e) {}
+      show();
+    };
+
+    if (!REDUCED && !seen) {
+      // the scene fades in over the first second; the plate must be on screen too
+      plate.decode().then(
+        () => setTimeout(arrive, Math.max(300, 1600 - performance.now())),
+        () => {},
+      );
+    }
   }
 
   // The secret: the footer's 140.85 (clicked or typed) or the Konami code rings the codec and

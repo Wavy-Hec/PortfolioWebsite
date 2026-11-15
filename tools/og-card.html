@@ -3,16 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <!--
-    The link-preview card (img/og-card.png, 1200x630): the fold itself, as a still. This page frames the real front page (../index.html, same
-    origin) at 1200x630 and, once it has loaded, dresses it for a card: no nav (the fold takes the whole height), no grain (it would triple the
-    PNG), nothing below the fold; the line under the headline becomes the name and the degree (the footer's own wording) and the call to action
-    becomes the address. Everything else is the page: the halftone moon, Raiden, the grass in a still gust, the fog (one still frame under
-    reduced motion, js/sumi-fold.js), so the card never drifts from the fold.
-    Rendered by headless Chrome at exactly 1200x630, reduced motion (the fold's still frame; no fade), served from the repo root:
-
-      chrome --headless=new --disable-gpu --hide-scrollbars --force-prefers-reduced-motion --window-size=1200,630 --virtual-time-budget=8000 --screenshot=img/og-card.png http://127.0.0.1:8000/tools/og-card.html
-
-    then convert to 8-bit grey (L: the card has no hue) and run oxipng -o4 --strip safe. Bump og-card.png?v= in index.html (og:image, twitter:image).
+    The link-preview card, img/og-card.png: the fold at 1200 x 630 with no nav, no grain and the name
+    and address in place of the words under the headline. Screenshot this page at exactly 1200 x 630
+    with reduced motion, save it as 8-bit grey, and bump og-card.png?v= in index.html.
   -->
   <meta name="robots" content="noindex">
   <title>og card</title>
@@ -24,21 +17,27 @@
 <body>
   <iframe src="../index.html" title="the fold" scrolling="no"></iframe>
   <script>
-    const f = document.querySelector('iframe');
-    f.addEventListener('load', () => {
-      const d = f.contentDocument;
-      const st = d.createElement('style');
-      st.textContent = `
+    const frame = document.querySelector('iframe');
+    frame.addEventListener('load', () => {
+      const d = frame.contentDocument;
+      const style = d.createElement('style');
+      style.textContent = `
         :root { --nav: 0px }
-        .nav, .skip, main > :not(.hero), footer, #live-status { display: none !important }
+        .nav, .skip, footer, #live-status { display: none !important }
         body::after { display: none }
-        .hero .sub.og { margin-top: 30px; max-width: none; font-family: 'Share Tech Mono', monospace; font-size: 16px; letter-spacing: .24em; text-transform: uppercase; color: #e9e7e2 }
-        .hero .cta.og { margin: 12px 0 0; padding: 0; font-size: 14px; letter-spacing: .14em; text-transform: none; color: #bab8b3 }`;
-      d.head.appendChild(st);
-      const sub = d.querySelector('.hero .sub'), cta = d.querySelector('.hero .cta');
-      sub.className = 'sub og'; sub.textContent = 'Hector Lugo · M.S. CS (expected Dec 2026) · UTRGV';
-      cta.className = 'link cta og'; cta.textContent = 'wavy-hec.github.io/PortfolioWebsite';
-      f.contentWindow.dispatchEvent(new Event('resize'));
+        .hero .sub.og { margin-top: 30px; max-width: none; min-height: 0; font-family: 'Share Tech Mono', monospace; font-size: 15px; letter-spacing: .2em; text-transform: uppercase; color: #e9e7e2 }
+        .hero .ctas.og { margin-top: 12px; font-family: 'Share Tech Mono', monospace; font-size: 14px; letter-spacing: .14em; color: #bab8b3 }`;
+      d.head.appendChild(style);
+      // the chapters go, so the drawings that load later find nothing to draw
+      d.querySelectorAll('main > :not(.hero)').forEach(el => el.remove());
+      const sub = d.querySelector('.hero .sub');
+      const ctas = d.querySelector('.hero .ctas');
+      sub.className = 'sub og';
+      sub.textContent = 'Hector Lugo · M.S. CS (expected Dec 2026) · UTRGV';
+      ctas.className = 'ctas og';
+      ctas.textContent = 'wavy-hec.github.io/PortfolioWebsite';
+      d.querySelector('.hero .status').remove();
+      frame.contentWindow.dispatchEvent(new Event('resize'));
     });
   </script>
 </body>

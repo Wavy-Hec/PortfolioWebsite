@@ -200,42 +200,44 @@ body::after {
 .nav .cv a:focus-visible {
   color: var(--paper);
 }
-/* the fold, back to front: the moon, the far fog, the Go2 (its shade plate under its paper plate), the far grass, the
-   fog bank, the near grass, the ground fog; the words over it all. --hr is where the headline's longer line ends
-   (9.36 em). The plate is 787 x 840 with the face 8.5 % in from its left: the face stands --gap past the headline, the
-   right edge 24 px inside the window, the feet in the grass, and the moon's top near 16 % of the fold */
+/* the fold, back to front: the moon, the far fog, the Go2 (its shade plate under its paper plate), the far grass,
+   the fog bank, the near grass and the ground fog; the words over them. --hr is where the headline's longer line ends;
+   --fb holds the moon's top near 16 % of the fold. The plate is 534 x 480: across it the robot's near shoulder is at
+   4.5 %, its face at 17 %, its tail at 97.9 %, and its crown is 4.6 % down */
 .hero {
   --F: calc(100vh - var(--nav));
   --fs: clamp(44px, min(5.6vw, 13.5vh), 200px);
   --hr: calc(var(--gutter) + 9.36 * var(--fs));
   --gap: max(85px, calc(var(--F) * 0.12));
-  --fh: min(calc(var(--F) * 0.74), calc((100vw - var(--hr) - var(--gap) - 24px) / 0.857), 1200px);
-  --fw: calc(var(--fh) * 0.937);
-  --fl: calc(var(--hr) + var(--gap) - var(--fw) * 0.085);
+  --fh: min(calc(var(--F) * 0.68), calc((100vw - var(--hr) - var(--gap) - 24px) / 0.9), 816px);
+  --fw: calc(var(--fh) * 1.1125);
+  --fl: calc(100vw - 24px - var(--fw) * 0.979);
   --fb: clamp(
     calc(var(--F) * -0.04),
-    calc(var(--F) * 0.84 - var(--fh) * 1.26),
+    calc(var(--F) * 0.84 - var(--fh) * 1.38),
     calc(var(--F) * 0.06)
   );
-  --md: calc(var(--fh) * 0.76);
-  --mx: 0.4;
-  --my: 0.12;
+  --md: calc(var(--fh) * 0.8);
+  --mcx: calc(var(--fw) * 0.46);
+  --mcy: calc(var(--fh) * 0.98);
   --gh: 34%;
+  --sf: clamp(16px, calc(var(--fs) * 0.18), 28px);
+  --af: clamp(2.4rem, calc(var(--F) * 0.052), 6rem);
   position: relative;
   isolation: isolate;
   min-height: var(--F);
   padding: 0 var(--gutter);
+  /* clip: a hidden box still scrolls itself to show the focused figure */
   overflow: hidden;
   overflow: clip;
 }
-/* clip, not hidden: the plate hangs past the floor, and a hidden box still scrolls itself when the focused figure is brought into view */
 @supports (height: 100svh) {
   .hero {
     --F: calc(100svh - var(--nav));
     --fs: clamp(44px, min(5.6vw, 13.5svh), 200px);
   }
 }
-/* no script: the scene is the figure on a still bank (the canvases stay empty) */
+/* without script the canvases stay empty: a still bank of fog */
 .hero::before {
   content: '';
   position: absolute;
@@ -250,6 +252,7 @@ body::after {
     transparent
   );
 }
+/* the floor sinks into sumi before the first chapter's hairline */
 .hero::after {
   content: '';
   position: absolute;
@@ -261,7 +264,6 @@ body::after {
   pointer-events: none;
   background: linear-gradient(transparent, var(--sumi));
 }
-/* the floor: the fog's foot sinks into sumi, so the first chapter's hairline starts on clean ground */
 .scene {
   position: absolute;
   inset: 0;
@@ -273,28 +275,23 @@ body::after {
   display: block;
 }
 .scene .moon {
-  left: calc(var(--fl) + var(--fw) * var(--mx) - var(--md) / 2);
-  bottom: calc(var(--fb) + var(--fh) * (1 - var(--my)) - var(--md) / 2);
+  left: calc(var(--fl) + var(--mcx) - var(--md) / 2);
+  bottom: calc(var(--fb) + var(--mcy) - var(--md) / 2);
   width: var(--md);
   height: var(--md);
-  border-radius: 50%;
-  box-shadow:
-    0 0 calc(var(--md) * 0.16) calc(var(--md) * 0.02) rgba(233, 231, 226, 0.055),
-    0 0 calc(var(--md) * 0.5) rgba(233, 231, 226, 0.03);
 }
-/* a faint halo: the disc glows rather than sits */
 .scene .fog {
   left: 0;
   width: 100%;
   overflow: hidden;
 }
+/* two copies of the tile side by side: the script slides them and wraps */
 .scene .fog canvas {
   display: block;
   width: 200%;
   height: 100%;
   will-change: transform;
 }
-/* two copies of a tile side by side: js/sumi-fold.js slides it right and wraps */
 .scene .f-back {
   bottom: 0;
   height: 52%;
@@ -313,7 +310,7 @@ body::after {
   width: 100%;
   height: var(--gh);
 }
-/* the figure's box stops at the fold's floor (his plate runs on below it, clipped by the hero), so keyboard focus never scrolls the page */
+/* the figure's box stops at the floor, so focusing it never scrolls the page */
 .hero .figure {
   left: var(--fl);
   bottom: max(0px, var(--fb));
@@ -334,15 +331,14 @@ body::after {
 .hero .figure:focus-visible {
   outline: none;
 }
-/* the "!" 8 px over the robot's head (the middle of its top edge: 22 % across the plate, 4.2 % down), popped by
-   hover or focus (js/sumi.js adds .on); never closer than 24 px to the nav's rule */
+/* the "!" over the robot's head, popped by js/sumi.js; never closer than 24 px to the nav's rule */
 .hero .alert {
   position: absolute;
   z-index: 3;
-  left: 22%;
-  top: max(calc(var(--fh) * 0.042 - 1.12em - 16px), calc(24px + var(--fh) + var(--fb) - var(--F)));
+  left: 27%;
+  top: max(calc(var(--fh) * 0.046 - 1.12em - 16px), calc(24px + var(--fh) + var(--fb) - var(--F)));
   transform: translateX(-50%);
-  font: 700 clamp(2.4rem, calc(var(--F) * 0.052), 6rem)/1 var(--mono);
+  font: 700 var(--af)/1 var(--mono);
   color: var(--paper);
   background: var(--sumi);
   border: 4px solid var(--paper);
@@ -355,11 +351,11 @@ body::after {
     alertPop 0.15s ease-out both,
     alertFade 0.3s ease-in 0.9s forwards;
 }
+/* under keyboard focus the plate holds */
 .hero .figure:focus-visible .alert {
   opacity: 1;
   animation: alertPop 0.15s ease-out both;
 }
-/* keyboard focus: the plate holds while he has it (WCAG 2.4.7), still silent */
 @keyframes alertPop {
   from {
     transform: translateX(-50%) scale(0.4);
@@ -380,17 +376,28 @@ body::after {
     opacity: 0;
   }
 }
-/* the copy sits top-left, over the scene; the headline is two lines, always, and scales with the screen (--fs) */
+/* Times New Roman (Liberation Serif on Linux) set to Shippori Mincho's width, ascent and descent, so
+   the words hold their lines and places until the web font arrives */
+@font-face {
+  font-family: 'Shippori Mincho fallback';
+  src: local('Times New Roman'), local('Liberation Serif');
+  size-adjust: 117.6%;
+  ascent-override: 98.6%;
+  descent-override: 24.5%;
+  line-gap-override: 0%;
+}
+/* the words sit top left, over the scene; the headline is always two lines */
 .hero .copy {
   position: relative;
   z-index: 2;
   padding: 10vh 0 48px;
+  font-family: 'Shippori Mincho', 'Shippori Mincho fallback', var(--serif);
   pointer-events: none;
 }
 .hero .copy > :not(h1) {
   pointer-events: auto;
 }
-/* the h1 block spans the fold's width over his head: only its words (.l) take the pointer, so hover on his face reaches the figure */
+/* only the headline's words take the pointer, so the figure under its box can be hovered */
 .hero h1 {
   font-weight: 400;
   font-size: var(--fs);
@@ -409,21 +416,25 @@ body::after {
   white-space: nowrap;
   pointer-events: auto;
 }
+/* the sub keeps the height of its five lines in Shippori Mincho, so nothing below it moves if a
+   fallback face sets fewer */
 .hero .sub {
-  max-width: 54ch;
+  max-width: 28em;
+  min-height: 8em;
   margin-top: calc(var(--fs) * 0.34);
-  font-size: clamp(16px, calc(var(--fs) * 0.18), 28px);
+  font-size: var(--sf);
   line-height: 1.6;
   color: var(--dim);
   text-shadow:
     0 0 2px var(--sumi),
     0 0 12px var(--sumi);
 }
+/* on a phone the nav shows only the seal: the name is here */
 .hero .sub .who {
   color: var(--paper);
 }
-/* his name, in paper: on a phone the nav shows only the seal, so this is where his name is above the fold */
 .hero .status {
+  width: fit-content;
   margin-top: 22px;
   line-height: 1.8;
   color: var(--dim);
@@ -436,6 +447,7 @@ body::after {
 }
 .hero .ctas {
   display: flex;
+  width: fit-content;
   flex-wrap: wrap;
   gap: 0 36px;
   margin-top: 6px;
@@ -1831,28 +1843,119 @@ main:has(> .ridge:last-child) + .foot .sign {
     --gap: calc(6.4vw + 36px);
   }
 }
-@media (max-width: 960px) {
-  /* stacked: the words first, then the scene in flow under them, filling the rest of the fold. The plate is sized
-     to the scene (--sh, its height, set by js/sumi-fold.js) so that the moon's top, 1.07 plates above the scene's
-     foot (the feet sink .06 into the floor), sits 24 px or more under the links, and to the width so that the
-     robot is whole */
+@media (min-width: 1920px) {
+  .hero .cta {
+    font-size: clamp(12.5px, calc(var(--fs) * 0.1), 14px);
+  }
+}
+/* tall windows: the head drops below the headline, the robot stands right of the sub and is sized from
+   the height. Over the first ~90 px of --d32 (the distance from 3:2) the floor and the moon ease into the
+   wide fold's, so a resize does not jump. Here and below, the moon is never wider than --mroom, which
+   keeps its disc 24 px clear of the headline (to --hb) and of the sub and status under it (to --sb) */
+@media (min-width: 721px) and (max-aspect-ratio: 3/2) {
+  .hero {
+    --d32: calc(150vh - 100vw);
+    --hb: calc(10vh + 2.08 * var(--fs));
+    --sb: calc(var(--hb) + 0.34 * var(--fs) + 8 * var(--sf) + 62px);
+    --fh: min(
+      calc((100vw - var(--gutter) - 28 * var(--sf) - 88px) / 1.039),
+      calc((var(--F) * 0.97 - var(--hb) - 1.12 * var(--af) - 64px) / 0.954),
+      816px
+    );
+    --fl: calc(100vw - 24px - var(--fw) * 0.979);
+    --fb: calc(
+      var(--F) * 0.03 +
+        clamp(
+          0px,
+          min(var(--F) * 0.81 - var(--fh) * 1.38, var(--F) * 0.03) - var(--d32),
+          var(--F) * 0.03
+        )
+    );
+    --mox: calc(var(--fl) + var(--mcx));
+    --moy: calc(var(--F) - var(--fb) - var(--mcy));
+    --mroom: calc(
+      2 *
+        min(
+          hypot(max(0px, var(--mox) - var(--hr)), max(0px, var(--moy) - var(--hb))),
+          hypot(
+            max(0px, var(--mox) - var(--gutter) - 28 * var(--sf)),
+            max(0px, var(--moy) - var(--sb))
+          )
+        ) -
+        48px
+    );
+    --md: min(
+      calc(var(--fh) * 0.62 + clamp(0px, var(--fh) * 0.18 - var(--d32), var(--fh) * 0.18)),
+      var(--mroom)
+    );
+    --mcx: calc(var(--fw) * 0.62 - clamp(0px, var(--fw) * 0.16 - var(--d32), var(--fw) * 0.16));
+    --mcy: calc(var(--fh) * 0.92 + clamp(0px, var(--fh) * 0.06 - var(--d32), var(--fh) * 0.06));
+  }
+  .hero .status .sep {
+    display: none;
+  }
+  .hero .status .cl {
+    display: block;
+  }
+}
+/* near square: a larger moon, higher, fills the sky over the robot; it grows in from 23:20 (--d23) */
+@media (min-width: 721px) and (max-aspect-ratio: 23/20) {
+  .hero {
+    --d23: calc(115vh - 100vw);
+    --md: min(calc(var(--fh) * 0.62 + clamp(0px, var(--d23), var(--fh) * 0.13)), var(--mroom));
+    --mcx: calc(var(--fw) * 0.62 - clamp(0px, var(--d23), var(--fw) * 0.07));
+    --mcy: calc(var(--fh) * 0.92 + clamp(0px, var(--d23), var(--fh) * 0.2));
+  }
+}
+/* portrait windows: the robot stands below the links (--cb, the bottom of the words) and may reach under them */
+@media (min-width: 961px) and (max-aspect-ratio: 1/1) {
+  .hero {
+    --cb: calc(10vh + 2.42 * var(--fs) + 242px);
+    --fh: min(
+      calc((100vw - 64px) / 1.065),
+      calc((var(--F) * 0.97 - var(--cb) - 1.12 * var(--af) - 40px) / 0.954),
+      816px
+    );
+  }
+}
+/* the tallest: the moon settles behind the robot's back, clear of the ends of the words, from 4:5 (--d45) */
+@media (min-width: 961px) and (max-aspect-ratio: 4/5) {
+  .hero {
+    --d45: calc(80vh - 100vw);
+    --md: min(calc(var(--fh) * 0.75 - clamp(0px, var(--d45) * 2, var(--fh) * 0.09)), var(--mroom));
+    --mcx: calc(var(--fw) * 0.55 + clamp(0px, var(--d45) * 2, var(--fw) * 0.05));
+    --mcy: calc(var(--fh) * 1.12 - clamp(0px, var(--d45) * 2, var(--fh) * 0.16));
+  }
+}
+/* stacked, on phones held upright, on narrow windows taller than wide and on windows too narrow for
+   the robot beside the headline: the words, then the scene filling the rest of the first screen (--sh,
+   set by js/sumi-fold.js), which holds the moon over the robot and, on short screens, the "!" over
+   its head. When the words leave less than --smin, a small robot stands below them */
+@media (max-width: 720px) and (max-aspect-ratio: 5/4),
+  (max-width: 960px) and (max-aspect-ratio: 1/1),
+  (max-width: 560px) {
   .hero {
     display: flex;
     flex-direction: column;
-    --sh0: max(300px, calc(var(--F) - 438px));
-    --fh: min(calc((var(--sh, var(--sh0)) - 24px) / 1.07), calc((100vw - 24px) / 0.937), 640px);
+    --fs: clamp(40px, 6.4vw, 60px);
+    --smin: 140px;
+    --sh0: calc(var(--F) - 336px - 2.08 * var(--fs));
+    --sc: max(var(--smin), var(--sh, var(--sh0)));
+    --fh: min(
+      calc((var(--sc) - 24px) / 1.22),
+      calc((var(--sc) - 76px) / 0.924),
+      calc((100vw - 16px) / 1.065),
+      640px
+    );
     --fl: calc((100% - var(--fw)) / 2);
-    --fb: calc(var(--fh) * -0.06);
-    --md: calc(var(--fh) * 0.66);
-    --mx: 0.38;
-    --my: 0.2;
+    --fb: calc(var(--fh) * -0.03);
+    --md: calc(var(--fh) * 0.7);
+    --mcx: calc(var(--fw) * 0.46);
+    --mcy: calc(var(--fh) * 0.9);
     --gh: 36%;
   }
   .hero .copy {
     padding: 56px 0 0;
-  }
-  .hero h1 {
-    font-size: clamp(40px, 6.4vw, 60px);
   }
   .hero .sub {
     font-size: 16px;
@@ -1862,16 +1965,16 @@ main:has(> .ridge:last-child) + .foot .sign {
     position: relative;
     inset: auto;
     flex: 1 0 auto;
-    min-height: 300px;
+    min-height: var(--smin);
     margin: 8px calc(-1 * var(--gutter)) 0;
   }
   .hero .alert {
-    top: calc(var(--fh) * 0.042 - 1.12em - 14px);
+    top: calc(var(--fh) * 0.046 - 1.12em - 14px);
     font-size: 3rem;
     border-width: 3px;
   }
 }
-@media (min-width: 721px) and (max-width: 960px) {
+@media (min-width: 721px) and (max-width: 960px) and (max-aspect-ratio: 1/1) {
   .hero {
     --fl: calc(100% - var(--fw) - var(--gutter));
     --gh: 42%;
@@ -2014,33 +2117,36 @@ main:has(> .ridge:last-child) + .foot .sign {
     }
   }
   .hero {
-    --sh0: max(300px, calc(var(--F) - 362px));
+    --fs: clamp(28px, 8.8vw, 40px);
+    --sh0: calc(var(--F) - 282.5px - 2.2 * var(--fs));
   }
   .hero .copy {
     padding: 36px 0 0;
   }
   .hero h1 {
-    font-size: clamp(28px, 8.8vw, 40px);
     letter-spacing: -0.012em;
     line-height: 1.1;
   }
   .hero .sub {
+    min-height: 6.2em;
     font-size: 15px;
     line-height: 1.55;
     margin-top: 18px;
-    max-width: 34ch;
+    max-width: 18.5em;
   }
+  /* phones: the three places are in Experience, a scroll below */
   .hero .sub .more {
     display: none;
   }
-  /* phones: the sentence ends at "vision systems."; the three places (UTRGV, AFRL, INL) are in Experience a scroll below */
   .hero .status {
     margin-top: 18px;
     letter-spacing: 0.14em;
-    text-wrap: balance;
   }
   .hero .status .cl {
     white-space: normal;
+  }
+  .hero .status .nw {
+    display: block;
   }
   .hero .ctas {
     margin-top: 4px;
@@ -2258,6 +2364,45 @@ main:has(> .ridge:last-child) + .foot .sign {
   }
   .mgs-alert {
     font-size: 5rem;
+  }
+}
+/* short phones: the status line gives way to the robot (the footer carries the same two facts) */
+@media (max-width: 720px) and (max-height: 600px) {
+  .hero {
+    --sh0: calc(var(--F) - 215px - 2.2 * var(--fs));
+  }
+  .hero .status {
+    display: none;
+  }
+  .hero .ctas {
+    margin-top: 14px;
+  }
+}
+/* the shortest phones turned sideways: the sub runs wider, in two lines, so the links stay on screen */
+@media (max-width: 720px) and (max-height: 340px) {
+  .hero .sub {
+    max-width: 28em;
+    min-height: 3.1em;
+  }
+}
+/* phones turned sideways and short desktop windows: the same, and the sub ends where it does on a
+   phone; under 580 px the full words would push the robot's feet off the first screen */
+@media (min-width: 721px) and (max-width: 960px) and (max-height: 500px),
+  (min-width: 961px) and (max-height: 579px) {
+  .hero .copy {
+    padding-bottom: 0;
+  }
+  .hero .sub {
+    min-height: 3.2em;
+  }
+  .hero .sub .more {
+    display: none;
+  }
+  .hero .status {
+    display: none;
+  }
+  .hero .ctas {
+    margin-top: 14px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -1,34 +1,29 @@
-"""The Go2 plates for the fold of index.html: the Unitree Go2 posed and rendered in
-MuJoCo under one moon, then printed as the page prints: NAME-night.png (paper through
-a Bayer 4 x 4 screen, on transparent) over NAME-shade.png (its silhouette in sumi).
+"""The Go2 plates for the fold of index.html: the Unitree Go2 posed and rendered in MuJoCo
+under one moon, then printed as the page prints, paper through a Bayer 4 x 4 screen
+(NAME-night.png) over the silhouette in sumi (NAME-shade.png), each also at twice the
+size (-2x) with the same screen, so the dots keep their size on every display.
 
-    python3 tools/make-go2.py --out DIR --name go2 [pose] [camera] [light] [print]
+    python3 tools/make-go2.py --out img --name go2 --size 534x480 --azimuth 216 \\
+        --elevation 6 --distance 3.2 --fov 9.192 --lookat=-0.0262,-0.0031,0.2103 \\
+        --height 0.30 --yaw 10 --pitch 4 --light 252,46 --fill 0.14 --black 0.06 \\
+        --white 0.2 --gamma 1.0 --fade 0.66,0.97
 
-The fold's plates (then delete img/go2-tone.png and img/go2-preview.png):
-
-    python3 tools/make-go2.py --out img --name go2 --azimuth 138 --elevation 6
-        --distance 0.78 --fov 39.357 --lookat=0.0694,-0.0532,0.1948 --height 0.30
-        --yaw=-10 --pitch 4 --light 160,50 --flip --size 787x840
-
-Also writes NAME-tone.png and NAME-preview.png to look at, and prints where the figure
-is on the plate, in fractions of it (x from the left, y from the top). --sheet N puts N
-frames of the trot in one sheet with a NAME.json index. Angles are in degrees, lengths
-in metres. The model is MuJoCo Menagerie's unitree_go2 (Unitree Robotics, BSD-3-Clause).
-Needs mujoco, numpy and Pillow.
+Also writes NAME-preview.png to look at (not shipped), and prints where the figure is on
+the plate, in fractions of it (x from the left, y from the top). Angles are in degrees,
+lengths in metres. The model is MuJoCo Menagerie's unitree_go2 (Unitree Robotics,
+BSD-3-Clause). Needs mujoco, numpy and Pillow.
 """
 
 import argparse
-import json
 import math
 import os
 import pathlib
-import random
 
 os.environ.setdefault("MUJOCO_GL", "osmesa")
 
 import mujoco
 import numpy as np
-from PIL import Image, ImageFilter, ImageOps
+from PIL import Image, ImageFilter
 
 GO2_XML = "/home/user/google-deepmind/mujoco_menagerie/unitree_go2/go2.xml"
 PAPER = (233, 231, 226)
@@ -36,10 +31,9 @@ SUMI = (20, 20, 22)
 SHADE = (20, 20, 20)
 BAYER = np.array([[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]])
 OVERSAMPLE = 3
-BLOT_PX = 9
 
-# the mesh's materials as print tones: dark trunk and calves, pale thigh shells
-TONE = {"black": 0.04, "gray": 0.22, "metal": 0.9, "white": 1.0}
+# the mesh's materials as print tones: the trunk near black, the shells lighter
+TONE = {"black": 0.04, "gray": 0.12, "metal": 0.6, "white": 1.0}
 SPECULAR = 1.0
 SHININESS = 0.15
 # the fill: on the camera's side, across from the moon and a little low
@@ -63,7 +57,6 @@ HOME_CALF = -1.8
 # places on the trunk, in its own frame
 HEAD_TOP = (0.22, 0.0, 0.089)
 HEAD_FRONT = (0.332, 0.0, 0.02)
-BACK = ((-0.128, 0.0, 0.062), (0.06, 0.0, 0.06))
 
 
 def numbers(count):
@@ -86,18 +79,12 @@ def arguments():
     parser.add_argument("--out", required=True, help="directory for the plates")
     parser.add_argument("--name", default="go2")
     parser.add_argument("--model", default=GO2_XML, help="path to go2.xml")
-    parser.add_argument("--sheet", type=int, metavar="N", help="N trot frames")
 
-    group = parser.add_argument_group("pose")
-    group.add_argument("--pose", choices=("stand", "trot"), default="stand")
-    group.add_argument("--phase", type=float, default=0.25, help="trot cycle, 0 to 1")
-    group.add_argument("--stride", type=float, default=0.2, help="trot step length")
-    group.add_argument("--lift", type=float, default=0.07, help="trot foot clearance")
-    group.add_argument("--yaw", type=float, default=0.0, help="nose left, feet planted")
-    group.add_argument("--pitch", type=float, default=0.0, help="nose up, feet planted")
+    group = parser.add_argument_group("pose: the feet stay planted, the trunk moves")
+    group.add_argument("--yaw", type=float, default=0.0, help="nose to its left")
+    group.add_argument("--pitch", type=float, default=0.0, help="nose up")
     group.add_argument("--roll", type=float, default=0.0, help="right side down")
     group.add_argument("--height", type=float, default=HOME_Z, help="trunk height")
-    group.add_argument("--qpos", type=numbers(19), help="19 numbers: a whole pose")
 
     group = parser.add_argument_group("camera")
     group.add_argument(
@@ -114,7 +101,6 @@ def arguments():
         "--lookat", type=numbers(3), default=[-0.035, 0.0, 0.16], metavar="X,Y,Z"
     )
     group.add_argument("--fov", type=float, default=20.0, help="vertical, degrees")
-    group.add_argument("--flip", action="store_true", help="mirror the finished plate")
 
     group = parser.add_argument_group("light")
     group.add_argument(
@@ -133,10 +119,10 @@ def arguments():
     group.add_argument("--white", type=float, default=0.36, help="tone printed solid")
     group.add_argument("--gamma", type=float, default=1.25)
     group.add_argument(
-        "--sink",
+        "--fade",
         type=numbers(2),
         metavar="FROM,TO",
-        help="dissolve toward the feet between these fractions of the plate's height",
+        help="the screen thins out toward the feet between these fractions of the height",
     )
     return parser.parse_args()
 
@@ -149,14 +135,10 @@ def direction(azimuth, elevation):
 
 
 def lit_model(args):
-    """the model with the moon, its fill and the print's tones"""
+    """the model with the moon, its fill and the print's tones, sized for the 2x plate"""
     moon_az, moon_el = args.light
     fill_az = -math.copysign(FILL_AZIMUTH_DEG, math.sin(math.radians(moon_az)))
     spec = mujoco.MjSpec.from_file(args.model)
-    # the lettering is left off: in the fold it reads as an advert
-    for geom in spec.geoms:
-        if geom.material == "white":
-            geom.group = 3
     spec.worldbody.add_light(
         type=mujoco.mjtLightType.mjLIGHT_DIRECTIONAL,
         dir=-direction(args.azimuth + 180 + moon_az, moon_el),
@@ -175,35 +157,13 @@ def lit_model(args):
     width, height = args.size
     model.vis.headlight.active = 0
     model.vis.global_.fovy = args.fov
-    model.vis.global_.offwidth = width * OVERSAMPLE
-    model.vis.global_.offheight = height * OVERSAMPLE
+    model.vis.global_.offwidth = 2 * width * OVERSAMPLE
+    model.vis.global_.offheight = 2 * height * OVERSAMPLE
     for name, tone in TONE.items():
         model.material(name).rgba[:3] = tone
     model.mat_specular[:] = SPECULAR
     model.mat_shininess[:] = SHININESS
     return model
-
-
-def home_feet():
-    """the four feet of the home pose, in the world"""
-    drop = THIGH_M * math.cos(HOME_THIGH) + CALF_M * math.cos(HOME_THIGH + HOME_CALF)
-    feet = {}
-    for leg, (x, y) in HIPS.items():
-        feet[leg] = np.array([x, y + math.copysign(THIGH_Y, y), HOME_Z - drop])
-    return feet
-
-
-def trot(feet, phase, stride, lift):
-    """a diagonal-pair trot: FL and RR stand for the first half cycle, then FR and RL"""
-    for leg in feet:
-        t = (phase + (0.5 if leg in ("FR", "RL") else 0.0)) % 1.0
-        if t < 0.5:
-            feet[leg][0] += stride * (0.5 - 2 * t)
-        else:
-            # the swing foot follows a cycloid
-            swing = 2 * math.pi * (2 * t - 1)
-            feet[leg][0] += stride * ((swing - math.sin(swing)) / (2 * math.pi) - 0.5)
-            feet[leg][2] += lift * (1 - math.cos(swing)) / 2
 
 
 def leg_angles(leg, foot):
@@ -226,11 +186,9 @@ def leg_angles(leg, foot):
     return hip, thigh, calf
 
 
-def pose(args, phase):
-    """qpos: the feet stay where the gait puts them and the trunk moves over them"""
-    feet = home_feet()
-    if phase is not None:
-        trot(feet, phase, args.stride, args.lift)
+def pose(args):
+    """qpos: the feet where they stand at home, the trunk moved over them"""
+    drop = THIGH_M * math.cos(HOME_THIGH) + CALF_M * math.cos(HOME_THIGH + HOME_CALF)
     centre = np.array([0.0, 0.0, args.height])
     quat = np.zeros(4)
     mujoco.mju_euler2Quat(quat, np.radians([args.yaw, -args.pitch, args.roll]), "zyx")
@@ -238,8 +196,9 @@ def pose(args, phase):
     mujoco.mju_quat2Mat(turn, quat)
     turn = turn.reshape(3, 3)
     joints = []
-    for leg in HIPS:
-        joints += leg_angles(leg, turn.T @ (feet[leg] - centre))
+    for leg, (x, y) in HIPS.items():
+        foot = np.array([x, y + math.copysign(THIGH_Y, y), HOME_Z - drop])
+        joints += leg_angles(leg, turn.T @ (foot - centre))
     return np.concatenate([centre, quat, joints])
 
 
@@ -266,57 +225,76 @@ def opened(mask, size):
     return np.asarray(image) > 0
 
 
-def render(renderer, data, camera):
-    """luminance and silhouette at the plate's size"""
+def render(renderer, data, camera, lettering):
+    """luminance, silhouette and the lettering's pixels at the plate's size"""
     height = renderer.height // OVERSAMPLE
     width = renderer.width // OVERSAMPLE
     renderer.update_scene(data, camera)
     renderer.disable_segmentation_rendering()
     light = renderer.render().mean(axis=2) / 255
     renderer.enable_segmentation_rendering()
-    solid = renderer.render()[..., 0] >= 0
+    segments = renderer.render()
+    solid = segments[..., 0] >= 0
+    geoms = segments[..., 1] == mujoco.mjtObj.mjOBJ_GEOM
+    letters = geoms & np.isin(segments[..., 0], lettering)
     cells = (height, OVERSAMPLE, width, OVERSAMPLE)
     cover = solid.reshape(cells).sum(axis=(1, 3))
     tone = (light * solid).reshape(cells).sum(axis=(1, 3)) / np.maximum(cover, 1)
     inside = cover * 2 >= OVERSAMPLE**2
-    # pinholes between parts would let the moon through
-    return tone, ~opened(~inside, 3)
+    lettered = letters.reshape(cells).any(axis=(1, 3))
+    return tone, inside, lettered
 
 
-def screen(tone, inside, args):
-    """the tone curve, then the page's Bayer screen at one plate pixel"""
+def neighbours(values):
+    """the sum of each pixel's 3 x 3 block"""
+    padded = np.pad(values, 1)
+    height, width = values.shape
+    blocks = [padded[y : y + height, x : x + width] for y in range(3) for x in range(3)]
+    return sum(blocks)
+
+
+def unlettered(tone, inside, lettered, scale):
+    """the shell without its lettering: the tone round it, grown in ring by ring"""
+    # grown past the letters: the recess they sit in prints its own edges
+    grown = Image.fromarray(lettered.astype(np.uint8) * 255)
+    grown = grown.filter(ImageFilter.MaxFilter(4 * scale + 1))
+    hole = (np.asarray(grown) > 0) & inside
+    have = inside & ~hole
+    value = np.where(have, tone, 0.0)
+    ring = hole
+    while ring.any():
+        count = neighbours(have.astype(float))
+        ring = hole & ~have & (count > 0)
+        value[ring] = neighbours(value)[ring] / np.maximum(count[ring], 1)
+        have |= ring
+    return np.where(hole, value, tone)
+
+
+def threshold(height, width, scale):
+    """the Bayer screen, one cell per 1x plate pixel"""
+    cell = np.kron(BAYER, np.ones((scale, scale), int))
+    size = 4 * scale
+    return np.tile(cell, (height // size + 1, width // size + 1))[:height, :width]
+
+
+def printed(tone, inside, args, scale):
+    """the tone curve and the screen; the fade thins both plates toward the feet"""
     height, width = tone.shape
+    screen = threshold(height, width, scale)
     tone = np.clip((tone - args.black) / (args.white - args.black), 0.0, 1.0)
     tone = tone**args.gamma
-    threshold = np.tile(BAYER, (height // 4 + 1, width // 4 + 1))[:height, :width]
+    if args.fade:
+        start, end = args.fade
+        depth = ((np.arange(height) + 0.5) / height - start) / (end - start)
+        keep = 1 - smooth(depth)[:, None]
+        tone = tone * keep
+        inside = inside & (keep * 16 > screen + 0.5)
     # no tint under a quarter: sparser dots read as a dot matrix, not as ink
-    threshold = np.maximum(threshold, 3)
-    return tone * inside, inside & (tone * 16 > threshold + 0.5)
+    paper = inside & (tone * 16 > np.maximum(screen, 3) + 0.5)
+    return inside, paper
 
 
-def sink(inside, paper, start, end):
-    """the legs dissolve toward the feet: patches drop out, the paper first"""
-    height, width = inside.shape
-    rnd = random.Random(31)
-    across = width // BLOT_PX + 2
-    down = height // BLOT_PX + 2
-    grains = (rnd.gauss(128, 64) for _ in range(across * down))
-    lattice = bytes(min(255, max(0, int(grain))) for grain in grains)
-    blot = Image.frombytes("L", (across, down), lattice)
-    blot = blot.resize((across * BLOT_PX, down * BLOT_PX), Image.BILINEAR)
-    blot = blot.crop((0, 0, width, height)).filter(ImageFilter.GaussianBlur(3))
-    blot = (np.asarray(ImageOps.equalize(blot)) + 0.5) / 256
-    depth = ((np.arange(height) + 0.5) / height - start) / (end - start)
-    keep = opened(blot < 1 - smooth(depth)[:, None], 5)
-    keep = ~opened(~keep, 5)
-    shade = inside & keep
-    sinking = depth > 0
-    shade[sinking] = opened(shade, 3)[sinking]
-    paper = paper & shade & (blot < 1 - smooth(2 * depth)[:, None])
-    return shade, paper
-
-
-def plate_facts(model, data, args, inside, paper):
+def plate_facts(data, args, inside, paper):
     """where the figure is on the plate"""
     height, width = inside.shape
     forward = direction(args.azimuth, args.elevation)
@@ -329,8 +307,6 @@ def plate_facts(model, data, args, inside, paper):
         ray = point - eye
         x = 0.5 + focal * (ray @ right) / (ray @ forward) * height / width
         y = 0.5 - focal * (ray @ up) / (ray @ forward)
-        if args.flip:
-            x = 1 - x
         return np.round([x, y], 3).tolist()
 
     trunk = data.body("base")
@@ -338,40 +314,12 @@ def plate_facts(model, data, args, inside, paper):
     rows = np.flatnonzero(inside.any(axis=1))
     columns = np.flatnonzero(inside.any(axis=0))
     edges = np.array([columns[0], rows[0], columns[-1] + 1, rows[-1] + 1])
-    figure = edges / [width, height, width, height]
-    feet = {}
-    for leg in HIPS:
-        feet[leg] = place(data.geom(leg).xpos - [0, 0, model.geom(leg).size[0]])
     return {
-        "figure": figure.round(3).tolist(),
+        "figure": (edges / [width, height, width, height]).round(3).tolist(),
         "head_top": place(trunk.xpos + turn @ HEAD_TOP),
         "head_front": place(trunk.xpos + turn @ HEAD_FRONT),
-        "back": [place(trunk.xpos + turn @ end) for end in BACK],
-        "feet": feet,
         "paper": round(float(paper.sum() / inside.sum()), 3),
     }
-
-
-def plate(args, model, renderer, qpos):
-    """one pose as tone, shade and paper, with its facts"""
-    check_joints(model, qpos)
-    data = mujoco.MjData(model)
-    data.qpos[:] = qpos
-    mujoco.mj_forward(model, data)
-    camera = mujoco.MjvCamera()
-    camera.azimuth = args.azimuth
-    camera.elevation = args.elevation
-    camera.distance = args.distance
-    camera.lookat[:] = args.lookat
-    tone, inside = render(renderer, data, camera)
-    if args.flip:
-        tone = tone[:, ::-1]
-        inside = inside[:, ::-1]
-    tone, paper = screen(tone, inside, args)
-    facts = plate_facts(model, data, args, inside, paper)
-    if args.sink:
-        inside, paper = sink(inside, paper, *args.sink)
-    return tone, inside, paper, facts
 
 
 def save_plate(mask, colour, path):
@@ -381,55 +329,43 @@ def save_plate(mask, colour, path):
     print(path.name, path.stat().st_size, "bytes")
 
 
-def save(out, name, tone, shade, paper):
-    save_plate(paper, PAPER, out / f"{name}-night.png")
-    save_plate(shade, SHADE, out / f"{name}-shade.png")
-    grey = np.round(tone * 255).astype(np.uint8)
-    Image.fromarray(grey, "L").save(out / f"{name}-tone.png")
-    preview = np.empty((*shade.shape, 3), np.uint8)
-    preview[:] = SUMI
-    preview[shade] = SHADE
-    preview[paper] = PAPER
-    Image.fromarray(preview, "RGB").save(out / f"{name}-preview.png")
-
-
 def main():
     args = arguments()
     out = pathlib.Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    width, height = args.size
-    if args.sheet:
-        phases = [round(step / args.sheet, 4) for step in range(args.sheet)]
-    elif args.pose == "trot":
-        phases = [args.phase]
-    else:
-        phases = [None]
-    columns = math.ceil(math.sqrt(len(phases)))
-    rows = math.ceil(len(phases) / columns)
-    tone = np.zeros((rows * height, columns * width))
-    shade = np.zeros(tone.shape, bool)
-    paper = np.zeros(tone.shape, bool)
-    frames = []
     model = lit_model(args)
-    with mujoco.Renderer(model, height * OVERSAMPLE, width * OVERSAMPLE) as renderer:
-        for index, phase in enumerate(phases):
-            qpos = np.array(args.qpos) if args.qpos else pose(args, phase)
-            x = index % columns * width
-            y = index // columns * height
-            cell = (slice(y, y + height), slice(x, x + width))
-            printed = plate(args, model, renderer, qpos)
-            tone[cell], shade[cell], paper[cell], facts = printed
-            frames.append({"x": x, "y": y, "phase": phase, **facts})
-    save(out, args.name, tone, shade, paper)
-    if args.sheet:
-        lines = ",\n".join(json.dumps(entry) for entry in frames)
-        text = f'{{"frame": [{width}, {height}], "frames": [\n{lines}\n]}}\n'
-        (out / f"{args.name}.json").write_text(text)
-        print(f"{args.name}.json", len(frames), "frames of", width, "x", height)
-    else:
-        print("size      ", [width, height])
-        for key, value in facts.items():
-            print(f"{key:10}", value)
+    qpos = pose(args)
+    check_joints(model, qpos)
+    data = mujoco.MjData(model)
+    data.qpos[:] = qpos
+    mujoco.mj_forward(model, data)
+    camera = mujoco.MjvCamera()
+    camera.azimuth = args.azimuth
+    camera.elevation = args.elevation
+    camera.distance = args.distance
+    camera.lookat[:] = args.lookat
+    lettering = np.flatnonzero(model.geom_matid == model.material("white").id)
+    width, height = args.size
+    for scale, suffix in ((1, ""), (2, "-2x")):
+        size = (height * scale * OVERSAMPLE, width * scale * OVERSAMPLE)
+        with mujoco.Renderer(model, *size) as renderer:
+            tone, inside, lettered = render(renderer, data, camera, lettering)
+        tone = unlettered(tone, inside, lettered, scale)
+        # pinholes between parts would let the moon through
+        inside = ~opened(~inside, 2 * scale + 1)
+        shade, paper = printed(tone, inside, args, scale)
+        save_plate(paper, PAPER, out / f"{args.name}-night{suffix}.png")
+        save_plate(shade, SHADE, out / f"{args.name}-shade{suffix}.png")
+        if scale == 1:
+            facts = plate_facts(data, args, inside, paper)
+            preview = np.empty((height, width, 3), np.uint8)
+            preview[:] = SUMI
+            preview[shade] = SHADE
+            preview[paper] = PAPER
+            Image.fromarray(preview, "RGB").save(out / f"{args.name}-preview.png")
+    print("size      ", [width, height])
+    for key, value in facts.items():
+        print(f"{key:10}", value)
 
 
 if __name__ == "__main__":
