@@ -487,7 +487,46 @@
           <p class="res-paper"><a class="link" href="papers/lugo-icmla-2026.pdf">Read the paper<span aria-hidden="true"> →</span></a></p>
         </div>
 
-        <span id="search"></span>
+        <div class="search" id="search">
+          <h3 class="fig-h" id="h-search">A memory that can be revised</h3>
+          <p class="search-d">Three robots search the same room for the same chair, and only their memory differs. Move the chair where none of them can see it.</p>
+          <figure>
+            <div class="search-rooms">
+              <div class="search-room">
+                <canvas aria-hidden="true"></canvas>
+                <span class="search-hint mono" aria-hidden="true">drag the chair</span>
+                <p class="search-name mono">No memory</p>
+                <dl class="search-count mono">
+                  <div><dt>Steps to reacquire</dt><dd></dd></div>
+                  <div><dt>Stale revisits</dt><dd></dd></div>
+                </dl>
+              </div>
+              <div class="search-room">
+                <canvas aria-hidden="true"></canvas>
+                <p class="search-name mono">Memory, never revised</p>
+                <dl class="search-count mono">
+                  <div><dt>Steps to reacquire</dt><dd></dd></div>
+                  <div><dt>Stale revisits</dt><dd></dd></div>
+                </dl>
+              </div>
+              <div class="search-room">
+                <canvas aria-hidden="true"></canvas>
+                <p class="search-name mono">Memory, revised</p>
+                <dl class="search-count mono">
+                  <div><dt>Steps to reacquire</dt><dd></dd></div>
+                  <div><dt>Stale revisits</dt><dd></dd></div>
+                </dl>
+              </div>
+            </div>
+            <div class="search-act">
+              <button type="button" class="search-move"><span>Move the chair</span></button>
+              <button type="button" class="search-reset"><span>Reset</span></button>
+            </div>
+            <p class="search-result mono"></p>
+            <p class="sr-only">Three plans of the same room, each with one robot and one chair. The robots walk to the chair and stop, then the chair moves out of their sight. The robot with no memory turns in circles and wanders until it comes across the chair. The one whose memory is never revised keeps walking back to where the chair used to be. The one that revises its memory checks that spot once, strikes it out and searches the rest of the room. The line under the rooms gives the steps each one took.</p>
+            <figcaption class="mono"><span class="cl">a toy: rays stand in for the camera, a <span class="nw">hand-written</span> rule for the vision-language model</span><span class="sep"> · </span><span class="cl">the real system writes this memory, as text, into a frozen model’s prompt</span><span class="sep"> · </span><span class="cl">the guards in the footer’s hidden game search where they last saw you, then give up</span></figcaption>
+          </figure>
+        </div>
 
         <h3 class="fig-h" id="h-pubs">Publications</h3>
         <ol class="rows pubs" aria-labelledby="h-pubs">
