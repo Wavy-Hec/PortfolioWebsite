@@ -17,7 +17,7 @@ import pymupdf
 from PIL import Image
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-PDF = ROOT / "Hector_Lugo_Fall_Resume.pdf"
+PDF = ROOT / "Hector_Lugo_III_Resume.pdf"
 IMG = ROOT / "img/resume-page1.png"
 IMG_2X = ROOT / "img/resume-page1-2x.png"
 VIEW = ROOT / "resume.html"
@@ -28,9 +28,9 @@ NEAR_PT = 10
 LABELS = [
     ("linkedin", "LinkedIn profile"),
     ("github.com/Wavy-Hec/MultiCam", "AFRL multi-camera harness on GitHub"),
-    ("github.com/Wavy-Hec/VLM", "VLM navigation repo on GitHub"),
+    ("github.com/Wavy-Hec/VLM", "VLM navigation and memory repo on GitHub"),
     ("github.com/Wavy-Hec/poker-rl", "Poker RL repo on GitHub"),
-    ("github.com/Wavy-Hec/ObjectDetection", "FlowCount repo on GitHub"),
+    ("github.com/Wavy-Hec/drone-search-rescue", "Drone search and rescue repo on GitHub"),
     ("github.com/Wavy-Hec/railway-accident-clustering", "Railway Crossing Accidents code on GitHub"),
     ("github.com/Wavy-Hec", "GitHub profile"),
     ("springer", "Personalized Chemotherapy Dosing paper (Springer)"),

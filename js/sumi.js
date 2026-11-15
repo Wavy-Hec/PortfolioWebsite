@@ -61,7 +61,6 @@
     ['.results', 'js/sumi-results.js'],
     ['.search', 'js/sumi-search.js'],
     ['.xray', 'js/sumi-xray.js?v=16'],
-    ['.print', 'js/sumi-print.js'],
     ['.track', 'js/sumi-track.js'],
     ['.ridge', 'js/sumi-ridge.js'],
   ];

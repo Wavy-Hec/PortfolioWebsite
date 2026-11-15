@@ -2147,17 +2147,6 @@ button.link {
   margin: 0 auto;
   mix-blend-mode: multiply;
 }
-.mat canvas {
-  position: absolute;
-  image-rendering: pixelated;
-}
-/* hidden until printed: placing it would count as a layout shift */
-.mat:not(.printed) canvas {
-  display: none;
-}
-.mat.printed img {
-  opacity: 0;
-}
 .print figcaption {
   margin-top: 18px;
   color: var(--dim);

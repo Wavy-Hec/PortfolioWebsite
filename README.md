@@ -19,14 +19,13 @@ dependencies.
 | `js/sumi-xray.js`                                       | The Go2 sketch you can drive                                                                                                   |
 | `js/sumi-results.js`                                    | The ICMLA paper's results                                                                                                      |
 | `js/sumi-search.js`                                     | The search toy: one room, three memories                                                                                       |
-| `js/sumi-print.js`                                      | Prints the About photograph as one-bit ink                                                                                     |
 | `js/sumi-ridge.js`                                      | The mountains before the footer                                                                                                |
 | `js/game.js`                                            | A hidden game, fetched only when someone finds it                                                                              |
 | `img/`                                                  | The fold's Go2, the project plates, the About photograph, the résumé page, the game's codec portrait and the link-preview card |
 | `media/`                                                | The drone reel's four clips and the poker clip, each with its poster                                                           |
 | `papers/`                                               | The ICMLA 2026 paper, the accepted version with IEEE's notice                                                                  |
 | `resume.html`                                           | The résumé as an image with its links laid over it                                                                             |
-| `Hector_Lugo_Fall_Resume.pdf`                           | The résumé, linked from `resume.html`                                                                                          |
+| `Hector_Lugo_III_Resume.pdf`                            | The résumé, linked from `resume.html`                                                                                          |
 | `404.html`                                              | Served by GitHub Pages at any missing path                                                                                     |
 | `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | The seal, as the tab and home-screen icon                                                                                      |
 | `sitemap.xml`                                           | The one page, for search engines                                                                                               |
@@ -40,17 +39,16 @@ dependencies.
 python3 -m http.server 8000
 ```
 
-Then open http://localhost:8000. Opened straight from disk, the page works except for the About photograph, which is
-not printed as ink: browsers do not let a page read back the pixels of a `file://` image.
+Then open http://localhost:8000. The page also works opened straight from disk.
 
 ## Tools
 
 Each one says at the top how to run it.
 
 - `make-go2.py`: the Go2 plates in the fold, rendered from MuJoCo Menagerie's model and printed in two colors.
-- `make-plate.py`: the G1 and RL in Isaac Lab project plates.
+- `make-plate.py`: the G1, RL in Isaac Lab and planet.txt project plates.
 - `make-media.sh`: the clips in `media/`, from the drone and poker repositories.
-- `make-about-photo.py`: the grayscale photograph that the About print is made from.
+- `make-about-photo.py`: the About photograph, in grayscale, from the original.
 - `build-resume-view.py`: `resume.html`'s two images and its links, from the PDF.
 - `make-night.py`: the hidden game's codec portrait, `img/raiden-night.png`.
 - `og-card.html`: the link-preview card, a still of the fold.

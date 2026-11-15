@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
-"""Draw two project plates in dry brush ink, each with its -2x twin: img/proj-humanoid-ink.png,
-a Unitree G1 walking, and img/proj-rl-isaaclab-ink.png, Go2s training side by side.
+"""Draw three project plates in ink, each with its -2x twin: img/proj-humanoid-ink.png, a Unitree
+G1 walking, and img/proj-rl-isaaclab-ink.png, Go2s training side by side, both in dry brush; and
+img/proj-planet-ink.png, a frame of planet.txt set in type.
 
     pip install numpy pillow
     python tools/make-plate.py
 
 Proportions and joint positions come from the G1 and Go2 models in MuJoCo Menagerie. The G1 is
 posed mid-stride and seen from the side; the Go2s trot, one to a cell, and a few have fallen.
+The planet.txt frame is the game's own text export of ?seed=home, as its README shows it, set in
+DejaVu Sans Mono Bold.
 """
 import pathlib
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 IMG = pathlib.Path(__file__).resolve().parent.parent / "img"
 W, H = 1280, 720
@@ -544,6 +547,63 @@ def draw_isaaclab(sheet):
                 go2(sheet, camera, (x, y, STAND), yaw, trot(phase), load)
 
 
+# rows 4 to 28 of the README's 80-column frame: the ringed moon, without the empty sky around it
+PLANET = r"""
+ .        .    .   .        .      . .      . .        .        .           . .
+       .        .    .   .      . .      . .      . .      .    ..``'',::;;;;;;;
+    .        .        .      . .      ....     .        ...``,:;;;;;;;;;;;=;;;;;
+ .        .    . . .... . .      `,:::=^====,`     ..',:;;;;;;;;::,,,''''':;=;,.
+ .            .      '''. . . ..:::======+======,:;;;;;;::,''',::;;;;;;;;`::'.
+  .        .        .  '+*```:^;^^====++++=========::'',:;;;;;;;;==;;;;:.'   .
+    .  ..        .    ..`^\_;;::^^==================;;;::|'''. . ';;:,'       .
+     .        .      . .. .='::^=========++=========^'   .     .,:..       .
+. .        .      .    . .^==========================;'    ....`        ..
+  . . `        .    ..':;======;=========^+++=====+++^; ..``.        .        .
+   .        .    `':;;;;;==^==============++=++====+==;` .      .        .
+.        .  ..':;;;;::'::====;===++++===++===+==+==;===;     .        .        .
+      .  .`:;;;;:,',:;;;;;^^;;;=;==;==^=+++==+===^;::===. .        .        .
+   .  `,;;;;;:',:;;;;,' .::;;:;=;^^===^=++===++===;^^+==      . .        .
+   `:;;;;|,',;;;;:'. . ..::=;:^==:::^=::^++++=+++=;====:   . .      . .  .   .
+`:;;;;:,',;;;=:'    ..`'_:,=^;:==^^;^:;::===+++====;===.. .      .        .
+;;;;:`:;;;;==`   ..``:|^'.::=^:^==^=^;::^^======;;;===`     . .        .
+;=;: :=;;;:;;:,''' . . .. .,^=^^===;;;::=========;;==' . . .        .     .  .
+;;;::....'`.        .    . .:^^:===;;:^;============*+'`.        .        .
+      . .        .      . . .;;::^;==;;;===========`.'*|'.. . .      . .      .
+     .        .      . .      ',;;;:^=========^=^'   ..`'|,       .    .   .
+  .        .      . .      . .  .'::^:^^^====::`  . . .  ...   .        .
+        .      .        .        .    .'`...     . .        .        .        .
+   .        .        .    .   .        .      . .      . .        .
+.        .        .  .     .      . .      . .    . . .      .        .        .
+""".strip("\n").split("\n")
+TYPE_PX = 23
+LINE_PX = 25
+TONES = 16
+# heavier than the type's own coverage, so the frame holds its weight beside the brush plates
+INK_GAMMA = 0.55
+
+
+def set_planet(scale):
+    """the frame set at 1 / scale of the 2x plate's size, as ink coverage from 0 to 1"""
+    width, height = W // scale, H // scale
+    font = ImageFont.truetype("DejaVuSansMono-Bold.ttf", TYPE_PX / scale)
+    page = Image.new("L", (width, height), 255)
+    pen = ImageDraw.Draw(page)
+    left = round((width - 80 * font.getlength("M")) / 2)
+    top = round((height - len(PLANET) * LINE_PX / scale) / 2)
+    for row, text in enumerate(PLANET):
+        pen.text((left, top + row * LINE_PX / scale), text, font=font, fill=0)
+    return 1 - np.asarray(page) / 255
+
+
+def save_tones(coverage, name):
+    # type keeps its antialiasing: a dithered edge reads as grain at thumbnail size
+    plate = Image.fromarray(np.rint(coverage**INK_GAMMA * (TONES - 1)).astype(np.uint8), "P")
+    ramp = [round(p + (i - p) * k / (TONES - 1)) for k in range(TONES) for p, i in zip(PAPER, INK)]
+    plate.putpalette(ramp)
+    plate.save(IMG / name, optimize=True)
+    print(f"{name}: {(IMG / name).stat().st_size:,} bytes")
+
+
 def save(ink, name):
     plate = Image.fromarray(ink.astype(np.uint8), "P")
     plate.putpalette(PAPER + INK)
@@ -566,6 +626,8 @@ def main():
             np.asarray(grey.convert("1", dither=Image.Dither.FLOYDSTEINBERG)) == 0,
             f"{name}.png",
         )
+    save_tones(set_planet(1), "proj-planet-ink-2x.png")
+    save_tones(set_planet(2), "proj-planet-ink.png")
 
 
 if __name__ == "__main__":
