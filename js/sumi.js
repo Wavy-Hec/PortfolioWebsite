@@ -62,6 +62,7 @@
     ['.results', 'js/sumi-results.js'],
     ['.xray', 'js/sumi-xray.js?v=15'],
     ['.print', 'js/sumi-print.js'],
+    ['.ridge', 'js/sumi-ridge.js'],
   ];
   const waiting = new Map();
   for (const [selector, src] of LAZY_SCRIPTS) {
@@ -271,63 +272,6 @@
       launchGame();
     }
   });
-
-  // The closing band's halftone piece (js/ascii): fetched 2.5 s after load, or sooner if the
-  // band nears the screen, and sized to its box.
-  const pieces = [...document.querySelectorAll('ascii-art[data-cols]')];
-  if (pieces.length) {
-    const fit = () => {
-      for (const el of pieces) {
-        const width = el.clientWidth;
-        if (!width) continue;
-        const size = (width / (parseFloat(el.dataset.cols) * 0.602)).toFixed(2);
-        if (el.getAttribute('size') !== size) el.setAttribute('size', size);
-      }
-    };
-    let resizeTimer;
-    addEventListener(
-      'resize',
-      () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(fit, 200);
-      },
-      { passive: true },
-    );
-
-    const idle = (fn, timeout) =>
-      'requestIdleCallback' in window ? requestIdleCallback(fn, { timeout }) : setTimeout(fn, 200);
-    const still = matchMedia('(max-width: 720px), (pointer: coarse)').matches;
-    const unnamed = new Map(pieces.map(el => [el.parentElement, el]));
-    let engine = null;
-
-    const name = el => {
-      if (!unnamed.delete(el.parentElement)) return;
-      engine =
-        engine || Promise.all([import('./ascii/ascii.js?v=13'), import('./ascii/lib/kit.js')]);
-      Promise.all([engine, import(`./ascii/pieces/${el.dataset.piece}.js`)]).then(() =>
-        idle(() => {
-          fit();
-          if (still) el.setAttribute('still', '');
-          if (matchMedia('(max-width: 960px)').matches) el.setAttribute('contrast', '12');
-          el.setAttribute('fps', el.dataset.fps);
-          el.setAttribute('piece', el.dataset.piece);
-        }, 1200),
-      );
-    };
-
-    addEventListener('load', () =>
-      setTimeout(() => idle(() => [...unnamed.values()].forEach(name), 4000), 2500),
-    );
-    const bandNearby = new IntersectionObserver(
-      entries => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) name(pieces.find(el => el.parentElement === entry.target));
-        }
-      },
-      { rootMargin: '1600px 0px' },
-    );
-    for (const box of unnamed.keys()) bandNearby.observe(box);
-  }
 
   start();
 })();

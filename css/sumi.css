@@ -1544,124 +1544,31 @@ button.link {
   }
 }
 /* closing band */
-.breath {
-  --floor: clamp(44px, 5vh, 64px);
+.ridge {
   position: relative;
-  margin-top: -16px;
-  padding-bottom: var(--floor);
-  container-type: inline-size;
+  height: clamp(200px, 46vh, 56vw);
+  overflow: hidden;
   pointer-events: none;
-  background: linear-gradient(transparent calc(100% - var(--floor) * 2.2), var(--deep) 100%);
+  background: linear-gradient(transparent 60%, var(--deep));
 }
-main:has(> .breath:last-child) + .foot {
+.ridge canvas {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+main:has(> .ridge:last-child) + .foot {
   border-top: 0;
 }
-main:has(> .breath:last-child) + .foot .sign {
+main:has(> .ridge:last-child) + .foot .sign {
   padding-top: 16px;
 }
-.breath .frame {
-  --aw: 100cqw;
-  --cx: 96;
-  --r0: 2;
-  --r1: 88;
-  --hmax: 82vh;
-  --ftr: 8;
-  --fbr: 10;
-  --cell: calc(var(--aw) / 192);
-  --h: min(calc(var(--cell) * (var(--r1) - var(--r0))), var(--hmax));
-  --cy: calc((var(--r0) + var(--r1)) / 2);
-  --ft: calc(var(--cell) * var(--ftr));
-  --fb: calc(var(--cell) * var(--fbr));
-  --fade: linear-gradient(
-    transparent,
-    rgba(0, 0, 0, 0.06) calc(var(--ft) * 0.22),
-    rgba(0, 0, 0, 0.24) calc(var(--ft) * 0.44),
-    rgba(0, 0, 0, 0.58) calc(var(--ft) * 0.7),
-    #000 var(--ft),
-    #000 calc(100% - var(--fb)),
-    rgba(0, 0, 0, 0.58) calc(100% - var(--fb) * 0.7),
-    rgba(0, 0, 0, 0.24) calc(100% - var(--fb) * 0.44),
-    rgba(0, 0, 0, 0.06) calc(100% - var(--fb) * 0.22),
-    transparent
-  );
-  --side: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
-  --sx: 129;
-  --sy: 36;
-  --ramp: radial-gradient(
-    calc(var(--cell) * 72) calc(var(--cell) * 48) at
-      calc(50% + var(--cell) * (var(--sx) - var(--cx)))
-      calc(var(--h) / 2 + var(--cell) * (var(--sy) - var(--cy))),
-    #000 25%,
-    rgba(0, 0, 0, 0.5) 60%,
-    rgba(0, 0, 0, 0.08) 100%
-  );
-  --low: linear-gradient(transparent 58%, #000 70%, #000 100%);
-  position: relative;
-  height: var(--h);
-  overflow: hidden;
-  -webkit-mask-image: var(--fade), var(--side), var(--ramp), var(--low);
-  -webkit-mask-composite: source-in, source-in, source-over;
-  mask-image: var(--fade), var(--side), var(--ramp), var(--low);
-  mask-composite: intersect, intersect, add;
-}
-.breath .pagoda {
-  position: absolute;
-  left: calc(50% - var(--cell) * var(--cx));
-  top: calc(var(--h) / 2 - var(--cell) * var(--cy));
-  width: var(--aw);
-  max-width: none;
-  opacity: 0.95;
-}
-@media (min-width: 1921px) {
-  .breath .frame {
-    --aw: 1920px;
-    --side: linear-gradient(
-      90deg,
-      transparent calc(50% - 960px),
-      #000 calc(50% - 640px),
-      #000 calc(50% + 640px),
-      transparent calc(50% + 960px)
-    );
-  }
-}
-@media (max-width: 960px) {
-  .breath .frame {
-    --aw: 1152px;
-    --cx: 92;
-    --r0: -4;
-    --r1: 101;
-    --ftr: 12;
-    --fbr: 6;
-    --low: linear-gradient(
-      transparent 56%,
-      #000 66%,
-      #000 80%,
-      rgba(0, 0, 0, 0.45) 92%,
-      transparent
-    );
-  }
-}
-@media (min-width: 721px) and (max-width: 960px) {
-  .breath .frame {
-    --aw: 960px;
-  }
-}
 @media (max-width: 720px) {
-  .breath .frame {
-    --aw: 1000px;
-    --cx: 128;
-    --r0: 0;
-    --r1: 64;
-    --ftr: 24;
-    --fbr: 10;
+  main:has(> .ridge:last-child) + .foot .sign {
+    padding-top: 32px;
   }
-  .breath {
-    --floor: 40px;
-    margin-top: -40px;
-  }
-}
-body.game-open ascii-art {
-  display: none;
 }
 /* footer */
 .foot {
@@ -2431,9 +2338,6 @@ body.game-open ascii-art {
   }
   .sign small .cl {
     display: block;
-  }
-  main:has(> .breath:last-child) + .foot .sign {
-    padding-top: 32px;
   }
   .cols {
     margin-top: 48px;
