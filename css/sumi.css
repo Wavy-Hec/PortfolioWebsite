@@ -2192,15 +2192,30 @@ button.link {
   height: clamp(200px, 46vh, 56vw);
   overflow: hidden;
   pointer-events: none;
-  background: linear-gradient(transparent 60%, var(--deep));
 }
 .ridge canvas {
   position: absolute;
   left: 0;
-  bottom: 0;
   width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
+}
+.ridge .mist {
+  width: 200%;
+}
+/* the band without scripting, and a veil over the mountains until they are painted */
+.ridge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(var(--sumi) 60%, var(--deep));
+  transition: opacity 0.9s;
+}
+.ridge.painted::after {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ridge::after {
+    transition: none;
+  }
 }
 main:has(> .ridge:last-child) + .foot {
   border-top: 0;

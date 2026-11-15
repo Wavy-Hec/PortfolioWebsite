@@ -62,7 +62,7 @@
     ['.search', 'js/sumi-search.js'],
     ['.xray', 'js/sumi-xray.js?v=16'],
     ['.track', 'js/sumi-track.js'],
-    ['.ridge', 'js/sumi-ridge.js'],
+    ['.ridge', 'js/sumi-ridge.js?v=2'],
   ];
   const waiting = new Map();
   for (const [selector, src] of LAZY_SCRIPTS) {

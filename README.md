@@ -19,7 +19,7 @@ dependencies.
 | `js/sumi-xray.js`                                       | The Go2 sketch you can drive                                                                                                  |
 | `js/sumi-results.js`                                    | The ICMLA paper's results                                                                                                     |
 | `js/sumi-search.js`                                     | The search toy: one room, three memories                                                                                      |
-| `js/sumi-ridge.js`                                      | The mountains before the footer                                                                                               |
+| `js/sumi-ridge.js`                                      | The mountains before the footer, and the same range without its summit on the 404                                             |
 | `js/game.js`                                            | A hidden game, fetched only when someone finds it                                                                             |
 | `img/`                                                  | Raiden (the fold and the codec portrait), the project plates, the About photograph, the résumé page and the link-preview card |
 | `media/`                                                | The drone reel's four clips and the poker clip, each with its poster                                                          |
@@ -58,4 +58,5 @@ Each one says at the top how to run it.
 GitHub Pages builds `main` with Jekyll, which copies the pages unchanged and leaves out `tools/` and this README
 (`_config.yml`). After changing a file, add or bump the `?v=` where it is loaded: in `index.html` for the stylesheet,
 `js/sumi.js`, `js/sumi-fold.js` and the images; in `resume.html` for its two images and the PDF; in `js/sumi.js` for
-the scripts in `LAZY_SCRIPTS` and for `js/game.js`; in `js/game.js` for the codec portrait.
+the scripts in `LAZY_SCRIPTS` and for `js/game.js`; in `js/game.js` for the codec portrait; in `404.html` for
+`js/sumi-ridge.js`, which it shares with the front page.
