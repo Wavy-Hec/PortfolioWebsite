@@ -1,8 +1,8 @@
-# Hector Lugo: portfolio
+# Hector Lugo III: portfolio
 
 Live: [wavy-hec.github.io/PortfolioWebsite](https://wavy-hec.github.io/PortfolioWebsite/)
 
-The site of Hector Lugo, M.S. Computer Science student at UTRGV (expected December 2026), who works on reinforcement
+The site of Hector Lugo III, M.S. Computer Science student at UTRGV (expected December 2026), who works on reinforcement
 learning and vision systems for robots. Plain HTML, CSS and JavaScript: no build step, no framework, no runtime
 dependencies.
 

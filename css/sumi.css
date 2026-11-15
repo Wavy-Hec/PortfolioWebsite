@@ -1832,7 +1832,8 @@ button.link {
 .results figcaption .cl {
   white-space: nowrap;
 }
-.res-paper {
+.res-paper,
+.search-code {
   margin-top: 14px;
 }
 @media (min-width: 961px) {
