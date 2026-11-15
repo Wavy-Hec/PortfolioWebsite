@@ -8,30 +8,30 @@ dependencies.
 
 ## Files
 
-| Path                                                    | What it is                                                                                                                     |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `index.html`                                            | The page: the fold, Work, Experience, Research, About and the footer                                                           |
-| `css/sumi.css`                                          | The one stylesheet                                                                                                             |
-| `js/sumi.js`                                            | The page's frame loop, the scripts that load as their section nears, the footer's secret                                       |
-| `js/sumi-fold.js`                                       | The fold: the moon, the fog and the grass on one wind                                                                          |
-| `js/sumi-clips.js`                                      | The drone reel and the poker clip                                                                                              |
-| `js/sumi-track.js`                                      | FlowCount's tracker, running live on its plate                                                                                 |
-| `js/sumi-xray.js`                                       | The Go2 sketch you can drive                                                                                                   |
-| `js/sumi-results.js`                                    | The ICMLA paper's results                                                                                                      |
-| `js/sumi-search.js`                                     | The search toy: one room, three memories                                                                                       |
-| `js/sumi-ridge.js`                                      | The mountains before the footer                                                                                                |
-| `js/game.js`                                            | A hidden game, fetched only when someone finds it                                                                              |
-| `img/`                                                  | The fold's Raiden (also the game's codec), the project plates, the About photograph, the résumé page and the link-preview card |
-| `media/`                                                | The drone reel's four clips and the poker clip, each with its poster                                                           |
-| `papers/`                                               | The ICMLA 2026 paper, the accepted version with IEEE's notice                                                                  |
-| `resume.html`                                           | The résumé as an image with its links laid over it                                                                             |
-| `Hector_Lugo_III_Resume.pdf`                            | The résumé, linked from `resume.html`                                                                                          |
-| `404.html`                                              | Served by GitHub Pages at any missing path                                                                                     |
-| `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | The seal, as the tab and home-screen icon                                                                                      |
-| `sitemap.xml`                                           | The one page, for search engines                                                                                               |
-| `_config.yml`                                           | Keeps `tools/` and this README out of the published site                                                                       |
-| `.editorconfig`, `.prettierrc.json`, `.prettierignore`  | How the files are formatted: Prettier for the CSS and JS, the HTML by hand                                                     |
-| `tools/`                                                | Scripts that make the images and clips                                                                                         |
+| Path                                                    | What it is                                                                                                                    |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `index.html`                                            | The page: the fold, Work, Experience, Research, About and the footer                                                          |
+| `css/sumi.css`                                          | The one stylesheet                                                                                                            |
+| `js/sumi.js`                                            | The page's frame loop, the scripts that load as their section nears, the footer's secret                                      |
+| `js/sumi-fold.js`                                       | The fold: the moon, the fog and the grass on one wind                                                                         |
+| `js/sumi-clips.js`                                      | The drone reel and the poker clip                                                                                             |
+| `js/sumi-track.js`                                      | FlowCount's tracker, running live on its plate                                                                                |
+| `js/sumi-xray.js`                                       | The Go2 sketch you can drive                                                                                                  |
+| `js/sumi-results.js`                                    | The ICMLA paper's results                                                                                                     |
+| `js/sumi-search.js`                                     | The search toy: one room, three memories                                                                                      |
+| `js/sumi-ridge.js`                                      | The mountains before the footer                                                                                               |
+| `js/game.js`                                            | A hidden game, fetched only when someone finds it                                                                             |
+| `img/`                                                  | Raiden (the fold and the codec portrait), the project plates, the About photograph, the résumé page and the link-preview card |
+| `media/`                                                | The drone reel's four clips and the poker clip, each with its poster                                                          |
+| `papers/`                                               | The ICMLA 2026 paper, the accepted version with IEEE's notice                                                                 |
+| `resume.html`                                           | The résumé as an image with its links laid over it                                                                            |
+| `Hector_Lugo_III_Resume.pdf`                            | The résumé, linked from `resume.html`                                                                                         |
+| `404.html`                                              | Served by GitHub Pages at any missing path                                                                                    |
+| `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | The seal, as the tab and home-screen icon                                                                                     |
+| `sitemap.xml`                                           | The one page, for search engines                                                                                              |
+| `_config.yml`                                           | Keeps `tools/` and this README out of the published site                                                                      |
+| `.editorconfig`, `.prettierrc.json`, `.prettierignore`  | How the files are formatted: Prettier for the CSS and JS, the HTML by hand                                                    |
+| `tools/`                                                | Scripts that make the images and clips                                                                                        |
 
 ## Run it locally
 

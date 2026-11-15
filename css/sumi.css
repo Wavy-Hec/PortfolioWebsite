@@ -200,7 +200,7 @@ body::after {
   color: var(--paper);
 }
 /* the fold. --hr: where the headline's longer line ends. Raiden's plate is 640 x 1016, at most
-   1.7x: his hair starts 5 % across, his feet are 78.7 % down; tools/make-night.py knows the moon */
+   1.7x: his hair starts 9 % across, his feet are 78.7 % down; tools/make-night.py knows the moon */
 .hero {
   --F: calc(100vh - var(--nav));
   --fs: clamp(44px, min(5.6vw, 13.5vh), 200px);
@@ -329,8 +329,7 @@ body::after {
 .hero .figure:focus-visible {
   outline: none;
 }
-/* the "!" right over his crown (52 % across, 8 % down), popped by js/sumi.js; never closer than
-   24 px to the nav's rule */
+/* the "!" over his crown, popped by js/sumi.js; never closer than 24 px to the nav's rule */
 .hero .alert {
   position: absolute;
   z-index: 3;
@@ -2642,7 +2641,7 @@ main:has(> .ridge:last-child) + .foot .sign {
     --sh0: max(340px, calc(var(--F) - 282.5px - 2.2 * var(--fs)));
     --fb: calc(var(--fh) * -0.17 - 24px);
   }
-  /* under the larger screens' 420 px, so a 740 px phone still holds the whole scene */
+  /* under the larger screens' 420 px, so on a 740 px phone the scene ends near the screen's foot */
   .scene {
     min-height: 340px;
   }
