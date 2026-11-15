@@ -433,19 +433,59 @@
         <h2 id="h-research">Research &amp; publications</h2>
         <p class="lede">Two threads. The first is hierarchical control for legged robots: a vision-language model navigates and a PPO policy walks. The second, begun during my Air Force Research Laboratory internship and still in progress, asks when fusing multi-camera video actually helps a vision-language model.</p>
 
-        <figure class="stack-wrap" id="results">
-          <div class="stack" role="group" aria-label="The research stack, exploded: cameras and video streams, a vision-language model, a belief memory, and a navigator commanding a PPO locomotion policy">
-            <canvas aria-hidden="true"></canvas>
-            <ol class="plates">
-              <li><button type="button" class="pl" data-k="3" aria-pressed="false" aria-label="navigator to PPO locomotion policy: a frozen Qwen3.5-9B navigator steers a PPO policy on the Go2 in MuJoCo"><span class="name">navigator → PPO<span class="lg"> locomotion policy</span></span><span class="cap"><span class="cl">a frozen Qwen3.5-9B navigator steers PPO</span><span class="sep"> · </span><span class="cl">Go2 · MuJoCo</span></span></button></li>
-              <li><button type="button" class="pl" data-k="2" aria-pressed="false" aria-label="belief memory: revisable, for out-of-view target search; it drops stale beliefs on contradiction"><span class="name">belief memory</span><span class="cap"><span class="cl">drops stale beliefs on contradiction</span><span class="sep"> · </span><span class="cl">revisable · out-of-view search</span></span></button></li>
-              <li><button type="button" class="pl" data-k="1" aria-pressed="false" aria-label="vision-language model, Qwen2.5-VL and InternVL3: 650K+ scored answers across 3 benchmarks on a multi-GPU SLURM cluster"><span class="name">vision-language model<span class="lg"> Qwen2.5-VL · InternVL3</span></span><span class="cap"><span class="cl">650K+ scored answers · 3 benchmarks</span><span class="sep"> · </span><span class="cl">multi-GPU SLURM cluster</span></span></button></li>
-              <li><button type="button" class="pl" data-k="0" aria-pressed="false" aria-label="cameras, video streams: multi-camera video QA, when fusing camera feeds helps, and when it does not"><span class="name">cameras<span class="lg"> video streams</span></span><span class="cap"><span class="cl">multi-camera video QA</span><span class="sep"> · </span><span class="cl">when fusing feeds helps, and when it does not</span></span></button></li>
-            </ol>
-          </div>
-          <p class="pl-note mono" aria-hidden="true"></p>
-          <figcaption class="mono">the stack<span class="sep"> · </span><span class="cl">lower two: the AFRL video study</span></figcaption>
-        </figure>
+        <div class="results" id="results">
+          <h3 class="fig-h" id="h-results">What the paper found</h3>
+          <figure>
+            <div class="res-tabs" role="tablist" aria-labelledby="h-results">
+              <button type="button" role="tab" id="res-tab-stop" aria-selected="true" aria-controls="res-panel"><span>Stop rule</span></button>
+              <button type="button" role="tab" id="res-tab-steering" aria-selected="false" aria-controls="res-panel" tabindex="-1"><span>Steering</span></button>
+              <button type="button" role="tab" id="res-tab-passes" aria-selected="false" aria-controls="res-panel" tabindex="-1"><span>Passes</span></button>
+              <button type="button" role="tab" id="res-tab-rate" aria-selected="false" aria-controls="res-panel" tabindex="-1"><span>Update rate</span></button>
+            </div>
+            <div class="res-panel" id="res-panel" role="tabpanel" aria-labelledby="res-tab-stop" tabindex="0">
+              <div class="res-finding" aria-hidden="true">
+                <p class="on"><span>Asked directly when to stop, the VLM was right 8&nbsp;to&nbsp;14% of the time.</span> <span>Reading the bottom edge of its bounding box: 79&nbsp;to&nbsp;86%.</span></p>
+                <p><span>A continuous heading beat five discrete&nbsp;choices,</span> <span>most of all in the hard scenarios.</span></p>
+                <p><span>Three sub-prompts steer a little better.</span> <span>One prompt stops a little better.</span></p>
+                <p><span>Asking the VLM every 20&nbsp;steps, not 50, barely changes steering.</span> <span>Stopping in the hard scenarios rises from 43.8&nbsp;to&nbsp;51.7%.</span></p>
+              </div>
+              <div class="res-chart">
+                <p class="res-legend mono" aria-hidden="true">
+                  <span class="res-key"><canvas></canvas><span>Bounding box</span></span>
+                  <span class="res-key"><canvas></canvas><span>Direct</span></span>
+                </p>
+                <div class="res-plots mono" aria-hidden="true">
+                  <div class="res-plot"><canvas></canvas></div>
+                  <div class="res-plot" hidden><canvas></canvas></div>
+                </div>
+                <div class="res-table">
+                  <table>
+                    <caption>Asked directly when to stop, the VLM was right 8 to 14% of the time. Reading the bottom edge of its bounding box: 79 to 86%.</caption>
+                    <thead>
+                      <tr><th scope="col">Scenarios</th><th scope="col">Stopping success, bounding box</th><th scope="col">Stopping success, direct</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><th scope="row">Easy, <span class="nw">18 scenarios</span></th><td>82.2%</td><td>14.4%</td></tr>
+                      <tr><th scope="row">Moderate, <span class="nw">12 scenarios</span></th><td>86.4%</td><td>8.2%</td></tr>
+                      <tr><th scope="row">Hard, <span class="nw">30 scenarios</span></th><td>78.9%</td><td>10.9%</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="res-note mono">
+                <p class="on">Success: the robot stops within 2&nbsp;<span class="nc">m</span> of the target without hitting it</p>
+                <p>Success: the robot gets within 3&nbsp;<span class="nc">m</span> of the target without hitting another object</p>
+                <p>Multi-pass: three <span class="nw">sub-prompts</span>, for scene understanding, steering and stop</p>
+                <p>Stopping success here averages both stop rules, so it sits below the bounding box alone</p>
+              </div>
+            </div>
+            <figcaption class="mono">
+              <span class="cl">IEEE ICMLA 2026, Figs. 4–7</span><span class="sep"> · </span>
+              <span class="cl">60 scenarios, 10 runs each</span>
+            </figcaption>
+          </figure>
+          <p class="res-paper"><a class="link" href="papers/lugo-icmla-2026.pdf">Read the paper<span aria-hidden="true"> →</span></a></p>
+        </div>
 
         <span id="search"></span>
 

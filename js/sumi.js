@@ -59,7 +59,7 @@
   // seconds after the page has loaded, whichever comes first.
   const LAZY_SCRIPTS = [
     ['.reel', 'js/sumi-clips.js'],
-    ['.stack', 'js/sumi-stack.js?v=15'],
+    ['.results', 'js/sumi-results.js'],
     ['.xray', 'js/sumi-xray.js?v=15'],
     ['.print', 'js/sumi-print.js'],
   ];
