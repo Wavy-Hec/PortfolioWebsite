@@ -1,484 +1,759 @@
-/* SUMI v7 — the About band: a Unitree Go2 (the robot the locomotion work runs on) in side elevation, drawn procedurally in paper lines on
-   deep sumi: the kinematic skeleton inside (links as lines, joints as circles: 12 of them, hip / thigh / calf per leg) in bright paper, the
-   outer silhouette as a dotted line, a faint ground line and shadow. Proportions from the go2_description URDF (unitree_ros): trunk 0.3762 m,
-   hips 0.1934 m fore and aft of the centre, thigh and calf 0.213 m, knees folding back. It RESOLVES on entry (the skeleton draws itself joint
-   by joint in 0.85 s, the silhouette fades in by 1.2 s, the leaders by 1.5 s, the tags by ~2 s; a timer, not the frame loop, reveals the tags, so
-   they arrive even when frames are throttled), then trots in place: a diagonal-pair gait, the thigh a sinusoid per leg, the knee folding in swing and the stance foot planted on the ground line,
-   every point from forward kinematics. The hardware tags (mono labels, a paper square, a hairline leader to the part) brighten their part on
-   hover / focus. Reduced motion: the standing pose, everything present, no walk. One canvas, ~40 strokes a frame, inside the page's single
-   frame loop at ~30 fps, subscribed only while the band is on screen. */
+/* The Go2 band: a Unitree Go2 in side elevation, walking at the speed a visitor commands, and a
+   dial for its heading. A command reaches the robot at the navigator's next tick and holds until
+   the one after. */
 (() => {
   'use strict';
   const S = window.SUMI;
-  const wrap = document.querySelector('.xray'),
-    canvas = wrap && wrap.querySelector('canvas'),
-    band = wrap && wrap.closest('.band');
-  if (!S || !canvas || !band) return;
+  const wrap = document.querySelector('.xray');
+  if (!wrap) return;
+  const band = wrap.closest('.band');
+  const sketch = wrap.querySelector('.sketch');
+  const canvas = sketch.querySelector('canvas');
   const ctx = canvas.getContext('2d');
-  const PAPER = '#e9e7e2',
-    DPR = Math.min(2, devicePixelRatio || 1),
-    FRAME = 1000 / 30;
-  // the robot (metres; x to the rear, y down; it faces left). Hip abduction joints sit on the body line; the thigh joint hangs 0.03 under them
-  // (the real offset is lateral, invisible from the side), thigh 0.213 at th1 from the down vertical (positive = knee back), calf 0.213 at th1 + psi.
-  const BODY_L = 0.3762,
-    BODY_H = 0.095,
-    HIP_X = 0.1934,
-    THIGH = 0.213,
-    CALF = 0.213,
-    HIP_DROP = 0.03;
-  const TH1 = 0.8,
-    PSI = -1.5,
-    GAIT_HZ = 1.6; // standing: the rear knee at (0.346, 0.178), the feet at y 0.341
-  // the ground: where the stance foot touches it, the foot circle's centre plus its radius at its lowest. In this gait the lowest foot is the
-  // standing one (each foot passes through it at sin(phase) = 0; the swing only lifts it), so the line is under every stance foot at every walk
-  const FOOT_R = 0.021,
-    GROUND = HIP_DROP + THIGH * Math.cos(TH1) + CALF * Math.cos(TH1 + PSI) + FOOT_R;
-  // legs: name, hip x, phase, near side (the far side draws dimmer, nudged back 0.018)
+  const dial = band.querySelector('.dial');
+  const dialCtx = dial.getContext('2d');
+  const speedInput = band.querySelector('#go2-speed');
+  const headingInput = band.querySelector('#go2-heading');
+  const [speedHeld, headingHeld] = band.querySelectorAll('.held');
+  const [speedNext, headingNext] = band.querySelectorAll('.next');
+  const tickButtons = [...band.querySelectorAll('.interval button')];
+  const lamp = band.querySelector('.lamp');
+  const lampCtx = lamp.getContext('2d');
+  const rateText = lamp.nextSibling; // the navigator's rate, after its lamp
+  const status = band.querySelector('[role="status"]');
+
+  const PAPER = '#e9e7e2';
+  const DOTTED = [1.5, 3.5];
+  const DPR = Math.min(2, devicePixelRatio || 1);
+  const HOVER = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  // metres; x runs to the rear, y down, the robot faces left. BODY_L, BODY_W, HIP_X, LEG_Y, THIGH
+  // and CALF are the go2_description URDF's, the rest is drawing
+  const BODY_L = 0.3762;
+  const BODY_W = 0.0935;
+  const BODY_H = 0.095;
+  const HIP_X = 0.1934;
+  const LEG_Y = 0.0465 + 0.0955; // out from the spine to the hip joint, then to the thigh joint
+  const THIGH = 0.213;
+  const CALF = 0.213;
+  const HIP_DROP = 0.03;
+  const FOOT_R = 0.021;
+  const NOSE = BODY_L / 2 + 0.085;
+  // standing, the thigh leans 0.8 rad back and the calf 1.5 rad forward of it
+  const STAND_X = THIGH * Math.sin(0.8) + CALF * Math.sin(0.8 - 1.5);
+  const STAND_Y = THIGH * Math.cos(0.8) + CALF * Math.cos(0.8 - 1.5);
+  const KNEE_BACK = THIGH * Math.sin(0.8);
+  const GROUND = HIP_DROP + STAND_Y + FOOT_R;
+  const HEAD_TOP = 0.08; // the LiDAR's arc over the head, at the top of a bob
+  const TICK_M = 0.25;
+  const HOME_SLACK_M = 0.002;
+
+  const MAX_SPEED_MPS = 1.5;
+  const MAX_ACCEL_MPS2 = 2;
+  const MAX_YAW_DPS = 90;
+  const CONTROL_HZ = 100; // the trained checkpoint's control rate
+  const LAMP_S = 0.15; // the navigator's lamp lights on its tick and eases off over this long
+  const DUTY = 0.56; // the share of a stride a foot spends on the ground
+  const MAX_STROKE_M = 0.26; // a longer stance splays the legs, so near the top the cadence rises
+  const stridesPerSecond = v => Math.max(1.5 + 0.5 * v, (v * DUTY) / MAX_STROKE_M);
+  const stanceTravel = v => (v * DUTY) / stridesPerSecond(v);
+  const swingTravel = v => (v * (1 - DUTY)) / stridesPerSecond(v);
+  const swingHeight = v => 0.03 + 0.02 * v;
+
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const smooth = v => {
+    const c = clamp(v, 0, 1);
+    return c * c * (3 - 2 * c);
+  };
+  const ramp = (t, from, to) => smooth((t - from) / (to - from));
+  const degrees = h => (h > 0 ? '+' : '') + String(h).replace('-', '−') + '°';
+  const degreesInWords = h => {
+    if (h === 0 || Math.abs(h) === 180) return `${Math.abs(h)} degrees`;
+    return `${Math.abs(h)} degrees to the ${h > 0 ? 'right' : 'left'}`;
+  };
+
+  // in the order the sketch draws them: front near, rear near, front far, rear far; the far pair
+  // sits a little behind the near one so that both read
+  const makeLeg = (hipX, near, offset) => ({
+    hipX,
+    near,
+    offset,
+    x: STAND_X,
+    lift: 0,
+    spot: hipX + STAND_X,
+    swing: null,
+  });
   const LEGS = [
-    { n: 'FL', x: -HIP_X, ph: 0, near: true },
-    { n: 'RR', x: HIP_X, ph: 0, near: false },
-    { n: 'FR', x: -HIP_X, ph: Math.PI, near: false },
-    { n: 'RL', x: HIP_X, ph: Math.PI, near: true },
+    makeLeg(-HIP_X, true, 0),
+    makeLeg(HIP_X, true, 0.5),
+    makeLeg(-HIP_X + 0.018, false, 0.5),
+    makeLeg(HIP_X + 0.018, false, 0),
   ];
-  const DRAW_ORDER = ['FL', 'RL', 'FR', 'RR']; // the resolve: front near, rear near, front far, rear far
-  // tags (order = the buttons in index.html): the part it brightens, the anchor on the robot (metres; a function of this frame's leg poses for
-  // a part that moves, so the leader stays on it while the robot trots), the label's place in metres from the figure's centre (desktop): for a
-  // tag on the left (side 'l', its square at its right end) l[0] is where that square sits; for one on the right, its left edge
-  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const [FRONT_NEAR, REAR_NEAR] = LEGS;
+
+  // the hardware tags, in the order of the buttons: where the square sits, in metres from the
+  // figure's centre, and the point on the robot its leader runs to
   const TAGS = [
-    // in on-screen reading order, head to feet (keyboard focus follows it)
-    { k: 'head', side: 'l', a: [-BODY_L / 2 - 0.05, -0.04], l: [-0.4, -0.19] }, // the head block: the LiDAR and the camera
-    { k: 'imu', side: 'r', a: [0.02, -0.01], l: [0.1, -0.2] }, // the trunk's centre
-    { k: 'lengths', side: 'l', a: p => mid(p.FL.thigh, p.FL.knee), l: [-0.42, 0.27] }, // thigh / calf: the front near leg's thigh, at its middle
-    { k: 'joints', side: 'l', a: p => p.RL.knee, l: [0.31, 0.43] }, // 12 joint motors (two lines, css .l2): under the ground line below the rear legs, its leader rising to the rear near knee right of both calves; nothing it names is crossed by its letters, at any width (right of the knee it ran out of room under ~1280 and was clamped onto the thigh)
+    { left: true, at: [-0.4, -0.19], anchor: () => px(-BODY_L / 2 - 0.05, trunkY - 0.04) },
+    { left: false, at: [0.1, -0.19], anchor: () => px(0.02, trunkY - 0.01) },
+    { left: true, at: [-0.42, 0.43], anchor: () => mid(FRONT_NEAR.top, FRONT_NEAR.knee) },
+    { left: true, at: [0.31, 0.43], anchor: () => REAR_NEAR.knee },
   ];
-  const JOINTS_Y = TAGS.find(T => T.k === 'joints').l[1]; // the row under the ground line
-  const tagEls = [...wrap.querySelectorAll('.tag')];
-  let W = 0,
-    H = 0,
-    s = 0,
-    cx = 0,
-    cy = 0,
-    narrow = false,
-    laidOut = false,
-    inView = false,
-    acc = 0,
-    lastCost = 0;
-  let t0 = null,
-    phase = 0,
-    walk = 0,
-    resolved = S.REDUCED;
-  const hl = { joints: 0, lengths: 0, imu: 0, head: 0 },
-    hlT = { ...hl },
-    held = {};
-  const P = (x, y) => [cx + x * s, cy + y * s],
-    clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  wrap.querySelectorAll('.tag').forEach((el, i) => Object.assign(TAGS[i], { el, glow: 0 }));
+  const [head, imu, lengths, joints] = TAGS;
+  const lit = tag => (tag.pinned || tag.hovered || tag.focused ? 1 : 0);
+
+  const wanted = { speed: +speedInput.value, heading: +headingInput.value };
+  const held = { ...wanted };
+  let stepsPerTick = +band.querySelector('.interval [aria-pressed="true"]').value;
+  let sinceTick = 0;
+  let lampLevel = 0;
+  let lastInput = 0;
+  let unsaid = false;
+
+  let speed = 0;
+  let travel = 0;
+  let phase = 0;
+  let trunkY = 0;
+  let yaw = held.heading;
+
+  let W = 0;
+  let H = 0;
+  let scale = 0;
+  let cx = 0;
+  let cy = 0;
+  let groundHalf = 0;
+  let groundInk = null;
+  let inked = null;
+  let dialSize = 0;
+  let dialStale = true;
+  let phone = false;
+
+  let age = 0; // seconds since the sketch came into view
+  let entered = false;
+  let tagsShown = false;
+  let bandSeen = false;
+  let sketchSeen = false;
+  let awake = false;
+
+  const px = (x, y) => [cx + x * scale, cy + y * scale];
+  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const pending = () => wanted.speed !== held.speed || wanted.heading !== held.heading;
 
   function layout() {
-    narrow = innerWidth <= 720;
-    W = wrap.clientWidth;
-    H = narrow ? Math.round(W * 0.7) : Math.round(clamp(W * 0.62, 380, 560)); // a phone's canvas fits the figure: a little air over the head, the ground line and its shadow under the feet
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    canvas.width = Math.round(W * DPR);
-    canvas.height = Math.round(H * DPR);
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    s = Math.min((narrow ? W * 0.92 : W * 0.6) / 0.76, (H * (narrow ? 1 : 0.66)) / 0.43); // px per metre: the figure is ~0.76 m long, 0.43 m from the head's top to the ground
+    phone = matchMedia('(max-width: 720px)').matches;
+    const box = sketch.getBoundingClientRect();
+    W = Math.round(box.width);
+    H = Math.round(box.height);
+    // px per metre: the robot is about 0.76 m long and 0.43 m tall; a phone fits its longest stride
+    scale = phone ? W / 0.93 : Math.min((W * 0.6) / 0.76, (H * 0.66) / 0.43);
     cx = W / 2;
-    cy = H * (narrow ? 0.26 : 0.3);
-    if (!narrow) {
-      // no tag starts left of the chapters' content edge (#about .in), so the band's left edge sits on the page's one line
-      const inner = document.querySelector('#about .in'),
-        off = inner
-          ? Math.round(inner.getBoundingClientRect().left - wrap.getBoundingClientRect().left)
-          : 8,
-        minX = Math.max(0, off); // 0 where the band's padding already sits on the content edge (721-1180): the tags flush with it
-      tagEls.forEach((el, i) => {
-        const T = TAGS[i];
-        if (!T) return;
-        const w = el.offsetWidth,
-          left = T.side === 'l',
-          maxX = W - 8 - w;
-        const lx = clamp(cx + T.l[0] * s - (left ? w : 0), Math.min(minX, maxX), maxX);
-        // a left tag pushed right (by the band's edge or the content edge) would put its square inside the front foot's swing (to 0.293 m
-        // left of the centre): it drops to the joints tag's row under the ground line instead, its leader rising to its part
-        const drop = left && T.l[1] > 0 && T.l[1] < JOINTS_Y && lx + w > cx - 0.293 * s - 14; // a tag at the legs' height only; 0.293 m: the front foot's leftmost reach in the trot, 14 px its circle and some air
-        el.style.left = lx + 'px';
-        el.style.top = cy + (drop ? JOINTS_Y : T.l[1]) * s + 'px';
-        el.classList.toggle('l', left);
-      });
-      // a near miss reads as an accident in a ruled drawing: any tag within 12 px of the head tag's row takes that row (the IMU); its leader follows (draw reads style.top)
-      const hi = TAGS.findIndex(T => T.k === 'head'),
-        hy = hi >= 0 && tagEls[hi] ? parseFloat(tagEls[hi].style.top) : NaN;
-      if (!isNaN(hy))
-        tagEls.forEach((el, i) => {
-          if (i !== hi && TAGS[i] && Math.abs(parseFloat(el.style.top) - hy) <= 12)
-            el.style.top = hy + 'px';
-        });
-    } else
-      tagEls.forEach(el => {
-        el.style.left = '';
-        el.style.top = '';
-        el.classList.remove('l');
-      });
-    laidOut = true;
-  }
-  // forward kinematics for one leg at gait phase ph (walk = 0 is the standing pose). In swing the knee folds (psi); in stance the calf angle
-  // is solved so the foot stays planted at the standing foot's height (the ground line's contact point) while the thigh sweeps it back
-  const FOOT_Y = GROUND - FOOT_R - HIP_DROP; // the foot's height under the thigh joint, standing
-  function legPose(leg, ph) {
-    const sn = Math.sin(ph),
-      th1 = TH1 - 0.26 * sn * walk;
-    const psi =
-      sn > 0
-        ? PSI - 0.42 * sn * walk
-        : -Math.acos(clamp((FOOT_Y - THIGH * Math.cos(th1)) / CALF, -1, 1)) - th1;
-    const hx = leg.x + (leg.near ? 0 : 0.018),
-      hy = 0,
-      tx = hx,
-      ty = HIP_DROP;
-    const kx = tx + THIGH * Math.sin(th1),
-      ky = ty + THIGH * Math.cos(th1);
-    const fx = kx + CALF * Math.sin(th1 + psi),
-      fy = ky + CALF * Math.cos(th1 + psi);
-    return { hip: [hx, hy], thigh: [tx, ty], knee: [kx, ky], foot: [fx, fy] };
-  }
-  function line(a, b, f) {
-    // a -> b, drawn to fraction f
-    const [x0, y0] = P(a[0], a[1]),
-      [x1, y1] = P(b[0], b[1]);
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x0 + (x1 - x0) * f, y0 + (y1 - y0) * f);
-    ctx.stroke();
-  }
-  function joint(p, r, f) {
-    const [x, y] = P(p[0], p[1]);
-    ctx.beginPath();
-    ctx.arc(x, y, r * f, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-  function capsule(a, b, r) {
-    // the silhouette of a link
-    const [x0, y0] = P(a[0], a[1]),
-      [x1, y1] = P(b[0], b[1]),
-      ang = Math.atan2(y1 - y0, x1 - x0),
-      rr = r * s;
-    ctx.beginPath();
-    ctx.arc(x0, y0, rr, ang + Math.PI / 2, ang - Math.PI / 2);
-    ctx.arc(x1, y1, rr, ang - Math.PI / 2, ang + Math.PI / 2);
-    ctx.closePath();
-    ctx.stroke();
-  }
-  function rbox(x, y, w, h, r) {
-    const [px, py] = P(x, y),
-      pw = w * s,
-      ph = h * s,
-      pr = r * s;
-    ctx.beginPath();
-    ctx.moveTo(px + pr, py);
-    ctx.lineTo(px + pw - pr, py);
-    ctx.arcTo(px + pw, py, px + pw, py + pr, pr);
-    ctx.lineTo(px + pw, py + ph - pr);
-    ctx.arcTo(px + pw, py + ph, px + pw - pr, py + ph, pr);
-    ctx.lineTo(px + pr, py + ph);
-    ctx.arcTo(px, py + ph, px, py + ph - pr, pr);
-    ctx.lineTo(px, py + pr);
-    ctx.arcTo(px, py, px + pr, py, pr);
-    ctx.closePath();
-  }
-  const ease = v => (v < 0 ? 0 : v > 1 ? 1 : v * v * (3 - 2 * v));
-  const seg = (t, a, b) => ease((t - a) / (b - a));
+    // the ground line on a pixel's centre, so that it stays one pixel wide
+    cy = Math.round(H * 0.3 + GROUND * scale) + 0.5 - GROUND * scale;
+    groundHalf = Math.min(0.5, W / 2 / scale);
+    placeTags();
+    fitCanvas();
 
-  function draw(now) {
-    const t = S.REDUCED ? 9 : t0 === null ? 0 : (now - t0) / 1000; // seconds since the band came into view
-    ctx.clearRect(0, 0, W, H);
+    dialSize = dial.clientWidth;
+    dial.width = Math.round(dialSize * DPR);
+    dial.height = Math.round(dialSize * DPR);
+    dialCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    dialCtx.strokeStyle = PAPER;
+    dialCtx.fillStyle = PAPER;
+    dialCtx.lineCap = 'round';
+    dialStale = true;
+  }
+
+  function placeTags() {
+    if (phone) {
+      for (const tag of TAGS) {
+        tag.el.style.left = '';
+        tag.el.style.top = '';
+        tag.el.classList.remove('l');
+      }
+      return;
+    }
+    // no tag starts left of the chapter's content edge
+    const content = band.closest('.chapter').querySelector('.in');
+    const edge = content.getBoundingClientRect().left - wrap.getBoundingClientRect().left;
+    const minX = Math.max(0, Math.round(edge));
+    for (const tag of TAGS) {
+      const w = tag.el.offsetWidth;
+      const maxX = W - 8 - w;
+      const x = clamp(cx + tag.at[0] * scale - (tag.left ? w : 0), Math.min(minX, maxX), maxX);
+      const y = cy + tag.at[1] * scale;
+      tag.from = [tag.left ? x + w + 3 : x - 3, y + tag.el.offsetHeight / 2];
+      tag.el.style.left = x + 'px';
+      tag.el.style.top = y + 'px';
+      tag.el.classList.toggle('l', tag.left);
+    }
+  }
+
+  // the canvas covers only what is drawn: the ground line and its ticks, the robot, the leaders
+  function fitCanvas() {
+    const ground = cy + GROUND * scale;
+    const ends = phone ? [] : TAGS.map(tag => tag.from);
+    const xs = [cx - groundHalf * scale, cx + groundHalf * scale, ...ends.map(p => p[0])];
+    const ys = [cy - HEAD_TOP * scale, ground + 9, ...ends.map(p => p[1])];
+    const x = Math.max(0, Math.floor(Math.min(...xs)) - 4);
+    const y = Math.max(0, Math.floor(Math.min(...ys)) - 4);
+    inked = {
+      x,
+      y,
+      w: Math.min(W, Math.ceil(Math.max(...xs)) + 4) - x,
+      h: Math.min(H, Math.ceil(Math.max(...ys)) + 4) - y,
+    };
+    canvas.style.left = x + 'px';
+    canvas.style.top = y + 'px';
+    canvas.style.width = inked.w + 'px';
+    canvas.style.height = inked.h + 'px';
+    canvas.width = Math.round(inked.w * DPR);
+    canvas.height = Math.round(inked.h * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, -x * DPR, -y * DPR);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    const bob = 0.004 * Math.sin(phase * 2) * walk;
-    cy += bob * s;
-    const poses = {};
-    for (const L of LEGS) poses[L.n] = legPose(L, phase + L.ph);
-    // the ground line and the shadow: a hairline, and a soft bar under the feet
-    const silA = seg(t, 0.85, 1.2);
-    ctx.strokeStyle = PAPER;
-    ctx.globalAlpha = 0.25 * silA;
-    ctx.lineWidth = 1;
-    ctx.setLineDash([]);
-    const [gx0, gy] = P(-0.46, GROUND),
-      [gx1] = P(0.46, GROUND);
-    ctx.beginPath();
-    ctx.moveTo(gx0, gy);
-    ctx.lineTo(gx1, gy);
-    ctx.stroke();
-    const grd = ctx.createLinearGradient(gx0, 0, gx1, 0);
-    grd.addColorStop(0, 'rgba(233,231,226,0)');
-    grd.addColorStop(0.3, 'rgba(233,231,226,.1)');
-    grd.addColorStop(0.7, 'rgba(233,231,226,.1)');
-    grd.addColorStop(1, 'rgba(233,231,226,0)');
-    ctx.fillStyle = grd;
-    ctx.globalAlpha = silA * 0.5;
-    ctx.fillRect(gx0, gy + 2, gx1 - gx0, 5);
-    // the silhouette: dotted paper, body, head, legs as capsules, feet
-    if (silA > 0) {
-      ctx.setLineDash([1.5, 3.5]);
-      ctx.lineWidth = 1;
-      for (const L of LEGS) {
-        if (L.near) continue;
-        const p = poses[L.n];
-        ctx.globalAlpha = silA * 0.22;
-        capsule(p.thigh, p.knee, 0.022);
-        capsule(p.knee, p.foot, 0.016);
-      }
-      ctx.globalAlpha = silA * 0.55 * (1 + 0.5 * hl.imu);
-      rbox(-BODY_L / 2, -BODY_H / 2, BODY_L, BODY_H, 0.03);
-      ctx.stroke();
-      ctx.globalAlpha = silA * 0.55 * (1 + 0.7 * hl.head); // the head: a slanted block ahead of the body, the camera on its face
-      const [hx0, hy0] = P(-BODY_L / 2 - 0.085, -0.045),
-        [hx1, hy1] = P(-BODY_L / 2 - 0.06, 0.03),
-        [hx2, hy2] = P(-BODY_L / 2 + 0.02, 0.03),
-        [hx3, hy3] = P(-BODY_L / 2 + 0.02, -0.052);
-      ctx.beginPath();
-      ctx.moveTo(hx0, hy0);
-      ctx.lineTo(hx1, hy1);
-      ctx.lineTo(hx2, hy2);
-      ctx.lineTo(hx3, hy3);
-      ctx.closePath();
-      ctx.stroke();
-      for (const L of LEGS) {
-        if (!L.near) continue;
-        const p = poses[L.n],
-          lit = L.n === 'FL' ? hl.lengths : 0;
-        ctx.globalAlpha = silA * 0.5 * (1 + 0.6 * lit);
-        capsule(p.thigh, p.knee, 0.024);
-        capsule(p.knee, p.foot, 0.017);
-        ctx.setLineDash([]);
-        joint(p.foot, FOOT_R * s, 1);
-        ctx.setLineDash([1.5, 3.5]);
-      }
-      ctx.setLineDash([]);
-      // the camera: a small filled circle on the head's face, the LiDAR a short arc above it; the IMU: a square at the body's centre
-      ctx.fillStyle = PAPER;
-      ctx.globalAlpha = silA * (0.6 + 0.4 * hl.head);
-      const [cxp, cyp] = P(-BODY_L / 2 - 0.068, -0.012);
-      ctx.beginPath();
-      ctx.arc(cxp, cyp, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-      const [lxp, lyp] = P(-BODY_L / 2 - 0.04, -0.045);
-      ctx.beginPath();
-      ctx.arc(lxp, lyp, 0.028 * s, Math.PI * 1.1, Math.PI * 1.9);
-      ctx.stroke();
-      ctx.globalAlpha = silA * (0.5 + 0.5 * hl.imu);
-      const [ix, iy] = P(0.02, -0.01);
-      ctx.strokeRect(ix - 5, iy - 5, 10, 10);
-      ctx.beginPath();
-      ctx.arc(ix, iy, 1.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    // the skeleton: the spine (hip to hip) then each leg in order; links as lines, joints as circles
-    const spineF = seg(t, 0, 0.12);
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = PAPER;
-    if (spineF > 0) {
-      ctx.globalAlpha = 0.85;
-      line([-HIP_X, 0], [HIP_X, 0], spineF);
-    }
-    DRAW_ORDER.forEach((n, i) => {
-      const L = LEGS.find(l => l.n === n),
-        p = poses[n],
-        a0 = 0.12 + i * 0.18,
-        a1 = a0 + 0.24;
-      const f = seg(t, a0, a1);
-      if (f <= 0) return;
-      const lit = n === 'FL' ? hl.lengths : 0,
-        jl = n === 'RL' ? hl.joints : hl.joints * 0.5;
-      const base = (L.near ? 0.95 : 0.42) * (1 + 0.3 * lit),
-        jA = (L.near ? 0.95 : 0.5) * (1 + 0.4 * jl);
-      const fDrop = ease(f / 0.15),
-        fTh = ease((f - 0.1) / 0.45),
-        fCa = ease((f - 0.5) / 0.5);
-      ctx.lineWidth = L.near ? 1.5 + lit : 1;
-      ctx.globalAlpha = base;
-      line(p.hip, p.thigh, fDrop);
-      if (fTh > 0) line(p.thigh, p.knee, fTh);
-      if (fCa > 0) line(p.knee, p.foot, fCa);
-      ctx.lineWidth = 1 + jl * 0.8;
-      ctx.globalAlpha = Math.min(1, jA);
-      const jr = (L.near ? 4.5 : 3.5) + jl * 1.5;
-      joint(p.hip, jr, ease(f / 0.1));
-      if (fDrop >= 1) joint(p.thigh, jr * 0.8, ease((f - 0.12) / 0.1));
-      if (fTh >= 1) joint(p.knee, jr, ease((f - 0.52) / 0.1));
-    });
-    // the leaders: from each tag's square to its part, a small paper square at the part (desktop only)
-    if (!narrow) {
-      const tagA = seg(t, 1.2, 1.5);
-      ctx.lineWidth = 1;
-      tagEls.forEach((el, i) => {
-        const T = TAGS[i];
-        if (!T) return;
-        const A = typeof T.a === 'function' ? T.a(poses) : T.a,
-          [ax, ay] = P(A[0], A[1]),
-          lx = parseFloat(el.style.left) || 0,
-          ly = parseFloat(el.style.top) || 0;
-        const left = el.classList.contains('l'),
-          sx = left ? lx + el.offsetWidth + 3 : lx - 3,
-          sy = ly + el.offsetHeight / 2;
-        ctx.globalAlpha = tagA * (0.3 + 0.6 * hl[T.k]);
-        ctx.strokeStyle = PAPER;
-        ctx.beginPath();
-        ctx.moveTo(sx, sy);
-        ctx.lineTo(ax, ay);
-        ctx.stroke();
-        ctx.fillStyle = PAPER;
-        ctx.globalAlpha = tagA * (0.7 + 0.3 * hl[T.k]);
-        const r = 2.5 + hl[T.k];
-        ctx.fillRect(ax - r, ay - r, r * 2, r * 2);
-      });
-    }
-    cy -= bob * s;
-    ctx.globalAlpha = 1;
+    ctx.fillStyle = PAPER;
+    groundInk = ctx.createLinearGradient(cx - groundHalf * scale, 0, cx + groundHalf * scale, 0);
+    groundInk.addColorStop(0, 'rgba(233, 231, 226, 0)');
+    groundInk.addColorStop(0.12, PAPER);
+    groundInk.addColorStop(0.88, PAPER);
+    groundInk.addColorStop(1, 'rgba(233, 231, 226, 0)');
   }
 
-  function step(dt, now) {
-    for (const k in hl) hl[k] += (hlT[k] - hl[k]) * (1 - Math.exp(-dt * 9));
-    if (!inView || !laidOut) return;
-    if (t0 === null) t0 = now;
-    const t = (now - t0) / 1000;
-    if (!resolved && t > 1.5) {
-      resolved = true;
-      wrap.classList.add('resolved');
-    }
-    walk = ease((t - 1.2) / 1.0);
-    phase += dt * GAIT_HZ * Math.PI * 2 * walk;
-    acc += dt * 1000;
-    if (acc < FRAME) return;
-    acc = 0;
-    const c0 = performance.now();
-    draw(now);
-    lastCost = performance.now() - c0;
-  }
-  function still() {
-    if (!laidOut) return;
-    wrap.classList.add('resolved');
-    draw(performance.now());
+  // a swinging foot leaves the ground and lands at the ground's own speed
+  function swing(leg, from, to, carry, s) {
+    leg.x = from + (to - from) * smooth(s) + carry * s * (1 - s) * (1 - 2 * s);
+    leg.lift = swingHeight(speed) * Math.sin(Math.PI * s) ** 2;
   }
 
-  function resolveNow() {
-    // keyboard focus lands on a tag before the band has resolved: finish the drawing at once, so the control is never invisible
-    if (resolved) return;
-    resolved = true;
-    wrap.classList.add('resolved');
-    if (!S.REDUCED) {
-      t0 = performance.now() - 2600;
-      inView = true;
-      walk = 1;
-      draw(performance.now());
-    }
-  }
-  // the first time the band is in view, a timer (not the frame loop) guarantees the tags by 1.6 s (fully in by ~2.1 s): a throttled requestAnimationFrame (a
-  // background tab, a hidden pane) must not leave them invisible. If no frame has drawn the sketch by then, it is drawn whole, standing.
-  let armed = false;
-  function arm() {
-    if (armed) return;
-    armed = true;
-    setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        wrap.classList.add('resolved');
-      }
-      if (t0 === null) {
-        t0 = performance.now() - 3000;
-        draw(performance.now());
-      }
-    }, 1600);
-  }
-  tagEls.forEach((el, i) => {
-    const k = (TAGS[i] || {}).k;
-    if (!k) return;
-    const on = () => {
-        hlT[k] = 1;
-      },
-      off = () => {
-        if (!held[k]) hlT[k] = 0;
-      };
-    el.addEventListener('pointerenter', on);
-    el.addEventListener('pointerleave', off);
-    el.addEventListener('focus', () => {
-      resolveNow();
-      on();
-    });
-    el.addEventListener('blur', off);
-    el.addEventListener('click', () => {
-      // the toggle (a click, Enter or Space): holds the part bright, aria-pressed
-      held[k] = !held[k];
-      el.setAttribute('aria-pressed', held[k] ? 'true' : 'false');
-      if (held[k]) on();
-      else if (!el.matches(':hover, :focus-visible')) off();
-      if (S.REDUCED) {
-        for (const q in hl) hl[q] = hlT[q];
-        draw(performance.now());
-      }
-    });
-  });
-  if (S.REDUCED) {
-    // the standing pose; hover still brightens (a direct redraw)
-    layout();
-    still();
-    tagEls.forEach(el =>
-      ['pointerenter', 'pointerleave', 'focus', 'blur'].forEach(ev =>
-        el.addEventListener(ev, () => {
-          for (const k in hl) hl[k] = hlT[k];
-          draw(performance.now());
-        }),
-      ),
-    );
-  } else {
-    layout();
-    draw(performance.now());
-    // subscribed to the page's loop only while the band is on screen, so the loop can sleep elsewhere on the page
-    let running = false;
-    new IntersectionObserver(
-      es => {
-        inView = es[es.length - 1].isIntersecting;
-        if (inView && !running) {
-          running = true;
-          S.add(step);
-        } else if (!inView && running) {
-          running = false;
-          S.remove(step);
+  function stepGait(dt) {
+    const goal = age < 1.2 ? 0 : held.speed;
+    speed += clamp(goal - speed, -MAX_ACCEL_MPS2 * dt, MAX_ACCEL_MPS2 * dt);
+    travel += speed * dt;
+    const rate = stridesPerSecond(speed);
+    const advance = rate * dt;
+    phase = (phase + advance) % 1;
+    trunkY = -0.004 * (speed / MAX_SPEED_MPS) * Math.cos(4 * Math.PI * phase);
+    const reach = stanceTravel(speed) / 2;
+    for (const leg of LEGS) {
+      const p = (phase + leg.offset) % 1;
+      if (leg.swing) {
+        leg.swing.s += advance / (1 - DUTY);
+        if (leg.swing.s >= 1) {
+          // it landed part of a frame ago and has moved with the ground since
+          const since = ((leg.swing.s - 1) * (1 - DUTY)) / rate;
+          leg.spot = leg.hipX + STAND_X - reach - travel + speed * since;
+          leg.swing = null;
         }
-        if (inView) arm();
-      },
-      { threshold: 0.15 },
-    ).observe(wrap);
+      }
+      const planted = leg.spot + travel - leg.hipX;
+      if (!leg.swing && p >= DUTY && (speed > 0 || Math.abs(planted - STAND_X) > HOME_SLACK_M)) {
+        // lifting on time, it left the ground part of a frame ago
+        const late = p - advance < DUTY ? p - DUTY : 0;
+        leg.swing = { from: planted - (speed * late) / rate, s: late / (1 - DUTY) };
+      }
+      if (leg.swing) {
+        swing(leg, leg.swing.from, STAND_X - reach, swingTravel(speed), leg.swing.s);
+      } else {
+        leg.x = planted;
+        leg.lift = 0;
+      }
+    }
   }
-  let rt;
+
+  // reduced motion: a stride held three quarters through a stance
+  function poseStill() {
+    speed = held.speed;
+    yaw = held.heading;
+    const reach = stanceTravel(speed) / 2;
+    for (const leg of LEGS) {
+      const p = (0.42 + leg.offset) % 1;
+      if (p < DUTY || speed === 0) {
+        leg.x = STAND_X + reach * ((2 * p) / DUTY - 1);
+        leg.lift = 0;
+      } else {
+        swing(leg, STAND_X + reach, STAND_X - reach, swingTravel(speed), (p - DUTY) / (1 - DUTY));
+      }
+    }
+  }
+
+  // two-link inverse kinematics, the knee to the rear
+  function solveLegs() {
+    for (const leg of LEGS) {
+      const dx = leg.x;
+      const dy = STAND_Y - leg.lift - trunkY;
+      const d = Math.hypot(dx, dy);
+      const thigh =
+        Math.atan2(dx, dy) + Math.acos((THIGH * THIGH + d * d - CALF * CALF) / (2 * THIGH * d));
+      const topY = trunkY + HIP_DROP;
+      leg.hip = px(leg.hipX, trunkY);
+      leg.top = px(leg.hipX, topY);
+      leg.knee = px(leg.hipX + THIGH * Math.sin(thigh), topY + THIGH * Math.cos(thigh));
+      leg.foot = px(leg.hipX + dx, topY + dy);
+    }
+  }
+
+  function stroke(alpha, width, dash = []) {
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = width;
+    ctx.setLineDash(dash);
+    ctx.stroke();
+  }
+  function line(a, b, f) {
+    if (f <= 0) return;
+    ctx.moveTo(a[0], a[1]);
+    ctx.lineTo(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f);
+  }
+  function ring(x, y, r) {
+    if (r <= 0) return;
+    ctx.moveTo(x + r, y);
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+  }
+  function capsule(a, b, r) {
+    const tilt = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    ctx.moveTo(a[0] - r * Math.sin(tilt), a[1] + r * Math.cos(tilt));
+    ctx.arc(a[0], a[1], r, tilt + Math.PI / 2, tilt - Math.PI / 2);
+    ctx.arc(b[0], b[1], r, tilt - Math.PI / 2, tilt + Math.PI / 2);
+    ctx.closePath();
+  }
+  function roundedBox(x, y, w, h, r) {
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawGround(shown) {
+    const y = cy + GROUND * scale;
+    ctx.beginPath();
+    ctx.moveTo(cx - groundHalf * scale, y);
+    ctx.lineTo(cx + groundHalf * scale, y);
+    // a tick every quarter metre, every fourth one longer; they pass at walking speed
+    const first = Math.ceil((-groundHalf - travel) / TICK_M);
+    for (let k = first; k * TICK_M + travel < groundHalf; k++) {
+      const x = cx + (k * TICK_M + travel) * scale;
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y + (k % 4 ? 4 : 8));
+    }
+    ctx.strokeStyle = groundInk;
+    stroke(0.3 * shown, 1);
+    ctx.strokeStyle = PAPER;
+  }
+
+  function drawSilhouette(shown) {
+    ctx.beginPath();
+    for (const leg of LEGS) {
+      if (leg.near) continue;
+      capsule(leg.top, leg.knee, 0.022 * scale);
+      capsule(leg.knee, leg.foot, 0.016 * scale);
+    }
+    stroke(0.22 * shown, 1, DOTTED);
+
+    const [bx, by] = px(-BODY_L / 2, trunkY - BODY_H / 2);
+    ctx.beginPath();
+    roundedBox(bx, by, BODY_L * scale, BODY_H * scale, 0.03 * scale);
+    stroke(0.55 * shown * (1 + 0.5 * imu.glow), 1, DOTTED);
+
+    ctx.beginPath();
+    ctx.moveTo(...px(-NOSE, trunkY - 0.045));
+    ctx.lineTo(...px(-BODY_L / 2 - 0.06, trunkY + 0.03));
+    ctx.lineTo(...px(-BODY_L / 2 + 0.02, trunkY + 0.03));
+    ctx.lineTo(...px(-BODY_L / 2 + 0.02, trunkY - 0.052));
+    ctx.closePath();
+    stroke(0.55 * shown * (1 + 0.7 * head.glow), 1, DOTTED);
+
+    for (const leg of [FRONT_NEAR, REAR_NEAR]) {
+      const tone = 0.5 * shown * (leg === FRONT_NEAR ? 1 + 0.6 * lengths.glow : 1);
+      ctx.beginPath();
+      capsule(leg.top, leg.knee, 0.024 * scale);
+      capsule(leg.knee, leg.foot, 0.017 * scale);
+      stroke(tone, 1, DOTTED);
+      ctx.beginPath();
+      ring(...leg.foot, FOOT_R * scale);
+      stroke(tone, 1);
+    }
+
+    // the camera on the head's face, the LiDAR's arc over it, the IMU at the trunk's centre
+    const camera = px(-BODY_L / 2 - 0.068, trunkY - 0.012);
+    const lidar = px(-BODY_L / 2 - 0.04, trunkY - 0.045);
+    ctx.beginPath();
+    ctx.arc(camera[0], camera[1], 2.5, 0, Math.PI * 2);
+    ctx.globalAlpha = shown * (0.6 + 0.4 * head.glow);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(lidar[0], lidar[1], 0.028 * scale, Math.PI * 1.1, Math.PI * 1.9);
+    stroke(shown * (0.6 + 0.4 * head.glow), 1);
+    const unit = px(0.02, trunkY - 0.01);
+    ctx.beginPath();
+    ctx.rect(unit[0] - 5, unit[1] - 5, 10, 10);
+    stroke(shown * (0.5 + 0.5 * imu.glow), 1);
+    ctx.beginPath();
+    ctx.arc(unit[0], unit[1], 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // links as lines, joints as circles; on entry it draws itself hip to foot, leg by leg
+  function drawSkeleton() {
+    ctx.beginPath();
+    line(px(-HIP_X, trunkY), px(HIP_X, trunkY), ramp(age, 0, 0.12));
+    stroke(0.85, 1.5);
+    LEGS.forEach((leg, i) => {
+      const f = ramp(age, 0.12 + i * 0.18, 0.36 + i * 0.18);
+      if (f <= 0) return;
+      const motors = leg === REAR_NEAR ? joints.glow : joints.glow / 2;
+      ctx.beginPath();
+      line(leg.hip, leg.top, smooth(f / 0.15));
+      line(leg.top, leg.knee, smooth((f - 0.1) / 0.45));
+      line(leg.knee, leg.foot, smooth((f - 0.5) / 0.5));
+      const width = leg.near ? 1.5 : 1;
+      stroke(leg.near ? 0.95 : 0.42, leg === FRONT_NEAR ? width + lengths.glow : width);
+      const r = (leg.near ? 4.5 : 3.5) + motors * 1.5;
+      ctx.beginPath();
+      ring(...leg.hip, r * smooth(f / 0.1));
+      ring(...leg.top, r * 0.8 * smooth((f - 0.15) / 0.1));
+      ring(...leg.knee, r * smooth((f - 0.55) / 0.1));
+      stroke(Math.min(1, (leg.near ? 0.95 : 0.5) * (1 + 0.4 * motors)), 1 + motors * 0.8);
+    });
+  }
+
+  function drawLeaders() {
+    const shown = ramp(age, 1.2, 1.5);
+    if (phone || shown <= 0) return;
+    for (const tag of TAGS) {
+      const [ax, ay] = tag.anchor();
+      ctx.beginPath();
+      ctx.moveTo(...tag.from);
+      ctx.lineTo(ax, ay);
+      stroke(shown * (0.3 + 0.6 * tag.glow), 1);
+      const r = 2.5 + tag.glow;
+      ctx.globalAlpha = shown * (0.7 + 0.3 * tag.glow);
+      ctx.fillRect(ax - r, ay - r, r * 2, r * 2);
+    }
+  }
+
+  function drawSketch() {
+    const shown = ramp(age, 0.85, 1.2);
+    ctx.clearRect(inked.x, inked.y, inked.w, inked.h);
+    solveLegs();
+    drawGround(shown);
+    if (shown > 0) drawSilhouette(shown);
+    drawSkeleton();
+    drawLeaders();
+  }
+
+  // the dial: straight ahead is up. The robot seen from above turns toward the heading marked on
+  // the ring; a heading still waiting for its tick is marked hollow
+  function drawDial() {
+    const g = dialCtx;
+    const c = Math.floor(dialSize / 2) + 0.5;
+    const r = c - 8;
+    // px per metre: the rear knees, the robot's farthest point from its centre, reach 0.72 of the
+    // ring, and the needles start just beyond them
+    const u = (0.72 * r) / Math.hypot(HIP_X + KNEE_BACK, LEG_Y);
+    const needle = r * 0.76;
+    const spoke = (deg, from, to) => {
+      const a = (deg * Math.PI) / 180;
+      g.moveTo(c + from * Math.sin(a), c - from * Math.cos(a));
+      g.lineTo(c + to * Math.sin(a), c - to * Math.cos(a));
+    };
+    const onRing = (deg, size) => {
+      const a = (deg * Math.PI) / 180;
+      return [
+        Math.round(c + r * Math.sin(a) - size / 2),
+        Math.round(c - r * Math.cos(a) - size / 2),
+      ];
+    };
+    dialStale = false;
+    g.clearRect(0, 0, dialSize, dialSize);
+    g.lineWidth = 1;
+    g.setLineDash([]);
+
+    g.beginPath();
+    g.arc(c, c, r, 0, Math.PI * 2);
+    for (let deg = 0; deg < 360; deg += 90) spoke(deg, r, r + (deg ? 3 : 6));
+    g.globalAlpha = 0.3;
+    g.stroke();
+
+    if (wanted.heading !== held.heading) {
+      const [x, y] = onRing(wanted.heading, 7);
+      g.beginPath();
+      spoke(wanted.heading, needle, r);
+      g.setLineDash(DOTTED);
+      g.globalAlpha = 0.72;
+      g.stroke();
+      g.setLineDash([]);
+      g.clearRect(x, y, 7, 7);
+      g.strokeRect(x + 0.5, y + 0.5, 6, 6);
+    }
+
+    // the trunk, the legs out to the thigh joints and back to the knees, the head filled
+    g.save();
+    g.translate(c, c);
+    g.rotate((yaw * Math.PI) / 180);
+    g.scale(u, u);
+    g.lineWidth = 1 / u;
+    g.globalAlpha = 0.85;
+    g.beginPath();
+    g.rect(-BODY_W / 2, -BODY_L / 2, BODY_W, BODY_L);
+    for (const y of [-HIP_X, HIP_X]) {
+      for (const side of [-1, 1]) {
+        g.moveTo((side * BODY_W) / 2, y);
+        g.lineTo(side * LEG_Y, y);
+        g.lineTo(side * LEG_Y, y + KNEE_BACK);
+      }
+    }
+    g.stroke();
+    g.beginPath();
+    g.moveTo(-0.038, -BODY_L / 2);
+    g.lineTo(-0.026, -NOSE);
+    g.lineTo(0.026, -NOSE);
+    g.lineTo(0.038, -BODY_L / 2);
+    g.fill();
+    g.restore();
+
+    g.globalAlpha = 1;
+    g.beginPath();
+    spoke(held.heading, needle, r);
+    g.stroke();
+    g.fillRect(...onRing(held.heading, 5), 5, 5);
+  }
+
+  function draw() {
+    drawSketch();
+    drawDial();
+  }
+
+  function showCommand() {
+    speedHeld.textContent = held.speed.toFixed(1);
+    headingHeld.textContent = degrees(held.heading);
+    speedNext.textContent = wanted.speed === held.speed ? '' : '→ ' + wanted.speed.toFixed(1);
+    headingNext.textContent = wanted.heading === held.heading ? '' : '→ ' + degrees(wanted.heading);
+    dialStale = true;
+  }
+
+  function describeSliders() {
+    speedInput.setAttribute('aria-valuetext', `${wanted.speed.toFixed(1)} meters per second`);
+    headingInput.setAttribute('aria-valuetext', degreesInWords(wanted.heading));
+  }
+
+  function announce() {
+    const course = `on a heading of ${degreesInWords(held.heading)}`;
+    status.textContent = held.speed
+      ? `The robot now walks at ${held.speed.toFixed(1)} meters per second ${course}.`
+      : `The robot now stands ${course}.`;
+  }
+
+  function showTags() {
+    if (tagsShown) return;
+    tagsShown = true;
+    wrap.classList.add('resolved');
+  }
+
+  function tickNavigator(dt) {
+    sinceTick += dt;
+    const period = stepsPerTick / CONTROL_HZ;
+    if (sinceTick >= period) {
+      sinceTick %= period;
+      if (pending()) {
+        Object.assign(held, wanted);
+        showCommand();
+        unsaid = true;
+      }
+      // one message, once the sliders have come to rest
+      if (unsaid && performance.now() - lastInput > 300) {
+        unsaid = false;
+        announce();
+      }
+    }
+    // a canvas, not a style: a style change every frame repaints far more of the page
+    const level = 1 - smooth(sinceTick / LAMP_S);
+    if (level !== lampLevel) {
+      lampLevel = level;
+      lampCtx.clearRect(0, 0, lamp.width, lamp.height);
+      lampCtx.globalAlpha = level;
+      lampCtx.fillRect(0, 0, lamp.width, lamp.height);
+    }
+  }
+
+  function turn(dt) {
+    if (yaw === held.heading) return;
+    const error = ((held.heading - yaw + 540) % 360) - 180;
+    if (Math.abs(error) < 0.1) yaw = held.heading;
+    else yaw += clamp(error * 4, -MAX_YAW_DPS, MAX_YAW_DPS) * dt;
+    dialStale = true;
+  }
+
+  function easeGlow(dt) {
+    for (const tag of TAGS) {
+      const to = lit(tag);
+      tag.glow += (to - tag.glow) * (1 - Math.exp(-9 * dt));
+      if (Math.abs(to - tag.glow) < 0.01) tag.glow = to;
+    }
+  }
+
+  const resting = () =>
+    (age > 2 || !entered) &&
+    lampLevel === 0 &&
+    !unsaid &&
+    !pending() &&
+    speed === 0 &&
+    held.speed === 0 &&
+    yaw === held.heading &&
+    LEGS.every(leg => !leg.swing && Math.abs(leg.x - STAND_X) <= HOME_SLACK_M) &&
+    TAGS.every(tag => tag.glow === lit(tag));
+
+  function frame(dt) {
+    if (entered) age += dt;
+    if (age > 1.5) showTags();
+    tickNavigator(dt);
+    stepGait(dt);
+    turn(dt);
+    easeGlow(dt);
+    if (sketchSeen && entered) drawSketch();
+    if (dialStale) drawDial();
+    if (resting()) sleep();
+  }
+
+  function wake() {
+    if (awake || !bandSeen) return;
+    awake = true;
+    S.add(frame);
+  }
+  function sleep() {
+    awake = false;
+    S.remove(frame);
+  }
+
+  // reduced motion: everything takes its final state at once, in one still frame
+  function still() {
+    Object.assign(held, wanted);
+    showCommand();
+    for (const tag of TAGS) tag.glow = lit(tag);
+    poseStill();
+    draw();
+  }
+  const refresh = S.REDUCED ? still : wake;
+
+  function onCommand() {
+    wanted.speed = +speedInput.value;
+    wanted.heading = +headingInput.value;
+    describeSliders();
+    lastInput = performance.now();
+    showCommand();
+    refresh();
+  }
+  speedInput.addEventListener('input', onCommand);
+  headingInput.addEventListener('input', onCommand);
+
+  // a touch jumps the slider to the finger at once; if it turns out to be a page scroll, the slider
+  // and the command go back to where they were
+  for (const input of [speedInput, headingInput]) {
+    let before = null;
+    input.addEventListener('pointerdown', e => {
+      before = e.pointerType === 'touch' ? { value: input.value, held: { ...held }, unsaid } : null;
+    });
+    input.addEventListener('pointercancel', () => {
+      if (!before) return;
+      input.value = before.value;
+      Object.assign(held, before.held);
+      unsaid = before.unsaid;
+      before = null;
+      onCommand();
+    });
+  }
+
+  for (const button of tickButtons) {
+    button.addEventListener('click', () => {
+      stepsPerTick = +button.value;
+      for (const other of tickButtons) other.setAttribute('aria-pressed', other === button);
+      rateText.data = `every ${stepsPerTick} steps`;
+    });
+  }
+
+  // a focused tag is never left invisible: the sketch finishes drawing at once
+  function finish() {
+    entered = true;
+    age = Math.max(age, 1.5);
+    showTags();
+  }
+  for (const tag of TAGS) {
+    const set = (key, on) => {
+      tag[key] = on;
+      refresh();
+    };
+    if (HOVER) {
+      tag.el.addEventListener('pointerenter', () => set('hovered', true));
+      tag.el.addEventListener('pointerleave', () => set('hovered', false));
+    }
+    tag.el.addEventListener('focus', () => {
+      finish();
+      set('focused', tag.el.matches(':focus-visible'));
+    });
+    tag.el.addEventListener('blur', () => set('focused', false));
+    tag.el.addEventListener('click', () => {
+      tag.el.setAttribute('aria-pressed', !tag.pinned);
+      set('pinned', !tag.pinned);
+    });
+  }
+
+  layout();
+  // the browser may have restored the sliders from history
+  describeSliders();
+  showCommand();
+  lamp.width = Math.round(4 * DPR);
+  lamp.height = Math.round(4 * DPR);
+  lampCtx.fillStyle = PAPER;
+  band.classList.add('live');
+  if (S.REDUCED) {
+    age = 2;
+    showTags();
+    still();
+  } else {
+    draw();
+    new IntersectionObserver(entries => {
+      bandSeen = entries[entries.length - 1].isIntersecting;
+      if (bandSeen) wake();
+      else sleep();
+    }).observe(band);
+    new IntersectionObserver(
+      entries => {
+        const entry = entries[entries.length - 1];
+        sketchSeen = entry.isIntersecting;
+        // to resolve on entry, or to redraw a robot that came to rest off screen
+        if (sketchSeen) wake();
+        if (entered || entry.intersectionRatio < 0.15) return;
+        entered = true;
+        // the tags arrive even where frames are throttled or the sketch has already scrolled away
+        setTimeout(() => {
+          showTags();
+          if (age < 1.5) {
+            age = 2;
+            drawSketch();
+          }
+        }, 1600);
+      },
+      { threshold: [0, 0.15] },
+    ).observe(sketch);
+  }
+
+  // the tags are placed by their width: again once the web font is in
+  document.fonts.ready.then(() => {
+    layout();
+    draw();
+  });
+
+  let resizeTimer = 0;
   addEventListener(
     'resize',
     () => {
-      clearTimeout(rt);
-      rt = setTimeout(() => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
         layout();
-        S.REDUCED ? still() : draw(performance.now());
+        draw();
       }, 150);
     },
     { passive: true },
   );
-  // dev (local hosts only): a frame's cost; at(sec) jumps the resolve clock for screenshots
-  if (S.DEV)
-    S.xray = {
-      cost: () => lastCost,
-      bench(n) {
-        const a = performance.now();
-        for (let i = 0; i < n; i++) draw(performance.now());
-        return ((performance.now() - a) / n).toFixed(2);
-      },
-      at(sec) {
-        t0 = performance.now() - sec * 1000;
-        inView = true;
-        walk = ease((sec - 1.2) / 1.0);
-        draw(performance.now());
-        if (sec > 1.5) wrap.classList.add('resolved');
-      },
-    };
 })();

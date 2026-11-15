@@ -294,29 +294,58 @@
           </div>
 
           <div class="band">
-          <div class="xray">
-            <canvas aria-hidden="true"></canvas>
-            <p class="sr-only">A Unitree Go2 quadruped robot drawn as a kinematic sketch: its twelve joints and legs inside a dotted silhouette, trotting in place. The tags name its hardware: a 4D LiDAR L2 and a wide-angle camera at the head; an IMU at the trunk’s center; a thigh and a calf of 0.213 meters each; twelve joint motors: hip, thigh, and calf on each of the four legs. It weighs about 15 kilograms and stands about 70 by 31 by 40 centimeters (unitree.com).</p>
-            <ul class="tags" aria-label="Hardware">
-              <li><button type="button" class="tag" aria-pressed="false">4D LiDAR L2 · wide-angle camera</button></li>
-              <li><button type="button" class="tag" aria-pressed="false">IMU</button></li>
-              <li><button type="button" class="tag" aria-pressed="false"><span class="tx">thigh 0.213 <span class="nc">m</span> · calf 0.213 <span class="nc">m</span></span></button></li>
-              <li><button type="button" class="tag" aria-pressed="false" aria-label="12 joint motors: hip / thigh / calf × 4"><span class="tx">12 joint motors<span class="sep"> · </span><span class="l2">hip / thigh / <span class="nw">calf × 4</span></span></span></button></li>
-            </ul>
+            <!-- the sketch -->
+            <div class="xray">
+              <div class="sketch"><canvas aria-hidden="true"></canvas></div>
+              <p class="sr-only">A Unitree Go2 quadruped robot drawn as a kinematic sketch: its twelve joints and legs inside a dotted silhouette, trotting in place over a ground line whose distance ticks pass at its speed. The gait is an illustration, not the trained policy’s own. The tags name its hardware: a 4D LiDAR L2 and a wide-angle camera at the head; an IMU at the trunk’s center; a thigh and a calf of 0.213 meters each; twelve joint motors: hip, thigh, and calf on each of the four legs. It weighs about 15 kilograms and stands about 70 by 31 by 40 centimeters (unitree.com). Two sliders give it the two commands the policy takes, a forward speed from 0 to 1.5 meters per second and a heading, which a dial shows from above; a change reaches the robot at the navigator’s next tick, every 20 or 50 control steps (0.2 or 0.5 seconds), and holds until the one after.</p>
+              <ul class="tags mono" aria-label="Hardware">
+                <li><button type="button" class="tag" aria-pressed="false">4D LiDAR L2 · wide-angle camera</button></li>
+                <li><button type="button" class="tag" aria-pressed="false">IMU</button></li>
+                <li><button type="button" class="tag" aria-pressed="false"><span class="tx">thigh 0.213 <span class="nc">m</span> · calf 0.213 <span class="nc">m</span></span></button></li>
+                <li><button type="button" class="tag" aria-pressed="false"><span class="tx">12 joint motors <span class="sep">· </span><span class="l2">hip / thigh / <span class="nw">calf × 4</span></span></span></button></li>
+              </ul>
+            </div>
+
+            <div class="band-side mono">
+              <!-- command -->
+              <div class="cmd" role="group" aria-labelledby="go2-command">
+                <p class="band-h" id="go2-command">command</p>
+                <div class="field">
+                  <p><label for="go2-speed">speed</label> <span class="held">0.8</span> <span class="nc">m/s</span> <span class="next" aria-hidden="true"></span></p>
+                  <input type="range" id="go2-speed" min="0" max="1.5" step="0.1" value="0.8" aria-valuetext="0.8 meters per second">
+                </div>
+                <div class="field">
+                  <p><label for="go2-heading">heading</label> <span class="held deg">0°</span> <span class="next" aria-hidden="true"></span></p>
+                  <input type="range" id="go2-heading" min="-180" max="180" step="5" value="0" aria-valuetext="0 degrees">
+                  <canvas class="dial" aria-hidden="true"></canvas>
+                </div>
+                <div class="interval" role="group" aria-labelledby="go2-tick">
+                  <p id="go2-tick">navigator tick</p>
+                  <button type="button" value="20" aria-pressed="true">every 20 steps · 0.2 <span class="nc">s</span></button>
+                  <button type="button" value="50" aria-pressed="false">every 50 steps · 0.5 <span class="nc">s</span></button>
+                </div>
+              </div>
+
+              <!-- control stack -->
+              <div role="group" aria-labelledby="go2-stack">
+                <p class="band-h" id="go2-stack">control stack</p>
+                <ol class="stages">
+                  <li>camera / video</li>
+                  <li class="navigator">VLM navigator (Qwen3.5-9B) <span class="rate"><canvas class="lamp" aria-hidden="true"></canvas>every 20 steps</span></li>
+                  <li>velocity command</li>
+                  <li class="policy">PPO locomotion policy <span class="rate">every step</span></li>
+                  <li>joint torques</li>
+                  <li>motors</li>
+                </ol>
+              </div>
+            </div>
+
+            <div class="band-cap mono">
+              <p><span class="cl">you are the navigator</span><span class="sep"> · </span><span class="cl">your command reaches the policy at the next tick, then holds, as in the ICMLA paper</span></p>
+              <p><span class="cl">Unitree Go2</span><span class="sep"> · </span><span class="cl">a kinematic sketch, not the trained policy’s gait</span><span class="sep"> · </span><span class="cl"><span class="nw">leg lengths</span> from the <span class="nc">go2_description</span> URDF</span></p>
+            </div>
+            <p class="sr-only" role="status"></p>
           </div>
-          <div class="cstack" role="group" aria-labelledby="cs-h">
-            <p class="cs-h mono" id="cs-h">control stack</p>
-            <ol class="chain mono">
-              <li>camera / video</li>
-              <li>VLM navigator (Qwen3.5-9B)</li>
-              <li>velocity command</li>
-              <li>PPO locomotion policy</li>
-              <li>joint torques</li>
-              <li>motors</li>
-            </ol>
-          </div>
-          <p class="band-cap mono"><span class="cl">Unitree Go2 · kinematic sketch</span><span class="sep"> · </span><span class="cl"><span class="nw">leg lengths</span> from the <span class="nc">go2_description</span> URDF</span></p>
-        </div>
 
           <ol class="rows" start="11">
             <li>
