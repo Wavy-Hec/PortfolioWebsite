@@ -24,7 +24,7 @@ dependencies.
 | `js/game.js`                                            | A hidden game, fetched only when someone finds it                                                                              |
 | `img/`                                                  | The fold's Go2, the project plates, the About photograph, the résumé page, the game's codec portrait and the link-preview card |
 | `media/`                                                | The drone reel's four clips and the poker clip, each with its poster                                                           |
-| `papers/`                                               | The ICMLA 2026 paper                                                                                                           |
+| `papers/`                                               | The ICMLA 2026 paper, the accepted version with IEEE's notice                                                                  |
 | `resume.html`                                           | The résumé as an image with its links laid over it                                                                             |
 | `Hector_Lugo_Fall_Resume.pdf`                           | The résumé, linked from `resume.html`                                                                                          |
 | `404.html`                                              | Served by GitHub Pages at any missing path                                                                                     |
