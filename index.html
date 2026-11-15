@@ -74,19 +74,20 @@
   </header>
 
   <main id="main" tabindex="-1">
-    <!-- the fold: one scene, back to front: a full moon printed in the same halftone as his plate, behind Raiden's head on the lit side, drifting fog, Raiden (Yoji Shinkawa's ink, cut out as paper, over his own ink as a sumi silhouette whose back runs out in dry brush), tall pampas grass bending in gusts that roll left to right, the ground fog over its roots (js/sumi-fold.js draws the moon once and runs the wind; css places it all). The headline at the left. First load: the scene fades up over a second, the words a beat later. Hover or focus on him pops the "!" plate over his head, silent (js/sumi.js). -->
+    <!-- fold -->
     <section class="hero" aria-labelledby="h1">
       <div class="copy">
         <h1 id="h1"><span class="l">Teaching machines</span> <span class="l">to see, and to decide.</span></h1>
         <p class="sub"><span class="who">Hector Lugo.</span> M.S. Computer Science student, UTRGV. I&nbsp;build reinforcement-learning and vision systems<span class="more">: legged robots at UTRGV, multi-camera video with the Air Force Research Laboratory, smart-grid signals at Idaho National Laboratory</span>.</p>
-        <a class="link cta" href="mailto:hlugo576@gmail.com">Get in touch<span aria-hidden="true"> →</span></a>
+        <p class="status mono">Graduating December 2026<span class="sep"> · </span><span class="cl">open to research collaborations and robotics work</span></p>
+        <p class="ctas"><a class="link cta" href="mailto:hlugo576@gmail.com">Get in touch<span aria-hidden="true"> →</span></a><a class="link cta" href="resume.html">Résumé<span aria-hidden="true"> →</span></a></p>
       </div>
       <div class="scene">
         <canvas class="moon" aria-hidden="true"></canvas>
         <div class="fog f-back" data-period="90" data-seed="3" aria-hidden="true"><canvas></canvas></div>
-        <figure class="figure" tabindex="0" role="img" aria-label="Raiden, ink illustration by Yoji Shinkawa, before a full moon in tall grass and fog">
-          <img src="img/raiden-shade.png?v=14" width="640" height="1016" decoding="async" alt="">
-          <img src="img/raiden-night.png?v=13" width="640" height="1016" loading="eager" fetchpriority="high" decoding="async" alt="">
+        <figure class="figure" tabindex="0" role="img" aria-label="A Unitree Go2, a four-legged robot, standing in tall grass at night before a full moon">
+          <img src="img/go2-shade.png?v=1" width="787" height="840" decoding="async" alt="">
+          <img src="img/go2-night.png?v=1" width="787" height="840" loading="eager" fetchpriority="high" decoding="async" alt="">
           <span class="alert" aria-hidden="true">!</span>
         </figure>
         <canvas class="grass g-far" aria-hidden="true"></canvas>

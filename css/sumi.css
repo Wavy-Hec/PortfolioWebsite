@@ -203,31 +203,26 @@ body::after {
   color: var(--paper);
 }
 
-/* ---------- the fold: one scene (v10) ----------
-   Back to front: the moon (a canvas, drawn once), the far fog, Raiden (his shadow plate under his paper plate), the far grass, the fog bank,
-   the near grass, the ground fog, the floor sinking into sumi; the copy over all of it, the grain over the page. One wind (js/sumi-fold.js)
-   bends the grass in gusts that roll left to right and drifts the fog the same way, each layer at its own speed. First load: the scene fades
-   up over 1 s (Raiden with it), the words 0.3 s later; nothing else arrives. Under reduced motion: one still frame, mid-gust.
-   The composition is set in custom properties so the moon, the figure and the headline move together:
-   --F the fold's height; --fs the headline's size; --hr where the headline's longer line ends (Shippori's "to see, and to decide." is 9.36 em
-   wide); --gap the air between the headline and his nearest ink (his flying hair, 5 % into the plate); --fh / --fw his plate (640 x 1016, never
-   upscaled past 1.7x, 1727 px tall: past that his halftone goes soft beside the type; 2560 x 1440 is just inside it) and
-   --fl / --fb its left and its bottom (his ink runs from 5.9 % to 78.7 % of the plate's height: the bottom puts his feet at the floor, in the
-   grass); --md the moon's diameter (.315 of his plate's height, so it keeps its place on him at every size: about .38 of the fold), --mx / --my
-   its centre as fractions of his plate (behind his head on the lit side, his face and hair crossing it, clear of the ink block behind his
-   back, the limb 50+ px under the nav's rule). tools/make-night.py holds the same three numbers: it keeps his shadow off that disc. */
+/* the fold, back to front: the moon, the far fog, the Go2 (its shade plate under its paper plate), the far grass, the
+   fog bank, the near grass, the ground fog; the words over it all. --hr is where the headline's longer line ends
+   (9.36 em). The plate is 787 x 840 with the face 8.5 % in from its left: the face stands --gap past the headline, the
+   right edge 24 px inside the window, the feet in the grass, and the moon's top near 16 % of the fold */
 .hero {
   --F: calc(100vh - var(--nav));
   --fs: clamp(44px, min(5.6vw, 13.5vh), 200px);
   --hr: calc(var(--gutter) + 9.36 * var(--fs));
-  --gap: calc(2.4vw + 36px);
-  --fh: min(calc(var(--F) * 1.22), calc((100vw - var(--hr) - var(--gap)) * 1.9), 1727px);
-  --fw: calc(var(--fh) * 0.63);
-  --fl: calc(var(--hr) + var(--gap) - var(--fw) * 0.05);
-  --fb: calc(var(--F) * 0.015 - var(--fh) * 0.213);
-  --md: calc(var(--fh) * 0.315);
-  --mx: 0.345;
-  --my: 0.19;
+  --gap: max(85px, calc(var(--F) * 0.12));
+  --fh: min(calc(var(--F) * 0.74), calc((100vw - var(--hr) - var(--gap) - 24px) / 0.857), 1200px);
+  --fw: calc(var(--fh) * 0.937);
+  --fl: calc(var(--hr) + var(--gap) - var(--fw) * 0.085);
+  --fb: clamp(
+    calc(var(--F) * -0.04),
+    calc(var(--F) * 0.84 - var(--fh) * 1.26),
+    calc(var(--F) * 0.06)
+  );
+  --md: calc(var(--fh) * 0.76);
+  --mx: 0.4;
+  --my: 0.12;
   --gh: 34%;
   position: relative;
   isolation: isolate;
@@ -335,23 +330,16 @@ body::after {
   height: var(--fh);
   max-width: none;
 }
-/* his legs: the paper plate dissolves in a fine stochastic stipple from 62 % down, inside the grass (baked, tools/make-night.py: a print,
-   never a translucent grey); his shadow runs on under it to 80 % and fades out by 90 %, so his legs sink into dark grass */
-.hero .figure img:first-child {
-  -webkit-mask-image: linear-gradient(#000 80%, transparent 90%);
-  mask-image: linear-gradient(#000 80%, transparent 90%);
-}
 .hero .figure:focus-visible {
   outline: none;
 }
-/* the "!" over his head: a paper plate, popped by hover / focus on the figure for 1.2 s (js/sumi.js adds .on); silent. It sits right over
-   his crown, the MGS alert: centred on the highest point of his hair (52 % across his plate, 8 % down) with its foot 8 px above it, so
-   it reads as his, not as a badge by the nav; never closer than 24 px to the nav's rule (the figure's box starts F - fh - fb below it) */
+/* the "!" 8 px over the robot's head (the middle of its top edge: 22 % across the plate, 4.2 % down), popped by
+   hover or focus (js/sumi.js adds .on); never closer than 24 px to the nav's rule */
 .hero .alert {
   position: absolute;
   z-index: 3;
-  left: 52%;
-  top: max(calc(var(--fh) * 0.08 - 1.12em - 16px), calc(24px + var(--fh) + var(--fb) - var(--F)));
+  left: 22%;
+  top: max(calc(var(--fh) * 0.042 - 1.12em - 16px), calc(24px + var(--fh) + var(--fb) - var(--F)));
   transform: translateX(-50%);
   font: 700 clamp(2.4rem, calc(var(--F) * 0.052), 6rem)/1 var(--mono);
   color: var(--paper);
@@ -431,16 +419,32 @@ body::after {
 .hero .sub .who {
   color: var(--paper);
 } /* his name, in paper: on a phone the nav shows only the seal, so this is where his name is above the fold */
+.hero .status {
+  margin-top: 22px;
+  line-height: 1.8;
+  color: var(--dim);
+  text-shadow:
+    0 0 2px var(--sumi),
+    0 0 12px var(--sumi);
+}
+.hero .status .cl {
+  white-space: nowrap;
+}
+.hero .ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 36px;
+  margin-top: 6px;
+}
 .hero .cta {
-  display: inline-block;
-  margin-top: 14px;
+  margin: 0;
   padding: 14px 0;
   font-size: clamp(11px, calc(var(--fs) * 0.1), 14px);
   letter-spacing: 0.24em;
   text-shadow:
     0 0 2px var(--sumi),
     0 0 12px var(--sumi);
-} /* the one call to action keeps its scale under a 129 px headline */
+}
 @keyframes fadeUp {
   from {
     opacity: 0;
@@ -1752,7 +1756,12 @@ body.game-open ascii-art {
 @media (max-width: 1279px) {
   .hero {
     --fs: clamp(44px, 5.2vw, 84px);
-    --fh: min(calc(var(--F) * 1.1), calc((100vw - var(--hr) - var(--gap)) * 1.9));
+  }
+  .hero .status .sep {
+    display: none;
+  }
+  .hero .status .cl {
+    display: block;
   }
 }
 
@@ -1763,18 +1772,20 @@ body.game-open ascii-art {
 }
 
 @media (max-width: 960px) {
-  /* the phone composition, larger: the words first, then the scene in flow under them, filling the rest of the fold: Raiden at the right,
-     his right edge just past the viewport's, his head just under the words, the moon behind it, the grass across the foot. His height is
-     1.25 x (the scene less 24 px): the moon's top (.0325 of his plate below its top, which is .83 of it above the scene's foot) then sits
-     24 px or more under the scene's top, so 32 px or more under "Get in touch" */
+  /* stacked: the words first, then the scene in flow under them, filling the rest of the fold. The plate is sized
+     to the scene (--sh, its height, set by js/sumi-fold.js) so that the moon's top, 1.07 plates above the scene's
+     foot (the feet sink .06 into the floor), sits 24 px or more under the links, and to the width so that the
+     robot is whole */
   .hero {
     display: flex;
     flex-direction: column;
-    --sh0: max(420px, calc(var(--F) - 330px));
-    --fh: min(calc((var(--sh, var(--sh0)) - 24px) * 1.25), calc(100vw * 1.55), 820px);
-    --fw: calc(var(--fh) * 0.63);
-    --fl: calc(100% - var(--fw) * 0.92);
-    --fb: calc(var(--fh) * -0.17);
+    --sh0: max(300px, calc(var(--F) - 438px));
+    --fh: min(calc((var(--sh, var(--sh0)) - 24px) / 1.07), calc((100vw - 24px) / 0.937), 640px);
+    --fl: calc((100% - var(--fw)) / 2);
+    --fb: calc(var(--fh) * -0.06);
+    --md: calc(var(--fh) * 0.66);
+    --mx: 0.38;
+    --my: 0.2;
     --gh: 36%;
   }
   .hero .copy {
@@ -1791,20 +1802,19 @@ body.game-open ascii-art {
     position: relative;
     inset: auto;
     flex: 1 0 auto;
-    min-height: 420px;
+    min-height: 300px;
     margin: 8px calc(-1 * var(--gutter)) 0;
-  } /* Raiden is sized to the scene (--sh, its height, set by js/sumi-fold.js): he fills what the words leave of the fold */
+  }
   .hero .alert {
-    top: calc(var(--fh) * 0.08 - 1.12em - 14px);
+    top: calc(var(--fh) * 0.042 - 1.12em - 14px);
     font-size: 3rem;
     border-width: 3px;
-  } /* the scene is in flow under the words: its top is not the rule */
+  }
 }
 
 @media (min-width: 721px) and (max-width: 960px) {
   .hero {
-    --fh: min(calc((var(--sh, var(--sh0)) - 24px) * 1.25), calc(100vw * 1.55), 900px);
-    --fl: calc(100% - var(--fw) * 1.08);
+    --fl: calc(100% - var(--fw) - var(--gutter));
     --gh: 42%;
   }
 }
@@ -2021,10 +2031,9 @@ body.game-open ascii-art {
       margin-left: 0;
     }
   }
-  /* the fold on a phone (the 960 block's composition): the words first, then Raiden under them in flow, his face whole, nothing dimmed */
   .hero {
-    --sh0: max(420px, calc(var(--F) - 284px));
-  } /* the scene's height before js/sumi-fold.js measures it (--sh): the fold less the words (~275 px) and their 8 px, so Raiden does not move when it does */
+    --sh0: max(300px, calc(var(--F) - 362px));
+  }
   .hero .copy {
     padding: 36px 0 0;
   }
@@ -2042,8 +2051,16 @@ body.game-open ascii-art {
   .hero .sub .more {
     display: none;
   } /* phones: the sentence ends at "vision systems."; the three places (UTRGV, AFRL, INL) are in Experience a scroll below */
-  .hero .cta {
+  .hero .status {
     margin-top: 18px;
+    letter-spacing: 0.14em;
+    text-wrap: balance;
+  }
+  .hero .status .cl {
+    white-space: normal;
+  }
+  .hero .ctas {
+    margin-top: 4px;
   }
   .hero .alert {
     font-size: 2.6rem;

@@ -83,7 +83,7 @@
     const css = moonC.clientWidth,
       plate = scene.querySelector('.figure img');
     if (!css || !plate || !plate.clientHeight) return;
-    const k = Math.max(plate.clientHeight / 1016, 1 / Math.min(window.devicePixelRatio || 1, 3)); // css px per dot: his plate's pitch, never under a device pixel
+    const k = Math.max(plate.clientHeight / 840, 1 / Math.min(window.devicePixelRatio || 1, 3)); // css px per dot: the plate's pitch, never under a device pixel
     const N = Math.max(32, Math.min(1400, Math.round(css / k)));
     moonC.width = moonC.height = N;
     const g = moonC.getContext('2d'),
@@ -255,16 +255,18 @@
     }
     const plate = scene.querySelector('.figure img:last-of-type'),
       pb = plate && plate.getBoundingClientRect();
-    const thighX = pb && pb.width ? pb.left - sb.left + pb.width * 0.4 : W * 0.78; // a few tall stems stand in front of his thigh
+    const placed = pb && pb.width;
+    // a few tall stems stand in front of the near foreleg; no pale plume tips over the robot's legs
+    const tallX = placed ? pb.left - sb.left + pb.width * 0.44 : W * 0.78;
     const narrow = W < 720;
-    const figL = pb && pb.width ? pb.left - sb.left + pb.width * 0.08 : W,
-      figR = pb && pb.width ? pb.left - sb.left + pb.width * 0.95 : W; // on a phone his coat fills the grass's height: no pale plume tips on it
+    const figL = placed ? pb.left - sb.left + pb.width * 0.03 : W,
+      figR = placed ? pb.left - sb.left + pb.width * 0.97 : W;
     const r = rng(8085);
     const swell = octaves(rng(77), 5, 1, 3); // the stand's density and height along x
     const sky = octaves(rng(31), 3, 1, 2); // the field's top edge: slow swells and dips, +-12 % of the grass's height
     const skyAt = x =>
       Math.max(-1, Math.min(1, (fbm(sky, ((x / W) * 0.9 + 1) % 1, 0.5) - 0.5) / 0.16));
-    const litX = (moonX + thighX) / 2; // under the moon, round his legs
+    const litX = (moonX + tallX) / 2; // under the moon, round the legs
     const lightAt = x => {
       const L = Math.max(0, 1 - Math.abs(x - litX) / Math.max(160, W * 0.2));
       return L > 0.7 ? 3 : L > 0.45 ? 2 : L > 0.15 ? 1 : 0;
@@ -296,7 +298,7 @@
           const nStems = near ? 1 + (r() < 0.25 ? 1 : 0) : 1;
           for (let k = 0; k < nStems; k++) {
             let plume = !dark && r() < (tall ? 0.5 : lerp(0.55, 0.92, d) * (near ? 0.3 : 0.33)); // few plumes: a third of the far stems, fewer up close
-            if (narrow && xc > figL && xc < figR) plume = false;
+            if (xc > figL && xc < figR) plume = false;
             items.push({
               stem: true,
               x: xc + (r() - 0.5) * sp * 0.2,
@@ -351,7 +353,7 @@
           x += sp * (n * 0.2 + 1.3 + 1.6 * r());
         }
         if (d === 1) {
-          clump(thighX, 3, true);
+          clump(tallX, 3, true);
           clump(W * 0.035 + 6, 2, true);
         } // the tall ones: before his thigh, and at the left edge
       }
